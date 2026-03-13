@@ -1,0 +1,21 @@
+{
+  "name": "capitalbridge-suite",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:login": "npm run dev -w @cb/login",
+    "dev:platform": "npm run dev -w @cb/platform",
+    "dev:api": "npm run dev -w @cb/api",
+    "build": "npm run build -w @cb/login && npm run build -w @cb/platform && npm run build -w @cb/api",
+    "typecheck": "npm run typecheck -w @cb/login && npm run typecheck -w @cb/platform && npm run typecheck -w @cb/api"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.14"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@cb/supabase",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": "./src/server.ts",
+    "./browser": "./src/browser.ts",
+    "./service": "./src/service.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.47.10",
+    "server-only": "^0.0.1"
+  }
+}
