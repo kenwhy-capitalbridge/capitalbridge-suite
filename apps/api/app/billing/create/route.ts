@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
-import { createAppServerClient } from "@cb/supabase/server";
 import { createBillplzBill } from "@/lib/billplz";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 
@@ -38,14 +37,21 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Body;
   const requestedPlan = (body.plan ?? "trial").toString();
 
-  // Supabase is the source of truth: user identity comes only from the Supabase session (shared .thecapitalbridge.com cookie).
-  const sessionClient = await createAppServerClient();
-  const { data: { user } } = await sessionClient.auth.getUser();
-  if (!user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401, headers });
-  }
+  // Supabase is the source of truth: user identity comes from the access token
+  // passed by the login app in the Authorization header.
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
   const svc = createServiceClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await svc.auth.getUser(token ?? undefined);
+
+  if (userError || !user?.id) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401, headers });
+  }
 
   // Fetch plan details
   const { data: planRow, error: planErr } = await svc
