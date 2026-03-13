@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
@@ -11,7 +11,7 @@ const PLAN_LABELS: Record<string, string> = {
   strategic: "Strategic Execution (365 Days)",
 };
 
-export default function SignupPage() {
+function SignupContent() {
   const searchParams = useSearchParams();
   const plan = useMemo(() => searchParams.get("plan") ?? "", [searchParams]);
   const planLabel = plan ? (PLAN_LABELS[plan] ?? plan) : "—";
@@ -84,6 +84,21 @@ export default function SignupPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card">
+          <h1 className="cb-card-title">Create an Account</h1>
+          <p style={{ marginTop: "1rem", opacity: 0.9 }}>Loading…</p>
+        </div>
+      </main>
+    }>
+      <SignupContent />
+    </Suspense>
   );
 }
 

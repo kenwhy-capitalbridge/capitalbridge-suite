@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
@@ -36,7 +36,7 @@ function getLoginErrorMessage(err: { message?: string; code?: string }): string 
   return err.message ?? "Login failed. Please try again.";
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams();
   const redirectTo = useMemo(() => searchParams.get("redirectTo"), [searchParams]);
 
@@ -174,6 +174,22 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card">
+          <h1 className="cb-card-title">Capital Bridge Advisory Platform</h1>
+          <p className="cb-card-subtitle">Log In To Your Account</p>
+          <p style={{ marginTop: "1rem", opacity: 0.9 }}>Loading…</p>
+        </div>
+      </main>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
 

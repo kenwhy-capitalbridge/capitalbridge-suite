@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { Suspense, useMemo, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 /** Production API URL. Set NEXT_PUBLIC_API_APP_URL in Vercel to your live API (e.g. https://api.thecapitalbridge.com). */
 const API_APP_URL = process.env.NEXT_PUBLIC_API_APP_URL ?? "https://api.thecapitalbridge.com";
 
-export default function ConfirmPaymentPage() {
+function ConfirmPaymentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const plan = useMemo(() => searchParams.get("plan") ?? "trial", [searchParams]);
@@ -105,5 +105,20 @@ export default function ConfirmPaymentPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function ConfirmPaymentPage() {
+  return (
+    <Suspense fallback={
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card">
+          <h1 className="cb-card-title">Preparing your payment</h1>
+          <p style={{ marginTop: "1rem", opacity: 0.9 }}>Loading…</p>
+        </div>
+      </main>
+    }>
+      <ConfirmPaymentContent />
+    </Suspense>
   );
 }
