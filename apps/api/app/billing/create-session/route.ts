@@ -38,10 +38,19 @@ type Body = { email?: string; plan?: string; name?: string };
 /**
  * Payment-first: create billing_sessions row with email + plan, then Billplz bill.
  * Returns payment_url for frontend redirect. No Supabase user is created here.
+ * Requires BILLPLZ_API_KEY and BILLPLZ_COLLECTION_ID (loaded from env).
  */
 export async function POST(req: Request) {
   const origin = req.headers.get("Origin");
   const headers = corsHeaders(origin);
+
+  if (!process.env.BILLPLZ_API_KEY || !process.env.BILLPLZ_COLLECTION_ID) {
+    console.error("[create-session] missing env: BILLPLZ_API_KEY or BILLPLZ_COLLECTION_ID");
+    return NextResponse.json(
+      { error: "billplz_config_missing", message: "Payment provider is not configured." },
+      { status: 503, headers }
+    );
+  }
 
   const body = (await req.json().catch(() => ({}))) as Body;
   const email = typeof body.email === "string" ? body.email.trim() : "";
@@ -95,7 +104,9 @@ export async function POST(req: Request) {
     billId = result.billId;
     paymentUrl = result.checkoutUrl;
   } catch (err) {
-    console.error("[create-session] Billplz error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    const body = err && typeof err === "object" && "body" in err ? String((err as { body?: string }).body) : undefined;
+    console.error("[create-session] Billplz error:", message, body ? { billplz_response: body } : "");
     await svc
       .from("billing_sessions")
       .update({
@@ -103,7 +114,14 @@ export async function POST(req: Request) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", session.id);
-    return NextResponse.json({ error: "bill_creation_failed" }, { status: 502, headers });
+    return NextResponse.json(
+      {
+        error: "bill_creation_failed",
+        message: "Payment provider could not create the bill.",
+        ...(body && { detail: body }),
+      },
+      { status: 502, headers }
+    );
   }
 
   await svc

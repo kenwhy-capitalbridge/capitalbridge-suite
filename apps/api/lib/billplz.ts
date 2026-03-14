@@ -45,7 +45,11 @@ export async function createBillplzBill(params: {
 
   if (!resp.ok) {
     const text = await resp.text();
-    throw new Error(`Billplz create bill failed (${resp.status}): ${text}`);
+    console.error("[billplz] create bill failed", { status: resp.status, statusText: resp.statusText, body: text });
+    const err = new Error(`Billplz create bill failed (${resp.status}): ${text}`) as Error & { status?: number; body?: string };
+    err.status = resp.status;
+    err.body = text;
+    throw err;
   }
 
   const data = (await resp.json()) as { id: string; url: string };
