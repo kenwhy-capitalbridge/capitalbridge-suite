@@ -40,6 +40,20 @@ export async function POST(req: Request) {
 
   console.info("[billplz-webhook] received", { billId, payloadKeys: Object.keys(body) });
 
+  logBillingEvent(svc, {
+    event_type: "webhook_received_raw",
+    metadata: {
+      billplz_bill_id: billId || null,
+      paid,
+      payload_keys: Object.keys(body),
+      signature_present: !!(
+        body["x_signature"] ??
+        body["billplz[x_signature]"] ??
+        req.headers.get("x-signature")
+      ),
+    },
+  });
+
   if (!billId) {
     return NextResponse.json({ ok: false, error: "missing_bill_id" }, { status: 400 });
   }
@@ -48,6 +62,10 @@ export async function POST(req: Request) {
     (body["x_signature"] ?? body["billplz[x_signature]"] ?? req.headers.get("x-signature")) as string | undefined;
   if (!verifyBillplzWebhookSignature(body, signature ?? null)) {
     console.warn("[billplz-webhook] signature verification failed", { bill_id: billId });
+    logBillingEvent(svc, {
+      event_type: "webhook_invalid_signature",
+      metadata: { billplz_bill_id: billId, paid },
+    });
     return NextResponse.json({ ok: false, error: "invalid_signature" }, { status: 401 });
   }
 
@@ -339,6 +357,10 @@ export async function POST(req: Request) {
 
   if (pendingErr || !pendingBill) {
     console.warn("[billplz-webhook] no billing_sessions, payments, or pending_bills found", { billId });
+    logBillingEvent(svc, {
+      event_type: "webhook_unmatched_bill",
+      metadata: { billplz_bill_id: billId, paid },
+    });
     return NextResponse.json({ ok: false, error: "payment_or_pending_not_found" }, { status: 404 });
   }
 
@@ -429,4 +451,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true });
 }
-
