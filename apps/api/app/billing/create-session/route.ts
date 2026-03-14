@@ -35,6 +35,81 @@ export async function OPTIONS(req: Request) {
 
 type Body = { email?: string; plan?: string; name?: string };
 
+async function createPendingBillFallback(params: {
+  svc: ReturnType<typeof createServiceClient>;
+  headers: Record<string, string>;
+  email: string;
+  name: string;
+  planId: string;
+  planName: string;
+  amountCents: number;
+}) {
+  const { svc, headers, email, name, planId, planName, amountCents } = params;
+
+  const { data: pendingBill, error: pendingErr } = await svc
+    .from("pending_bills")
+    .insert({
+      email,
+      plan_id: planId,
+      name: name || email,
+    })
+    .select("id")
+    .single();
+
+  if (pendingErr || !pendingBill?.id) {
+    console.error("[create-session] pending_bills insert failed:", pendingErr);
+    return NextResponse.json(
+      { error: "session_create_failed", detail: pendingErr?.message ?? "pending_bills insert failed" },
+      { status: 500, headers }
+    );
+  }
+
+  let paymentUrl: string;
+  let billId: string;
+  try {
+    const result = await createBillplzBill({
+      amountCents,
+      description: `Capital Bridge — ${planName}`,
+      email,
+      name: name || email,
+      reference1: pendingBill.id,
+      redirectUrl: process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com/dashboard",
+    });
+    paymentUrl = result.checkoutUrl;
+    billId = result.billId;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const body = err && typeof err === "object" && "body" in err ? String((err as { body?: string }).body) : undefined;
+    console.error("[create-session] Billplz fallback error:", message, body ? { billplz_response: body } : "");
+    return NextResponse.json(
+      {
+        error: "bill_creation_failed",
+        message: "Payment provider could not create the bill.",
+        ...(body && { detail: body }),
+      },
+      { status: 502, headers }
+    );
+  }
+
+  const { error: updatePendingErr } = await svc
+    .from("pending_bills")
+    .update({ billplz_bill_id: billId })
+    .eq("id", pendingBill.id);
+
+  if (updatePendingErr) {
+    console.error("[create-session] pending_bills update failed:", updatePendingErr);
+    return NextResponse.json(
+      { error: "session_update_failed", detail: updatePendingErr.message },
+      { status: 500, headers }
+    );
+  }
+
+  return NextResponse.json(
+    { payment_url: paymentUrl, checkoutUrl: paymentUrl, mode: "pending_bills_fallback" },
+    { headers }
+  );
+}
+
 /**
  * Payment-first: create billing_sessions row with email + plan, then Billplz bill.
  * Returns payment_url for frontend redirect. No Supabase user is created here.
@@ -87,7 +162,15 @@ export async function POST(req: Request) {
 
   if (sessionErr || !session?.id) {
     console.error("[create-session] billing_sessions insert failed:", sessionErr);
-    return NextResponse.json({ error: "session_create_failed" }, { status: 500, headers });
+    return createPendingBillFallback({
+      svc,
+      headers,
+      email,
+      name,
+      planId: planRow.id,
+      planName: planRow.name,
+      amountCents: planRow.price_cents,
+    });
   }
 
   let billId: string;
