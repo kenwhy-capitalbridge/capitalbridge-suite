@@ -49,6 +49,10 @@ export type Database = {
           amount_cents: number | null;
           paid_at: string | null;
           raw_webhook: Json | null;
+          payment_provider: string | null;
+          payment_currency: string | null;
+          payment_amount: number | null;
+          payment_confirmed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -65,6 +69,8 @@ export type Database = {
           bill_id: string | null;
           payment_url: string | null;
           membership_id: string | null;
+          payment_attempt_count: number;
+          last_payment_error: string | null;
           created_at: string;
           updated_at: string;
         };

@@ -59,13 +59,19 @@ export async function POST(req: Request) {
     }
 
     const newStatus = paid ? "paid" : "failed";
+    const paidAtVal = paidAt ?? (paid ? new Date().toISOString() : null);
+    const amountNum = amount != null ? Number(amount) : null;
     await svc
       .from("payments")
       .update({
         status: newStatus,
-        paid_at: paidAt ?? null,
-        amount_cents: amount ? Number(amount) : null,
+        paid_at: paidAtVal,
+        amount_cents: amountNum,
         raw_webhook: body as Record<string, unknown>,
+        payment_provider: "billplz",
+        payment_currency: "MYR",
+        payment_amount: amountNum != null ? amountNum / 100 : null,
+        payment_confirmed_at: paid ? paidAtVal : null,
       })
       .eq("id", payment.id);
 

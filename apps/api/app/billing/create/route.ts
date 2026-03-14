@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     // --- PART 2: Idempotent bill creation — reuse existing session/bill when valid ---
     const { data: existingSession } = await svc
       .from("billing_sessions")
-      .select("id, status, bill_id, payment_url, membership_id, created_at")
+      .select("id, status, bill_id, payment_url, membership_id, created_at, payment_attempt_count")
       .eq("user_id", user.id)
       .eq("plan_id", planRow.id)
       .in("status", ["pending", "bill_created"])
@@ -83,6 +83,19 @@ export async function POST(req: Request) {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    // Diagnostics: increment payment attempt count when touching this session
+    if (existingSession?.id) {
+      const attemptCount = (existingSession as { payment_attempt_count?: number }).payment_attempt_count ?? 0;
+      await svc
+        .from("billing_sessions")
+        .update({
+          payment_attempt_count: attemptCount + 1,
+          updated_at: now.toISOString(),
+          last_payment_error: null,
+        })
+        .eq("id", existingSession.id);
+    }
 
     if (existingSession?.bill_id && existingSession?.payment_url && existingSession.status === "bill_created") {
       logBillingEvent(svc, {
@@ -161,6 +174,7 @@ export async function POST(req: Request) {
           plan_id: planRow.id,
           status: "pending",
           membership_id: membershipId,
+          payment_attempt_count: 1,
           updated_at: now.toISOString(),
         })
         .select("id")
@@ -206,9 +220,23 @@ export async function POST(req: Request) {
         billId = result.billId;
         checkoutUrl = result.checkoutUrl;
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : "unknown";
         console.error("[api/billing/create] Billplz error:", err);
+        const errorCode =
+          /expired/i.test(errMsg) ? "payment_expired"
+          : /cancel/i.test(errMsg) ? "payment_cancelled"
+          : /network|fetch|ECONNREFUSED/i.test(errMsg) ? "network_error"
+          : /invalid|404/i.test(errMsg) ? "invalid_bill"
+          : "bill_creation_failed";
+        await svc
+          .from("billing_sessions")
+          .update({
+            last_payment_error: errorCode,
+            updated_at: now.toISOString(),
+          })
+          .eq("id", sessionId);
         return NextResponse.json(
-          { error: "bill_creation_failed", detail: err instanceof Error ? err.message : "unknown" },
+          { error: "bill_creation_failed", detail: errMsg },
           { status: 502 }
         );
       }
