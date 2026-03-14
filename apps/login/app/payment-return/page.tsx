@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type BillingStatusResponse = {
@@ -18,7 +18,7 @@ type BillingStatusResponse = {
 
 const LOGIN_REDIRECT = "https://platform.thecapitalbridge.com/dashboard";
 
-export default function PaymentReturnPage() {
+function PaymentReturnContent() {
   const searchParams = useSearchParams();
   const paid = searchParams.get("billplz[paid]") === "true";
   const paidAt = searchParams.get("billplz[paid_at]");
@@ -128,5 +128,22 @@ export default function PaymentReturnPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PaymentReturnPage() {
+  return (
+    <Suspense
+      fallback={
+        <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+          <div className="cb-card">
+            <h1 className="cb-card-title">Payment received</h1>
+            <p className="cb-card-subtitle">Loading your account status…</p>
+          </div>
+        </main>
+      }
+    >
+      <PaymentReturnContent />
+    </Suspense>
   );
 }
