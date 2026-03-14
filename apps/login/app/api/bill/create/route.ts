@@ -71,12 +71,18 @@ export async function POST(req: Request) {
           user_id: user.id,
           plan_id: planRow.id,
           status: "pending",
+          updated_at: new Date().toISOString(),
         })
         .select("id")
         .single();
 
       if (createErr || !created?.id) {
-        return NextResponse.json({ error: "membership_create_failed" }, { status: 500 });
+        const message = createErr?.message ?? "no id returned";
+        console.error("[bill/create] membership insert failed:", createErr?.code, message, createErr?.details);
+        return NextResponse.json(
+          { error: "membership_create_failed", detail: message },
+          { status: 500 }
+        );
       }
       membershipId = created.id;
     }

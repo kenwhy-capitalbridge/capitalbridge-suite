@@ -54,15 +54,15 @@ BEGIN
   END IF;
 END $$;
 
--- Seed rows: insert only if slug not already present (id required if table has no default)
-INSERT INTO public.plans (id, slug, name, price_cents, duration_days, is_trial)
-SELECT gen_random_uuid(), v.slug, v.name, v.price_cents, v.duration_days, v.is_trial
-FROM (VALUES
-  ('trial'::text, 'Trial Access (7 days)', 100, 7, true),
-  ('monthly', 'Monthly Access (30 days)', 20000, 30, false),
-  ('quarterly', 'Quarterly Access (90 days)', 54000, 90, false),
-  ('strategic', 'Strategic Advisory & Execution', 250000, 365, false)
-) AS v(slug, name, price_cents, duration_days, is_trial)
-WHERE NOT EXISTS (SELECT 1 FROM public.plans p WHERE p.slug = v.slug);
+-- Seed rows: insert only if slug not already present. id is TEXT; table also has NOT NULL price (numeric).
+INSERT INTO public.plans (id, slug, name, price, price_cents, duration_days, is_trial)
+SELECT row.id, row.slug, row.name, row.price, row.price_cents, row.duration_days, row.is_trial
+FROM (
+  SELECT gen_random_uuid()::text AS id, 'trial'::text AS slug, 'Trial Access (7 days)' AS name, 1 AS price, 100 AS price_cents, 7 AS duration_days, true AS is_trial
+  UNION ALL SELECT gen_random_uuid()::text, 'monthly', 'Monthly Access (30 days)', 200, 20000, 30, false
+  UNION ALL SELECT gen_random_uuid()::text, 'quarterly', 'Quarterly Access (90 days)', 540, 54000, 90, false
+  UNION ALL SELECT gen_random_uuid()::text, 'strategic', 'Strategic Advisory & Execution', 2500, 250000, 365, false
+) AS row
+WHERE NOT EXISTS (SELECT 1 FROM public.plans p WHERE p.slug = row.slug);
 
 COMMENT ON TABLE public.plans IS 'Subscription plan catalog; slug used by /api/bill/create and frontend.';
