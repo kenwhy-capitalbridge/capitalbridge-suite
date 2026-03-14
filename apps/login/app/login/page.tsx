@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
 const PLATFORM_URL = "https://platform.thecapitalbridge.com";
+const SESSION_SYNC_RETRIES = 5;
+const SESSION_SYNC_DELAY_MS = 500;
 
 /** Map Supabase auth errors to user-friendly messages shown in the login box. */
 function getLoginErrorMessage(err: { message?: string; code?: string }): string {
@@ -34,6 +36,10 @@ function getLoginErrorMessage(err: { message?: string; code?: string }): string 
   }
 
   return err.message ?? "Login failed. Please try again.";
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function LoginContent() {
@@ -75,24 +81,39 @@ function LoginContent() {
       return;
     }
 
-    // Register this session in public.user_sessions (one session per account; IP/UA stored for matching).
-    try {
-      await fetch("/api/register-session", { method: "POST", credentials: "include" });
-    } catch {
-      // Non-blocking; session still valid
+    // Register this session in public.user_sessions and retry membership lookup
+    // briefly while the browser/server auth cookies settle after sign-in.
+    let membershipExpired = false;
+    for (let attempt = 0; attempt < SESSION_SYNC_RETRIES; attempt += 1) {
+      try {
+        await fetch("/api/register-session", { method: "POST", credentials: "include" });
+      } catch {
+        // Non-blocking; we retry below.
+      }
+
+      try {
+        const res = await fetch("/api/membership-status", { credentials: "include" });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 401) {
+          await sleep(SESSION_SYNC_DELAY_MS);
+          continue;
+        }
+
+        if (data.active === false) {
+          membershipExpired = true;
+        }
+        break;
+      } catch {
+        // If the check fails, don't block login; platform will still gate access.
+        break;
+      }
     }
 
-    // Check membership: if expired, show message and link to pricing to renew (user stays logged in).
-    try {
-      const res = await fetch("/api/membership-status", { credentials: "include" });
-      const data = await res.json().catch(() => ({}));
-      if (data.active === false) {
-        setLoading(false);
-        setError("Membership expired.");
-        return;
-      }
-    } catch {
-      // If check fails, still allow redirect; platform will gate access
+    if (membershipExpired) {
+      setLoading(false);
+      setError("Membership expired.");
+      return;
     }
 
     setLoading(false);
@@ -192,4 +213,3 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-
