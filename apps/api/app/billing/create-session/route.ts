@@ -40,6 +40,10 @@ function getPaymentFirstRedirectUrl(): string {
   return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
 }
 
+function getBillplzCheckoutUrl(billId: string): string {
+  return `https://billplz.com/bills/${billId}`;
+}
+
 async function createPendingBillFallback(params: {
   svc: ReturnType<typeof createServiceClient>;
   headers: Record<string, string>;
@@ -51,6 +55,31 @@ async function createPendingBillFallback(params: {
   billingSessionError?: { message?: string; details?: string } | null;
 }) {
   const { svc, headers, email, name, planId, planName, amountCents, billingSessionError } = params;
+
+  const { data: existingPendingBill, error: existingPendingErr } = await svc
+    .from("pending_bills")
+    .select("id, billplz_bill_id, created_at")
+    .eq("email", email)
+    .eq("plan_id", planId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingPendingErr) {
+    console.warn("[create-session] pending_bills reuse lookup failed:", existingPendingErr.message);
+  }
+
+  if (existingPendingBill?.billplz_bill_id) {
+    const checkoutUrl = getBillplzCheckoutUrl(existingPendingBill.billplz_bill_id);
+    return NextResponse.json(
+      {
+        payment_url: checkoutUrl,
+        checkoutUrl,
+        mode: "pending_bills_reused",
+      },
+      { headers }
+    );
+  }
 
   const { data: pendingBill, error: pendingErr } = await svc
     .from("pending_bills")
