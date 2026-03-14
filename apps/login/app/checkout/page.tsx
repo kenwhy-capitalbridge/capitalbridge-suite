@@ -43,8 +43,13 @@ function CheckoutContent() {
         return;
       }
       const paymentUrl = data?.payment_url ?? data?.checkoutUrl;
+      const billId = typeof data?.bill_id === "string" ? data.bill_id : null;
       if (typeof paymentUrl === "string" && paymentUrl) {
-        window.location.href = paymentUrl;
+        const handoffUrl = new URL("/payment-handoff", window.location.origin);
+        handoffUrl.searchParams.set("payment_url", paymentUrl);
+        if (billId) handoffUrl.searchParams.set("bill_id", billId);
+        handoffUrl.searchParams.set("plan", plan);
+        window.location.href = handoffUrl.toString();
         return;
       }
       setError("Invalid response from server.");

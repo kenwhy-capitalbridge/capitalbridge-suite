@@ -73,6 +73,7 @@ async function createPendingBillFallback(params: {
     const checkoutUrl = getBillplzCheckoutUrl(existingPendingBill.billplz_bill_id);
     return NextResponse.json(
       {
+        bill_id: existingPendingBill.billplz_bill_id,
         payment_url: checkoutUrl,
         checkoutUrl,
         mode: "pending_bills_reused",
@@ -145,7 +146,7 @@ async function createPendingBillFallback(params: {
   }
 
   return NextResponse.json(
-    { payment_url: paymentUrl, checkoutUrl: paymentUrl, mode: "pending_bills_fallback" },
+    { bill_id: billId, payment_url: paymentUrl, checkoutUrl: paymentUrl, mode: "pending_bills_fallback" },
     { headers }
   );
 }
@@ -258,5 +259,5 @@ export async function POST(req: Request) {
     })
     .eq("id", session.id);
 
-  return NextResponse.json({ payment_url: paymentUrl, checkoutUrl: paymentUrl }, { headers });
+  return NextResponse.json({ bill_id: billId, payment_url: paymentUrl, checkoutUrl: paymentUrl }, { headers });
 }
