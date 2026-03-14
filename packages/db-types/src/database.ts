@@ -24,7 +24,7 @@ export type Database = {
           id: string;
           user_id: string;
           plan_id: string;
-          status: "pending" | "active" | "expired" | "cancelled";
+          status: "pending" | "bill_created" | "paid" | "active" | "failed" | "expired" | "cancelled";
           start_date: string | null;
           end_date: string | null;
           started_at: string | null;
@@ -44,6 +44,7 @@ export type Database = {
           membership_id: string;
           billplz_bill_id: string | null;
           billplz_collection_id: string | null;
+          billing_session_id: string | null;
           status: "pending" | "paid" | "failed";
           amount_cents: number | null;
           paid_at: string | null;
@@ -53,6 +54,22 @@ export type Database = {
         };
         Insert: Partial<Database["public"]["Tables"]["payments"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["payments"]["Row"]>;
+        Relationships: [];
+      };
+      billing_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_id: string;
+          status: "pending" | "bill_created" | "paid";
+          bill_id: string | null;
+          payment_url: string | null;
+          membership_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["billing_sessions"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["billing_sessions"]["Row"]>;
         Relationships: [];
       };
       active_memberships: {

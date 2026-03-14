@@ -4,6 +4,22 @@ import { randomBytes } from "crypto";
 
 export const runtime = "nodejs";
 
+function logBillingEvent(
+  svc: Awaited<ReturnType<typeof createServiceClient>>,
+  payload: { event_type: string; user_id?: string | null; membership_id?: string | null; payment_id?: string | null; metadata?: Record<string, unknown> }
+) {
+  return svc
+    .from("billing_events")
+    .insert({
+      event_type: payload.event_type,
+      user_id: payload.user_id ?? null,
+      membership_id: payload.membership_id ?? null,
+      payment_id: payload.payment_id ?? null,
+      metadata: (payload.metadata ?? null) as Record<string, unknown> | null,
+    })
+    .then(() => {}, () => {});
+}
+
 export async function POST(req: Request) {
   const svc = createServiceClient();
 
@@ -24,7 +40,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "missing_bill_id" }, { status: 400 });
   }
 
-  // 1) Existing flow: payment row exists (authenticated billing/create)
+  logBillingEvent(svc, {
+    event_type: "webhook_received",
+    metadata: { billplz_bill_id: billId, paid },
+  });
+
+  // 1) Billing session flow: payment row exists (authenticated billing/create)
   const { data: payment, error: paymentErr } = await svc
     .from("payments")
     .select("id, membership_id, status")
@@ -32,9 +53,11 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   if (!paymentErr && payment) {
+    // PART 4: Idempotent — already processed
     if (payment.status === "paid") {
-      return NextResponse.json({ ok: true }); // idempotent: already processed
+      return NextResponse.json({ ok: true });
     }
+
     const newStatus = paid ? "paid" : "failed";
     await svc
       .from("payments")
@@ -42,18 +65,46 @@ export async function POST(req: Request) {
         status: newStatus,
         paid_at: paidAt ?? null,
         amount_cents: amount ? Number(amount) : null,
-        raw_webhook: body as any,
+        raw_webhook: body as Record<string, unknown>,
       })
       .eq("id", payment.id);
 
+    // pending → failed when payment fails or expires
+    if (!paid && payment.membership_id) {
+      await svc
+        .from("memberships")
+        .update({ status: "failed", updated_at: new Date().toISOString() })
+        .eq("id", payment.membership_id)
+        .in("status", ["pending", "bill_created"]);
+    }
+
     if (paid) {
+      logBillingEvent(svc, {
+        event_type: "payment_succeeded",
+        membership_id: payment.membership_id,
+        payment_id: payment.id,
+        metadata: { billplz_bill_id: billId },
+      });
+
+      // Mark billing session as paid (idempotent; no-op if table or row missing)
+      await svc
+        .from("billing_sessions")
+        .update({ status: "paid", updated_at: new Date().toISOString() })
+        .eq("bill_id", billId)
+        .then(() => {}, () => {});
+
       const { data: membership } = await svc
         .from("memberships")
-        .select("id, plan_id, user_id")
+        .select("id, plan_id, user_id, status")
         .eq("id", payment.membership_id)
         .maybeSingle();
 
       if (membership) {
+        // PART 5: Only activate if not already active (strict state transition)
+        if (membership.status === "active") {
+          return NextResponse.json({ ok: true });
+        }
+
         const { data: plan } = await svc
           .from("plans")
           .select("duration_days, is_trial")
@@ -77,8 +128,16 @@ export async function POST(req: Request) {
           })
           .eq("id", membership.id);
 
+        logBillingEvent(svc, {
+          event_type: "membership_activated",
+          user_id: membership.user_id,
+          membership_id: membership.id,
+          payment_id: payment.id,
+          metadata: { billplz_bill_id: billId },
+        });
+
         if (plan?.is_trial && membership.user_id) {
-          await svc.rpc("increment_trial_use_count" as any, { user_id: membership.user_id }).catch(() => {});
+          await svc.rpc("increment_trial_use_count" as never, { user_id: membership.user_id }).catch(() => {});
         }
       }
     }
