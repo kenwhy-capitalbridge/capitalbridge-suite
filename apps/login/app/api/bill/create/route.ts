@@ -1,116 +1,59 @@
 import { NextResponse } from "next/server";
 import { createAppServerClient } from "@cb/supabase/server";
-import { createServiceClient } from "@cb/supabase/service";
-import { createBillplzBill } from "@/lib/billplz";
 
 export const runtime = "nodejs";
 
+/**
+ * Proxy: no billing logic here. Forwards to API with user's Bearer token.
+ * Login server reads session from cookies, calls api.thecapitalbridge.com/billing/create.
+ */
 type Body = { plan?: string };
 
-/**
- * Same-origin payment creation. Called from login.thecapitalbridge.com only.
- * No CORS: session is read from cookies via createAppServerClient.
- */
+function getApiBaseUrl(): string {
+  const url =
+    process.env.API_APP_URL ??
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    (process.env.NODE_ENV === "development" ? "http://127.0.0.1:3002" : "https://api.thecapitalbridge.com");
+  return url.replace(/\/$/, "");
+}
+
 export async function POST(req: Request) {
   try {
     const supabase = await createAppServerClient();
     const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
 
-    if (userError || !user?.id) {
+    if (sessionError || !session?.access_token) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
     const body = (await req.json().catch(() => ({}))) as Body;
-    const requestedPlan = (body.plan ?? "trial").toString();
-
-    const svc = createServiceClient();
-
-    // Fetch plan details
-    const { data: planRow, error: planErr } = await svc
-      .from("plans")
-      .select("id, slug, name, price_cents, duration_days, is_trial")
-      .eq("slug", requestedPlan)
-      .maybeSingle();
-
-    if (planErr || !planRow) {
-      return NextResponse.json({ error: "invalid_plan" }, { status: 400 });
-    }
-
-    // Trial enforcement (max 3)
-    if (planRow.is_trial) {
-      const { data: profile } = await svc
-        .from("profiles")
-        .select("trial_use_count")
-        .eq("id", user.id)
-        .maybeSingle();
-      const used = profile?.trial_use_count ?? 0;
-      if (used >= 3) {
-        return NextResponse.json({ error: "trial_limit_reached" }, { status: 403 });
-      }
-    }
-
-    // Ensure a pending membership exists for this user + plan
-    const { data: existingPending } = await svc
-      .from("memberships")
-      .select("id, status, plan_id")
-      .eq("user_id", user.id)
-      .eq("plan_id", planRow.id)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    let membershipId = existingPending?.id;
-    if (!membershipId) {
-      const { data: created, error: createErr } = await svc
-        .from("memberships")
-        .insert({
-          user_id: user.id,
-          plan_id: planRow.id,
-          status: "pending",
-          updated_at: new Date().toISOString(),
-        })
-        .select("id")
-        .single();
-
-      if (createErr || !created?.id) {
-        const message = createErr?.message ?? "no id returned";
-        console.error("[bill/create] membership insert failed:", createErr?.code, message, createErr?.details);
-        return NextResponse.json(
-          { error: "membership_create_failed", detail: message },
-          { status: 500 }
-        );
-      }
-      membershipId = created.id;
-    }
-
-    // Create Billplz bill
-    const { billId, checkoutUrl } = await createBillplzBill({
-      amountCents: planRow.price_cents,
-      description: `Capital Bridge — ${planRow.name}`,
-      email: user.email ?? "client@thecapitalbridge.com",
-      name: user.email ?? "Capital Bridge Client",
-      reference1: membershipId,
-      redirectUrl: "https://platform.thecapitalbridge.com/dashboard",
+    const apiUrl = `${getApiBaseUrl()}/billing/create`;
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ plan: body.plan ?? "trial" }),
+      cache: "no-store",
     });
 
-    // Upsert payment record
-    await svc.from("payments").upsert(
-      {
-        membership_id: membershipId,
-        billplz_bill_id: billId,
-        billplz_collection_id: process.env.BILLPLZ_COLLECTION_ID ?? null,
-        status: "pending",
-        amount_cents: planRow.price_cents,
-      },
-      { onConflict: "membership_id" }
-    );
-
-    return NextResponse.json({ checkoutUrl });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: (data?.error as string) ?? "server_error", detail: data?.detail },
+        { status: res.status }
+      );
+    }
+    return NextResponse.json(data);
   } catch (err) {
-    return NextResponse.json({ error: "server_error" }, { status: 500 });
+    console.error("[login /api/bill/create] proxy error:", err);
+    return NextResponse.json(
+      { error: "server_error", detail: err instanceof Error ? err.message : "unknown" },
+      { status: 500 }
+    );
   }
 }

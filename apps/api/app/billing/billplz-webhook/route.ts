@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
   if (!paymentErr && payment) {
     if (payment.status === "paid") {
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true }); // idempotent: already processed
     }
     const newStatus = paid ? "paid" : "failed";
     await svc
@@ -72,6 +72,8 @@ export async function POST(req: Request) {
             status: "active",
             start_date: start.toISOString(),
             end_date: end ? end.toISOString() : null,
+            started_at: start.toISOString(),
+            expires_at: end ? end.toISOString() : null,
           })
           .eq("id", membership.id);
 

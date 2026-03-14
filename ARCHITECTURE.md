@@ -2,20 +2,37 @@
 
 ## Principle
 
-- **login.thecapitalbridge.com** handles authentication, billing, and all APIs.
-- All backend operations run through `login.thecapitalbridge.com/api/*`.
-- No frontend application should call `api.thecapitalbridge.com`.
+- **api.thecapitalbridge.com** is the single billing authority: creates pending membership, Billplz bill, and payment record. Uses `SUPABASE_SERVICE_ROLE_KEY` and `BILLPLZ_*` only on the API app.
+- **login.thecapitalbridge.com** provides auth UI and a **proxy**: `POST /api/bill/create` reads session from cookies and forwards to `API_APP_URL/billing/create` with Bearer token. No billing logic or service role on login (except if webhook is still pointed at login).
 - Shared auth and membership validation across subdomains via root-domain cookies and shared packages.
 
-## API Endpoints (login app)
+## Billing flow
+
+1. User selects plan on login → confirm-payment page.
+2. Frontend calls **login** `POST /api/bill/create` (same-origin, credentials included).
+3. Login server gets session from cookies, calls **API** `POST /billing/create` with `Authorization: Bearer <access_token>` and `{ plan }`.
+4. API validates JWT, creates pending membership, creates Billplz bill, upserts payment row, returns `{ checkoutUrl }`.
+5. User is redirected to Billplz; after payment, Billplz calls **API** `/billing/billplz-webhook` (or login webhook if configured).
+6. Webhook updates payment and membership; idempotent for retries.
+
+## API Endpoints
+
+### API app (api.thecapitalbridge.com)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/bill/create` | POST | Create Billplz bill (authenticated; session from cookies). Returns `{ checkoutUrl }`. |
-| `/api/webhooks/billplz` | POST | Billplz webhook: update payment, activate membership, create user if payment-first. |
-| `/api/membership-status` | GET | Returns `{ active: boolean }` for current user (session required). |
-| `/api/membership/status` | GET | Returns `{ status, plan, expires_at, active }` for access control and middleware. |
-| `/api/auth/session` | (Supabase handles session via cookies) | — |
+| `/billing/create` | POST | Create pending membership + Billplz bill (Bearer token required). Returns `{ checkoutUrl }`. |
+| `/billing/billplz-webhook` | POST | Billplz callback: update payment, activate membership. Idempotent. |
+| `/billing/request-bill` | POST | Create bill without login (pending_bills flow); CORS for login origin. |
+
+### Login app (login.thecapitalbridge.com)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/bill/create` | POST | **Proxy** to API `/billing/create` with session token. No billing logic. |
+| `/api/webhooks/billplz` | POST | Billplz webhook (optional; prefer API webhook). |
+| `/api/membership-status` | GET | Returns `{ active: boolean }` for current user. |
+| `/api/membership/status` | GET | Returns `{ status, plan, expires_at, active }` for access control. |
 
 ## Verification checklist
 
