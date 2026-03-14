@@ -4,9 +4,10 @@ import { Suspense, useMemo, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-/** Production API URL. Set NEXT_PUBLIC_API_APP_URL in Vercel to your live API (e.g. https://api.thecapitalbridge.com). */
-const API_APP_URL = process.env.NEXT_PUBLIC_API_APP_URL ?? "https://api.thecapitalbridge.com";
-
+/**
+ * Same-origin API: all backend runs on login.thecapitalbridge.com/api/*
+ * No cross-domain calls, so no CORS or preflight issues.
+ */
 function ConfirmPaymentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -28,7 +29,7 @@ function ConfirmPaymentContent() {
       }
 
       try {
-        const res = await fetch(`${API_APP_URL}/billing/create`, {
+        const res = await fetch("/api/bill/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

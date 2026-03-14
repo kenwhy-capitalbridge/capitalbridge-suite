@@ -9,6 +9,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@cb/auth": "*",
+    "@cb/membership": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
     "autoprefixer": "^10.4.27",

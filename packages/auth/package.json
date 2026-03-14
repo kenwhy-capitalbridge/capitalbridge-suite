@@ -1,0 +1,16 @@
+{
+  "name": "@cb/auth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./session": "./src/session.ts"
+  },
+  "dependencies": {
+    "@cb/supabase": "*",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

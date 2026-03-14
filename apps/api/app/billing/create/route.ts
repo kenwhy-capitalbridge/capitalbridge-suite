@@ -1,48 +1,25 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
-import { LOGIN_APP_URL } from "@cb/shared/urls";
 
 export const runtime = "nodejs";
 
-const CORS_ORIGINS = [
-  LOGIN_APP_URL,
-  "http://localhost:3001",
-  "http://localhost:3006",
-  "http://127.0.0.1:3001",
-  "http://127.0.0.1:3006",
-];
-
-function corsHeaders(origin: string | null): Record<string, string> {
-  const allow = origin && CORS_ORIGINS.includes(origin);
-  return {
-    "Access-Control-Allow-Origin": allow ? origin : CORS_ORIGINS[0],
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
-}
-
-export async function OPTIONS(req: Request) {
-  const origin = req.headers.get("Origin");
-  return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
-}
-
+/**
+ * @deprecated Use login app same-origin endpoint: POST login.thecapitalbridge.com/api/bill/create
+ * This route is kept for reference; all payment creation should go through the login app.
+ */
 type Body = { plan?: string };
 
 export async function POST(req: Request) {
-  const origin = req.headers.get("Origin");
-  const headers = corsHeaders(origin);
+  try {
+    const body = (await req.json().catch(() => ({}))) as Body;
+    const requestedPlan = (body.plan ?? "trial").toString();
 
-  const body = (await req.json().catch(() => ({}))) as Body;
-  const requestedPlan = (body.plan ?? "trial").toString();
+    // Supabase is the source of truth: user identity comes from the access token
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
-  // Supabase is the source of truth: user identity comes from the access token
-  // passed by the login app in the Authorization header.
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-
-  const svc = createServiceClient();
+    const svc = createServiceClient();
 
   const {
     data: { user },
@@ -50,7 +27,7 @@ export async function POST(req: Request) {
   } = await svc.auth.getUser(token ?? undefined);
 
   if (userError || !user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401, headers });
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   // Fetch plan details
@@ -61,7 +38,7 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   if (planErr || !planRow) {
-    return NextResponse.json({ error: "invalid_plan" }, { status: 400, headers });
+    return NextResponse.json({ error: "invalid_plan" }, { status: 400 });
   }
 
   // Trial enforcement (max 3)
@@ -73,7 +50,7 @@ export async function POST(req: Request) {
       .maybeSingle();
     const used = profile?.trial_use_count ?? 0;
     if (used >= 3) {
-      return NextResponse.json({ error: "trial_limit_reached" }, { status: 403, headers });
+      return NextResponse.json({ error: "trial_limit_reached" }, { status: 403 });
     }
   }
 
@@ -101,7 +78,7 @@ export async function POST(req: Request) {
       .single();
 
     if (createErr || !created?.id) {
-      return NextResponse.json({ error: "membership_create_failed" }, { status: 500, headers });
+      return NextResponse.json({ error: "membership_create_failed" }, { status: 500 });
     }
     membershipId = created.id;
   }
@@ -128,6 +105,9 @@ export async function POST(req: Request) {
     { onConflict: "membership_id" }
   );
 
-  return NextResponse.json({ checkoutUrl }, { headers });
+  return NextResponse.json({ checkoutUrl });
+  } catch (err) {
+    return NextResponse.json({ error: "server_error" }, { status: 500 });
+  }
 }
 

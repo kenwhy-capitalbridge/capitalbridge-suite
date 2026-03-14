@@ -24,9 +24,13 @@ export type Database = {
           id: string;
           user_id: string;
           plan_id: string;
-          status: "pending" | "active" | "expired";
+          status: "pending" | "active" | "expired" | "cancelled";
           start_date: string | null;
           end_date: string | null;
+          started_at: string | null;
+          expires_at: string | null;
+          cancelled_at: string | null;
+          renewed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -71,6 +75,33 @@ export type Database = {
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
+      };
+      pending_bills: {
+        Row: {
+          id: string;
+          email: string;
+          plan_id: string;
+          name: string | null;
+          billplz_bill_id: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["pending_bills"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["pending_bills"]["Row"]>;
+        Relationships: [];
+      };
+      billing_events: {
+        Row: {
+          id: string;
+          event_type: string;
+          user_id: string | null;
+          membership_id: string | null;
+          payment_id: string | null;
+          created_at: string;
+          metadata: Json | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["billing_events"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["billing_events"]["Row"]>;
         Relationships: [];
       };
     };

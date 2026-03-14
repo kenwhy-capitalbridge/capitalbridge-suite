@@ -48,6 +48,11 @@ function SignupContent() {
       <div className="cb-card">
         <h1 className="cb-card-title">Create an Account</h1>
         <p className="cb-card-subtitle">Selected Plan: {planLabel}</p>
+        <p style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
+          <a className="cb-link" href="/pricing">
+            &larr; View Other Plans
+          </a>
+        </p>
 
         {!isSupabaseConfigured && (
           <p className="cb-message-error" style={{ marginTop: "1rem" }}>

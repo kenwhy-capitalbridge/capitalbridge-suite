@@ -1,0 +1,16 @@
+{
+  "name": "@cb/membership",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./status": "./src/status.ts"
+  },
+  "dependencies": {
+    "@cb/supabase": "*",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

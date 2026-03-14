@@ -10,7 +10,12 @@
     "dev:login": "npm run dev -w @cb/login",
     "dev:platform": "npm run dev -w @cb/platform",
     "dev:api": "npm run dev -w @cb/api",
+    "dev:capitalstress": "npm run dev -w @cb/capitalstress",
+    "dev:capitalhealth": "npm run dev -w @cb/capitalhealth",
+    "dev:incomeengineering": "npm run dev -w @cb/incomeengineering",
+    "dev:forever": "npm run dev -w @cb/forever",
     "build": "npm run build -w @cb/login && npm run build -w @cb/platform && npm run build -w @cb/api",
+    "build:all": "npm run build -w @cb/login && npm run build -w @cb/platform && npm run build -w @cb/api && npm run build -w @cb/capitalstress && npm run build -w @cb/capitalhealth && npm run build -w @cb/incomeengineering && npm run build -w @cb/forever",
     "typecheck": "npm run typecheck -w @cb/login && npm run typecheck -w @cb/platform && npm run typecheck -w @cb/api"
   },
   "devDependencies": {
