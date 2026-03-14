@@ -17,9 +17,19 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     async function run() {
       const hash = typeof window !== "undefined" ? window.location.hash : "";
+      const search = typeof window !== "undefined" ? window.location.search : "";
       const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const searchParams = new URLSearchParams(search);
       const type = params.get("type");
       const hasRecoveryToken = type === "recovery" || hash.includes("type=recovery");
+      const code = searchParams.get("code");
+
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        setInvalidLink(!!exchangeError);
+        setReady(true);
+        return;
+      }
 
       // Trigger Supabase to read the hash and exchange the recovery token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
