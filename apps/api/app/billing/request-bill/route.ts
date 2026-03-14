@@ -5,6 +5,7 @@ import { createBillplzBill } from "@/lib/billplz";
 export const runtime = "nodejs";
 
 const DEFAULT_LOGIN = "https://login.thecapitalbridge.com";
+const DEFAULT_PAYMENT_RETURN_URL = `${DEFAULT_LOGIN}/payment-return`;
 
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
@@ -34,6 +35,10 @@ export async function OPTIONS(req: Request) {
 }
 
 type Body = { email?: string; plan?: string; name?: string };
+
+function getPaymentFirstRedirectUrl(): string {
+  return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
+}
 
 /**
  * Payment-first: create billing_sessions row with email + plan, then Billplz bill.
@@ -91,7 +96,7 @@ export async function POST(req: Request) {
       email,
       name: name || email,
       reference1: session.id,
-      redirectUrl: process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com/dashboard",
+      redirectUrl: getPaymentFirstRedirectUrl(),
     });
     billId = result.billId;
     checkoutUrl = result.checkoutUrl;
