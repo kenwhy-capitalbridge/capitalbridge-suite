@@ -43,8 +43,8 @@ export default function ForgotPasswordPage() {
         <div className="cb-card text-center">
           <h1 className="cb-card-title">Check your email</h1>
           <p className="cb-card-subtitle mt-2">
-            We&apos;ve sent a password reset link to <strong>{email}</strong>. Click the link in that
-            email to set a new password.
+            If an account exists for <strong>{email}</strong>, a password reset link will be sent there.
+            Check your inbox and spam folder, and allow a few minutes for delivery.
           </p>
           <p style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.9 }}>
             <Link className="cb-link" href="/login">

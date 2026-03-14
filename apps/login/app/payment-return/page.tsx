@@ -39,7 +39,11 @@ export default function PaymentReturnPage({
             <Link className="cb-link" href="/forgot-password">
               Forgot Password
             </Link>{" "}
-            to set your password, then log in.
+            to request a password setup link, then log in.
+          </p>
+          <p>
+            If no email arrives within a few minutes, check spam and try again later. Your account may still be finishing setup in
+            the background.
           </p>
           <p>
             If you already have an account, you can go straight to{" "}
