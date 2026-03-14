@@ -54,9 +54,9 @@ BEGIN
   END IF;
 END $$;
 
--- Seed rows: insert only if slug not already present
-INSERT INTO public.plans (slug, name, price_cents, duration_days, is_trial)
-SELECT v.slug, v.name, v.price_cents, v.duration_days, v.is_trial
+-- Seed rows: insert only if slug not already present (id required if table has no default)
+INSERT INTO public.plans (id, slug, name, price_cents, duration_days, is_trial)
+SELECT gen_random_uuid(), v.slug, v.name, v.price_cents, v.duration_days, v.is_trial
 FROM (VALUES
   ('trial'::text, 'Trial Access (7 days)', 100, 7, true),
   ('monthly', 'Monthly Access (30 days)', 20000, 30, false),
