@@ -31,11 +31,14 @@ export async function POST(req: Request) {
       return (await req.json().catch(() => ({}))) as Record<string, unknown>;
     })) as Record<string, unknown>;
 
-  const billId = (body["id"] ?? body["billplz[id]"] ?? body["billplz_id"]) as string | undefined;
+  const billIdRaw = body["id"] ?? body["bill_id"] ?? body["billplz[id]"] ?? body["billplz_id"];
+  const billId = typeof billIdRaw === "string" ? billIdRaw.trim() : billIdRaw != null ? String(billIdRaw).trim() : "";
   const paidRaw = (body["paid"] ?? body["billplz[paid]"]) as string | undefined;
   const paid = paidRaw === "true" || paidRaw === "1";
   const paidAt = (body["paid_at"] ?? body["billplz[paid_at]"]) as string | undefined;
   const amount = (body["amount"] ?? body["billplz[amount]"]) as string | undefined;
+
+  console.info("[billplz-webhook] received", { billId, payloadKeys: Object.keys(body) });
 
   if (!billId) {
     return NextResponse.json({ ok: false, error: "missing_bill_id" }, { status: 400 });
@@ -53,12 +56,23 @@ export async function POST(req: Request) {
     metadata: { billplz_bill_id: billId, paid },
   });
 
-  // 0) Payment-first billing_sessions: session created by request-bill (no user until paid)
+  // 0) Payment-first billing_sessions: find by bill_id (accept pending, bill_created, or paid — no status filter so we always find and then check idempotency)
   const { data: sessionByBill, error: sessionErr } = await svc
     .from("billing_sessions")
     .select("id, email, plan_id, status")
     .eq("bill_id", billId)
     .maybeSingle();
+
+  if (sessionErr) {
+    console.warn("[billplz-webhook] billing_sessions query error", { billId, error: sessionErr.message });
+  } else {
+    console.info("[billplz-webhook] billing_sessions lookup", {
+      billId,
+      found: !!sessionByBill,
+      sessionId: sessionByBill?.id,
+      status: sessionByBill?.status,
+    });
+  }
 
   if (!sessionErr && sessionByBill) {
     const billingSessionId = sessionByBill.id;
@@ -207,6 +221,7 @@ export async function POST(req: Request) {
       await svc.rpc("increment_trial_use_count" as never, { user_id: userId }).catch(() => {});
     }
 
+    // Section 13 (optional): send magic login link via svc.auth.admin.generateLink({ type: "magiclink", email: sessionEmail }) + your email provider
     return NextResponse.json({ ok: true });
   }
 
@@ -323,6 +338,7 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   if (pendingErr || !pendingBill) {
+    console.warn("[billplz-webhook] no billing_sessions, payments, or pending_bills found", { billId });
     return NextResponse.json({ ok: false, error: "payment_or_pending_not_found" }, { status: 404 });
   }
 

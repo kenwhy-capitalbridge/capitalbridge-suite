@@ -84,7 +84,7 @@ const INDIVIDUAL_PLANS = [
       "Save report on server",
     ],
     cta: "Start RM 1 Trial",
-    ctaLink: "/signup?plan=trial",
+    ctaLink: "/checkout?plan=trial",
     paid: false,
     recommended: false,
   },
@@ -341,7 +341,7 @@ function PlanCard({
           </button>
         ) : (
           <Link
-            href={("ctaLink" in plan ? plan.ctaLink : null) ?? "/signup?plan=trial"}
+            href={("ctaLink" in plan ? plan.ctaLink : null) ?? "/checkout?plan=trial"}
             className="cb-btn-primary block w-full text-center shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)]"
           >
             {plan.cta}
@@ -379,34 +379,10 @@ function PricingContent() {
     supabase.auth.getSession().then(({ data: { session } }) => setIsLoggedIn(!!session));
   }, []);
 
-  async function handlePay(planId: string) {
+  function handlePay(planId: string) {
     if (!planId) return;
     setError(null);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      router.replace(`/signup?plan=${encodeURIComponent(planId)}`);
-      return;
-    }
-    setLoadingPlan(planId);
-    try {
-      const setRes = await fetch("/api/set-pending-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId }),
-      });
-      if (!setRes.ok) {
-        const data = await setRes.json().catch(() => ({}));
-        setError(data?.error ?? "Could not set plan.");
-        return;
-      }
-      router.replace(`/confirm-payment?plan=${encodeURIComponent(planId)}`);
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoadingPlan(null);
-    }
+    router.replace(`/checkout?plan=${encodeURIComponent(planId)}`);
   }
 
   return (
@@ -586,7 +562,7 @@ function PricingContent() {
                 </p>
                 <div className="mt-4 flex flex-col items-center justify-center gap-1">
                   <Link
-                    href="/signup?plan=trial"
+                    href="/checkout?plan=trial"
                     className="cb-btn-primary inline-block w-full text-center sm:w-auto"
                   >
                     Start My Trial Analysis
