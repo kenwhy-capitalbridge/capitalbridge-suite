@@ -31,6 +31,7 @@ export type Database = {
           expires_at: string | null;
           cancelled_at: string | null;
           renewed_at: string | null;
+          billing_session_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -63,7 +64,7 @@ export type Database = {
       billing_sessions: {
         Row: {
           id: string;
-          user_id: string;
+          user_id: string | null;
           plan_id: string;
           status: "pending" | "bill_created" | "paid";
           bill_id: string | null;
@@ -71,6 +72,11 @@ export type Database = {
           membership_id: string | null;
           payment_attempt_count: number;
           last_payment_error: string | null;
+          email: string | null;
+          payment_provider: string | null;
+          payment_currency: string | null;
+          payment_amount: number | null;
+          payment_confirmed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -95,6 +101,7 @@ export type Database = {
           trial_use_count: number | null;
           payment_status: string | null;
           pending_plan: string | null;
+          email: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
@@ -125,6 +132,18 @@ export type Database = {
         };
         Insert: Partial<Database["public"]["Tables"]["billing_events"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["billing_events"]["Row"]>;
+        Relationships: [];
+      };
+      payment_events: {
+        Row: {
+          id: string;
+          billing_session_id: string | null;
+          event_type: string;
+          event_payload: Json | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["payment_events"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["payment_events"]["Row"]>;
         Relationships: [];
       };
     };

@@ -1,4 +1,5 @@
 import "server-only";
+import { createHmac } from "crypto";
 
 export function getBillplzConfig() {
   const apiKey = process.env.BILLPLZ_API_KEY;
@@ -49,5 +50,28 @@ export async function createBillplzBill(params: {
 
   const data = (await resp.json()) as { id: string; url: string };
   return { billId: data.id, checkoutUrl: data.url };
+}
+
+/**
+ * Verify Billplz callback X-Signature (HMAC-SHA256 over sorted key+value pairs).
+ * See Billplz API doc: X Signature Callback URL, STEP 1 & 2.
+ * If BILLPLZ_X_SIGNATURE_KEY is not set, returns true (verification skipped).
+ */
+export function verifyBillplzWebhookSignature(
+  body: Record<string, unknown>,
+  signatureFromRequest: string | null
+): boolean {
+  const secret = process.env.BILLPLZ_X_SIGNATURE_KEY ?? process.env.BILLPLZ_API_KEY;
+  if (!secret || !signatureFromRequest?.trim()) {
+    return !process.env.BILLPLZ_X_SIGNATURE_KEY;
+  }
+  const excluded = new Set(["x_signature", "billplz[x_signature]"]);
+  const entries = Object.entries(body)
+    .filter(([k]) => !excluded.has(k.toLowerCase()))
+    .map(([k, v]) => [k, String(v ?? "")] as [string, string]);
+  entries.sort((a, b) => a[0].toLowerCase().localeCompare(b[0].toLowerCase()));
+  const sourceString = entries.map(([k, v]) => `${k}${v}`).join("|");
+  const expected = createHmac("sha256", secret).update(sourceString).digest("hex");
+  return expected === signatureFromRequest.trim();
 }
 

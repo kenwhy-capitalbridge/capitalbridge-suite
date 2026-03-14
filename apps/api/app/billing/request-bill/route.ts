@@ -36,10 +36,8 @@ export async function OPTIONS(req: Request) {
 type Body = { email?: string; plan?: string; name?: string };
 
 /**
- * Create a Billplz bill without requiring a logged-in user.
- * No Supabase user or email is created here — only a pending_bills row.
- * The Supabase account is created only when Billplz confirms payment (webhook).
- * This avoids "account already exists" if the user abandons and retries with the same email.
+ * Payment-first: create billing_sessions row with email + plan, then Billplz bill.
+ * No Supabase user is created here. User is created only after webhook confirms payment.
  */
 export async function POST(req: Request) {
   const origin = req.headers.get("Origin");
@@ -66,18 +64,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400, headers });
   }
 
-  const { data: pendingBill, error: insertErr } = await svc
-    .from("pending_bills")
+  // Section 2: Create billing_sessions row (email, plan, status = pending, payment_attempt_count = 0)
+  const { data: session, error: sessionErr } = await svc
+    .from("billing_sessions")
     .insert({
       email,
       plan_id: planRow.id,
-      name: name || email,
+      status: "pending",
+      payment_attempt_count: 0,
+      updated_at: new Date().toISOString(),
     })
     .select("id")
     .single();
 
-  if (insertErr || !pendingBill?.id) {
-    return NextResponse.json({ error: "pending_bill_create_failed" }, { status: 500, headers });
+  if (sessionErr || !session?.id) {
+    console.error("[request-bill] billing_sessions insert failed:", sessionErr);
+    return NextResponse.json({ error: "session_create_failed" }, { status: 500, headers });
   }
 
   let billId: string;
@@ -88,20 +90,33 @@ export async function POST(req: Request) {
       description: `Capital Bridge — ${planRow.name}`,
       email,
       name: name || email,
-      reference1: pendingBill.id,
-      redirectUrl: "https://platform.thecapitalbridge.com/dashboard",
+      reference1: session.id,
+      redirectUrl: process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com/dashboard",
     });
     billId = result.billId;
     checkoutUrl = result.checkoutUrl;
   } catch (err) {
-    await svc.from("pending_bills").delete().eq("id", pendingBill.id);
+    console.error("[request-bill] Billplz error:", err);
+    await svc
+      .from("billing_sessions")
+      .update({
+        last_payment_error: "bill_creation_failed",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", session.id);
     return NextResponse.json({ error: "bill_creation_failed" }, { status: 502, headers });
   }
 
+  // Section 2: Save bill_id, status = bill_created
   await svc
-    .from("pending_bills")
-    .update({ billplz_bill_id: billId })
-    .eq("id", pendingBill.id);
+    .from("billing_sessions")
+    .update({
+      bill_id: billId,
+      payment_url: checkoutUrl,
+      status: "bill_created",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", session.id);
 
   return NextResponse.json({ checkoutUrl }, { headers });
 }
