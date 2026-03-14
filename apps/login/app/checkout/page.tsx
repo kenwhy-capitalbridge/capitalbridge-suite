@@ -3,6 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Trial (7 Days)",
@@ -19,6 +20,8 @@ function CheckoutContent() {
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +29,59 @@ function CheckoutContent() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/billing/create-session", {
+      const createAccountRes = await fetch("/api/auth/create-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: email.trim(), plan, name: name.trim() || undefined }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          name: name.trim() || undefined,
+        }),
+      });
+
+      const accountData = await createAccountRes.json().catch(() => ({}));
+      if (!createAccountRes.ok && accountData?.error !== "account_exists") {
+        const message = typeof accountData?.message === "string" ? accountData.message : null;
+        const detail = typeof accountData?.detail === "string" ? accountData.detail : null;
+        const errorCode = typeof accountData?.error === "string" ? accountData.error : null;
+        setError(message || detail || errorCode || "Could not create account.");
+        setLoading(false);
+        return;
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError) {
+        setError(signInError.message || "Could not sign in after creating account.");
+        setLoading(false);
+        return;
+      }
+
+      await fetch("/api/register-session", { method: "POST", credentials: "include" }).catch(() => {});
+
+      const res = await fetch("/api/bill/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ plan }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -42,6 +92,7 @@ function CheckoutContent() {
         setLoading(false);
         return;
       }
+
       const paymentUrl = data?.payment_url ?? data?.checkoutUrl;
       const billId = typeof data?.bill_id === "string" ? data.bill_id : null;
       if (typeof paymentUrl === "string" && paymentUrl) {
@@ -71,7 +122,7 @@ function CheckoutContent() {
         </p>
 
         <p style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.9 }}>
-          Enter your email. You will be redirected to payment. Your account is created only after successful payment.
+          Create your account first, then continue to secure payment. Your access activates after payment is confirmed.
         </p>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "1.75rem", display: "grid", gap: "1rem" }}>
@@ -100,8 +151,34 @@ function CheckoutContent() {
             />
           </label>
 
+          <label style={{ display: "grid", gap: "0.35rem" }}>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Password</span>
+            <input
+              className="cb-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              required
+              minLength={8}
+              placeholder="At least 8 characters"
+            />
+          </label>
+
+          <label style={{ display: "grid", gap: "0.35rem" }}>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Confirm password</span>
+            <input
+              className="cb-input"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              type="password"
+              required
+              minLength={8}
+              placeholder="Re-enter your password"
+            />
+          </label>
+
           <button className="cb-btn-primary" type="submit" disabled={loading}>
-            {loading ? "Preparing payment…" : "Continue to payment"}
+            {loading ? "Creating account…" : "Create account and continue"}
           </button>
         </form>
 

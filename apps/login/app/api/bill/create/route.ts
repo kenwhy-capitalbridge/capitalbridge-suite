@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return NextResponse.json(
-        { error: (data?.error as string) ?? "server_error", detail: data?.detail },
+        { error: (data?.error as string) ?? "server_error", detail: data?.detail, message: data?.message },
         { status: res.status }
       );
     }

@@ -117,7 +117,7 @@ export async function POST(req: Request) {
           { onConflict: "membership_id" }
         );
       }
-      return NextResponse.json({ checkoutUrl: existingSession.payment_url });
+      return NextResponse.json({ bill_id: existingSession.bill_id, checkoutUrl: existingSession.payment_url });
     }
 
     // --- Get or create membership (one pending per user+plan) ---
@@ -285,7 +285,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ checkoutUrl });
+    return NextResponse.json({ bill_id: billId, checkoutUrl });
   } catch (err) {
     console.error("[api/billing/create] unexpected error:", err);
     return NextResponse.json(

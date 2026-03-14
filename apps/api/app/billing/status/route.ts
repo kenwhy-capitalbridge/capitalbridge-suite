@@ -20,25 +20,27 @@ export async function GET(req: Request) {
     .maybeSingle();
 
   if (sessionByBill) {
-    let authUserExists = false;
-    if (sessionByBill.email) {
-      const { data: listData } = await svc.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      authUserExists = !!listData?.users?.find(
-        (user) => (user.email ?? "").toLowerCase() === sessionByBill.email!.toLowerCase()
-      );
+    let membershipStatus: string | null = null;
+    if (sessionByBill.membership_id) {
+      const { data: membership } = await svc
+        .from("memberships")
+        .select("status")
+        .eq("id", sessionByBill.membership_id)
+        .maybeSingle();
+      membershipStatus = typeof membership?.status === "string" ? membership.status : null;
     }
+
+    const paymentConfirmed = sessionByBill.status === "paid" || membershipStatus === "active";
 
     return NextResponse.json({
       mode: "billing_sessions",
       bill_id: billId,
       email: sessionByBill.email,
       billing_status: sessionByBill.status,
-      account_ready: !!sessionByBill.user_id || authUserExists,
-      membership_ready: !!sessionByBill.membership_id,
-      next_step:
-        sessionByBill.user_id || authUserExists
-          ? "login"
-          : "wait_for_webhook",
+      membership_status: membershipStatus,
+      account_ready: paymentConfirmed,
+      membership_ready: membershipStatus === "active",
+      next_step: paymentConfirmed ? "login" : "wait_for_payment",
     });
   }
 
