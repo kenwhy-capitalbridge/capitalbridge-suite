@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
+import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -25,14 +25,14 @@ export default function ResetPasswordPage() {
       const code = searchParams.get("code");
 
       if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        const { error: exchangeError } = await recoverySupabase.auth.exchangeCodeForSession(code);
         setInvalidLink(!!exchangeError);
         setReady(true);
         return;
       }
 
       // Trigger Supabase to read the hash and exchange the recovery token
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await recoverySupabase.auth.getSession();
 
       if (hasRecoveryToken) {
         // After getSession(), Supabase will have exchanged the hash; we're ready to show the form
@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
     }
     setLoading(true);
 
-    const { error: updateError } = await supabase.auth.updateUser({ password });
+    const { error: updateError } = await recoverySupabase.auth.updateUser({ password });
 
     setLoading(false);
     if (updateError) {

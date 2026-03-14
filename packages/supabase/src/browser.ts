@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
 const PLACEHOLDER_URL = "https://placeholder.supabase.co";
 const PLACEHOLDER_KEY = "placeholder-key";
@@ -20,3 +21,18 @@ export function createAppBrowserClient() {
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
+/**
+ * Dedicated client for recovery flows. This uses implicit auth so password-reset
+ * links continue to work even when the email link opens in a different browser
+ * from the one that initiated the request.
+ */
+export function createRecoveryBrowserClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? PLACEHOLDER_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? PLACEHOLDER_KEY;
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: "implicit",
+      detectSessionInUrl: true,
+    },
+  });
+}

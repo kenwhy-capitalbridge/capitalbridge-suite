@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
+import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
 
 // Must match exactly a URL in Supabase Dashboard → Auth → URL Configuration → Redirect URLs (no trailing slash)
 const RESET_PASSWORD_PATH = "/reset-password";
@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     const redirectTo = getResetPasswordRedirectUrl();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error: resetError } = await recoverySupabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });
 
