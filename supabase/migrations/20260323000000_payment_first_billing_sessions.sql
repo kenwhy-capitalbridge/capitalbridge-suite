@@ -13,7 +13,10 @@ BEGIN
       ALTER TABLE public.billing_sessions ADD COLUMN email text;
       COMMENT ON COLUMN public.billing_sessions.email IS 'For payment-first flow: user email; user_id is set after payment in webhook.';
     END IF;
-    -- Allow user_id to be null for payment-first sessions
+    -- Add user_id if missing, then allow it to be null for payment-first sessions
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'user_id') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE;
+    END IF;
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'user_id') THEN
       ALTER TABLE public.billing_sessions ALTER COLUMN user_id DROP NOT NULL;
     END IF;
@@ -64,12 +67,20 @@ CREATE INDEX IF NOT EXISTS idx_payment_events_created_at ON public.payment_event
 
 ALTER TABLE public.payment_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "payment_events_service_only"
-  ON public.payment_events
-  FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'payment_events' AND policyname = 'payment_events_service_only'
+  ) THEN
+    CREATE POLICY "payment_events_service_only"
+      ON public.payment_events
+      FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- -----------------------------------------------------------------------------
 -- 4. profiles: optional email for display (payment-first sets from session)

@@ -35,7 +35,10 @@ function CheckoutContent() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data?.error as string) ?? data?.detail ?? "Could not start payment.");
+        const message = typeof data?.message === "string" ? data.message : null;
+        const detail = typeof data?.detail === "string" ? data.detail : null;
+        const errorCode = typeof data?.error === "string" ? data.error : null;
+        setError(message || detail || errorCode || "Could not start payment.");
         setLoading(false);
         return;
       }

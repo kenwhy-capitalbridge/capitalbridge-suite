@@ -19,25 +19,93 @@ CREATE TABLE IF NOT EXISTS public.billing_sessions (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_sessions') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'user_id') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'plan_id') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN plan_id text REFERENCES public.plans(id) ON DELETE RESTRICT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'status') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'bill_created', 'paid'));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'bill_id') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN bill_id text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'payment_url') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN payment_url text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'membership_id') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN membership_id uuid REFERENCES public.memberships(id) ON DELETE SET NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'created_at') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN created_at timestamptz NOT NULL DEFAULT now();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'updated_at') THEN
+      ALTER TABLE public.billing_sessions ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
+    END IF;
+  END IF;
+END $$;
+
 COMMENT ON TABLE public.billing_sessions IS 'One session = at most one Billplz bill and one successful payment. Idempotency key for billing lifecycle.';
 
-CREATE UNIQUE INDEX IF NOT EXISTS billing_sessions_bill_id_key
-  ON public.billing_sessions (bill_id) WHERE bill_id IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'bill_id'
+  ) THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS billing_sessions_bill_id_key
+      ON public.billing_sessions (bill_id) WHERE bill_id IS NOT NULL;
+  END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS idx_billing_sessions_user_plan_status
-  ON public.billing_sessions (user_id, plan_id, status);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'user_id'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'plan_id'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'status'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_billing_sessions_user_plan_status
+      ON public.billing_sessions (user_id, plan_id, status);
+  END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS idx_billing_sessions_created_at
-  ON public.billing_sessions (created_at DESC);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'billing_sessions' AND column_name = 'created_at'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_billing_sessions_created_at
+      ON public.billing_sessions (created_at DESC);
+  END IF;
+END $$;
 
 ALTER TABLE public.billing_sessions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "billing_sessions_service_only"
-  ON public.billing_sessions
-  FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'billing_sessions' AND policyname = 'billing_sessions_service_only'
+  ) THEN
+    CREATE POLICY "billing_sessions_service_only"
+      ON public.billing_sessions
+      FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- -----------------------------------------------------------------------------
 -- 2. One active membership per (user_id, plan_id) — prevents duplicate subscriptions
@@ -47,6 +115,10 @@ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'memberships') THEN
     IF NOT EXISTS (
       SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'memberships' AND indexname = 'memberships_one_active_per_user_plan'
+    ) AND EXISTS (
+      SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'memberships' AND column_name = 'user_id'
+    ) AND EXISTS (
+      SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'memberships' AND column_name = 'plan_id'
     ) THEN
       CREATE UNIQUE INDEX memberships_one_active_per_user_plan
         ON public.memberships (user_id, plan_id)

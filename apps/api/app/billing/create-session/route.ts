@@ -43,8 +43,9 @@ async function createPendingBillFallback(params: {
   planId: string;
   planName: string;
   amountCents: number;
+  billingSessionError?: { message?: string; details?: string } | null;
 }) {
-  const { svc, headers, email, name, planId, planName, amountCents } = params;
+  const { svc, headers, email, name, planId, planName, amountCents, billingSessionError } = params;
 
   const { data: pendingBill, error: pendingErr } = await svc
     .from("pending_bills")
@@ -57,9 +58,14 @@ async function createPendingBillFallback(params: {
     .single();
 
   if (pendingErr || !pendingBill?.id) {
-    console.error("[create-session] pending_bills insert failed:", pendingErr);
+    console.error("[create-session] pending_bills insert failed:", pendingErr, "billing_sessions error was:", billingSessionError?.message);
     return NextResponse.json(
-      { error: "session_create_failed", detail: pendingErr?.message ?? "pending_bills insert failed" },
+      {
+        error: "session_create_failed",
+        message: "Could not create billing session. Run the payment-first migration on Supabase (billing_sessions.email, nullable user_id) and ensure pending_bills table exists.",
+        detail: pendingErr?.message ?? "pending_bills insert failed",
+        ...(billingSessionError?.message && { billing_session_error: billingSessionError.message }),
+      },
       { status: 500, headers }
     );
   }
@@ -161,7 +167,7 @@ export async function POST(req: Request) {
     .single();
 
   if (sessionErr || !session?.id) {
-    console.error("[create-session] billing_sessions insert failed:", sessionErr);
+    console.error("[create-session] billing_sessions insert failed:", sessionErr?.message, sessionErr?.details);
     return createPendingBillFallback({
       svc,
       headers,
@@ -170,6 +176,7 @@ export async function POST(req: Request) {
       planId: planRow.id,
       planName: planRow.name,
       amountCents: planRow.price_cents,
+      billingSessionError: sessionErr ? { message: sessionErr.message, details: sessionErr.details as string } : null,
     });
   }
 
