@@ -152,6 +152,17 @@ export default function ResetPasswordPage() {
               required
               minLength={6}
             />
+            <p
+              style={{
+                fontSize: "0.8rem",
+                color: "#2d3e2d",
+                margin: "0.25rem 0 0",
+                lineHeight: 1.35,
+              }}
+            >
+              Passwords must be at least 6 characters (8+ recommended) and include lowercase, uppercase, digits and
+              symbols.
+            </p>
           </label>
           <label style={{ display: "grid", gap: "0.35rem" }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Confirm password</span>
