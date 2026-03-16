@@ -22,7 +22,7 @@ BEGIN
       ALTER TABLE public.pending_bills ADD COLUMN plan_id text REFERENCES public.plans(id) ON DELETE RESTRICT;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'pending_bills' AND column_name = 'name') THEN
-      ALTER TABLE public.pending_bills ADD COLUMN name text;
+      ALTER TABLE public.pending_bills ADD COLUMimage.pngN name text;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'pending_bills' AND column_name = 'billplz_bill_id') THEN
       ALTER TABLE public.pending_bills ADD COLUMN billplz_bill_id text;
