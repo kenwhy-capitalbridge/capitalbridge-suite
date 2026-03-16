@@ -55,10 +55,21 @@ function CheckoutContent() {
       });
 
       const accountData = await createAccountRes.json().catch(() => ({}));
-      if (!createAccountRes.ok && accountData?.error !== "account_exists") {
+      if (!createAccountRes.ok) {
         const message = typeof accountData?.message === "string" ? accountData.message : null;
         const detail = typeof accountData?.detail === "string" ? accountData.detail : null;
         const errorCode = typeof accountData?.error === "string" ? accountData.error : null;
+
+        if (errorCode === "account_exists") {
+          setError(
+            message ||
+              detail ||
+              "An account already exists for this email. Please log in instead or use \"Forgot password\"."
+          );
+          setLoading(false);
+          return;
+        }
+
         setError(message || detail || errorCode || "Could not create account.");
         setLoading(false);
         return;
