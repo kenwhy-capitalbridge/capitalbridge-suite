@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
 import { getServerUserAndMembership } from "@/lib/auth";
 import { PaymentGate } from "../components/PaymentGate";
+import { PersonaHeader } from "./components/PersonaHeader";
+import { DashboardTiles } from "./components/DashboardTiles";
 
 export const dynamic = "force-dynamic";
+
+const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
 
 export default async function DashboardPage({
   searchParams,
@@ -48,34 +52,44 @@ export default async function DashboardPage({
               textTransform: "uppercase",
               color: "rgba(255,204,106,0.85)",
               margin: 0,
+              fontFamily: 'ui-serif, "Roboto Serif", Georgia, serif',
             }}
+            aria-label="Capital Bridge"
           >
-            Capital Bridge Advisory Platform
+            CAPITAL BRIDGE
           </p>
-          <p style={{ fontSize: "0.8rem", color: "rgba(246,245,241,0.8)", margin: "0.25rem 0 0" }}>
-            Signed in as {user.email ?? "client"}
-          </p>
+          {useV2 ? (
+            <PersonaHeader />
+          ) : (
+            <p style={{ fontSize: "0.8rem", color: "rgba(246,245,241,0.8)", margin: "0.25rem 0 0" }}>
+              Signed in as {user.email ?? "client"}
+            </p>
+          )}
         </div>
       </header>
 
       <section style={{ padding: "1rem 0 2rem" }}>
         <div style={{ width: "100%", maxWidth: 1280, margin: "0 auto", padding: "0 1rem" }}>
-          <div
-            style={{
-              width: "100%",
-              minHeight: "80vh",
-              border: "1px solid rgba(255,204,106,0.35)",
-              borderRadius: 12,
-              backgroundColor: "#0D3A1D",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "rgba(246,245,241,0.9)",
-              fontSize: "1rem",
-            }}
-          >
-            Advisory tools content
-          </div>
+          {useV2 ? (
+            <DashboardTiles />
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                minHeight: "80vh",
+                border: "1px solid rgba(255,204,106,0.35)",
+                borderRadius: 12,
+                backgroundColor: "#0D3A1D",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "rgba(246,245,241,0.9)",
+                fontSize: "1rem",
+              }}
+            >
+              Advisory tools content
+            </div>
+          )}
         </div>
       </section>
     </main>

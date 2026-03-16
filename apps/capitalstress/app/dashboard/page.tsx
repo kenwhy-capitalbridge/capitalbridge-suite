@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { AdvisoryShell } from "./AdvisoryShell";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,11 @@ export default async function CapitalStressDashboard() {
   }
 
   return (
-    <main style={{ padding: "2rem", maxWidth: 960, margin: "0 auto" }}>
-      <h1>CapitalStress</h1>
-      <p>CapitalStress financial tool — protected. Signed in as {user.email ?? "user"}.</p>
+    <main>
+      <AdvisoryShell userId={user.id}>
+        <h1>Capital Stress</h1>
+        <p>Capital Stress financial tool — protected. Signed in as {user.email ?? "user"}.</p>
+      </AdvisoryShell>
     </main>
   );
 }

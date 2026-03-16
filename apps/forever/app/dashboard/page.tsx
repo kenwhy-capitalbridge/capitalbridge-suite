@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { AdvisoryShell } from "./AdvisoryShell";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +23,11 @@ export default async function ForeverDashboard() {
   if (!membership) redirect(`${LOGIN_APP_URL}/pricing?message=membership_required`);
 
   return (
-    <main style={{ padding: "2rem", maxWidth: 960, margin: "0 auto" }}>
-      <h1>Forever</h1>
-      <p>Legacy planning tool. Signed in as {user.email ?? "user"}.</p>
+    <main>
+      <AdvisoryShell userId={user.id}>
+        <h1>Forever Income</h1>
+        <p>Legacy planning tool. Signed in as {user.email ?? "user"}.</p>
+      </AdvisoryShell>
     </main>
   );
 }
