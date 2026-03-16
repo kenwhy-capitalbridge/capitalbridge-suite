@@ -164,6 +164,11 @@ function CheckoutContent() {
             />
           </label>
 
+          <p style={{ fontSize: "0.8rem", color: "rgba(246,245,241,0.75)", margin: "0.25rem 0 0" }}>
+            Passwords must be at least 6 characters (8+ recommended) and include lowercase, uppercase, digits and
+            symbols. Weaker passwords may be rejected.
+          </p>
+
           <label style={{ display: "grid", gap: "0.35rem" }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Confirm password</span>
             <input
