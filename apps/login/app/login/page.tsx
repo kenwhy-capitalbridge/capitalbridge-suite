@@ -174,6 +174,16 @@ function LoginContent() {
               type="password"
               required
             />
+            <span
+              style={{
+                fontSize: "0.8rem",
+                color: "rgba(14,31,16,0.8)",
+                marginTop: "0.1rem",
+              }}
+            >
+              Passwords must be at least 6 characters (8+ recommended) and include lowercase, uppercase, digits and
+              symbols.
+            </span>
           </label>
 
           <button className="cb-btn-primary" type="submit" disabled={loading || !isSupabaseConfigured}>
