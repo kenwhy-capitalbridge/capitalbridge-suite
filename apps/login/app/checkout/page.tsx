@@ -141,7 +141,7 @@ function CheckoutContent() {
           </label>
 
           <label style={{ display: "grid", gap: "0.35rem" }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Name (optional)</span>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Name</span>
             <input
               className="cb-input"
               value={name}
