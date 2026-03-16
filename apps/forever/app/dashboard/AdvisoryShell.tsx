@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createAppBrowserClient } from "@cb/supabase/browser";
+import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
   deriveEntitlements,
@@ -32,10 +32,10 @@ export function AdvisoryShell({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [canSave, setCanSave] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "ok" | "error">("idle");
-  const [supabase, setSupabase] = useState<ReturnType<typeof createAppBrowserClient> | null>(null);
+  const [supabase, setSupabase] = useState<ReturnType<typeof createSupabaseBrowserClient> | null>(null);
 
   useEffect(() => {
-    const client = createAppBrowserClient();
+    const client = createSupabaseBrowserClient();
     setSupabase(client);
   }, []);
 

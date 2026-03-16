@@ -10,6 +10,7 @@ export async function hasActiveMembership(
   userId: string
 ): Promise<boolean> {
   const { data: viewRows } = await supabase
+    .schema("public")
     .from("active_memberships")
     .select("user_id")
     .eq("user_id", userId)
@@ -21,6 +22,7 @@ export async function hasActiveMembership(
 
   const now = new Date().toISOString();
   const { data: membershipRows } = await supabase
+    .schema("public")
     .from("memberships")
     .select("id")
     .eq("user_id", userId)

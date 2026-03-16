@@ -13,7 +13,7 @@ function logBillingEvent(
   svc: Awaited<ReturnType<typeof createServiceClient>>,
   payload: { event_type: string; user_id?: string; membership_id?: string; payment_id?: string; metadata?: Record<string, unknown> }
 ) {
-  return svc.from("billing_events").insert({
+  return svc.schema("public").from("billing_events").insert({
     event_type: payload.event_type,
     user_id: payload.user_id ?? null,
     membership_id: payload.membership_id ?? null,
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
     }
 
     const { data: planRow, error: planErr } = await svc
+      .schema("public")
       .from("plans")
       .select("id, slug, name, price_cents, duration_days, is_trial")
       .eq("slug", requestedPlan)
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
 
     if (planRow.is_trial) {
       const { data: profile } = await svc
+        .schema("public")
         .from("profiles")
         .select("trial_use_count")
         .eq("id", user.id)
@@ -74,6 +76,7 @@ export async function POST(req: Request) {
 
     // --- PART 2: Idempotent bill creation — reuse existing session/bill when valid ---
     const { data: existingSession } = await svc
+      .schema("public")
       .from("billing_sessions")
       .select("id, status, bill_id, payment_url, membership_id, created_at, payment_attempt_count")
       .eq("user_id", user.id)
@@ -88,6 +91,7 @@ export async function POST(req: Request) {
     if (existingSession?.id) {
       const attemptCount = (existingSession as { payment_attempt_count?: number }).payment_attempt_count ?? 0;
       await svc
+        .schema("public")
         .from("billing_sessions")
         .update({
           payment_attempt_count: attemptCount + 1,
@@ -124,6 +128,7 @@ export async function POST(req: Request) {
     let membershipId = existingSession?.membership_id ?? null;
     if (!membershipId) {
       const { data: existingPending } = await svc
+        .schema("public")
         .from("memberships")
         .select("id")
         .eq("user_id", user.id)
@@ -137,6 +142,7 @@ export async function POST(req: Request) {
 
     if (!membershipId) {
       const { data: created, error: createErr } = await svc
+        .schema("public")
         .from("memberships")
         .insert({
           user_id: user.id,
@@ -168,6 +174,7 @@ export async function POST(req: Request) {
     let sessionId = existingSession?.id ?? null;
     if (!sessionId) {
       const { data: newSession, error: sessionErr } = await svc
+        .schema("public")
         .from("billing_sessions")
         .insert({
           user_id: user.id,
@@ -195,6 +202,7 @@ export async function POST(req: Request) {
       });
     } else if (existingSession?.membership_id !== membershipId) {
       await svc
+        .schema("public")
         .from("billing_sessions")
         .update({ membership_id: membershipId, updated_at: now.toISOString() })
         .eq("id", sessionId);
@@ -229,6 +237,7 @@ export async function POST(req: Request) {
           : /invalid|404/i.test(errMsg) ? "invalid_bill"
           : "bill_creation_failed";
         await svc
+          .schema("public")
           .from("billing_sessions")
           .update({
             last_payment_error: errorCode,
@@ -242,6 +251,7 @@ export async function POST(req: Request) {
       }
 
       await svc
+        .schema("public")
         .from("billing_sessions")
         .update({
           status: "bill_created",
@@ -253,6 +263,7 @@ export async function POST(req: Request) {
 
       // SECTION 6: Store state in membership table — pending → bill_created
       await svc
+        .schema("public")
         .from("memberships")
         .update({ status: "bill_created", updated_at: now.toISOString() })
         .eq("id", membershipId!);
@@ -265,7 +276,7 @@ export async function POST(req: Request) {
     }
 
     // --- Payment record (upsert by membership_id); link to billing_session for audit ---
-    const { error: payErr } = await svc.from("payments").upsert(
+    const { error: payErr } = await svc.schema("public").from("payments").upsert(
       {
         membership_id: membershipId,
         billplz_bill_id: billId,

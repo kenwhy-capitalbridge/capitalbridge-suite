@@ -1,9 +1,19 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+
+const isDevOrPreview =
+  typeof process !== "undefined" &&
+  (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENV === "staging");
+
+function liveTestRef(): string {
+  const url = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "" : "";
+  if (!url) return "";
+  return url.replace(/^https?:\/\//, "").split(".")[0] ?? "";
+}
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Trial (7 Days)",
@@ -24,6 +34,13 @@ function CheckoutContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isDevOrPreview || typeof window === "undefined") return;
+    console.info(
+      "Billing debug: schema=public; personaRPC=public.get_user_persona (fallback advisory_v2)"
+    );
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -123,6 +140,22 @@ function CheckoutContent() {
 
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+      {isDevOrPreview && (
+        <div
+          aria-hidden
+          style={{
+            position: "fixed",
+            bottom: 8,
+            left: 8,
+            fontSize: "0.7rem",
+            opacity: 0.5,
+            pointerEvents: "none",
+            fontFamily: "monospace",
+          }}
+        >
+          LIVE TEST MODE — REF:{liveTestRef() || "—"} — schema:public
+        </div>
+      )}
       <div className="cb-card">
         <h1 className="cb-card-title">Complete your purchase</h1>
         <p className="cb-card-subtitle">Plan: {planLabel}</p>

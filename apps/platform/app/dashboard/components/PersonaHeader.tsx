@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createAppBrowserClient } from "@cb/supabase/browser";
+import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
   deriveEntitlements,
@@ -45,7 +45,7 @@ export function PersonaHeader() {
 
   useEffect(() => {
     if (!mounted || typeof window === "undefined") return;
-    const supabase = createAppBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     fetchPersona(supabase).then((p) => {
       setPersona(p ?? null);
       setEntitlements(deriveEntitlements(p?.active_plan ?? null));

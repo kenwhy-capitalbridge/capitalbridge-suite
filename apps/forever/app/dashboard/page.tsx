@@ -12,6 +12,7 @@ export default async function ForeverDashboard() {
 
   const now = new Date().toISOString();
   const { data: membership } = await supabase
+    .schema("public")
     .from("memberships")
     .select("id")
     .eq("user_id", user.id)

@@ -34,15 +34,27 @@ export type ModelType =
   | "capital-health"
   | "capital-stress";
 
+/** Try public.get_user_persona first; on PGRST202/404-style error fall back to advisory_v2.get_user_persona. */
+function isRpcNotFound(err: { code?: string; message?: string }): boolean {
+  const code = String(err?.code ?? "").toUpperCase();
+  const msg = String(err?.message ?? "").toLowerCase();
+  return code === "PGRST202" || code === "42883" || msg.includes("could not find") || msg.includes("does not exist");
+}
+
 /**
- * Fetches current user persona via RPC advisory_v2.get_user_persona.
+ * Fetches current user persona via RPC: tries public.get_user_persona first, then advisory_v2.get_user_persona.
  * Returns null on error (logs concise warning).
  */
 export async function fetchPersona(
   supabase: SupabaseClient
 ): Promise<Persona | null> {
+  const client = supabase as { rpc: (name: string) => ReturnType<SupabaseClient["rpc"]>; schema: (s: string) => { rpc: (name: string) => ReturnType<SupabaseClient["rpc"]> } };
   try {
-    const { data, error } = await supabase.rpc("get_user_persona");
+    let result = await client.rpc("get_user_persona");
+    if (result.error && isRpcNotFound(result.error)) {
+      result = await client.schema("advisory_v2").rpc("get_user_persona");
+    }
+    const { data, error } = result;
     if (error) {
       console.warn("[platformAccess] get_user_persona failed:", error.message);
       return null;

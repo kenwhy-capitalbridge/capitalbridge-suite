@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   const svc = createServiceClient();
 
   const { data: sessionByBill } = await svc
+    .schema("public")
     .from("billing_sessions")
     .select("id, email, status, user_id, membership_id")
     .eq("bill_id", billId)
@@ -23,6 +24,7 @@ export async function GET(req: Request) {
     let membershipStatus: string | null = null;
     if (sessionByBill.membership_id) {
       const { data: membership } = await svc
+        .schema("public")
         .from("memberships")
         .select("status")
         .eq("id", sessionByBill.membership_id)
@@ -45,6 +47,7 @@ export async function GET(req: Request) {
   }
 
   const { data: pendingBill } = await svc
+    .schema("public")
     .from("pending_bills")
     .select("id, email, plan_id, created_at")
     .eq("billplz_bill_id", billId)

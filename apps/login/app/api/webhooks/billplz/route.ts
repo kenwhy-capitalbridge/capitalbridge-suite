@@ -36,6 +36,7 @@ export async function POST(req: Request) {
 
   // 1) Existing flow: payment row exists (authenticated bill/create)
   const { data: payment, error: paymentErr } = await svc
+    .schema("public")
     .from("payments")
     .select("id, membership_id, status")
     .eq("billplz_bill_id", billId)
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
     }
     const newStatus = paid ? "paid" : "failed";
     await svc
+      .schema("public")
       .from("payments")
       .update({
         status: newStatus,
@@ -65,6 +67,7 @@ export async function POST(req: Request) {
         metadata: { billplz_bill_id: billId },
       });
       const { data: membership } = await svc
+        .schema("public")
         .from("memberships")
         .select("id, plan_id, user_id")
         .eq("id", payment.membership_id)
@@ -72,6 +75,7 @@ export async function POST(req: Request) {
 
       if (membership) {
         const { data: plan } = await svc
+          .schema("public")
           .from("plans")
           .select("duration_days, is_trial")
           .eq("id", membership.plan_id)
@@ -84,6 +88,7 @@ export async function POST(req: Request) {
             : null;
 
         await svc
+          .schema("public")
           .from("memberships")
           .update({
             status: "active",
@@ -114,6 +119,7 @@ export async function POST(req: Request) {
 
   // 2) Payment-first flow: pending_bills — create Supabase user only after payment
   const { data: pendingBill, error: pendingErr } = await svc
+    .schema("public")
     .from("pending_bills")
     .select("id, email, plan_id, name")
     .eq("billplz_bill_id", billId)
@@ -131,6 +137,7 @@ export async function POST(req: Request) {
   }
 
   const { data: planRow } = await svc
+    .schema("public")
     .from("plans")
     .select("id, duration_days, is_trial")
     .eq("id", pendingBill.plan_id)
@@ -183,6 +190,7 @@ export async function POST(req: Request) {
   }
 
   const { data: profileData } = await svc
+    .schema("public")
     .from("profiles")
     .select("trial_use_count")
     .eq("id", userId)
@@ -190,7 +198,7 @@ export async function POST(req: Request) {
   const currentTrialCount = profileData?.trial_use_count ?? 0;
   const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
 
-  await svc.from("profiles").upsert(
+  await svc.schema("public").from("profiles").upsert(
     { id: userId, trial_use_count: newTrialCount },
     { onConflict: "id" }
   );
@@ -202,6 +210,7 @@ export async function POST(req: Request) {
       : null;
 
   const { data: newMembership, error: membershipErr } = await svc
+    .schema("public")
     .from("memberships")
     .insert({
       user_id: userId,
@@ -223,6 +232,7 @@ export async function POST(req: Request) {
   }
 
   const { data: newPayment } = await svc
+    .schema("public")
     .from("payments")
     .insert({
       membership_id: newMembership.id,
@@ -244,7 +254,7 @@ export async function POST(req: Request) {
     metadata: { billplz_bill_id: billId, source: "pending_bills" },
   });
 
-  await svc.from("pending_bills").delete().eq("id", pendingBill.id);
+  await svc.schema("public").from("pending_bills").delete().eq("id", pendingBill.id);
 
   return NextResponse.json({ ok: true });
 }
@@ -260,7 +270,7 @@ async function logBillingEvent(
   }
 ) {
   try {
-    await svc.from("billing_events").insert({
+    await svc.schema("public").from("billing_events").insert({
       event_type: payload.event_type,
       user_id: payload.user_id ?? null,
       membership_id: payload.membership_id ?? null,

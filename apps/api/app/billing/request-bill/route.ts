@@ -60,6 +60,7 @@ export async function POST(req: Request) {
   const svc = createServiceClient();
 
   const { data: planRow, error: planErr } = await svc
+    .schema("public")
     .from("plans")
     .select("id, slug, name, price_cents, duration_days, is_trial")
     .eq("slug", requestedPlan)
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
 
   // Section 2: Create billing_sessions row (email, plan, status = pending, payment_attempt_count = 0)
   const { data: session, error: sessionErr } = await svc
+    .schema("public")
     .from("billing_sessions")
     .insert({
       email,
@@ -103,6 +105,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[request-bill] Billplz error:", err);
     await svc
+      .schema("public")
       .from("billing_sessions")
       .update({
         last_payment_error: "bill_creation_failed",
@@ -114,6 +117,7 @@ export async function POST(req: Request) {
 
   // Section 2: Save bill_id, status = bill_created
   await svc
+    .schema("public")
     .from("billing_sessions")
     .update({
       bill_id: billId,

@@ -14,6 +14,7 @@ export default async function CapitalStressDashboard() {
 
   const now = new Date().toISOString();
   const { data: membership } = await supabase
+    .schema("public")
     .from("memberships")
     .select("id, status, end_date, expires_at")
     .eq("user_id", user.id)

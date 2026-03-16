@@ -10,6 +10,7 @@ function logBillingEvent(
   payload: { event_type: string; user_id?: string | null; membership_id?: string | null; payment_id?: string | null; metadata?: Record<string, unknown> }
 ) {
   return svc
+    .schema("public")
     .from("billing_events")
     .insert({
       event_type: payload.event_type,
@@ -76,6 +77,7 @@ export async function POST(req: Request) {
 
   // 0) Payment-first billing_sessions: find by bill_id (accept pending, bill_created, or paid — no status filter so we always find and then check idempotency)
   const { data: sessionByBill, error: sessionErr } = await svc
+    .schema("public")
     .from("billing_sessions")
     .select("id, email, plan_id, status")
     .eq("bill_id", billId)
@@ -83,6 +85,15 @@ export async function POST(req: Request) {
 
   if (sessionErr) {
     console.warn("[billplz-webhook] billing_sessions query error", { billId, error: sessionErr.message });
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("Billing debug:", {
+        area: "billing",
+        op: "billing_sessions:select",
+        status: sessionErr.code ?? null,
+        code: sessionErr.code ?? null,
+        message: sessionErr.message ?? null,
+      });
+    }
   } else {
     console.info("[billplz-webhook] billing_sessions lookup", {
       billId,
@@ -108,6 +119,7 @@ export async function POST(req: Request) {
 
     // Section 6: Update billing_sessions
     await svc
+      .schema("public")
       .from("billing_sessions")
       .update({
         status: "paid",
@@ -157,6 +169,7 @@ export async function POST(req: Request) {
     }
 
     const { data: planRow } = await svc
+      .schema("public")
       .from("plans")
       .select("id, duration_days, is_trial")
       .eq("id", sessionByBill.plan_id)
@@ -168,10 +181,11 @@ export async function POST(req: Request) {
     }
 
     // Section 8: Upsert profile (id, email, trial_use_count when trial)
-    const profileRow = await svc.from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
+    const profileRow = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
     const currentTrialCount = profileRow?.trial_use_count ?? 0;
     const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
     await svc
+      .schema("public")
       .from("profiles")
       .upsert(
         { id: userId, email: sessionEmail, trial_use_count: newTrialCount },
@@ -186,6 +200,7 @@ export async function POST(req: Request) {
 
     // Section 9: Create membership (idempotent: check by billing_session_id)
     const { data: existingMembership } = await svc
+      .schema("public")
       .from("memberships")
       .select("id")
       .eq("billing_session_id", billingSessionId)
@@ -197,6 +212,7 @@ export async function POST(req: Request) {
       console.info("[billplz-webhook] membership already exists", { bill_id: billId, billing_session_id: billingSessionId, membership_id: membershipId });
     } else {
       const { data: newMembership, error: membershipErr } = await svc
+        .schema("public")
         .from("memberships")
         .insert({
           user_id: userId,
@@ -221,12 +237,14 @@ export async function POST(req: Request) {
 
     // Link session to user and membership
     await svc
+      .schema("public")
       .from("billing_sessions")
       .update({ user_id: userId, membership_id: membershipId, updated_at: now })
       .eq("id", billingSessionId);
 
     // Section 10: Record payment_events
     await svc
+      .schema("public")
       .from("payment_events")
       .insert({
         billing_session_id: billingSessionId,
@@ -245,6 +263,7 @@ export async function POST(req: Request) {
 
   // 1) Billing session flow: payment row exists (authenticated billing/create)
   const { data: payment, error: paymentErr } = await svc
+    .schema("public")
     .from("payments")
     .select("id, membership_id, status")
     .eq("billplz_bill_id", billId)
@@ -260,6 +279,7 @@ export async function POST(req: Request) {
     const paidAtVal = paidAt ?? (paid ? new Date().toISOString() : null);
     const amountNum = amount != null ? Number(amount) : null;
     await svc
+      .schema("public")
       .from("payments")
       .update({
         status: newStatus,
@@ -276,6 +296,7 @@ export async function POST(req: Request) {
     // pending → failed when payment fails or expires
     if (!paid && payment.membership_id) {
       await svc
+        .schema("public")
         .from("memberships")
         .update({ status: "failed", updated_at: new Date().toISOString() })
         .eq("id", payment.membership_id)
@@ -292,12 +313,14 @@ export async function POST(req: Request) {
 
       // Mark billing session as paid (idempotent; no-op if table or row missing)
       await svc
+        .schema("public")
         .from("billing_sessions")
         .update({ status: "paid", updated_at: new Date().toISOString() })
         .eq("bill_id", billId)
         .then(() => {}, () => {});
 
       const { data: membership } = await svc
+        .schema("public")
         .from("memberships")
         .select("id, plan_id, user_id, status")
         .eq("id", payment.membership_id)
@@ -310,6 +333,7 @@ export async function POST(req: Request) {
         }
 
         const { data: plan } = await svc
+          .schema("public")
           .from("plans")
           .select("duration_days, is_trial")
           .eq("id", membership.plan_id)
@@ -322,6 +346,7 @@ export async function POST(req: Request) {
             : null;
 
         await svc
+          .schema("public")
           .from("memberships")
           .update({
             status: "active",
@@ -350,6 +375,7 @@ export async function POST(req: Request) {
 
   // 2) Payment-first flow: pending_bills — create Supabase user only after payment
   const { data: pendingBill, error: pendingErr } = await svc
+    .schema("public")
     .from("pending_bills")
     .select("id, email, plan_id, name")
     .eq("billplz_bill_id", billId)
@@ -369,6 +395,7 @@ export async function POST(req: Request) {
   }
 
   const { data: planRow } = await svc
+    .schema("public")
     .from("plans")
     .select("id, duration_days, is_trial")
     .eq("id", pendingBill.plan_id)
@@ -406,11 +433,11 @@ export async function POST(req: Request) {
     userId = authUser.user.id;
   }
 
-  const profileRow = await svc.from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
+  const profileRow = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
   const currentTrialCount = profileRow?.trial_use_count ?? 0;
   const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
 
-  await svc.from("profiles").upsert(
+  await svc.schema("public").from("profiles").upsert(
     { id: userId, trial_use_count: newTrialCount },
     { onConflict: "id" }
   );
@@ -422,6 +449,7 @@ export async function POST(req: Request) {
       : null;
 
   const { data: newMembership, error: membershipErr } = await svc
+    .schema("public")
     .from("memberships")
     .insert({
       user_id: userId,
@@ -437,7 +465,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "membership_create_failed" }, { status: 500 });
   }
 
-  await svc.from("payments").insert({
+  await svc.schema("public").from("payments").insert({
     membership_id: newMembership.id,
     billplz_bill_id: billId,
     billplz_collection_id: process.env.BILLPLZ_COLLECTION_ID ?? null,
@@ -447,7 +475,7 @@ export async function POST(req: Request) {
     raw_webhook: body as any,
   });
 
-  await svc.from("pending_bills").delete().eq("id", pendingBill.id);
+  await svc.schema("public").from("pending_bills").delete().eq("id", pendingBill.id);
 
   return NextResponse.json({ ok: true });
 }

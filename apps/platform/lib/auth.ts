@@ -23,6 +23,7 @@ export async function getServerUserAndMembership(): Promise<{
     if (!user) return { user: null, membership: null };
 
     const { data: membership } = await supabase
+      .schema("public")
       .from("active_memberships")
       .select("user_id, plan, start_date, end_date")
       .eq("user_id", user.id)

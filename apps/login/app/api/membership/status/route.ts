@@ -19,6 +19,7 @@ export async function GET(request: Request) {
     }
 
     const { data: membership } = await supabase
+      .schema("public")
       .from("memberships")
       .select("id, status, start_date, end_date, started_at, expires_at, plan_id")
       .eq("user_id", validation.userId)
@@ -45,6 +46,7 @@ export async function GET(request: Request) {
     let planSlug: string | null = null;
     if (membership.plan_id) {
       const { data: plan } = await supabase
+        .schema("public")
         .from("plans")
         .select("slug, name")
         .eq("id", membership.plan_id)

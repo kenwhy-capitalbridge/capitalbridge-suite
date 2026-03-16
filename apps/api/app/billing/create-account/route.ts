@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     }
 
     await svc
+      .schema("public")
       .from("profiles")
       .upsert({ id: data.user.id, email }, { onConflict: "id" })
       .then(() => {}, () => {});

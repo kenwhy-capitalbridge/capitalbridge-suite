@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createAppBrowserClient } from "@cb/supabase/browser";
+import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
   deriveEntitlements,
@@ -78,7 +78,7 @@ export function DashboardTiles() {
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
 
   useEffect(() => {
-    const supabase = createAppBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     fetchPersona(supabase).then((p) => {
       setEntitlements(deriveEntitlements(p?.active_plan ?? null));
     });

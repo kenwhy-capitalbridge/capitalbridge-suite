@@ -57,6 +57,7 @@ async function createPendingBillFallback(params: {
   const { svc, headers, email, name, planId, planName, amountCents, billingSessionError } = params;
 
   const { data: existingPendingBill, error: existingPendingErr } = await svc
+    .schema("public")
     .from("pending_bills")
     .select("id, billplz_bill_id, created_at")
     .eq("email", email)
@@ -83,6 +84,7 @@ async function createPendingBillFallback(params: {
   }
 
   const { data: pendingBill, error: pendingErr } = await svc
+    .schema("public")
     .from("pending_bills")
     .insert({
       email,
@@ -133,6 +135,7 @@ async function createPendingBillFallback(params: {
   }
 
   const { error: updatePendingErr } = await svc
+    .schema("public")
     .from("pending_bills")
     .update({ billplz_bill_id: billId })
     .eq("id", pendingBill.id);
@@ -180,6 +183,7 @@ export async function POST(req: Request) {
   const svc = createServiceClient();
 
   const { data: planRow, error: planErr } = await svc
+    .schema("public")
     .from("plans")
     .select("id, slug, name, price_cents, duration_days, is_trial")
     .eq("slug", requestedPlan)
@@ -190,6 +194,7 @@ export async function POST(req: Request) {
   }
 
   const { data: session, error: sessionErr } = await svc
+    .schema("public")
     .from("billing_sessions")
     .insert({
       email,
@@ -233,6 +238,7 @@ export async function POST(req: Request) {
     const body = err && typeof err === "object" && "body" in err ? String((err as { body?: string }).body) : undefined;
     console.error("[create-session] Billplz error:", message, body ? { billplz_response: body } : "");
     await svc
+      .schema("public")
       .from("billing_sessions")
       .update({
         last_payment_error: "bill_creation_failed",
@@ -250,6 +256,7 @@ export async function POST(req: Request) {
   }
 
   await svc
+    .schema("public")
     .from("billing_sessions")
     .update({
       bill_id: billId,

@@ -18,6 +18,7 @@ export async function GET() {
     }
 
     const { data: profile, error } = await supabase
+      .schema("public")
       .from("profiles")
       .select("trial_count")
       .eq("id", user.id)
