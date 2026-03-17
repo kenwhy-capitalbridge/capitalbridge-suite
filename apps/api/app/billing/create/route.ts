@@ -46,6 +46,9 @@ export async function POST(req: Request) {
     if (userError || !user?.id) {
       return NextResponse.json({ error: "unauthorized", detail: userError?.message ?? "invalid_token" }, { status: 401 });
     }
+    if (!user.email) {
+      return NextResponse.json({ error: "email_required", detail: "billing_sessions requires email" }, { status: 400 });
+    }
 
     const { data: planRow, error: planErr } = await svc
       .schema("public")
@@ -177,6 +180,7 @@ export async function POST(req: Request) {
         .from("billing_sessions")
         .insert({
           user_id: user.id,
+          email: user.email ?? "",
           plan_id: planRow.id,
           status: "pending",
           membership_id: membershipId,

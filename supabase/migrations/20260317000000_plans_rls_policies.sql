@@ -6,6 +6,7 @@
 
 -- Allow anyone (anon + authenticated) to read plans (public pricing catalog).
 -- INSERT/UPDATE/DELETE have no policy for anon/authenticated → only service_role can write.
+DROP POLICY IF EXISTS "plans_allow_public_select" ON public.plans;
 CREATE POLICY "plans_allow_public_select"
   ON public.plans
   FOR SELECT

@@ -91,6 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_billing_events_event_type ON public.billing_event
 
 ALTER TABLE public.billing_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "billing_events_service_only" ON public.billing_events;
 CREATE POLICY "billing_events_service_only"
   ON public.billing_events
   FOR ALL

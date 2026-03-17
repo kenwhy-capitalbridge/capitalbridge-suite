@@ -20,6 +20,16 @@ CREATE TABLE IF NOT EXISTS public.user_sessions (
 
 COMMENT ON TABLE public.user_sessions IS 'One active session per user; replaced on each login. Validated by matching session_token to current access token and optionally IP/User-Agent.';
 
+-- Ensure last_activity_at exists (table may have been created without it)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_sessions') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_sessions' AND column_name = 'last_activity_at') THEN
+      ALTER TABLE public.user_sessions ADD COLUMN last_activity_at timestamptz NOT NULL DEFAULT now();
+    END IF;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_user_sessions_last_activity ON public.user_sessions(last_activity_at);
 
 ALTER TABLE public.user_sessions ENABLE ROW LEVEL SECURITY;

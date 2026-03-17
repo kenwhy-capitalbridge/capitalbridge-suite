@@ -48,6 +48,15 @@ grant execute on function public.email_exists(text) to anon, authenticated;
 - **Backstop:** The DB trigger that sets `expires_at` / `end_date` remains authoritative; if the app cache is stale or misses, the trigger still corrects on write.
 - **Dev:** On first load you’ll see `planMap: loaded N plans` in the console (dev/preview only).
 
+## memberships trigger: "NEW has no field starts_at"
+
+If a trigger on `public.memberships` references `NEW.starts_at` but the table only has `started_at` (or `start_date`), either:
+
+- **Option A (migration):** Run `supabase/migrations/20260324000000_memberships_starts_at_for_trigger.sql` to add `starts_at`, backfill from `started_at`/`start_date`, and set default. The existing trigger then works without changes.
+- **Option B (Studio):** Recreate the trigger function to use an existing column instead of `starts_at` (e.g. `NEW.started_at` or `COALESCE(NEW.start_date::timestamptz, now())`). Drop and recreate the trigger to use the updated function.
+
+Re-test: incognito → `/checkout?plan=trial` → create trial user → membership row is created with no trigger errors.
+
 ## Rollback
 
 Revert the checkout-hardening PR (code only). The SQL function `public.email_exists` is safe to leave in place. To restore the old flow: remove the pre-check call and the anti-enum branch; billing will run after create-account as before (with possible partial writes on duplicate email).
