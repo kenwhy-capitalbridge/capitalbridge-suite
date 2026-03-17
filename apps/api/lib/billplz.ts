@@ -56,6 +56,38 @@ export async function createBillplzBill(params: {
   return { billId: data.id, checkoutUrl: data.url };
 }
 
+/** GET bill from Billplz to check payment status (e.g. when user returns and webhook may not have fired). */
+export async function getBillplzBill(billId: string): Promise<{
+  paid: boolean;
+  state: string;
+  paid_at: string | null;
+  amount: number;
+  paid_amount: number;
+} | null> {
+  const { apiKey } = getBillplzConfig();
+  const basic = Buffer.from(`${apiKey}:`).toString("base64");
+  const resp = await fetch(`https://www.billplz.com/api/v3/bills/${encodeURIComponent(billId)}`, {
+    method: "GET",
+    headers: { Authorization: `Basic ${basic}` },
+    cache: "no-store",
+  });
+  if (!resp.ok) return null;
+  const data = (await resp.json()) as {
+    paid?: boolean;
+    state?: string;
+    paid_at?: string | null;
+    amount?: number;
+    paid_amount?: number;
+  };
+  return {
+    paid: data.paid === true,
+    state: typeof data.state === "string" ? data.state : "due",
+    paid_at: data.paid_at ?? null,
+    amount: typeof data.amount === "number" ? data.amount : 0,
+    paid_amount: typeof data.paid_amount === "number" ? data.paid_amount : 0,
+  };
+}
+
 /**
  * Verify Billplz callback X-Signature (HMAC-SHA256 over sorted key+value pairs).
  * See Billplz API doc: X Signature Callback URL, STEP 1 & 2.

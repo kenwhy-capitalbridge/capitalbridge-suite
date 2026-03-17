@@ -96,6 +96,12 @@ export async function POST(req: Request) {
     );
   }
 
+  if (!process.env.BILLPLZ_CALLBACK_URL) {
+    console.warn(
+      "[request-bill] BILLPLZ_CALLBACK_URL is not set; Billplz may not call the webhook. Set it to e.g. https://api.thecapitalbridge.com/billing/billplz-webhook so payment creates the user. User can still activate via payment-return (confirm-payment fallback)."
+    );
+  }
+
   let billId: string;
   let checkoutUrl: string;
   try {

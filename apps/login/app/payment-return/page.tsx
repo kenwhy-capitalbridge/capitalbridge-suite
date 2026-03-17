@@ -37,6 +37,15 @@ function PaymentReturnContent() {
 
     let cancelled = false;
 
+    // When user returns with paid=true, trigger confirm-payment so we create account + send set-password email
+    // even if the Billplz callback (webhook) never fired (e.g. BILLPLZ_CALLBACK_URL not set).
+    if (paid) {
+      fetch(`/api/billing/confirm-payment?bill_id=${encodeURIComponent(billId)}`, {
+        method: "GET",
+        cache: "no-store",
+      }).catch(() => {});
+    }
+
     async function pollStatus() {
       if (!billId) return;
       try {
@@ -69,7 +78,7 @@ function PaymentReturnContent() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [billId, loginHref]);
+  }, [billId, paid, loginHref]);
 
   const accountReady = !!status?.account_ready;
   const waitingForWebhook = !accountReady && paid;
