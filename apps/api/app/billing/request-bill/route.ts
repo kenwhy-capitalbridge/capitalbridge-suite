@@ -71,12 +71,14 @@ export async function POST(req: Request) {
   }
 
   // Payment-first: no user yet; user_id must be null (migration 20260323 makes user_id nullable).
+  // Some schemas have a "plan" column (slug) NOT NULL; set it for compatibility.
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
     .insert({
       user_id: null,
       email,
+      plan: planRow.slug,
       plan_id: planRow.id,
       status: "pending",
       payment_attempt_count: 0,
