@@ -109,7 +109,7 @@ export async function POST(req: Request) {
       });
       // Ensure payment row exists (in case first request failed after creating bill)
       if (existingSession.membership_id) {
-        await svc.from("payments").upsert(
+        await svc.schema("public").from("payments").upsert(
           {
             membership_id: existingSession.membership_id,
             billplz_bill_id: existingSession.bill_id,
@@ -148,7 +148,6 @@ export async function POST(req: Request) {
           user_id: user.id,
           plan_id: planRow.id,
           status: "pending",
-          updated_at: now.toISOString(),
         })
         .select("id")
         .single();
@@ -265,7 +264,7 @@ export async function POST(req: Request) {
       await svc
         .schema("public")
         .from("memberships")
-        .update({ status: "bill_created", updated_at: now.toISOString() })
+        .update({ status: "bill_created" })
         .eq("id", membershipId!);
 
       logBillingEvent(svc, {

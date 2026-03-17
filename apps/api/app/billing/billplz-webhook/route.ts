@@ -298,7 +298,7 @@ export async function POST(req: Request) {
       await svc
         .schema("public")
         .from("memberships")
-        .update({ status: "failed", updated_at: new Date().toISOString() })
+        .update({ status: "failed" })
         .eq("id", payment.membership_id)
         .in("status", ["pending", "bill_created"]);
     }

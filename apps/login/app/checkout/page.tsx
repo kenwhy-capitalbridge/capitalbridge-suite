@@ -37,8 +37,9 @@ function CheckoutContent() {
 
   useEffect(() => {
     if (!isDevOrPreview || typeof window === "undefined") return;
+    const projectRef = liveTestRef();
     console.info(
-      "Billing debug: schema=public; personaRPC=public.get_user_persona (fallback advisory_v2)"
+      `Billing debug: projectRef=${projectRef || "(none)"}, schema=public, personaRPC=public.get_user_persona(fallback advisory_v2)`
     );
   }, []);
 
@@ -73,6 +74,15 @@ function CheckoutContent() {
 
       const accountData = await createAccountRes.json().catch(() => ({}));
       if (!createAccountRes.ok) {
+        if (isDevOrPreview) {
+          console.warn("Billing debug:", {
+            area: "billing",
+            op: "create-account",
+            status: createAccountRes.status,
+            code: typeof accountData?.error === "string" ? accountData.error : null,
+            message: typeof accountData?.detail === "string" ? accountData.detail : accountData?.message ?? null,
+          });
+        }
         const message = typeof accountData?.message === "string" ? accountData.message : null;
         const detail = typeof accountData?.detail === "string" ? accountData.detail : null;
         const errorCode = typeof accountData?.error === "string" ? accountData.error : null;
@@ -113,6 +123,15 @@ function CheckoutContent() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (isDevOrPreview) {
+          console.warn("Billing debug:", {
+            area: "billing",
+            op: "create select",
+            status: res.status,
+            code: typeof data?.error === "string" ? data.error : null,
+            message: typeof data?.detail === "string" ? data.detail : data?.message ?? null,
+          });
+        }
         const message = typeof data?.message === "string" ? data.message : null;
         const detail = typeof data?.detail === "string" ? data.detail : null;
         const errorCode = typeof data?.error === "string" ? data.error : null;
@@ -153,7 +172,7 @@ function CheckoutContent() {
             fontFamily: "monospace",
           }}
         >
-          LIVE TEST MODE — REF:{liveTestRef() || "—"} — schema:public
+          LIVE TEST • schema:public
         </div>
       )}
       <div className="cb-card">
