@@ -24,6 +24,9 @@ const PLAN_LABELS: Record<string, string> = {
   strategic: "Strategic Execution (365 Days)",
 };
 
+const ACCOUNT_EXISTS_MSG =
+  'An account already exists for this email. Please log in instead or use "Forgot password".';
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const plan = useMemo(() => searchParams.get("plan") ?? "trial", [searchParams]);
@@ -31,158 +34,83 @@ function CheckoutContent() {
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!isDevOrPreview || typeof window === "undefined") return;
     const projectRef = liveTestRef();
     console.info(
-      `Checkout debug: projectRef=${projectRef || "(none)"}, schema=public(billing), emailPrecheck=ON, signUpSequence=SAFE`
+      `Checkout debug: projectRef=${projectRef || "(none)"}, schema=public(billing), payment-first=ON`
     );
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submittingRef.current) return;
     setError(null);
+    setEmailAlreadyExists(false);
     setLoading(true);
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      setLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
+    submittingRef.current = true;
 
     try {
-      const exists = await emailExists(supabase, email.trim());
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        setError("Please enter a valid email address.");
+        return;
+      }
+
+      const exists = await emailExists(supabase, trimmedEmail);
       if (exists) {
-        setError(
-          "An account already exists for this email. Please log in instead or use \"Forgot password\"."
-        );
-        setLoading(false);
+        setError(ACCOUNT_EXISTS_MSG);
+        setEmailAlreadyExists(true);
         emailInputRef.current?.focus();
         return;
       }
 
-      const createAccountRes = await fetch("/api/auth/create-account", {
+      const res = await fetch("/api/bill/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          email: email.trim(),
-          password,
+          email: trimmedEmail,
           name: name.trim() || undefined,
+          plan,
         }),
       });
 
-      const accountData = await createAccountRes.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({}));
 
-      if (!createAccountRes.ok) {
-        if (isDevOrPreview) {
-          console.warn("Billing debug:", {
-            area: "billing",
-            op: "create-account",
-            status: createAccountRes.status,
-            code: typeof accountData?.error === "string" ? accountData.error : null,
-            message: typeof accountData?.detail === "string" ? accountData.detail : accountData?.message ?? null,
-          });
-        }
-        const message = typeof accountData?.message === "string" ? accountData.message : null;
-        const detail = typeof accountData?.detail === "string" ? accountData.detail : null;
-        const errorCode = typeof accountData?.error === "string" ? accountData.error : null;
-
-        if (errorCode === "account_exists") {
-          setError(
-            message ||
-              detail ||
-              "An account already exists for this email. Please log in instead or use \"Forgot password\"."
-          );
-          setLoading(false);
+      if (!res.ok) {
+        if (data?.error === "account_exists" || String(data?.detail ?? "").toLowerCase().includes("already exists")) {
+          setError(ACCOUNT_EXISTS_MSG);
+          setEmailAlreadyExists(true);
           emailInputRef.current?.focus();
           return;
-        }
-
-        setError(message || detail || errorCode || "Could not create account.");
-        setLoading(false);
-        return;
-      }
-
-      const cleanSuccess = accountData?.ok === true && !!accountData?.user_id;
-      if (!cleanSuccess) {
-        if (isDevOrPreview) {
-          console.warn({ area: "checkout", branch: "anti-enum-detected" });
-        }
-        setError(
-          "An account already exists for this email. Please log in instead or use \"Forgot password\"."
-        );
-        setLoading(false);
-        emailInputRef.current?.focus();
-        return;
-      }
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (signInError) {
-        setError(signInError.message || "Could not sign in after creating account.");
-        setLoading(false);
-        return;
-      }
-
-      await fetch("/api/register-session", { method: "POST", credentials: "include" }).catch(() => {});
-
-      const res = await fetch("/api/bill/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ plan }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (isDevOrPreview) {
-          console.warn("Billing debug:", {
-            area: "billing",
-            op: "create select",
-            status: res.status,
-            code: typeof data?.error === "string" ? data.error : null,
-            message: typeof data?.detail === "string" ? data.detail : data?.message ?? null,
-          });
         }
         const message = typeof data?.message === "string" ? data.message : null;
         const detail = typeof data?.detail === "string" ? data.detail : null;
         const errorCode = typeof data?.error === "string" ? data.error : null;
         setError(message || detail || errorCode || "Could not start payment.");
-        setLoading(false);
         return;
       }
 
-      const paymentUrl = data?.payment_url ?? data?.checkoutUrl;
-      const billId = typeof data?.bill_id === "string" ? data.bill_id : null;
-      if (typeof paymentUrl === "string" && paymentUrl) {
-        const handoffUrl = new URL("/payment-handoff", window.location.origin);
-        handoffUrl.searchParams.set("payment_url", paymentUrl);
-        if (billId) handoffUrl.searchParams.set("bill_id", billId);
-        handoffUrl.searchParams.set("plan", plan);
-        window.location.href = handoffUrl.toString();
+      const checkoutUrl = data?.checkoutUrl ?? data?.payment_url;
+      if (typeof checkoutUrl === "string" && checkoutUrl) {
+        window.location.href = checkoutUrl;
         return;
       }
       setError("Invalid response from server.");
     } catch {
       setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittingRef.current = false;
     }
-    setLoading(false);
   }
 
   return (
@@ -213,7 +141,7 @@ function CheckoutContent() {
         </p>
 
         <p style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.9 }}>
-          Create your account first, then continue to secure payment. Your access activates after payment is confirmed.
+          Enter your details and continue to secure payment. Your account is created only after payment is confirmed.
         </p>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "1.75rem", display: "grid", gap: "1rem" }}>
@@ -225,7 +153,10 @@ function CheckoutContent() {
               ref={emailInputRef}
               className="cb-input"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailAlreadyExists) setEmailAlreadyExists(false);
+              }}
               type="email"
               required
               placeholder="you@example.com"
@@ -243,44 +174,12 @@ function CheckoutContent() {
             />
           </label>
 
-          <label style={{ display: "grid", gap: "0.35rem" }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Password</span>
-            <input
-              className="cb-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              required
-              minLength={8}
-              placeholder="At least 8 characters"
-            />
-            <span
-              style={{
-                fontSize: "0.8rem",
-                color: "rgba(14,31,16,0.8)",
-                marginTop: "0.1rem",
-              }}
-            >
-              Passwords must be at least 6 characters (8+ recommended) and include lowercase, uppercase, digits and
-              symbols.
-            </span>
-          </label>
-
-          <label style={{ display: "grid", gap: "0.35rem" }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Confirm password</span>
-            <input
-              className="cb-input"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              type="password"
-              required
-              minLength={8}
-              placeholder="Re-enter your password"
-            />
-          </label>
-
-          <button className="cb-btn-primary" type="submit" disabled={loading}>
-            {loading ? "Creating account…" : "Create account and continue"}
+          <button
+            className="cb-btn-primary"
+            type="submit"
+            disabled={loading || emailAlreadyExists}
+          >
+            {loading ? "Redirecting to payment…" : "Continue to payment"}
           </button>
         </form>
 
