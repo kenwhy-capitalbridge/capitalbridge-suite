@@ -7,6 +7,46 @@ import { computeExpiry } from "@cb/advisory-graph/plans/expiry";
 
 export const runtime = "nodejs";
 
+/** Login app URL for password reset redirect (must be in Supabase Auth → URL Configuration). */
+function getResetPasswordRedirectUrl(): string {
+  const base =
+    process.env.LOGIN_APP_URL ??
+    process.env.NEXT_PUBLIC_LOGIN_APP_URL ??
+    "https://login.thecapitalbridge.com";
+  return `${base.replace(/\/$/, "")}/reset-password`;
+}
+
+/**
+ * Trigger Supabase Auth to send a "set password" (recovery) email to the user.
+ * Uses the project's SMTP (e.g. Resend); requires NEXT_PUBLIC_SUPABASE_ANON_KEY in API env.
+ */
+async function sendSetPasswordEmail(email: string): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    console.warn("[billplz-webhook] skip set-password email: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    return;
+  }
+  const redirectTo = getResetPasswordRedirectUrl();
+  const recoverUrl = new URL(`${url}/auth/v1/recover`);
+  recoverUrl.searchParams.set("redirect_to", redirectTo);
+  try {
+    const res = await fetch(recoverUrl.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: anonKey },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.warn("[billplz-webhook] recover request failed", { status: res.status, email, detail: text.slice(0, 200) });
+      return;
+    }
+    console.info("[billplz-webhook] set-password email triggered", { email });
+  } catch (err) {
+    console.warn("[billplz-webhook] sendSetPasswordEmail error", err);
+  }
+}
+
 function logBillingEvent(
   svc: Awaited<ReturnType<typeof createServiceClient>>,
   payload: { event_type: string; user_id?: string | null; membership_id?: string | null; payment_id?: string | null; metadata?: Record<string, unknown> }
@@ -258,7 +298,8 @@ export async function POST(req: Request) {
       void svc.rpc("increment_trial_use_count" as never, { user_id: userId }).then(() => {}, () => {});
     }
 
-    // Section 13 (optional): send magic login link via svc.auth.admin.generateLink({ type: "magiclink", email: sessionEmail }) + your email provider
+    // Section 13: trigger "set password" email via Supabase Auth recover (uses project SMTP e.g. Resend)
+    void sendSetPasswordEmail(sessionEmail);
     return NextResponse.json({ ok: true });
   }
 
@@ -474,5 +515,6 @@ export async function POST(req: Request) {
 
   await svc.schema("public").from("pending_bills").delete().eq("id", pendingBill.id);
 
+  void sendSetPasswordEmail(pendingBill.email);
   return NextResponse.json({ ok: true });
 }
