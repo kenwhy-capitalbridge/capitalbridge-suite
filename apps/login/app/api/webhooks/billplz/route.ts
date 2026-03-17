@@ -4,10 +4,19 @@ import { randomBytes } from "crypto";
 
 export const runtime = "nodejs";
 
+function getApiBaseUrl(): string {
+  const url =
+    process.env.API_APP_URL ??
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    (process.env.NODE_ENV === "development" ? "http://127.0.0.1:3002" : "https://api.thecapitalbridge.com");
+  return url.replace(/\/$/, "");
+}
+
 /**
  * Billplz webhook: verify payment, update payment record, activate membership.
  * Idempotent: repeated webhook calls do not create duplicate memberships.
  * No CORS (webhook is server-to-server).
+ * When billing_sessions flow is used, forwards to API webhook (which handles set-password email).
  */
 export async function POST(req: Request) {
   const svc = createServiceClient();
@@ -33,6 +42,33 @@ export async function POST(req: Request) {
     event_type: "webhook_received",
     metadata: { billplz_bill_id: billId, paid },
   });
+
+  // 0) billing_sessions flow (payment-first from request-bill): forward to API webhook so it creates user, activates, and sends set-password email
+  const { data: sessionByBill } = await svc
+    .schema("public")
+    .from("billing_sessions")
+    .select("id")
+    .eq("bill_id", billId)
+    .maybeSingle();
+
+  if (sessionByBill) {
+    try {
+      const apiUrl = `${getApiBaseUrl()}/billing/billplz-webhook`;
+      const form = new FormData();
+      for (const [k, v] of Object.entries(body)) {
+        form.append(k, typeof v === "string" ? v : String(v ?? ""));
+      }
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      return NextResponse.json(data, { status: res.status });
+    } catch (err) {
+      console.error("[login webhooks/billplz] forward to API failed", err);
+      return NextResponse.json({ ok: false, error: "forward_failed" }, { status: 502 });
+    }
+  }
 
   // 1) Existing flow: payment row exists (authenticated bill/create)
   const { data: payment, error: paymentErr } = await svc
@@ -256,7 +292,57 @@ export async function POST(req: Request) {
 
   await svc.schema("public").from("pending_bills").delete().eq("id", pendingBill.id);
 
+  void sendSetPasswordEmail(pendingBill.email);
   return NextResponse.json({ ok: true });
+}
+
+function getResetPasswordRedirectUrl(): string {
+  const base =
+    process.env.LOGIN_APP_URL ??
+    process.env.NEXT_PUBLIC_LOGIN_APP_URL ??
+    "https://login.thecapitalbridge.com";
+  return `${base.replace(/\/$/, "")}/reset-password`;
+}
+
+async function sendSetPasswordEmail(email: string): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const apiKey = serviceKey ?? anonKey;
+  if (!url || !apiKey) {
+    console.warn(
+      "[login webhooks/billplz] skip set-password email: missing SUPABASE URL or keys"
+    );
+    return;
+  }
+  const redirectTo = getResetPasswordRedirectUrl();
+  const recoverUrl = new URL(`${url}/auth/v1/recover`);
+  recoverUrl.searchParams.set("redirect_to", redirectTo);
+  try {
+    const res = await fetch(recoverUrl.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: apiKey,
+        ...(serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {}),
+      },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      console.warn("[login webhooks/billplz] recover failed", {
+        status: res.status,
+        email,
+        detail: text.slice(0, 200),
+      });
+      return;
+    }
+    console.info("[login webhooks/billplz] set-password email triggered", {
+      email,
+    });
+  } catch (err) {
+    console.warn("[login webhooks/billplz] sendSetPasswordEmail error", err);
+  }
 }
 
 async function logBillingEvent(

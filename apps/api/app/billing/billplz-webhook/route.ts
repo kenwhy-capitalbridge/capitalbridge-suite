@@ -18,13 +18,17 @@ function getResetPasswordRedirectUrl(): string {
 
 /**
  * Trigger Supabase Auth to send a "set password" (recovery) email to the user.
- * Uses the project's SMTP (e.g. Resend); requires NEXT_PUBLIC_SUPABASE_ANON_KEY in API env.
+ * Uses the project's SMTP (e.g. Resend). Tries service_role first (API already has it), then anon.
  */
 async function sendSetPasswordEmail(email: string): Promise<void> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
-    console.warn("[billplz-webhook] skip set-password email: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const apiKey = serviceKey ?? anonKey;
+  if (!url || !apiKey) {
+    console.warn(
+      "[billplz-webhook] skip set-password email: missing NEXT_PUBLIC_SUPABASE_URL or both SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
     return;
   }
   const redirectTo = getResetPasswordRedirectUrl();
@@ -33,12 +37,20 @@ async function sendSetPasswordEmail(email: string): Promise<void> {
   try {
     const res = await fetch(recoverUrl.toString(), {
       method: "POST",
-      headers: { "Content-Type": "application/json", apikey: anonKey },
+      headers: {
+        "Content-Type": "application/json",
+        apikey: apiKey,
+        ...(serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {}),
+      },
       body: JSON.stringify({ email: email.trim() }),
     });
+    const text = await res.text();
     if (!res.ok) {
-      const text = await res.text();
-      console.warn("[billplz-webhook] recover request failed", { status: res.status, email, detail: text.slice(0, 200) });
+      console.warn("[billplz-webhook] recover request failed", {
+        status: res.status,
+        email,
+        detail: text.slice(0, 300),
+      });
       return;
     }
     console.info("[billplz-webhook] set-password email triggered", { email });
