@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@cb/advisory-graph": "*",
     "@cb/auth": "*",
     "@cb/membership": "*",
     "@cb/shared": "*",
