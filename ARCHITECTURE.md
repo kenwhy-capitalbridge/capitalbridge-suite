@@ -49,7 +49,7 @@ After deploying, verify:
 ### Billing flow
 - [ ] User can select plan on login → confirm-payment → redirect to Billplz checkout
 - [ ] After payment, webhook activates membership
-- [ ] User is redirected to platform.thecapitalbridge.com/dashboard and has access
+- [ ] User is redirected to platform.thecapitalbridge.com and has access
 
 ### Authentication
 - [ ] User logs in once on login.thecapitalbridge.com

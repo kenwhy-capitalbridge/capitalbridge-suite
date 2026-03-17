@@ -2,9 +2,9 @@
 
 Server routes:
 
-- `/` redirects to `/dashboard` if session else `/login`
+- `/` requires session (else redirect to login); checks membership and shows tools or payment gate
 - `/login` redirects to the login app with `redirectTo`
-- `/dashboard` checks membership and shows tools or payment gate
+- `/dashboard` redirects to `/`
 
 ## Required env vars (Vercel project: platform)
 

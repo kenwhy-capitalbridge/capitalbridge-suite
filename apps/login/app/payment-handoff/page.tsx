@@ -27,7 +27,7 @@ const PLAN_LABELS: Record<string, string> = {
 const platformBase =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
   "https://platform.thecapitalbridge.com";
-const LOGIN_REDIRECT = `${platformBase.replace(/\/$/, "")}/dashboard`;
+const LOGIN_REDIRECT = platformBase.replace(/\/$/, "");
 
 function PaymentHandoffContent() {
   const searchParams = useSearchParams();

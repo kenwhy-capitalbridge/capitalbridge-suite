@@ -14,7 +14,7 @@ export async function getServerUser() {
 }
 
 export async function getServerUserAndMembership(): Promise<{
-  user: { id: string; email?: string } | null;
+  user: { id: string; email?: string | null; name?: string | null } | null;
   membership: Membership;
 }> {
   try {
@@ -29,7 +29,18 @@ export async function getServerUserAndMembership(): Promise<{
       .eq("user_id", user.id)
       .maybeSingle();
 
-    return { user, membership: (membership as Membership) ?? null };
+    const name =
+      (user.user_metadata?.name as string | undefined)?.trim() ||
+      null;
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email ?? null,
+        name: name || null,
+      },
+      membership: (membership as Membership) ?? null,
+    };
   } catch {
     return { user: null, membership: null };
   }

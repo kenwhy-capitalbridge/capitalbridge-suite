@@ -19,7 +19,7 @@ type BillingStatusResponse = {
 const platformBase =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
   "https://platform.thecapitalbridge.com";
-const LOGIN_REDIRECT = `${platformBase.replace(/\/$/, "")}/dashboard`;
+const LOGIN_REDIRECT = platformBase.replace(/\/$/, "");
 
 function PaymentReturnContent() {
   const searchParams = useSearchParams();

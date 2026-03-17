@@ -3,14 +3,12 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 
-const PROTECTED_PATHS = ["/dashboard"];
-
 function isProtected(pathname: string): boolean {
-  return PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  return pathname === "/" || pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 }
 
 /**
- * Protects /dashboard and below: redirects to login if no Supabase session.
+ * Protects / and dashboard routes: redirects to login if no Supabase session.
  * Membership enforcement (active vs expired) remains in the dashboard page (PaymentGate).
  */
 export async function middleware(req: NextRequest) {

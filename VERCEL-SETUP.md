@@ -25,7 +25,7 @@ Create **three** Vercel projects connected to this repo, each with a different *
      - `BILLPLZ_API_KEY`
      - `BILLPLZ_COLLECTION_ID`
      - `BILLPLZ_CALLBACK_URL` = `https://api.thecapitalbridge.com/billing/billplz-webhook` (recommended)
-     - `BILLPLZ_REDIRECT_URL` (optional) = `https://platform.thecapitalbridge.com/dashboard`
+     - `BILLPLZ_REDIRECT_URL` (optional) = `https://platform.thecapitalbridge.com`
    - Endpoints: `POST /billing/create` (Bearer token), `POST /billing/billplz-webhook` (Billplz callback).
 
 3. **platform** project

@@ -226,7 +226,7 @@ export async function POST(req: Request) {
           email: user.email ?? "client@thecapitalbridge.com",
           name: user.email ?? "Capital Bridge Client",
           reference1: membershipId!,
-          redirectUrl: process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com/dashboard",
+          redirectUrl: process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com",
         });
         billId = result.billId;
         checkoutUrl = result.checkoutUrl;

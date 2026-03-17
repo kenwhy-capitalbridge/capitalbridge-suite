@@ -55,11 +55,11 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const dashboardUrl = `${PLATFORM_URL.replace(/\/$/, "")}/dashboard`;
+  const platformBase = PLATFORM_URL.replace(/\/$/, "");
   const destination =
-    redirectTo && redirectTo.startsWith(PLATFORM_URL.replace(/\/$/, ""))
+    redirectTo && redirectTo.startsWith(platformBase)
       ? redirectTo
-      : dashboardUrl;
+      : platformBase;
 
   useEffect(() => {
     if (!success) return;
