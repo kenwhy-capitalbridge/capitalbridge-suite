@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/platformAccess.ts",
     "./SavedReportsPanel": "./src/SavedReportsPanel.tsx",
-    "./supabaseClient": "./src/supabaseClient.ts"
+    "./supabaseClient": "./src/supabaseClient.ts",
+    "./auth/emailCheck": "./src/auth/emailCheck.ts"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2",

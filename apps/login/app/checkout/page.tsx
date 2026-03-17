@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
 
 const isDevOrPreview =
   typeof process !== "undefined" &&
@@ -35,11 +36,13 @@ function CheckoutContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!isDevOrPreview || typeof window === "undefined") return;
     const projectRef = liveTestRef();
     console.info(
-      `Billing debug: projectRef=${projectRef || "(none)"}, schema=public, personaRPC=public.get_user_persona(fallback advisory_v2)`
+      `Checkout debug: projectRef=${projectRef || "(none)"}, schema=public(billing), emailPrecheck=ON, signUpSequence=SAFE`
     );
   }, []);
 
@@ -61,6 +64,16 @@ function CheckoutContent() {
     }
 
     try {
+      const exists = await emailExists(supabase, email.trim());
+      if (exists) {
+        setError(
+          "An account already exists for this email. Please log in instead or use \"Forgot password\"."
+        );
+        setLoading(false);
+        emailInputRef.current?.focus();
+        return;
+      }
+
       const createAccountRes = await fetch("/api/auth/create-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,6 +86,7 @@ function CheckoutContent() {
       });
 
       const accountData = await createAccountRes.json().catch(() => ({}));
+
       if (!createAccountRes.ok) {
         if (isDevOrPreview) {
           console.warn("Billing debug:", {
@@ -94,11 +108,25 @@ function CheckoutContent() {
               "An account already exists for this email. Please log in instead or use \"Forgot password\"."
           );
           setLoading(false);
+          emailInputRef.current?.focus();
           return;
         }
 
         setError(message || detail || errorCode || "Could not create account.");
         setLoading(false);
+        return;
+      }
+
+      const cleanSuccess = accountData?.ok === true && !!accountData?.user_id;
+      if (!cleanSuccess) {
+        if (isDevOrPreview) {
+          console.warn({ area: "checkout", branch: "anti-enum-detected" });
+        }
+        setError(
+          "An account already exists for this email. Please log in instead or use \"Forgot password\"."
+        );
+        setLoading(false);
+        emailInputRef.current?.focus();
         return;
       }
 
@@ -194,6 +222,7 @@ function CheckoutContent() {
           <label style={{ display: "grid", gap: "0.35rem" }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Email</span>
             <input
+              ref={emailInputRef}
               className="cb-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
