@@ -4,7 +4,10 @@ import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
-const PLATFORM_URL = "https://platform.thecapitalbridge.com";
+/** Final destination after sign-in (dashboard). Set NEXT_PUBLIC_PLATFORM_APP_URL in Vercel to override. */
+const PLATFORM_URL =
+  (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
+  "https://platform.thecapitalbridge.com";
 const SESSION_SYNC_RETRIES = 5;
 const SESSION_SYNC_DELAY_MS = 500;
 
@@ -52,10 +55,11 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const dashboardUrl = `${PLATFORM_URL.replace(/\/$/, "")}/dashboard`;
   const destination =
-    redirectTo && redirectTo.startsWith(PLATFORM_URL)
+    redirectTo && redirectTo.startsWith(PLATFORM_URL.replace(/\/$/, ""))
       ? redirectTo
-      : `${PLATFORM_URL}/dashboard`;
+      : dashboardUrl;
 
   useEffect(() => {
     if (!success) return;

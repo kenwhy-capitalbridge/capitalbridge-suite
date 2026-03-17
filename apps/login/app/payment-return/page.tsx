@@ -16,7 +16,10 @@ type BillingStatusResponse = {
   error?: string;
 };
 
-const LOGIN_REDIRECT = "https://platform.thecapitalbridge.com/dashboard";
+const platformBase =
+  (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
+  "https://platform.thecapitalbridge.com";
+const LOGIN_REDIRECT = `${platformBase.replace(/\/$/, "")}/dashboard`;
 
 function PaymentReturnContent() {
   const searchParams = useSearchParams();

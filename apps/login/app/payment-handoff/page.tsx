@@ -24,7 +24,10 @@ const PLAN_LABELS: Record<string, string> = {
   strategic: "Strategic Execution (365 Days)",
 };
 
-const LOGIN_REDIRECT = "https://platform.thecapitalbridge.com/dashboard";
+const platformBase =
+  (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
+  "https://platform.thecapitalbridge.com";
+const LOGIN_REDIRECT = `${platformBase.replace(/\/$/, "")}/dashboard`;
 
 function PaymentHandoffContent() {
   const searchParams = useSearchParams();
