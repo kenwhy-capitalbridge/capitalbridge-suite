@@ -39,6 +39,15 @@ grant execute on function public.email_exists(text) to anon, authenticated;
 2. **Fresh email** — Use a new email. Submit checkout. Sign-up succeeds; only then is a row added in `public.memberships` (and billing flow continues).
 3. **Network** — In DevTools → Network, confirm billing requests use the expected project host and (where applicable) `Accept-Profile: public`. No "updated_at in schema cache" errors.
 
+## planMap cache
+
+- **What:** In-memory cache of `public.plans` id/slug → `duration_days`, used when computing membership `expires_at` so we do fewer plan table round-trips.
+- **Where:** Loaded at the start of billing handlers (e.g. webhook); `getPlanDuration(planIdOrName, fallbackDays)` returns cached days; expiry uses `computeExpiry(start, days)`.
+- **TTL:** 60 minutes. If the cache is older, the next `loadPlanMap(supabase)` call refetches from `public.plans` (always with `schema('public')`).
+- **Refresh:** Call `refreshPlanMap(supabase)` to clear and reload (e.g. after changing plans in Studio).
+- **Backstop:** The DB trigger that sets `expires_at` / `end_date` remains authoritative; if the app cache is stale or misses, the trigger still corrects on write.
+- **Dev:** On first load you’ll see `planMap: loaded N plans` in the console (dev/preview only).
+
 ## Rollback
 
 Revert the checkout-hardening PR (code only). The SQL function `public.email_exists` is safe to leave in place. To restore the old flow: remove the pre-check call and the anti-enum branch; billing will run after create-account as before (with possible partial writes on duplicate email).

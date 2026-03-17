@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { randomBytes } from "crypto";
 import { verifyBillplzWebhookSignature } from "@/lib/billplz";
+import { loadPlanMap, getPlanDuration } from "@cb/advisory-graph/plans/planMap";
+import { computeExpiry } from "@cb/advisory-graph/plans/expiry";
 
 export const runtime = "nodejs";
 
@@ -24,6 +26,7 @@ function logBillingEvent(
 
 export async function POST(req: Request) {
   const svc = createServiceClient();
+  await loadPlanMap(svc);
 
   const body = (await req
     .formData()
@@ -171,7 +174,7 @@ export async function POST(req: Request) {
     const { data: planRow } = await svc
       .schema("public")
       .from("plans")
-      .select("id, duration_days, is_trial")
+      .select("id, is_trial")
       .eq("id", sessionByBill.plan_id)
       .maybeSingle();
 
@@ -181,7 +184,7 @@ export async function POST(req: Request) {
     }
 
     // Section 8: Upsert profile (id, email, trial_use_count when trial)
-    const profileRow = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
+    const { data: profileRow } = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
     const currentTrialCount = profileRow?.trial_use_count ?? 0;
     const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
     await svc
@@ -193,10 +196,8 @@ export async function POST(req: Request) {
       );
 
     const start = new Date();
-    const end =
-      planRow.duration_days != null
-        ? new Date(start.getTime() + planRow.duration_days * 24 * 60 * 60 * 1000)
-        : null;
+    const days = getPlanDuration(planRow.id, 7);
+    const end = computeExpiry(start, days);
 
     // Section 9: Create membership (idempotent: check by billing_session_id)
     const { data: existingMembership } = await svc
@@ -254,7 +255,7 @@ export async function POST(req: Request) {
       .then(() => {}, () => {});
 
     if (planRow.is_trial) {
-      await svc.rpc("increment_trial_use_count" as never, { user_id: userId }).catch(() => {});
+      void svc.rpc("increment_trial_use_count" as never, { user_id: userId }).then(() => {}, () => {});
     }
 
     // Section 13 (optional): send magic login link via svc.auth.admin.generateLink({ type: "magiclink", email: sessionEmail }) + your email provider
@@ -335,15 +336,13 @@ export async function POST(req: Request) {
         const { data: plan } = await svc
           .schema("public")
           .from("plans")
-          .select("duration_days, is_trial")
+          .select("id, is_trial")
           .eq("id", membership.plan_id)
           .maybeSingle();
 
         const start = new Date();
-        const end =
-          plan?.duration_days != null
-            ? new Date(start.getTime() + plan.duration_days * 24 * 60 * 60 * 1000)
-            : null;
+        const days = plan ? getPlanDuration(plan.id, 7) : 7;
+        const end = computeExpiry(start, days);
 
         await svc
           .schema("public")
@@ -366,7 +365,7 @@ export async function POST(req: Request) {
         });
 
         if (plan?.is_trial && membership.user_id) {
-          await svc.rpc("increment_trial_use_count" as never, { user_id: membership.user_id }).catch(() => {});
+          void svc.rpc("increment_trial_use_count" as never, { user_id: membership.user_id }).then(() => {}, () => {});
         }
       }
     }
@@ -397,7 +396,7 @@ export async function POST(req: Request) {
   const { data: planRow } = await svc
     .schema("public")
     .from("plans")
-    .select("id, duration_days, is_trial")
+    .select("id, is_trial")
     .eq("id", pendingBill.plan_id)
     .maybeSingle();
 
@@ -433,7 +432,7 @@ export async function POST(req: Request) {
     userId = authUser.user.id;
   }
 
-  const profileRow = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
+  const { data: profileRow } = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
   const currentTrialCount = profileRow?.trial_use_count ?? 0;
   const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
 
@@ -443,10 +442,8 @@ export async function POST(req: Request) {
   );
 
   const start = new Date();
-  const end =
-    planRow.duration_days != null
-      ? new Date(start.getTime() + planRow.duration_days * 24 * 60 * 60 * 1000)
-      : null;
+  const days = getPlanDuration(planRow.id, 7);
+  const end = computeExpiry(start, days);
 
   const { data: newMembership, error: membershipErr } = await svc
     .schema("public")
