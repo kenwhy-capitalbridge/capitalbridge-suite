@@ -26,8 +26,32 @@ export default async function Page({
     return <PaymentGate userId={user.id} plan={searchParams?.plan ?? null} />;
   }
 
+  const displayName = user.name ?? user.email ?? "there";
+
   return (
     <main>
+      {/* Prominent welcome at the very top */}
+      <div
+        style={{
+          width: "100%",
+          padding: "0.75rem 1.25rem",
+          backgroundColor: "rgba(255,204,106,0.12)",
+          borderBottom: "1px solid rgba(255,204,106,0.3)",
+          textAlign: "center",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontSize: "1.1rem",
+            fontWeight: 600,
+            color: "rgba(246,245,241,0.98)",
+            letterSpacing: "0.02em",
+          }}
+        >
+          Welcome, {displayName}.
+        </p>
+      </div>
       <header
         style={{
           position: "sticky",
@@ -47,21 +71,11 @@ export default async function Page({
         <div>
           <p
             style={{
-              fontSize: "0.85rem",
-              color: "rgba(246,245,241,0.95)",
-              margin: 0,
-              fontWeight: 500,
-            }}
-          >
-            Welcome, {user.name ?? user.email ?? "there"}.
-          </p>
-          <p
-            style={{
               fontSize: "0.7rem",
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "rgba(255,204,106,0.85)",
-              margin: "0.2rem 0 0",
+              margin: 0,
               fontFamily: 'ui-serif, "Roboto Serif", Georgia, serif',
             }}
             aria-label="Capital Bridge"
