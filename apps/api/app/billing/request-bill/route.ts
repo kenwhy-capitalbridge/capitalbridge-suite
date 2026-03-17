@@ -70,11 +70,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400, headers });
   }
 
-  // Section 2: Create billing_sessions row (email, plan, status = pending, payment_attempt_count = 0)
+  // Payment-first: no user yet; user_id must be null (migration 20260323 makes user_id nullable).
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
     .insert({
+      user_id: null,
       email,
       plan_id: planRow.id,
       status: "pending",
@@ -86,7 +87,11 @@ export async function POST(req: Request) {
 
   if (sessionErr || !session?.id) {
     console.error("[request-bill] billing_sessions insert failed:", sessionErr);
-    return NextResponse.json({ error: "session_create_failed" }, { status: 500, headers });
+    const detail = sessionErr?.message ?? (sessionErr as Error)?.message;
+    return NextResponse.json(
+      { error: "session_create_failed", detail: typeof detail === "string" ? detail : undefined },
+      { status: 500, headers }
+    );
   }
 
   let billId: string;
