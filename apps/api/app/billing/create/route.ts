@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         .eq("id", user.id)
         .maybeSingle();
       const used = profile?.trial_use_count ?? 0;
-      if (used >= 3) {
+      if (used >= 2) {
         return NextResponse.json({ error: "trial_limit_reached" }, { status: 403 });
       }
     }

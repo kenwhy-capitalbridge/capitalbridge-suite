@@ -1,6 +1,6 @@
 # Session Management and Trial Limit
 
-This document describes the Supabase-backed system for **one session per account**, **cookie/IP/User-Agent matching**, **token reuse protection**, and **maximum 3 trials per account**.
+This document describes the Supabase-backed system for **one session per account**, **cookie/IP/User-Agent matching**, **token reuse protection**, and **maximum 2 trials per account**.
 
 ---
 
@@ -76,8 +76,8 @@ Optional flags: **`strictIp`** and **`strictUserAgent`** to require IP/User-Agen
 - For the inserted row, the function checks if it is a trial:
   - If **`subscriptions.plan_id = 'trial'`** (or **`subscriptions.plan = 'trial'`** if the table has no `plan_id`), then:
     - Read **`profiles.trial_count`** for `subscriptions.user_id`.
-    - If **`trial_count >= 3`** → **raise exception** `'Trial limit reached (max 3 per account).'` → the INSERT fails.
-    - If **`trial_count < 3`** → increment **`profiles.trial_count`** by 1 and allow the INSERT.
+    - If **`trial_count >= 2`** → **raise exception** `'Trial limit reached (max 2 per account).'` → the INSERT fails.
+    - If **`trial_count < 2`** → increment **`profiles.trial_count`** by 1 and allow the INSERT.
 
 So the **database** enforces the limit; the app should catch the error and show a friendly message.
 
@@ -88,9 +88,9 @@ So the **database** enforces the limit; the app should catch the error and show 
 - **Endpoint:** **`GET /api/can-start-trial`** (login app).
 - **Returns:**  
   `{ canStartTrial: boolean, trialCount: number, reason?: string }`
-- **Logic:** Reads **`profiles.trial_count`** for the current user. If **`trial_count >= 3`**, **`canStartTrial`** is `false` and **`reason`** can be **`"limit_reached"`** (or **`"not_logged_in"`** if unauthenticated).
+- **Logic:** Reads **`profiles.trial_count`** for the current user. If **`trial_count >= 2`**, **`canStartTrial`** is `false` and **`reason`** can be **`"limit_reached"`** (or **`"not_logged_in"`** if unauthenticated).
 
-**Usage:** Before sending the user to signup or confirm-payment for a trial, call this endpoint. If **`canStartTrial === false`**, block the flow or show “You’ve already used 3 trials” and do not attempt to create a trial subscription.
+**Usage:** Before sending the user to signup or confirm-payment for a trial, call this endpoint. If **`canStartTrial === false`**, block the flow or show “You’ve already used 2 trials” and do not attempt to create a trial subscription.
 
 ---
 
@@ -98,9 +98,9 @@ So the **database** enforces the limit; the app should catch the error and show 
 
 When your app **inserts** into **`public.subscriptions`** with **`plan_id = 'trial'`** (or **`plan = 'trial'`**):
 
-- The trigger may **raise** **`Trial limit reached (max 3 per account).`**
+- The trigger may **raise** **`Trial limit reached (max 2 per account).`**
 - **Catch** this error (e.g. from Supabase client or API response) and:
-  - Return a **403** or **400** with a clear message, e.g. **“Trial limit reached (max 3 per account).”**
+  - Return a **403** or **400** with a clear message, e.g. **“Trial limit reached (max 2 per account).”**
   - Do **not** create the subscription; the INSERT will have been rolled back.
 
 ---
@@ -139,7 +139,7 @@ Use this list when deploying or verifying the system:
   Protected APIs (e.g. **`GET /api/membership-status`**) use **`validateSession()`** and return **401** when the session is invalid (no row or token mismatch).
 
 - [ ] **Trial insert error handled**  
-  The code path that inserts into **`subscriptions`** with **`plan_id = 'trial'`** (or **`plan = 'trial'`**) catches the database error and shows **“Trial limit reached (max 3 per account).”**
+  The code path that inserts into **`subscriptions`** with **`plan_id = 'trial'`** (or **`plan = 'trial'`**) catches the database error and shows **“Trial limit reached (max 2 per account).”**
 
 ---
 

@@ -65,7 +65,7 @@ const INDIVIDUAL_PLANS = [
     name: "Trial Access (7 days)",
     price: 1,
     durationLabel: "7 Day Access",
-    supportingLine: "One-time introductory trial",
+    supportingLine: "RM 1.00 · Max 2 trials per account",
     description:
       "Try the advisory dashboard and models before committing.",
     includes: [
@@ -91,7 +91,7 @@ const INDIVIDUAL_PLANS = [
   {
     id: "monthly",
     name: "Monthly Access (30 days)",
-    price: 200,
+    price: 1399,
     durationLabel: "30 Day Access",
     description:
       "Flexible month-to-month access to the advisory platform.",
@@ -119,7 +119,7 @@ const ADVISOR_PLANS = [
   {
     id: "quarterly",
     name: "Quarterly Access (90 days)",
-    price: 540,
+    price: 3900,
     durationLabel: "90 Day Access",
     description:
       "Ideal balance between flexibility and commitment.",
@@ -146,7 +146,7 @@ const ADVISOR_PLANS = [
   {
     id: "yearly_full",
     name: "Strategic Advisory & Execution",
-    price: 2500,
+    price: 4999,
     durationLabel: "365-Day Strategic Advisory Access",
     description:
       "Full-year strategic advisory access for entrepreneurs, investors, and families structuring sustainable lifetime income portfolios.",

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAppServerClient } from "@cb/supabase/server";
 
-const MAX_TRIALS = 3;
+const MAX_TRIALS = 2;
 
 /**
- * Returns whether the current user can start a trial (trial_count < 3).
+ * Returns whether the current user can start a trial (trial_count < 2).
  * Use before redirecting to signup?plan=trial or confirm-payment so you can show a message.
  */
 export async function GET() {
