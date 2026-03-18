@@ -4,22 +4,19 @@
 UPDATE public.plans
 SET
   name = 'Monthly Access (30 days)',
-  price_cents = 139900,
-  updated_at = now()
+  price_cents = 139900
 WHERE slug = 'monthly';
 
 UPDATE public.plans
 SET
   name = 'Quarterly Access (90 days)',
-  price_cents = 390000,
-  updated_at = now()
+  price_cents = 390000
 WHERE slug = 'quarterly';
 
 UPDATE public.plans
 SET
   name = 'Strategic Advisory & Execution',
-  price_cents = 499900,
-  updated_at = now()
+  price_cents = 499900
 WHERE slug = 'strategic';
 
 DO $$
