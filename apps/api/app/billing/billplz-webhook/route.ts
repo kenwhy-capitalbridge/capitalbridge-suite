@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { verifyBillplzWebhookSignature } from "@/lib/billplz";
 import { loadPlanMap, getPlanDuration } from "@cb/advisory-graph/plans/planMap";
 import { computeExpiry } from "@cb/advisory-graph/plans/expiry";
+import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
 
 export const runtime = "nodejs";
 
@@ -226,16 +227,19 @@ export async function POST(req: Request) {
     const { data: planRow } = await svc
       .schema("public")
       .from("plans")
-      .select("id, is_trial")
+      .select("id, is_trial, slug")
       .eq("id", sessionByBill.plan_id)
       .maybeSingle();
 
-    if (!planRow) {
-      console.error("[billplz-webhook] plan not found", { bill_id: billId, billing_session_id: billingSessionId, plan_id: sessionByBill.plan_id });
-      return NextResponse.json({ ok: true });
+    if (!planRow?.slug) {
+      console.error("[billplz-webhook] plan not found or missing slug", {
+        bill_id: billId,
+        billing_session_id: billingSessionId,
+        plan_id: sessionByBill.plan_id,
+      });
+      return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
     }
 
-    // Section 8: Upsert profile (id, email, trial_use_count when trial)
     const { data: profileRow } = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
     const currentTrialCount = profileRow?.trial_use_count ?? 0;
     const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
@@ -247,48 +251,37 @@ export async function POST(req: Request) {
         { onConflict: "id" }
       );
 
-    const start = new Date();
-    const days = getPlanDuration(planRow.id, 7);
-    const end = computeExpiry(start, days);
+    const activate = await insertBillplzPaymentThenActivate({
+      svc,
+      billId,
+      userId,
+      planId: planRow.id,
+      planSlug: planRow.slug,
+      userEmail: sessionEmail,
+      amountCents: amountNum,
+      paymentConfirmedAtIso: now,
+      rawWebhook: body as Record<string, unknown>,
+      billingSessionId: billingSessionId,
+    });
 
-    // Section 9: Create membership (idempotent: check by billing_session_id)
-    const { data: existingMembership } = await svc
-      .schema("public")
-      .from("memberships")
-      .select("id")
-      .eq("billing_session_id", billingSessionId)
-      .maybeSingle();
-
-    let membershipId: string | null = null;
-    if (existingMembership?.id) {
-      membershipId = existingMembership.id;
-      console.info("[billplz-webhook] membership already exists", { bill_id: billId, billing_session_id: billingSessionId, membership_id: membershipId });
-    } else {
-      const { data: newMembership, error: membershipErr } = await svc
-        .schema("public")
-        .from("memberships")
-        .insert({
-          user_id: userId,
-          plan_id: planRow.id,
-          status: "active",
-          billing_session_id: billingSessionId,
-          start_date: start.toISOString(),
-          end_date: end ? end.toISOString() : null,
-          started_at: start.toISOString(),
-          expires_at: end ? end.toISOString() : null,
-        })
-        .select("id")
-        .single();
-
-      if (membershipErr || !newMembership?.id) {
-        console.error("[billplz-webhook] membership create failed", { bill_id: billId, billing_session_id: billingSessionId, error: membershipErr?.message });
-        return NextResponse.json({ ok: false, error: "membership_create_failed" }, { status: 500 });
-      }
-      membershipId = newMembership.id;
-      console.info("[billplz-webhook] membership created", { bill_id: billId, billing_session_id: billingSessionId, membership_id: membershipId });
+    if (!activate.ok) {
+      console.error("[billplz-webhook] payment insert / activate_membership_for_billplz failed", {
+        bill_id: billId,
+        billing_session_id: billingSessionId,
+        error: activate.error,
+      });
+      return NextResponse.json(
+        { ok: false, error: "payment_or_activate_failed", detail: activate.error },
+        { status: 500 }
+      );
     }
 
-    // Link session to user and membership
+    const membershipId = activate.membershipId ?? null;
+    if (!membershipId) {
+      console.error("[billplz-webhook] activate succeeded but missing membership_id", { bill_id: billId });
+      return NextResponse.json({ ok: false, error: "membership_id_missing" }, { status: 500 });
+    }
+
     await svc
       .schema("public")
       .from("billing_sessions")
@@ -449,15 +442,14 @@ export async function POST(req: Request) {
   const { data: planRow } = await svc
     .schema("public")
     .from("plans")
-    .select("id, is_trial")
+    .select("id, is_trial, slug")
     .eq("id", pendingBill.plan_id)
     .maybeSingle();
 
-  if (!planRow) {
+  if (!planRow?.slug) {
     return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
   }
 
-  // Create Supabase user only upon payment confirmation (not when payment is pending).
   let userId: string;
   const tempPassword = randomBytes(24).toString("base64url");
   const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
@@ -490,40 +482,33 @@ export async function POST(req: Request) {
   const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
 
   await svc.schema("public").from("profiles").upsert(
-    { id: userId, trial_use_count: newTrialCount },
+    { id: userId, email: pendingBill.email.trim(), trial_use_count: newTrialCount },
     { onConflict: "id" }
   );
 
-  const start = new Date();
-  const days = getPlanDuration(planRow.id, 7);
-  const end = computeExpiry(start, days);
-
-  const { data: newMembership, error: membershipErr } = await svc
-    .schema("public")
-    .from("memberships")
-    .insert({
-      user_id: userId,
-      plan_id: planRow.id,
-      status: "active",
-      start_date: start.toISOString(),
-      end_date: end ? end.toISOString() : null,
-    })
-    .select("id")
-    .single();
-
-  if (membershipErr || !newMembership?.id) {
-    return NextResponse.json({ ok: false, error: "membership_create_failed" }, { status: 500 });
-  }
-
-  await svc.schema("public").from("payments").insert({
-    membership_id: newMembership.id,
-    billplz_bill_id: billId,
-    billplz_collection_id: process.env.BILLPLZ_COLLECTION_ID ?? null,
-    status: "paid",
-    paid_at: paidAt ?? new Date().toISOString(),
-    amount_cents: amount ? Number(amount) : null,
-    raw_webhook: body as any,
+  const paidAtIso = paidAt ?? new Date().toISOString();
+  const activatePb = await insertBillplzPaymentThenActivate({
+    svc,
+    billId,
+    userId,
+    planId: planRow.id,
+    planSlug: planRow.slug,
+    userEmail: pendingBill.email.trim(),
+    amountCents: amount != null ? Number(amount) : null,
+    paymentConfirmedAtIso: paidAtIso,
+    rawWebhook: body as Record<string, unknown>,
   });
+
+  if (!activatePb.ok) {
+    console.error("[billplz-webhook] pending_bills payment/activate failed", {
+      bill_id: billId,
+      error: activatePb.error,
+    });
+    return NextResponse.json(
+      { ok: false, error: "payment_or_activate_failed", detail: activatePb.error },
+      { status: 500 }
+    );
+  }
 
   await svc.schema("public").from("pending_bills").delete().eq("id", pendingBill.id);
 

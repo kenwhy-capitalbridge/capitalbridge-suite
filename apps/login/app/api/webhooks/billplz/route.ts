@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { randomBytes } from "crypto";
+import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
 
 export const runtime = "nodejs";
 
@@ -175,15 +176,14 @@ export async function POST(req: Request) {
   const { data: planRow } = await svc
     .schema("public")
     .from("plans")
-    .select("id, duration_days, is_trial")
+    .select("id, duration_days, is_trial, slug")
     .eq("id", pendingBill.plan_id)
     .maybeSingle();
 
-  if (!planRow) {
+  if (!planRow?.slug) {
     return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
   }
 
-  // Create Supabase user only upon payment confirmation (not when payment is pending).
   let userId: string;
   const tempPassword = randomBytes(24).toString("base64url");
   const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
@@ -235,58 +235,46 @@ export async function POST(req: Request) {
   const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
 
   await svc.schema("public").from("profiles").upsert(
-    { id: userId, trial_use_count: newTrialCount },
+    { id: userId, email: pendingBill.email.trim(), trial_use_count: newTrialCount },
     { onConflict: "id" }
   );
 
-  const start = new Date();
-  const end =
-    planRow.duration_days != null
-      ? new Date(start.getTime() + planRow.duration_days * 24 * 60 * 60 * 1000)
-      : null;
+  const paidAtIso = paidAt ?? new Date().toISOString();
+  const activated = await insertBillplzPaymentThenActivate({
+    svc,
+    billId,
+    userId,
+    planId: planRow.id,
+    planSlug: planRow.slug,
+    userEmail: pendingBill.email.trim(),
+    amountCents: amount ? Number(amount) : null,
+    paymentConfirmedAtIso: paidAtIso,
+    rawWebhook: body as Record<string, unknown>,
+  });
 
-  const { data: newMembership, error: membershipErr } = await svc
-    .schema("public")
-    .from("memberships")
-    .insert({
-      user_id: userId,
-      plan_id: planRow.id,
-      status: "active",
-      start_date: start.toISOString(),
-      end_date: end ? end.toISOString() : null,
-      started_at: start.toISOString(),
-      expires_at: end ? end.toISOString() : null,
-    })
-    .select("id")
-    .single();
-
-  if (membershipErr || !newMembership?.id) {
+  if (!activated.ok || !activated.membershipId) {
+    console.error("[login webhooks/billplz] pending_bills payment/activate failed", {
+      billId,
+      error: activated.error,
+    });
     return NextResponse.json(
-      { ok: false, error: "membership_create_failed" },
+      { ok: false, error: "payment_or_activate_failed", detail: activated.error },
       { status: 500 }
     );
   }
 
-  const { data: newPayment } = await svc
+  const { data: payRow } = await svc
     .schema("public")
     .from("payments")
-    .insert({
-      membership_id: newMembership.id,
-      billplz_bill_id: billId,
-      billplz_collection_id: process.env.BILLPLZ_COLLECTION_ID ?? null,
-      status: "paid",
-      paid_at: paidAt ?? new Date().toISOString(),
-      amount_cents: amount ? Number(amount) : null,
-      raw_webhook: body as Record<string, unknown>,
-    })
     .select("id")
-    .single();
+    .eq("billplz_bill_id", billId)
+    .maybeSingle();
 
   await logBillingEvent(svc, {
     event_type: "membership_activated",
     user_id: userId,
-    membership_id: newMembership.id,
-    payment_id: newPayment?.id ?? null,
+    membership_id: activated.membershipId,
+    payment_id: payRow?.id ?? null,
     metadata: { billplz_bill_id: billId, source: "pending_bills" },
   });
 

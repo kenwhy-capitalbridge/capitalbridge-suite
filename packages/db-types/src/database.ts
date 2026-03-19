@@ -42,7 +42,9 @@ export type Database = {
       payments: {
         Row: {
           id: string;
-          membership_id: string;
+          membership_id: string | null;
+          user_id: string | null;
+          plan_id: string | null;
           billplz_bill_id: string | null;
           billplz_collection_id: string | null;
           billing_session_id: string | null;

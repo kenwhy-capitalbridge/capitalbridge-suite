@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { getBillplzBill } from "@/lib/billplz";
-import { loadPlanMap, getPlanDuration } from "@cb/advisory-graph/plans/planMap";
-import { computeExpiry } from "@cb/advisory-graph/plans/expiry";
+import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
+import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
 import { randomBytes } from "crypto";
 
 export const runtime = "nodejs";
@@ -91,11 +91,11 @@ export async function GET(req: Request) {
   const { data: planRow } = await svc
     .schema("public")
     .from("plans")
-    .select("id, is_trial")
+    .select("id, is_trial, slug")
     .eq("id", session.plan_id)
     .maybeSingle();
 
-  if (!planRow) {
+  if (!planRow?.slug) {
     return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
   }
 
@@ -110,47 +110,38 @@ export async function GET(req: Request) {
       { onConflict: "id" }
     );
 
-  const start = new Date();
-  const days = getPlanDuration(planRow.id, 7);
-  const end = computeExpiry(start, days);
+  const activate = await insertBillplzPaymentThenActivate({
+    svc,
+    billId,
+    userId,
+    planId: planRow.id,
+    planSlug: planRow.slug,
+    userEmail: sessionEmail,
+    amountCents: amountNum != null ? Math.round(amountNum) : null,
+    paymentConfirmedAtIso: now,
+    rawWebhook: {
+      source: "confirm_payment",
+      bill_id: billId,
+      paid: true,
+    },
+    billingSessionId: session.id,
+  });
 
-  const { data: existingMembership } = await svc
-    .schema("public")
-    .from("memberships")
-    .select("id")
-    .eq("billing_session_id", session.id)
-    .maybeSingle();
-
-  let membershipId: string | null = null;
-  if (existingMembership?.id) {
-    membershipId = existingMembership.id;
-  } else {
-    const { data: newMembership, error: membershipErr } = await svc
-      .schema("public")
-      .from("memberships")
-      .insert({
-        user_id: userId,
-        plan_id: planRow.id,
-        status: "active",
-        billing_session_id: session.id,
-        start_date: start.toISOString(),
-        end_date: end ? end.toISOString() : null,
-        started_at: start.toISOString(),
-        expires_at: end ? end.toISOString() : null,
-      })
-      .select("id")
-      .single();
-
-    if (membershipErr || !newMembership?.id) {
-      return NextResponse.json({ ok: false, error: "membership_create_failed" }, { status: 500 });
-    }
-    membershipId = newMembership.id;
+  if (!activate.ok || !activate.membershipId) {
+    console.error("[confirm-payment] payment insert / activate failed", {
+      billId,
+      error: activate.error,
+    });
+    return NextResponse.json(
+      { ok: false, error: "payment_or_activate_failed", detail: activate.error },
+      { status: 500 }
+    );
   }
 
   await svc
     .schema("public")
     .from("billing_sessions")
-    .update({ user_id: userId, membership_id: membershipId, updated_at: now })
+    .update({ user_id: userId, membership_id: activate.membershipId, updated_at: now })
     .eq("id", session.id);
 
   if (planRow.is_trial) {
