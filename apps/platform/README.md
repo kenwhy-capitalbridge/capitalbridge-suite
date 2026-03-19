@@ -3,7 +3,7 @@
 Server routes:
 
 - `/` requires session (else redirect to login); checks membership and shows tools or payment gate
-- `/login` redirects to the login app with `redirectTo`
+- `/login` redirects to the login app **`/access`** with `redirectTo`
 - `/dashboard` redirects to `/`
 
 ## Required env vars (Vercel project: platform)

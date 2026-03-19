@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
 
-// Must match exactly a URL in Supabase Dashboard → Auth → URL Configuration → Redirect URLs (no trailing slash)
-const RESET_PASSWORD_PATH = "/reset-password";
-function getResetPasswordRedirectUrl(): string {
+const ACCESS_PATH = "/access";
+
+function getAccessRedirectUrl(): string {
   if (typeof window === "undefined")
-    return `${process.env.NEXT_PUBLIC_LOGIN_APP_URL ?? "https://login.thecapitalbridge.com"}${RESET_PASSWORD_PATH}`;
-  const origin = window.location.origin;
-  return `${origin}${RESET_PASSWORD_PATH}`;
+    return `${process.env.NEXT_PUBLIC_LOGIN_APP_URL ?? "https://login.thecapitalbridge.com"}${ACCESS_PATH}`;
+  return `${window.location.origin}${ACCESS_PATH}`;
 }
+
+const btnBase =
+  "w-full rounded-xl px-4 py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100";
+const btnPrimary = `${btnBase} cb-btn-primary`;
+const btnSecondary = `${btnBase} cb-btn-secondary`;
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -24,7 +27,7 @@ export default function ForgotPasswordPage() {
     setError(null);
     setLoading(true);
 
-    const redirectTo = getResetPasswordRedirectUrl();
+    const redirectTo = getAccessRedirectUrl();
     const { error: resetError } = await recoverySupabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });
@@ -40,17 +43,14 @@ export default function ForgotPasswordPage() {
   if (success) {
     return (
       <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
-        <div className="cb-card text-center">
+        <div className="cb-card max-w-md text-center">
           <h1 className="cb-card-title">Check your email</h1>
           <p className="cb-card-subtitle mt-2">
-            If an account exists for <strong>{email}</strong>, a password reset link will be sent there.
-            Check your inbox and spam folder, and allow a few minutes for delivery.
+            If an account exists for <strong>{email}</strong>, we&apos;ll send a link to get you back in.
           </p>
-          <p style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.9 }}>
-            <Link className="cb-link" href="/login">
-              Back to login
-            </Link>
-          </p>
+          <button type="button" className={`${btnPrimary} mt-6`} onClick={() => { window.location.href = "/access"; }}>
+            Back to account access
+          </button>
         </div>
       </main>
     );
@@ -58,13 +58,13 @@ export default function ForgotPasswordPage() {
 
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
-      <div className="cb-card">
-        <h1 className="cb-card-title">Forgot Password</h1>
-        <p className="cb-card-subtitle">Enter your email and we&apos;ll send you a reset link.</p>
+      <div className="cb-card max-w-md">
+        <h1 className="cb-card-title">Forgot password</h1>
+        <p className="cb-card-subtitle">Enter your email and we&apos;ll send you a secure link.</p>
 
         {!isSupabaseConfigured && (
           <p className="cb-message-error" style={{ marginTop: "1rem" }}>
-            Supabase env vars are not configured for this environment.
+            Sign-in isn&apos;t configured for this environment.
           </p>
         )}
 
@@ -83,16 +83,14 @@ export default function ForgotPasswordPage() {
             />
           </label>
 
-          <button className="cb-btn-primary" type="submit" disabled={loading || !isSupabaseConfigured}>
+          <button className={btnPrimary} type="submit" disabled={loading || !isSupabaseConfigured}>
             {loading ? "Sending…" : "Send reset link"}
           </button>
         </form>
 
-        <p style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.9 }}>
-          <Link className="cb-link" href="/login">
-            Back to login
-          </Link>
-        </p>
+        <button type="button" className={`${btnSecondary} mt-4`} onClick={() => { window.location.href = "/access"; }}>
+          Back to account access
+        </button>
       </div>
     </main>
   );

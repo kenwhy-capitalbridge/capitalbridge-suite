@@ -39,7 +39,7 @@ export default function Header() {
 
         {/* Exit / back to login: extra small on mobile */}
         <a
-          href={isPricing ? "/login" : EXIT_LOGIN_URL}
+          href={isPricing ? "/access" : EXIT_LOGIN_URL}
           className="shrink-0 rounded border border-cb-gold/50 bg-cb-gold/10 px-1 py-0.5 text-[10px] font-medium leading-tight text-cb-gold transition hover:bg-cb-gold/20 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm sm:leading-normal"
         >
           {isPricing ? "← BACK TO LOGIN" : "← EXIT LOGIN"}

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
-import { randomBytes } from "crypto";
 import { verifyBillplzWebhookSignature } from "@/lib/billplz";
 import { loadPlanMap, getPlanDuration } from "@cb/advisory-graph/plans/planMap";
 import { computeExpiry } from "@cb/advisory-graph/plans/expiry";
@@ -8,13 +7,13 @@ import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayme
 
 export const runtime = "nodejs";
 
-/** Login app URL for password reset redirect (must be in Supabase Auth → URL Configuration). */
-function getResetPasswordRedirectUrl(): string {
+/** Login app access page for recovery / magic links (must be in Supabase Auth → URL Configuration). */
+function getAccessPageRedirectUrl(): string {
   const base =
     process.env.LOGIN_APP_URL ??
     process.env.NEXT_PUBLIC_LOGIN_APP_URL ??
     "https://login.thecapitalbridge.com";
-  return `${base.replace(/\/$/, "")}/reset-password`;
+  return `${base.replace(/\/$/, "")}/access`;
 }
 
 /**
@@ -32,7 +31,7 @@ async function sendSetPasswordEmail(email: string): Promise<void> {
     );
     return;
   }
-  const redirectTo = getResetPasswordRedirectUrl();
+  const redirectTo = getAccessPageRedirectUrl();
   const recoverUrl = new URL(`${url}/auth/v1/recover`);
   recoverUrl.searchParams.set("redirect_to", redirectTo);
   try {
@@ -58,6 +57,19 @@ async function sendSetPasswordEmail(email: string): Promise<void> {
   } catch (err) {
     console.warn("[billplz-webhook] sendSetPasswordEmail error", err);
   }
+}
+
+async function sendSetPasswordEmailForUserId(
+  svc: Awaited<ReturnType<typeof createServiceClient>>,
+  userId: string
+): Promise<void> {
+  const { data: wrap, error } = await svc.auth.admin.getUserById(userId);
+  const email = wrap?.user?.email?.trim();
+  if (error || !email) {
+    console.warn("[billplz-webhook] skip recovery email: could not resolve email for user", { userId });
+    return;
+  }
+  await sendSetPasswordEmail(email);
 }
 
 function logBillingEvent(
@@ -135,7 +147,7 @@ export async function POST(req: Request) {
   const { data: sessionByBill, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
-    .select("id, email, plan_id, status")
+    .select("id, email, plan_id, status, user_id")
     .eq("bill_id", billId)
     .maybeSingle();
 
@@ -187,42 +199,25 @@ export async function POST(req: Request) {
       })
       .eq("id", billingSessionId);
 
-    const sessionEmail = sessionByBill.email?.trim();
-    if (!sessionEmail) {
-      console.error("[billplz-webhook] billing_sessions missing email", { bill_id: billId, billing_session_id: billingSessionId });
-      return NextResponse.json({ ok: true });
+    const preUserId = sessionByBill.user_id as string | null | undefined;
+    if (!preUserId) {
+      console.error("[billplz-webhook] billing_sessions missing user_id", { bill_id: billId, billing_session_id: billingSessionId });
+      return NextResponse.json({ ok: false, error: "missing_user_id" }, { status: 400 });
     }
 
-    // Section 7: Create Supabase user (reuse if exists)
-    let userId: string;
-    const tempPassword = randomBytes(24).toString("base64url");
-    const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
-      email: sessionEmail,
-      password: tempPassword,
-      email_confirm: true,
-    });
-
-    if (createUserErr || !authUser?.user?.id) {
-      const msg = String(createUserErr?.message ?? "").toLowerCase();
-      const isAlreadyExists = msg.includes("already") || msg.includes("registered") || msg.includes("exists");
-      if (isAlreadyExists) {
-        const { data: listData } = await svc.auth.admin.listUsers({ perPage: 1000, page: 1 });
-        const existing = listData?.users?.find((u) => (u.email ?? "").toLowerCase() === sessionEmail.toLowerCase());
-        if (existing?.id) {
-          userId = existing.id;
-          console.info("[billplz-webhook] reused existing user", { bill_id: billId, billing_session_id: billingSessionId, user_id: userId });
-        } else {
-          console.error("[billplz-webhook] user creation failed (exists but not found)", { bill_id: billId, billing_session_id: billingSessionId });
-          return NextResponse.json({ ok: false, error: "user_creation_failed" }, { status: 500 });
-        }
-      } else {
-        console.error("[billplz-webhook] user creation failed", { bill_id: billId, billing_session_id: billingSessionId, error: createUserErr?.message });
-        return NextResponse.json({ ok: false, error: "user_creation_failed" }, { status: 500 });
-      }
-    } else {
-      userId = authUser.user.id;
-      console.info("[billplz-webhook] user created", { bill_id: billId, billing_session_id: billingSessionId, user_id: userId });
+    const { data: authWrap, error: guErr } = await svc.auth.admin.getUserById(preUserId);
+    if (guErr || !authWrap?.user?.id) {
+      console.error("[billplz-webhook] invalid user_id on billing_session", { bill_id: billId, user_id: preUserId });
+      return NextResponse.json({ ok: false, error: "invalid_user" }, { status: 400 });
     }
+
+    const userId = authWrap.user.id;
+    const userEmail = (authWrap.user.email ?? "").trim();
+    if (!userEmail) {
+      console.error("[billplz-webhook] user has no email", { bill_id: billId, user_id: userId });
+      return NextResponse.json({ ok: false, error: "user_missing_email" }, { status: 400 });
+    }
+    console.info("[billplz-webhook] payment-first session user resolved", { bill_id: billId, user_id: userId });
 
     const { data: planRow } = await svc
       .schema("public")
@@ -247,7 +242,7 @@ export async function POST(req: Request) {
       .schema("public")
       .from("profiles")
       .upsert(
-        { id: userId, email: sessionEmail, trial_use_count: newTrialCount },
+        { id: userId, email: userEmail, trial_use_count: newTrialCount },
         { onConflict: "id" }
       );
 
@@ -257,7 +252,7 @@ export async function POST(req: Request) {
       userId,
       planId: planRow.id,
       planSlug: planRow.slug,
-      userEmail: sessionEmail,
+      userEmail,
       amountCents: amountNum,
       paymentConfirmedAtIso: now,
       rawWebhook: body as Record<string, unknown>,
@@ -303,8 +298,25 @@ export async function POST(req: Request) {
       void svc.rpc("increment_trial_use_count" as never, { user_id: userId }).then(() => {}, () => {});
     }
 
-    // Section 13: trigger "set password" email via Supabase Auth recover (uses project SMTP e.g. Resend)
-    void sendSetPasswordEmail(sessionEmail);
+    try {
+      const { data: uwrap } = await svc.auth.admin.getUserById(userId);
+      const meta = { ...(uwrap?.user?.user_metadata ?? {}), checkout_pending: false };
+      await svc.auth.admin.updateUserById(userId, { user_metadata: meta });
+    } catch (e) {
+      console.warn("[billplz-webhook] user metadata update skipped", e);
+    }
+
+    await svc
+      .schema("public")
+      .from("profiles")
+      .upsert(
+        { id: userId, email: userEmail, payment_status: "active", pending_plan: null },
+        { onConflict: "id" }
+      );
+
+    await sendSetPasswordEmailForUserId(svc, userId).catch((e) =>
+      console.error("[billplz-webhook] set-password email failed", e)
+    );
     return NextResponse.json({ ok: true });
   }
 
@@ -418,100 +430,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  // 2) Payment-first flow: pending_bills — create Supabase user only after payment
-  const { data: pendingBill, error: pendingErr } = await svc
-    .schema("public")
-    .from("pending_bills")
-    .select("id, email, plan_id, name")
-    .eq("billplz_bill_id", billId)
-    .maybeSingle();
-
-  if (pendingErr || !pendingBill) {
-    console.warn("[billplz-webhook] no billing_sessions, payments, or pending_bills found", { billId });
-    logBillingEvent(svc, {
-      event_type: "webhook_unmatched_bill",
-      metadata: { billplz_bill_id: billId, paid },
-    });
-    return NextResponse.json({ ok: false, error: "payment_or_pending_not_found" }, { status: 404 });
-  }
-
-  if (!paid) {
-    return NextResponse.json({ ok: true });
-  }
-
-  const { data: planRow } = await svc
-    .schema("public")
-    .from("plans")
-    .select("id, is_trial, slug")
-    .eq("id", pendingBill.plan_id)
-    .maybeSingle();
-
-  if (!planRow?.slug) {
-    return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
-  }
-
-  let userId: string;
-  const tempPassword = randomBytes(24).toString("base64url");
-  const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
-    email: pendingBill.email,
-    password: tempPassword,
-    email_confirm: true,
+  console.warn("[billplz-webhook] no billing_sessions or payments row for bill", { billId });
+  logBillingEvent(svc, {
+    event_type: "webhook_unmatched_bill",
+    metadata: { billplz_bill_id: billId, paid },
   });
-
-  if (createUserErr || !authUser?.user?.id) {
-    const msg = String(createUserErr?.message ?? "").toLowerCase();
-    const isAlreadyExists =
-      msg.includes("already") || msg.includes("registered") || msg.includes("exists");
-    if (isAlreadyExists) {
-      const { data: listData } = await svc.auth.admin.listUsers({ perPage: 1000, page: 1 });
-      const existing = listData?.users?.find((u) => (u.email ?? "").toLowerCase() === pendingBill.email.toLowerCase());
-      if (existing?.id) {
-        userId = existing.id;
-      } else {
-        return NextResponse.json({ ok: false, error: "user_creation_failed" }, { status: 500 });
-      }
-    } else {
-      return NextResponse.json({ ok: false, error: "user_creation_failed" }, { status: 500 });
-    }
-  } else {
-    userId = authUser.user.id;
-  }
-
-  const { data: profileRow } = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
-  const currentTrialCount = profileRow?.trial_use_count ?? 0;
-  const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
-
-  await svc.schema("public").from("profiles").upsert(
-    { id: userId, email: pendingBill.email.trim(), trial_use_count: newTrialCount },
-    { onConflict: "id" }
-  );
-
-  const paidAtIso = paidAt ?? new Date().toISOString();
-  const activatePb = await insertBillplzPaymentThenActivate({
-    svc,
-    billId,
-    userId,
-    planId: planRow.id,
-    planSlug: planRow.slug,
-    userEmail: pendingBill.email.trim(),
-    amountCents: amount != null ? Number(amount) : null,
-    paymentConfirmedAtIso: paidAtIso,
-    rawWebhook: body as Record<string, unknown>,
-  });
-
-  if (!activatePb.ok) {
-    console.error("[billplz-webhook] pending_bills payment/activate failed", {
-      bill_id: billId,
-      error: activatePb.error,
-    });
-    return NextResponse.json(
-      { ok: false, error: "payment_or_activate_failed", detail: activatePb.error },
-      { status: 500 }
-    );
-  }
-
-  await svc.schema("public").from("pending_bills").delete().eq("id", pendingBill.id);
-
-  void sendSetPasswordEmail(pendingBill.email);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: false, error: "payment_not_found" }, { status: 404 });
 }

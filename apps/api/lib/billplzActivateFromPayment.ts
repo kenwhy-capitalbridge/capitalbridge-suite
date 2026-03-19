@@ -39,10 +39,31 @@ export async function insertBillplzPaymentThenActivate(
     return { ok: false, error: "missing_bill_id" };
   }
 
+  const { data: existingPay, error: existingErr } = await params.svc
+    .schema("public")
+    .from("payments")
+    .select("id, membership_id, status")
+    .eq("billplz_bill_id", billId)
+    .maybeSingle();
+
+  if (!existingErr && existingPay?.membership_id) {
+    console.info("[billplz-payment] idempotent: payment already linked to membership", { billId });
+    return {
+      ok: true,
+      duplicatePayment: true,
+      idempotentRpc: true,
+      membershipId: existingPay.membership_id,
+    };
+  }
+
+  const skipInsert = !existingErr && !!existingPay?.id && !existingPay.membership_id;
+
   const paymentAmount =
     params.amountCents != null ? params.amountCents / 100 : null;
 
-  const { error: insertErr } = await params.svc.schema("public").from("payments").insert({
+  const { error: insertErr } = skipInsert
+    ? { error: null }
+    : await params.svc.schema("public").from("payments").insert({
     user_id: params.userId,
     plan_id: params.planId,
     billplz_bill_id: billId,
@@ -58,7 +79,9 @@ export async function insertBillplzPaymentThenActivate(
     raw_webhook: params.rawWebhook,
   });
 
-  if (insertErr?.code === "23505") {
+  const effectiveInsertErr = skipInsert ? null : insertErr;
+
+  if (effectiveInsertErr?.code === "23505") {
     console.info("[billplz-payment] duplicate Billplz payment (23505), idempotency branch", { billId });
     const { data: existing, error: selErr } = await params.svc
       .schema("public")
@@ -88,15 +111,15 @@ export async function insertBillplzPaymentThenActivate(
     console.info("[billplz-payment] payment exists without membership — invoking activate_membership_for_billplz", {
       billId,
     });
-  } else if (insertErr) {
+  } else if (effectiveInsertErr) {
     console.error("[billplz-payment] payments insert failed", {
       billId,
-      code: insertErr.code,
-      message: insertErr.message,
-      details: insertErr.details,
-      hint: insertErr.hint,
+      code: effectiveInsertErr.code,
+      message: effectiveInsertErr.message,
+      details: effectiveInsertErr.details,
+      hint: effectiveInsertErr.hint,
     });
-    return { ok: false, error: insertErr.message };
+    return { ok: false, error: effectiveInsertErr.message };
   }
 
   const email = params.userEmail.trim();
@@ -165,7 +188,7 @@ export async function insertBillplzPaymentThenActivate(
 
   return {
     ok: true,
-    duplicatePayment: insertErr?.code === "23505",
+    duplicatePayment: effectiveInsertErr?.code === "23505" || skipInsert,
     idempotentRpc: !!row.idempotent,
     membershipId: row.membership_id ?? null,
     isTrial: !!row.is_trial,

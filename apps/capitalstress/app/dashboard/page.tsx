@@ -9,7 +9,7 @@ export default async function CapitalStressDashboard() {
   const supabase = await createAppServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect(`${LOGIN_APP_URL}/login?redirectTo=${encodeURIComponent("https://capitalstress.thecapitalbridge.com/dashboard")}`);
+    redirect(`${LOGIN_APP_URL}/access?redirectTo=${encodeURIComponent("https://capitalstress.thecapitalbridge.com/dashboard")}`);
   }
 
   const now = new Date().toISOString();

@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
 
@@ -35,7 +34,9 @@ function CheckoutContent() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [emailFieldError, setEmailFieldError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [securing, setSecuring] = useState(false);
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -49,20 +50,30 @@ function CheckoutContent() {
     );
   }, []);
 
+  function validateEmail(value: string): boolean {
+    const t = value.trim();
+    if (!t || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) {
+      setEmailFieldError("Please enter a valid email address.");
+      return false;
+    }
+    setEmailFieldError(null);
+    return true;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submittingRef.current) return;
     setError(null);
     setEmailAlreadyExists(false);
+    if (!validateEmail(email)) {
+      emailInputRef.current?.focus();
+      return;
+    }
     setLoading(true);
     submittingRef.current = true;
 
     try {
       const trimmedEmail = email.trim();
-      if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-        setError("Please enter a valid email address.");
-        return;
-      }
 
       const exists = await emailExists(supabase, trimmedEmail);
       if (exists) {
@@ -86,7 +97,11 @@ function CheckoutContent() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        if (data?.error === "account_exists" || String(data?.detail ?? "").toLowerCase().includes("already exists")) {
+        if (
+          res.status === 409 ||
+          data?.error === "account_exists" ||
+          String(data?.detail ?? "").toLowerCase().includes("already exists")
+        ) {
           setError(ACCOUNT_EXISTS_MSG);
           setEmailAlreadyExists(true);
           emailInputRef.current?.focus();
@@ -101,16 +116,31 @@ function CheckoutContent() {
 
       const checkoutUrl = data?.checkoutUrl ?? data?.payment_url;
       if (typeof checkoutUrl === "string" && checkoutUrl) {
-        window.location.href = checkoutUrl;
+        setSecuring(true);
+        setLoading(false);
+        window.setTimeout(() => {
+          window.location.href = checkoutUrl;
+        }, 400);
         return;
       }
       setError("Invalid response from server.");
     } catch {
       setError("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      if (!securing) setLoading(false);
       submittingRef.current = false;
     }
+  }
+
+  if (securing) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card max-w-md text-center">
+          <h1 className="cb-card-title">Securing your access…</h1>
+          <p className="cb-card-subtitle mt-2">You&apos;re being moved to our secure payment page.</p>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -132,17 +162,18 @@ function CheckoutContent() {
         </div>
       )}
       <div className="cb-card">
-        <h1 className="cb-card-title">Complete your purchase</h1>
-        <p className="cb-card-subtitle">Plan: {planLabel}</p>
-        <p style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
-          <Link className="cb-link" href="/pricing">
-            &larr; View other plans
-          </Link>
-        </p>
-
-        <p style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.9 }}>
-          Enter your details and continue to secure payment. Your account is created only after payment is confirmed.
-        </p>
+        <h1 className="cb-card-title">Start Building Your Capital Strategy</h1>
+        <p className="cb-card-subtitle">Set up your access in seconds.</p>
+        <p style={{ marginTop: "0.75rem", fontSize: "0.9rem", opacity: 0.9 }}>Plan: {planLabel}</p>
+        <button
+          type="button"
+          className="cb-btn-secondary mt-3 w-full rounded-xl py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50"
+          onClick={() => {
+            window.location.href = "/pricing";
+          }}
+        >
+          View other plans
+        </button>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "1.75rem", display: "grid", gap: "1rem" }}>
           {error && <p className="cb-message-error">{error}</p>}
@@ -156,11 +187,20 @@ function CheckoutContent() {
               onChange={(e) => {
                 setEmail(e.target.value);
                 if (emailAlreadyExists) setEmailAlreadyExists(false);
+                if (emailFieldError) setEmailFieldError(null);
+              }}
+              onBlur={() => {
+                if (email.trim()) validateEmail(email);
               }}
               type="email"
               required
               placeholder="you@example.com"
             />
+            {emailFieldError && (
+              <p className="cb-message-error" style={{ marginTop: "0.35rem", fontSize: "0.85rem" }}>
+                {emailFieldError}
+              </p>
+            )}
           </label>
 
           <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -175,17 +215,23 @@ function CheckoutContent() {
           </label>
 
           <button
-            className="cb-btn-primary"
+            className="cb-btn-primary w-full rounded-xl py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             type="submit"
             disabled={loading || emailAlreadyExists}
           >
-            {loading ? "Redirecting to payment…" : "Continue to payment"}
+            {loading ? "One moment…" : "Continue Securely"}
           </button>
         </form>
 
-        <p style={{ marginTop: "1rem", fontSize: "0.9rem", opacity: 0.9 }}>
-          Already have an account? <Link className="cb-link" href="/login">Log in</Link>
-        </p>
+        <button
+          type="button"
+          className="cb-btn-secondary mt-4 w-full rounded-xl py-3 font-medium transition hover:scale-[1.02]"
+          onClick={() => {
+            window.location.href = "/access";
+          }}
+        >
+          I already have an account
+        </button>
       </div>
     </main>
   );

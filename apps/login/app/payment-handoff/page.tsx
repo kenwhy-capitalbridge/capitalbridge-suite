@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -29,6 +28,11 @@ const platformBase =
   "https://platform.thecapitalbridge.com";
 const LOGIN_REDIRECT = platformBase.replace(/\/$/, "");
 
+const btnBase =
+  "w-full rounded-xl px-4 py-3 text-center font-medium transition hover:scale-[1.02] disabled:opacity-50";
+const btnPrimary = `${btnBase} cb-btn-primary block`;
+const btnSecondary = `${btnBase} cb-btn-secondary block`;
+
 function PaymentHandoffContent() {
   const searchParams = useSearchParams();
   const paymentUrl = searchParams.get("payment_url");
@@ -39,8 +43,8 @@ function PaymentHandoffContent() {
   const [status, setStatus] = useState<BillingStatusResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(!!billId);
 
-  const loginHref = useMemo(
-    () => `/login?redirectTo=${encodeURIComponent(LOGIN_REDIRECT)}`,
+  const accessHref = useMemo(
+    () => `/access?redirectTo=${encodeURIComponent(LOGIN_REDIRECT)}`,
     []
   );
 
@@ -61,7 +65,7 @@ function PaymentHandoffContent() {
           setLoading(false);
           if (data.account_ready) {
             window.setTimeout(() => {
-              if (!cancelled) window.location.href = loginHref;
+              if (!cancelled) window.location.href = accessHref;
             }, 1500);
           }
         }
@@ -79,7 +83,7 @@ function PaymentHandoffContent() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [billId, loginHref]);
+  }, [billId, accessHref]);
 
   const accountReady = !!status?.account_ready;
 
@@ -102,7 +106,7 @@ function PaymentHandoffContent() {
             </p>
           )}
           {loading && <p>Checking account status…</p>}
-          {!loading && accountReady && <p>Your account is ready. Redirecting you to login now.</p>}
+          {!loading && accountReady && <p>Your account is ready. Taking you to sign in…</p>}
           {!loading && !accountReady && (
             <p>
               After you complete payment, return to this page or use the Billplz merchant return link. We will keep checking your
@@ -114,7 +118,7 @@ function PaymentHandoffContent() {
         <div style={{ marginTop: "1.5rem", display: "grid", gap: "0.75rem" }}>
           {paymentUrl && (
             <a
-              className="cb-btn-primary"
+              className={btnPrimary}
               href={paymentUrl}
               target="_blank"
               rel="noreferrer"
@@ -122,13 +126,19 @@ function PaymentHandoffContent() {
               Open secure payment
             </a>
           )}
-          <Link className="cb-link" href={loginHref}>
-            Go to login
-          </Link>
+          <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
+            Open my account
+          </button>
           {billId && (
-            <Link className="cb-link" href={`/payment-return?billplz[id]=${encodeURIComponent(billId)}`}>
+            <button
+              type="button"
+              className={btnSecondary}
+              onClick={() => {
+                window.location.href = `/payment-return?billplz[id]=${encodeURIComponent(billId)}`;
+              }}
+            >
               I already paid
-            </Link>
+            </button>
           )}
         </div>
       </div>

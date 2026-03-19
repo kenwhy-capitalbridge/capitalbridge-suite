@@ -41,7 +41,7 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const loginUrl = new URL(`${LOGIN_APP_URL}/login`);
+    const loginUrl = new URL(`${LOGIN_APP_URL}/access`);
     loginUrl.searchParams.set("redirectTo", req.nextUrl.origin + req.nextUrl.pathname);
     return NextResponse.redirect(loginUrl.toString());
   }

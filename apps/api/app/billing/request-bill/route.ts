@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
 
@@ -41,8 +42,8 @@ function getPaymentFirstRedirectUrl(): string {
 }
 
 /**
- * Payment-first: create billing_sessions row with email + plan, then Billplz bill.
- * No Supabase user is created here. User is created only after webhook confirms payment.
+ * Payment-first: create Auth user + profile (pending), billing_sessions with user_id, then Billplz bill.
+ * Webhook confirms payment → membership + set-password email (user already exists).
  */
 export async function POST(req: Request) {
   const origin = req.headers.get("Origin");
@@ -70,13 +71,55 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400, headers });
   }
 
-  // Payment-first: no user yet; user_id must be null (migration 20260323 makes user_id nullable).
-  // Some schemas have a "plan" column (slug) NOT NULL; set it for compatibility.
+  const tempPassword = randomBytes(28).toString("base64url");
+  const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: false,
+    user_metadata: {
+      full_name: name,
+      name,
+      checkout_pending: true,
+    },
+  });
+
+  if (createUserErr || !authUser?.user?.id) {
+    const msg = String(createUserErr?.message ?? "").toLowerCase();
+    if (
+      msg.includes("already") ||
+      msg.includes("registered") ||
+      msg.includes("exists") ||
+      createUserErr?.code === "email_exists"
+    ) {
+      return NextResponse.json({ error: "account_exists", detail: "email_already_registered" }, { status: 409, headers });
+    }
+    console.error("[request-bill] create user failed:", createUserErr);
+    return NextResponse.json(
+      { error: "user_create_failed", detail: createUserErr?.message },
+      { status: 500, headers }
+    );
+  }
+
+  const userId = authUser.user.id;
+
+  await svc
+    .schema("public")
+    .from("profiles")
+    .upsert(
+      {
+        id: userId,
+        email,
+        payment_status: "pending",
+        pending_plan: planRow.slug,
+      },
+      { onConflict: "id" }
+    );
+
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
     .insert({
-      user_id: null,
+      user_id: userId,
       email,
       plan: planRow.slug,
       plan_id: planRow.id,
@@ -89,6 +132,7 @@ export async function POST(req: Request) {
 
   if (sessionErr || !session?.id) {
     console.error("[request-bill] billing_sessions insert failed:", sessionErr);
+    await svc.auth.admin.deleteUser(userId).catch(() => {});
     const detail = sessionErr?.message ?? (sessionErr as Error)?.message;
     return NextResponse.json(
       { error: "session_create_failed", detail: typeof detail === "string" ? detail : undefined },

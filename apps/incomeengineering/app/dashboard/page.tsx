@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function IncomeEngineeringDashboard() {
   const supabase = await createAppServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`${LOGIN_APP_URL}/login?redirectTo=${encodeURIComponent("https://incomeengineering.thecapitalbridge.com/dashboard")}`);
+  if (!user) redirect(`${LOGIN_APP_URL}/access?redirectTo=${encodeURIComponent("https://incomeengineering.thecapitalbridge.com/dashboard")}`);
 
   const now = new Date().toISOString();
   const { data: membership } = await supabase

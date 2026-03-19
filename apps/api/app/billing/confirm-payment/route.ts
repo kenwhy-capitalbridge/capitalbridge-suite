@@ -3,7 +3,6 @@ import { createServiceClient } from "@cb/supabase/service";
 import { getBillplzBill } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
 import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
-import { randomBytes } from "crypto";
 
 export const runtime = "nodejs";
 
@@ -25,7 +24,7 @@ export async function GET(req: Request) {
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
-    .select("id, email, plan_id, status")
+    .select("id, email, plan_id, status, user_id")
     .eq("bill_id", billId)
     .maybeSingle();
 
@@ -57,35 +56,20 @@ export async function GET(req: Request) {
     })
     .eq("id", session.id);
 
-  const sessionEmail = session.email?.trim();
-  if (!sessionEmail) {
-    return NextResponse.json({ ok: false, error: "session_missing_email" }, { status: 500 });
+  const preUserId = session.user_id as string | null | undefined;
+  if (!preUserId) {
+    return NextResponse.json({ ok: false, error: "missing_user_id" }, { status: 400 });
   }
 
-  let userId: string;
-  const tempPassword = randomBytes(24).toString("base64url");
-  const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
-    email: sessionEmail,
-    password: tempPassword,
-    email_confirm: true,
-  });
+  const { data: authWrap, error: guErr } = await svc.auth.admin.getUserById(preUserId);
+  if (guErr || !authWrap?.user?.id) {
+    return NextResponse.json({ ok: false, error: "invalid_user" }, { status: 400 });
+  }
 
-  if (createUserErr || !authUser?.user?.id) {
-    const msg = String(createUserErr?.message ?? "").toLowerCase();
-    const isAlreadyExists = msg.includes("already") || msg.includes("registered") || msg.includes("exists");
-    if (isAlreadyExists) {
-      const { data: listData } = await svc.auth.admin.listUsers({ perPage: 1000, page: 1 });
-      const existing = listData?.users?.find((u) => (u.email ?? "").toLowerCase() === sessionEmail.toLowerCase());
-      if (existing?.id) {
-        userId = existing.id;
-      } else {
-        return NextResponse.json({ ok: false, error: "user_creation_failed" }, { status: 500 });
-      }
-    } else {
-      return NextResponse.json({ ok: false, error: "user_creation_failed" }, { status: 500 });
-    }
-  } else {
-    userId = authUser.user.id;
+  const userId = authWrap.user.id;
+  const userEmail = (authWrap.user.email ?? "").trim();
+  if (!userEmail) {
+    return NextResponse.json({ ok: false, error: "user_missing_email" }, { status: 400 });
   }
 
   const { data: planRow } = await svc
@@ -106,7 +90,7 @@ export async function GET(req: Request) {
     .schema("public")
     .from("profiles")
     .upsert(
-      { id: userId, email: sessionEmail, trial_use_count: newTrialCount },
+      { id: userId, email: userEmail, trial_use_count: newTrialCount },
       { onConflict: "id" }
     );
 
@@ -116,7 +100,7 @@ export async function GET(req: Request) {
     userId,
     planId: planRow.id,
     planSlug: planRow.slug,
-    userEmail: sessionEmail,
+    userEmail,
     amountCents: amountNum != null ? Math.round(amountNum) : null,
     paymentConfirmedAtIso: now,
     rawWebhook: {
@@ -148,7 +132,23 @@ export async function GET(req: Request) {
     void svc.rpc("increment_trial_use_count" as never, { user_id: userId }).then(() => {}, () => {});
   }
 
-  // Trigger set-password email (same as webhook)
+  try {
+    const { data: uwrap } = await svc.auth.admin.getUserById(userId);
+    const meta = { ...(uwrap?.user?.user_metadata ?? {}), checkout_pending: false };
+    await svc.auth.admin.updateUserById(userId, { user_metadata: meta });
+  } catch {
+    /* noop */
+  }
+
+  await svc
+    .schema("public")
+    .from("profiles")
+    .upsert(
+      { id: userId, email: userEmail, payment_status: "active", pending_plan: null },
+      { onConflict: "id" }
+    );
+
+  // Trigger recovery email → unified /access (same as webhook)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -158,7 +158,7 @@ export async function GET(req: Request) {
       process.env.LOGIN_APP_URL ??
       process.env.NEXT_PUBLIC_LOGIN_APP_URL ??
       "https://login.thecapitalbridge.com";
-    const redirectTo = `${loginBase.replace(/\/$/, "")}/reset-password`;
+    const redirectTo = `${loginBase.replace(/\/$/, "")}/access`;
     const recoverUrl = new URL(`${supabaseUrl}/auth/v1/recover`);
     recoverUrl.searchParams.set("redirect_to", redirectTo);
     fetch(recoverUrl.toString(), {
@@ -168,7 +168,7 @@ export async function GET(req: Request) {
         apikey: apiKey,
         ...(serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {}),
       },
-      body: JSON.stringify({ email: sessionEmail.trim() }),
+      body: JSON.stringify({ email: userEmail }),
     }).catch(() => {});
   }
 

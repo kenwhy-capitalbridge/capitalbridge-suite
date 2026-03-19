@@ -67,6 +67,10 @@
     @apply rounded-xl bg-cb-gold px-4 py-3 font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] transition hover:bg-cb-green hover:text-white disabled:opacity-50;
   }
 
+  .cb-btn-secondary {
+    @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-4 py-3 font-medium text-cb-green transition hover:bg-white disabled:opacity-50;
+  }
+
   /* Secondary link: dark gold on light bg for legibility (CSS var avoids @apply issues) */
   .cb-link {
     color: var(--cb-gold-dark);

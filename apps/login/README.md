@@ -2,7 +2,8 @@
 
 Pages:
 
-- `/login`
+- `/access` (sign-in, password setup, magic link)
+- `/login` → redirects to `/access`
 - `/pricing`
 - `/signup`
 

@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 /**
- * Payment-first proxy: no auth. Forwards to API billing/request-bill.
- * Creates billing session + Billplz bill; no Supabase account until webhook confirms payment.
+ * Payment-first proxy: forwards to API billing/request-bill.
+ * Creates Auth user (pending) + session + Billplz bill; webhook completes activation + set-password email.
  */
 type Body = { email?: string; name?: string; plan?: string };
 

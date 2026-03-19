@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function LoginRedirectPage() {
   const h = await headers();
   const host = h.get("host") ?? "platform.thecapitalbridge.com";
-  const loginUrl = new URL(`${LOGIN_APP_URL}/login`);
+  const loginUrl = new URL(`${LOGIN_APP_URL}/access`);
   loginUrl.searchParams.set("redirectTo", `https://${host}`);
   redirect(loginUrl.toString());
 }
