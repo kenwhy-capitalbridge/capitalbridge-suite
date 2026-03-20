@@ -3,18 +3,15 @@
 import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured, supabase, recoverySupabase } from "@/lib/supabaseClient";
+import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
 
 const PLATFORM_URL =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
   "https://platform.thecapitalbridge.com";
-const ACCESS_ORIGIN =
-  typeof window !== "undefined"
-    ? window.location.origin
-    : (process.env.NEXT_PUBLIC_LOGIN_APP_URL ?? "https://login.thecapitalbridge.com").replace(/\/$/, "");
 
 const btn =
   "w-full rounded-xl px-4 py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100";
-const btnPrimary = `${btn} bg-cb-gold text-cb-green shadow-lg`;
+const btnPrimary = `${btn} bg-cb-gold text-base font-semibold text-cb-green shadow-lg`;
 const btnSecondary = `${btn} border-2 border-cb-gold/60 bg-white/90 text-cb-green`;
 
 type View =
@@ -23,11 +20,12 @@ type View =
   | "password_done"
   | "error"
   | "login"
-  | "magic_sent"
+  | "secure_link_sent"
   | "resend_email";
 
 const SESSION_SYNC_RETRIES = 5;
 const SESSION_SYNC_DELAY_MS = 500;
+const PASSWORD_SUCCESS_HOLD_MS = 5000;
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -37,12 +35,19 @@ function getLoginErrorMessage(err: { message?: string; code?: string }): string 
   const msg = (err.message ?? "").toLowerCase();
   const code = (err.code ?? "").toLowerCase();
   if (code === "invalid_login_credentials" || msg.includes("invalid login credentials")) {
-    return "Wrong email or password. Please try again.";
+    return "";
   }
   if (msg.includes("rate limit") || msg.includes("too many")) {
     return "Too many attempts. Please wait a moment.";
   }
   return err.message ?? "Something went wrong. Please try again.";
+}
+
+function stripQueryParams(keys: string[]) {
+  const u = new URL(window.location.href);
+  keys.forEach((k) => u.searchParams.delete(k));
+  const qs = u.searchParams.toString();
+  window.history.replaceState(null, "", `${u.pathname}${qs ? `?${qs}` : ""}`);
 }
 
 function AccessInner() {
@@ -57,6 +62,8 @@ function AccessInner() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [invalidSession, setInvalidSession] = useState(false);
+  const [successSecondsLeft, setSuccessSecondsLeft] = useState(5);
+  const [showPasswordNotSetHint, setShowPasswordNotSetHint] = useState(false);
 
   const destination = useMemo(() => {
     const platformBase = PLATFORM_URL.replace(/\/$/, "");
@@ -64,17 +71,38 @@ function AccessInner() {
     return `${platformBase}/`;
   }, [redirectTo]);
 
+  const authEmailRedirect = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
+
   const resolveSession = useCallback(async () => {
     setError(null);
+    setInvalidSession(false);
     const search = typeof window !== "undefined" ? window.location.search : "";
     const hash = typeof window !== "undefined" ? window.location.hash : "";
-    const searchParamsLocal = new URLSearchParams(search);
-    const code = searchParamsLocal.get("code");
+    const sp = new URLSearchParams(search);
+    const code = sp.get("code");
 
     if (code) {
       const { error: exErr } = await recoverySupabase.auth.exchangeCodeForSession(code);
       if (!exErr) {
-        window.history.replaceState(null, "", window.location.pathname + window.location.search.replace(/[?&]code=[^&]+/, "").replace(/^&/, "?"));
+        stripQueryParams(["code"]);
+        setView("password_setup");
+        return;
+      }
+      setInvalidSession(true);
+      setView("error");
+      return;
+    }
+
+    const qAccess = sp.get("access_token");
+    const qRefresh = sp.get("refresh_token");
+    if (qAccess && qRefresh) {
+      const { error: sErr } = await supabase.auth.setSession({
+        access_token: qAccess,
+        refresh_token: qRefresh,
+      });
+      if (!sErr) {
+        stripQueryParams(["access_token", "refresh_token"]);
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
         setView("password_setup");
         return;
       }
@@ -86,7 +114,6 @@ function AccessInner() {
     const hp = new URLSearchParams(hash.replace(/^#/, ""));
     const access_token = hp.get("access_token");
     const refresh_token = hp.get("refresh_token");
-
     if (access_token && refresh_token) {
       const { error: sErr } = await supabase.auth.setSession({ access_token, refresh_token });
       if (!sErr) {
@@ -100,25 +127,32 @@ function AccessInner() {
     }
 
     const { data: { session } } = await supabase.auth.getSession();
-    const hashHasRecovery = hash.includes("type=recovery") || hp.get("type") === "recovery";
-    if (session?.user && hashHasRecovery) {
-      setView("password_setup");
+    if (session?.user) {
+      window.location.replace(destination);
       return;
     }
 
     setView("login");
-  }, []);
+  }, [destination]);
 
   useEffect(() => {
-    resolveSession();
+    void resolveSession();
   }, [resolveSession]);
 
   useEffect(() => {
     if (view !== "password_done") return;
+    const totalSec = Math.ceil(PASSWORD_SUCCESS_HOLD_MS / 1000);
+    setSuccessSecondsLeft(totalSec);
+    const tick = setInterval(() => {
+      setSuccessSecondsLeft((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
     const t = setTimeout(() => {
       window.location.href = destination;
-    }, 1600);
-    return () => clearTimeout(t);
+    }, PASSWORD_SUCCESS_HOLD_MS);
+    return () => {
+      clearInterval(tick);
+      clearTimeout(t);
+    };
   }, [view, destination]);
 
   async function handleSetPassword(e: React.FormEvent) {
@@ -145,6 +179,7 @@ function AccessInner() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setShowPasswordNotSetHint(false);
     setBusy(true);
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -152,7 +187,16 @@ function AccessInner() {
     });
     if (signInError) {
       setBusy(false);
-      setError(getLoginErrorMessage(signInError));
+      const code = (signInError.code ?? "").toLowerCase();
+      const msg = (signInError.message ?? "").toLowerCase();
+      if (code === "invalid_login_credentials" || msg.includes("invalid login credentials")) {
+        setShowPasswordNotSetHint(true);
+        setError(
+          "If you already created a password, check your email address and password for typos."
+        );
+      } else {
+        setError(getLoginErrorMessage(signInError) || signInError.message);
+      }
       return;
     }
     let membershipExpired = false;
@@ -193,17 +237,38 @@ function AccessInner() {
     }
     setBusy(true);
     const { error: rErr } = await supabase.auth.resetPasswordForEmail(em, {
-      redirectTo: `${ACCESS_ORIGIN}/access`,
+      redirectTo: authEmailRedirect,
     });
     setBusy(false);
     if (rErr) {
       setError(rErr.message);
       return;
     }
-    setView("magic_sent");
+    setView("secure_link_sent");
   }
 
-  async function handleMagicLink() {
+  async function handleResendFromPasswordStep() {
+    setError(null);
+    setBusy(true);
+    const { data } = await supabase.auth.getSession();
+    const em = data.session?.user?.email?.trim();
+    if (!em) {
+      setBusy(false);
+      setError('We could not detect your email. Use "Resend access email" on the sign-in step.');
+      return;
+    }
+    const { error: rErr } = await supabase.auth.resetPasswordForEmail(em, {
+      redirectTo: authEmailRedirect,
+    });
+    setBusy(false);
+    if (rErr) {
+      setError(rErr.message);
+      return;
+    }
+    setView("secure_link_sent");
+  }
+
+  async function handleSecureLoginLink() {
     setError(null);
     const em = email.trim();
     if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
@@ -213,21 +278,21 @@ function AccessInner() {
     setBusy(true);
     const { error: oErr } = await supabase.auth.signInWithOtp({
       email: em,
-      options: { emailRedirectTo: `${ACCESS_ORIGIN}/access` },
+      options: { emailRedirectTo: authEmailRedirect },
     });
     setBusy(false);
     if (oErr) {
       setError(oErr.message);
       return;
     }
-    setView("magic_sent");
+    setView("secure_link_sent");
   }
 
   if (view === "loading") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
         <div className="cb-card max-w-md text-center">
-          <p className="cb-card-subtitle text-base">Setting things up for you…</p>
+          <p className="cb-card-subtitle text-base font-medium">Securing your access…</p>
         </div>
       </main>
     );
@@ -235,10 +300,17 @@ function AccessInner() {
 
   if (view === "password_setup") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-        <div className="cb-card max-w-md">
-          <h1 className="cb-card-title text-center">You&apos;re in 🎉</h1>
-          <p className="cb-card-subtitle mt-2 text-center">Secure your account by setting a password.</p>
+      <main className="flex min-h-screen flex-col items-center justify-center bg-cb-green p-5">
+        <div className="mb-3 w-full max-w-md">
+          <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
+            View All Plans
+          </button>
+        </div>
+        <div className="cb-card max-w-md w-full">
+          <h1 className="cb-card-title text-center text-xl sm:text-2xl">Create your password</h1>
+          <p className="cb-card-subtitle mt-2 text-center text-base">
+            Set your password to access your Capital Bridge dashboard.
+          </p>
           {!isSupabaseConfigured && <p className="cb-message-error mt-4">Configuration error. Contact support.</p>}
           <form onSubmit={handleSetPassword} className="mt-6 flex flex-col gap-4">
             {error && <p className="cb-message-error text-sm">{error}</p>}
@@ -251,9 +323,14 @@ function AccessInner() {
               <input className="cb-input" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required />
             </label>
             <button type="submit" className={btnPrimary} disabled={busy || !isSupabaseConfigured}>
-              {busy ? "Saving…" : "Set Password & Continue"}
+              {busy ? "Securing your access…" : "Save password & continue"}
             </button>
           </form>
+          <div className="mt-4 flex justify-center">
+            <button type="button" className="cb-btn-view-plans" disabled={busy} onClick={() => void handleResendFromPasswordStep()}>
+              Resend access email
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -262,9 +339,24 @@ function AccessInner() {
   if (view === "password_done") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-        <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">You&apos;re all set 🎉</h1>
-          <p className="cb-card-subtitle mt-2">Opening your Capital Bridge workspace…</p>
+        <div
+          className="cb-card max-w-md text-center"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <p className="mb-3 text-4xl" aria-hidden>
+            ✓
+          </p>
+          <h1 className="cb-card-title text-2xl sm:text-3xl">You&apos;re all set!</h1>
+          <p className="cb-card-subtitle mt-3 text-base leading-relaxed">
+            Your password is saved and your account is secure.
+          </p>
+          <p className="mt-4 text-sm font-medium text-cb-green/85">
+            {successSecondsLeft > 0
+              ? `Opening your workspace in ${successSecondsLeft} second${successSecondsLeft === 1 ? "" : "s"}…`
+              : "Opening your workspace…"}
+          </p>
         </div>
       </main>
     );
@@ -277,15 +369,26 @@ function AccessInner() {
           <h1 className="cb-card-title text-center">
             {invalidSession ? "This link has expired" : "Something went wrong"}
           </h1>
-          <p className="cb-card-subtitle mt-2 text-center">
-            Use the options below — we&apos;ll get you back on track.
-          </p>
+          <p className="cb-card-subtitle mt-2 text-center">Choose your next step below.</p>
           <div className="mt-6 flex flex-col gap-3">
             <button type="button" className={btnPrimary} disabled={busy} onClick={() => { setView("resend_email"); setError(null); }}>
-              Send Me a New Access Link
+              Send a new access email
             </button>
-            <button type="button" className={btnSecondary} disabled={busy} onClick={() => { setView("login"); setError(null); }}>
-              Log In Instead
+            <button
+              type="button"
+              className={btnSecondary}
+              disabled={busy}
+              onClick={() => {
+                setView("login");
+                setError(null);
+              }}
+            >
+              I already created my password
+            </button>
+          </div>
+          <div className="mt-4 flex justify-center">
+            <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
+              View All Plans
             </button>
           </div>
         </div>
@@ -297,8 +400,8 @@ function AccessInner() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
         <div className="cb-card max-w-md">
-          <h1 className="cb-card-title text-center">Send a new link</h1>
-          <p className="cb-card-subtitle mt-2 text-center">Enter the email you used at checkout.</p>
+          <h1 className="cb-card-title text-center">Send a new access email</h1>
+          <p className="cb-card-subtitle mt-2 text-center">Use the same email you used at checkout.</p>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -306,16 +409,17 @@ function AccessInner() {
             }}
             className="mt-6 flex flex-col gap-4"
           >
+            {busy && <p className="text-center text-sm font-medium text-cb-green">Securing your access…</p>}
             {error && <p className="cb-message-error text-sm">{error}</p>}
             <label className="grid gap-1">
               <span className="text-sm font-semibold text-cb-green">Email</span>
               <input className="cb-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
             <button type="submit" className={btnPrimary} disabled={busy}>
-              {busy ? "Sending…" : "Send Access Link"}
+              {busy ? "Securing your access…" : "Send access email"}
             </button>
             <button type="button" className={btnSecondary} disabled={busy} onClick={() => setView("login")}>
-              Back to Log In
+              Back to sign in
             </button>
           </form>
         </div>
@@ -323,14 +427,16 @@ function AccessInner() {
     );
   }
 
-  if (view === "magic_sent") {
+  if (view === "secure_link_sent") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
         <div className="cb-card max-w-md text-center">
           <h1 className="cb-card-title">Check your email</h1>
-          <p className="cb-card-subtitle mt-2">We sent you a link. Open it on this device to continue.</p>
+          <p className="cb-card-subtitle mt-2">
+            We sent a secure link to that address. Open it on this device to continue.
+          </p>
           <button type="button" className={`${btnPrimary} mt-6`} onClick={() => setView("login")}>
-            Back to Log In
+            Return to sign in
           </button>
         </div>
       </main>
@@ -338,34 +444,90 @@ function AccessInner() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-      <div className="cb-card max-w-md">
-        <h1 className="cb-card-title text-center">Log in to your account</h1>
-        <p className="cb-card-subtitle mt-2 text-center">Use your email and password, or get a magic link.</p>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-cb-green p-5">
+      <div className="mb-3 w-full max-w-md">
+        <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
+          View All Plans
+        </button>
+      </div>
+      <div className="cb-card max-w-md w-full">
+        <h1 className="cb-card-title text-center text-xl sm:text-2xl">Access your account</h1>
+        <p className="cb-card-subtitle mt-2 text-center">
+          Sign in with the email and password you created after checkout.
+        </p>
         {!isSupabaseConfigured && (
           <p className="cb-message-error mt-4 text-center text-sm">Sign-in is not configured for this environment.</p>
         )}
         <form onSubmit={handleLogin} className="mt-6 flex flex-col gap-4">
+          {showPasswordNotSetHint && (
+            <div className="rounded-lg border border-cb-gold/50 bg-amber-50/95 p-4 text-left text-sm text-cb-green shadow-sm">
+              <p className="font-semibold leading-snug">
+                You haven&apos;t set your password yet. Check your email to activate your account.
+              </p>
+              <button
+                type="button"
+                className="cb-btn-view-plans mt-3"
+                disabled={busy}
+                onClick={() => {
+                  if (!email.trim()) {
+                    setError("Enter your email above, then tap Resend access email again.");
+                    return;
+                  }
+                  void handleResendLink();
+                }}
+              >
+                Resend access email
+              </button>
+            </div>
+          )}
+          {busy && <p className="text-center text-sm font-medium text-cb-green">Securing your access…</p>}
           {error && <p className="cb-message-error text-sm">{error}</p>}
           <label className="grid gap-1">
             <span className="text-sm font-semibold text-cb-green">Email</span>
-            <input className="cb-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input
+              className="cb-input"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setShowPasswordNotSetHint(false);
+              }}
+              required
+            />
           </label>
           <label className="grid gap-1">
             <span className="text-sm font-semibold text-cb-green">Password</span>
-            <input className="cb-input" type="password" autoComplete="current-password" value={loginPw} onChange={(e) => setLoginPw(e.target.value)} required />
+            <input
+              className="cb-input"
+              type="password"
+              autoComplete="current-password"
+              value={loginPw}
+              onChange={(e) => setLoginPw(e.target.value)}
+              required
+            />
           </label>
           <button type="submit" className={btnPrimary} disabled={busy || !isSupabaseConfigured}>
-            {busy ? "Signing in…" : "Log In"}
+            {busy ? "Securing your access…" : "Sign in"}
           </button>
         </form>
         <div className="mt-4 flex flex-col gap-3">
-          <button type="button" className={btnSecondary} disabled={busy || !isSupabaseConfigured} onClick={() => void handleMagicLink()}>
-            {busy ? "Sending…" : "Send Magic Link Instead"}
+          <button
+            type="button"
+            className={btnSecondary}
+            disabled={busy || !isSupabaseConfigured}
+            onClick={() => void handleSecureLoginLink()}
+          >
+            {busy ? "Securing your access…" : "Email Me a Secure Login Link"}
           </button>
-          <button type="button" className={btnSecondary} disabled={busy} onClick={() => { setView("resend_email"); setError(null); }}>
-            Forgot Password
+          <button type="button" className={btnSecondary} disabled={busy} onClick={() => { window.location.href = "/forgot-password"; }}>
+            Forgot password
           </button>
+          <div className="flex justify-center pt-1">
+            <button type="button" className="cb-btn-view-plans" disabled={busy} onClick={() => { setView("resend_email"); setError(null); }}>
+              Resend access email
+            </button>
+          </div>
         </div>
       </div>
     </main>
@@ -378,7 +540,7 @@ export default function AccessPage() {
       fallback={
         <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
           <div className="cb-card max-w-md text-center">
-            <p className="cb-card-subtitle">Loading…</p>
+            <p className="cb-card-subtitle">Securing your access…</p>
           </div>
         </main>
       }

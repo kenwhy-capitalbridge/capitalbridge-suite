@@ -28,10 +28,10 @@ const platformBase =
   "https://platform.thecapitalbridge.com";
 const LOGIN_REDIRECT = platformBase.replace(/\/$/, "");
 
-const btnBase =
-  "w-full rounded-xl px-4 py-3 text-center font-medium transition hover:scale-[1.02] disabled:opacity-50";
-const btnPrimary = `${btnBase} cb-btn-primary block`;
-const btnSecondary = `${btnBase} cb-btn-secondary block`;
+const btnPrimary =
+  "w-full rounded-xl bg-cb-gold px-4 py-3.5 text-center text-base font-semibold text-cb-green shadow-lg transition hover:scale-[1.02] hover:bg-cb-green hover:text-white disabled:opacity-50 block";
+const btnSecondary =
+  "w-full rounded-xl border-2 border-cb-gold/50 bg-white/90 px-4 py-3 text-center font-medium text-cb-green transition hover:scale-[1.02] block";
 
 function PaymentHandoffContent() {
   const searchParams = useSearchParams();
@@ -63,11 +63,6 @@ function PaymentHandoffContent() {
         if (!cancelled) {
           setStatus(data);
           setLoading(false);
-          if (data.account_ready) {
-            window.setTimeout(() => {
-              if (!cancelled) window.location.href = accessHref;
-            }, 1500);
-          }
         }
       } catch {
         if (!cancelled) setLoading(false);
@@ -83,52 +78,65 @@ function PaymentHandoffContent() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [billId, accessHref]);
+  }, [billId]);
 
   const accountReady = !!status?.account_ready;
 
+  function openMailto() {
+    window.location.href = "mailto:";
+  }
+
+  if (accountReady) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card max-w-md text-center">
+          <h1 className="cb-card-title">Check your email to activate your account</h1>
+          <p className="cb-card-subtitle mt-3 text-base leading-relaxed">
+            We&apos;ve sent you a secure link to set your password and access your dashboard.
+          </p>
+          {billId && <p className="mt-4 text-xs text-cb-green/60">Reference: {billId}</p>}
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <button type="button" className="cb-btn-view-plans px-4 py-2 text-sm normal-case tracking-normal" onClick={openMailto}>
+              Open my email
+            </button>
+            <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
+              I opened my email link — continue
+            </button>
+            <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
+              View All Plans
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
-      <div className="cb-card">
-        <h1 className="cb-card-title">{accountReady ? "Account ready" : "Continue to secure payment"}</h1>
+      <div className="cb-card max-w-md">
+        <h1 className="cb-card-title">Continue to payment</h1>
         <p className="cb-card-subtitle">Plan: {planLabel}</p>
 
         <div style={{ marginTop: "1rem", display: "grid", gap: "0.5rem", fontSize: "0.92rem", opacity: 0.9 }}>
-          {billId && <p>Bill ID: {billId}</p>}
-          {status?.mode && <p>Flow: {status.mode}</p>}
-          {status?.billing_status && <p>Billing status: {status.billing_status}</p>}
+          {billId && <p>Reference: {billId}</p>}
         </div>
 
         <div style={{ marginTop: "1.25rem", display: "grid", gap: "0.9rem", fontSize: "0.95rem", lineHeight: 1.6 }}>
-          {!accountReady && (
+          {loading && <p className="font-medium text-cb-green">Securing your access…</p>}
+          {!loading && (
             <p>
-              Open Billplz in a new tab to complete payment. Keep this page open so we can detect when your account is ready.
-            </p>
-          )}
-          {loading && <p>Checking account status…</p>}
-          {!loading && accountReady && <p>Your account is ready. Taking you to sign in…</p>}
-          {!loading && !accountReady && (
-            <p>
-              After you complete payment, return to this page or use the Billplz merchant return link. We will keep checking your
-              setup automatically.
+              Open secure payment in a new tab. After you pay, check your email for a link to create your password — you won&apos;t
+              need to sign in until then.
             </p>
           )}
         </div>
 
         <div style={{ marginTop: "1.5rem", display: "grid", gap: "0.75rem" }}>
           {paymentUrl && (
-            <a
-              className={btnPrimary}
-              href={paymentUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a className={btnPrimary} href={paymentUrl} target="_blank" rel="noreferrer">
               Open secure payment
             </a>
           )}
-          <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
-            Open my account
-          </button>
           {billId && (
             <button
               type="button"
@@ -140,6 +148,9 @@ function PaymentHandoffContent() {
               I already paid
             </button>
           )}
+          <button type="button" className="cb-btn-view-plans mx-auto" onClick={() => { window.location.href = "/pricing"; }}>
+            View All Plans
+          </button>
         </div>
       </div>
     </main>
@@ -151,9 +162,9 @@ export default function PaymentHandoffPage() {
     <Suspense
       fallback={
         <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
-          <div className="cb-card">
-            <h1 className="cb-card-title">Preparing payment</h1>
-            <p className="cb-card-subtitle">Loading your secure payment handoff…</p>
+          <div className="cb-card max-w-md text-center">
+            <h1 className="cb-card-title">Securing your access…</h1>
+            <p className="cb-card-subtitle mt-2">Loading…</p>
           </div>
         </main>
       }

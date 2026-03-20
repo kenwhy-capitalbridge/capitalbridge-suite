@@ -20,10 +20,10 @@ const platformBase =
   "https://platform.thecapitalbridge.com";
 const LOGIN_REDIRECT = platformBase.replace(/\/$/, "");
 
-const btnBase =
-  "w-full rounded-xl px-4 py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100";
-const btnPrimary = `${btnBase} cb-btn-primary`;
-const btnSecondary = `${btnBase} cb-btn-secondary`;
+const btnPrimary =
+  "w-full rounded-xl bg-cb-gold px-4 py-3.5 text-center text-base font-semibold text-cb-green shadow-lg transition hover:scale-[1.02] hover:bg-cb-green hover:text-white disabled:opacity-50";
+const btnSecondary =
+  "w-full rounded-xl border-2 border-cb-gold/50 bg-white/90 px-4 py-3 text-center font-medium text-cb-green transition hover:scale-[1.02] hover:bg-white disabled:opacity-50";
 
 function PaymentReturnContent() {
   const searchParams = useSearchParams();
@@ -61,11 +61,6 @@ function PaymentReturnContent() {
         if (!cancelled) {
           setStatus(data);
           setLoading(false);
-          if (data.account_ready) {
-            window.setTimeout(() => {
-              if (!cancelled) window.location.href = accessHref;
-            }, 1500);
-          }
         }
       } catch {
         if (!cancelled) {
@@ -83,44 +78,107 @@ function PaymentReturnContent() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [billId, paid, accessHref]);
+  }, [billId, paid]);
 
   const accountReady = !!status?.account_ready;
-  const waitingForWebhook = !accountReady && paid;
+  const waitingForWebhook = !accountReady && paid && !!billId;
+
+  function openMailto() {
+    window.location.href = "mailto:";
+  }
+
+  if (!billId) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card max-w-md text-center">
+          <h1 className="cb-card-title">Payment</h1>
+          <p className="cb-card-subtitle mt-2">
+            If you just paid, use the return link from checkout or open your email for next steps.
+          </p>
+          <div className="mt-6 flex flex-col gap-3">
+            <button type="button" className={btnSecondary} onClick={openMailto}>
+              Open my email
+            </button>
+            <button type="button" className="cb-btn-view-plans mx-auto" onClick={() => { window.location.href = "/pricing"; }}>
+              View All Plans
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (loading || waitingForWebhook) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card max-w-md text-center">
+          <h1 className="cb-card-title">Securing your access…</h1>
+          <p className="cb-card-subtitle mt-2">
+            {paid
+              ? "We're confirming your payment. This usually takes just a moment."
+              : "Checking your payment status…"}
+          </p>
+          {paidAt && <p className="mt-4 text-sm text-cb-green/75">Paid at: {paidAt}</p>}
+          {billId && <p className="mt-2 text-xs text-cb-green/60">Reference: {billId}</p>}
+          {waitingForWebhook && (
+            <p className="mt-4 text-sm text-cb-green/80">This page updates automatically every few seconds.</p>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  if (accountReady) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <div className="cb-card max-w-md text-center">
+          <h1 className="cb-card-title">Check your email to activate your account</h1>
+          <p className="cb-card-subtitle mt-3 text-base leading-relaxed">
+            We&apos;ve sent you a secure link to set your password and access your dashboard.
+          </p>
+          {billId && <p className="mt-4 text-xs text-cb-green/60">Reference: {billId}</p>}
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <button type="button" className="cb-btn-view-plans px-4 py-2 text-sm normal-case tracking-normal" onClick={openMailto}>
+              Open my email
+            </button>
+            <button
+              type="button"
+              className={btnSecondary}
+              onClick={() => {
+                window.location.href = accessHref;
+              }}
+            >
+              I opened my email link — continue
+            </button>
+            <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
+              View All Plans
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
       <div className="cb-card max-w-md">
-        <h1 className="cb-card-title">
-          {accountReady ? "You&apos;re almost there" : paid ? "Securing your access…" : "Payment pending"}
-        </h1>
-        <p className="cb-card-subtitle">
-          {accountReady
-            ? "Opening your account page so you can finish sign-in."
-            : paid
-              ? "We&apos;re confirming your payment. This usually takes just a moment."
-              : "We couldn&apos;t confirm payment from this page alone. If you already paid, you can still open your account below."}
+        <h1 className="cb-card-title">Payment pending</h1>
+        <p className="cb-card-subtitle mt-2">
+          We couldn&apos;t confirm payment from this page. If you already paid, check your email for a link to finish setup.
         </p>
-
-        <div style={{ marginTop: "1rem", display: "grid", gap: "0.5rem", fontSize: "0.92rem", opacity: 0.9 }}>
-          {billId && <p>Reference: {billId}</p>}
-          {paidAt && <p>Paid at: {paidAt}</p>}
-        </div>
-
-        <div style={{ marginTop: "1.25rem", display: "grid", gap: "0.9rem", fontSize: "0.95rem", lineHeight: 1.6 }}>
-          {loading && <p>Checking your status…</p>}
-          {waitingForWebhook && <p>This page updates automatically every few seconds.</p>}
-          {!loading && !accountReady && status?.next_step === "contact_support" && (
-            <p>We couldn&apos;t match this payment yet. Please contact support with the reference above.</p>
-          )}
-        </div>
-
-        <div style={{ marginTop: "1.5rem", display: "grid", gap: "0.75rem" }}>
-          <button type="button" className={btnPrimary} onClick={() => { window.location.href = accessHref; }}>
-            Open my account
+        {billId && <p className="mt-4 text-sm text-cb-green/75">Reference: {billId}</p>}
+        {status?.next_step === "contact_support" && (
+          <p className="cb-message-error mt-4 text-sm">We couldn&apos;t match this payment yet. Contact support with the reference above.</p>
+        )}
+        <div className="mt-6 flex flex-col gap-3">
+          <button type="button" className={btnPrimary} onClick={openMailto}>
+            Open my email
           </button>
-          <button type="button" className={btnSecondary} onClick={() => { window.location.href = "/access"; }}>
-            Send me a sign-in link
+          <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
+            Continue to account page
+          </button>
+          <button type="button" className="cb-btn-view-plans mx-auto" onClick={() => { window.location.href = "/pricing"; }}>
+            View All Plans
           </button>
         </div>
       </div>

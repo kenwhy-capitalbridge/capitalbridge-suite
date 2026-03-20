@@ -707,8 +707,8 @@ function PricingContent() {
         </section>
 
         <p className="mt-12 text-center text-sm text-cb-cream/70">
-          <Link href="/access" className="text-cb-gold hover:underline">
-            Back To Login
+          <Link href="/access" className="cb-btn-view-plans inline-flex">
+            Back to account
           </Link>
           {" · "}
           <a

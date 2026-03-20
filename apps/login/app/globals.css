@@ -71,6 +71,14 @@
     @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-4 py-3 font-medium text-cb-green transition hover:bg-white disabled:opacity-50;
   }
 
+  /**
+   * Small outlined control for “View All Plans” (not input-like).
+   * Use on checkout, payment screens, optional on access.
+   */
+  .cb-btn-view-plans {
+    @apply inline-flex w-auto max-w-full items-center justify-center rounded-lg border border-cb-gold/30 bg-transparent px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-cb-green/90 shadow-none transition hover:border-cb-gold/50 hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-cb-gold/40;
+  }
+
   /* Secondary link: dark gold on light bg for legibility (CSS var avoids @apply issues) */
   .cb-link {
     color: var(--cb-gold-dark);

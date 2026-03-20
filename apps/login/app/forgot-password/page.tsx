@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
-
-const ACCESS_PATH = "/access";
-
-function getAccessRedirectUrl(): string {
-  if (typeof window === "undefined")
-    return `${process.env.NEXT_PUBLIC_LOGIN_APP_URL ?? "https://login.thecapitalbridge.com"}${ACCESS_PATH}`;
-  return `${window.location.origin}${ACCESS_PATH}`;
-}
+import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
 
 const btnBase =
   "w-full rounded-xl px-4 py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100";
@@ -27,7 +20,7 @@ export default function ForgotPasswordPage() {
     setError(null);
     setLoading(true);
 
-    const redirectTo = getAccessRedirectUrl();
+    const redirectTo = getAccessRedirectUrlForAuthEmails();
     const { error: resetError } = await recoverySupabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });
@@ -84,7 +77,7 @@ export default function ForgotPasswordPage() {
           </label>
 
           <button className={btnPrimary} type="submit" disabled={loading || !isSupabaseConfigured}>
-            {loading ? "Sending…" : "Send reset link"}
+            {loading ? "Securing your access…" : "Send reset link"}
           </button>
         </form>
 

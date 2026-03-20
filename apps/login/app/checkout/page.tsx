@@ -24,7 +24,7 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 const ACCOUNT_EXISTS_MSG =
-  'An account already exists for this email. Please log in instead or use "Forgot password".';
+  "An account already exists for this email. Use “Log in to existing account” below, or open the account page for password help.";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -165,17 +165,13 @@ function CheckoutContent() {
         <h1 className="cb-card-title">Start Building Your Capital Strategy</h1>
         <p className="cb-card-subtitle">Set up your access in seconds.</p>
         <p style={{ marginTop: "0.75rem", fontSize: "0.9rem", opacity: 0.9 }}>Plan: {planLabel}</p>
-        <button
-          type="button"
-          className="cb-btn-secondary mt-3 w-full rounded-xl py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50"
-          onClick={() => {
-            window.location.href = "/pricing";
-          }}
-        >
-          View other plans
-        </button>
+        <div className="mt-2">
+          <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
+            View All Plans
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} style={{ marginTop: "1.75rem", display: "grid", gap: "1rem" }}>
+        <form onSubmit={handleSubmit} style={{ marginTop: "1.5rem", display: "grid", gap: "1rem" }}>
           {error && <p className="cb-message-error">{error}</p>}
 
           <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -215,22 +211,25 @@ function CheckoutContent() {
           </label>
 
           <button
-            className="cb-btn-primary w-full rounded-xl py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+            className="cb-btn-primary w-full rounded-xl py-3.5 text-base font-semibold transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             type="submit"
             disabled={loading || emailAlreadyExists}
           >
-            {loading ? "One moment…" : "Continue Securely"}
+            {loading ? "Securing your access…" : "Continue to Payment"}
           </button>
+          <p className="text-center text-sm leading-relaxed text-cb-green/80">
+            You&apos;ll set your password after payment via a secure email.
+          </p>
         </form>
 
         <button
           type="button"
-          className="cb-btn-secondary mt-4 w-full rounded-xl py-3 font-medium transition hover:scale-[1.02]"
+          className="cb-btn-secondary mt-5 w-full rounded-xl py-3 font-medium transition hover:scale-[1.02]"
           onClick={() => {
             window.location.href = "/access";
           }}
         >
-          I already have an account
+          Log in to existing account
         </button>
       </div>
     </main>
