@@ -50,9 +50,51 @@ function stripQueryParams(keys: string[]) {
   window.history.replaceState(null, "", `${u.pathname}${qs ? `?${qs}` : ""}`);
 }
 
+/** Shown when platform middleware redirects here (inactive membership or cleared session). */
+function PlatformAccessNotice({
+  membershipInactive,
+  sessionCleared,
+}: {
+  membershipInactive: boolean;
+  sessionCleared: boolean;
+}) {
+  if (!membershipInactive && !sessionCleared) return null;
+  return (
+    <div
+      role="alert"
+      className="w-full border-b border-cb-gold/40 bg-amber-50/95 px-4 py-3 text-center text-cb-green shadow-sm"
+    >
+      <p className="text-sm font-semibold">
+        {sessionCleared
+          ? "Your session is no longer valid. Please sign in again."
+          : "Your access is no longer active."}
+      </p>
+      {membershipInactive && (
+        <p className="mt-1 text-xs text-cb-green/80">
+          Your access has expired. Please renew your plan.
+        </p>
+      )}
+      <button
+        type="button"
+        className="cb-btn-primary mt-3 inline-block rounded-xl px-5 py-2 text-sm font-semibold"
+        onClick={() => {
+          window.location.href = "/pricing";
+        }}
+      >
+        View plans
+      </button>
+    </div>
+  );
+}
+
 function AccessInner() {
   const searchParams = useSearchParams();
   const redirectTo = useMemo(() => searchParams.get("redirectTo"), [searchParams]);
+  const membershipInactive = useMemo(
+    () => searchParams.get("membership_inactive") === "1",
+    [searchParams]
+  );
+  const sessionCleared = useMemo(() => searchParams.get("session_cleared") === "1", [searchParams]);
 
   const [view, setView] = useState<View>("loading");
   const [password, setPassword] = useState("");
@@ -290,17 +332,22 @@ function AccessInner() {
 
   if (view === "loading") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-        <div className="cb-card max-w-md text-center">
-          <p className="cb-card-subtitle text-base font-medium">Securing your access…</p>
-        </div>
-      </main>
+      <>
+        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+          <div className="cb-card max-w-md text-center">
+            <p className="cb-card-subtitle text-base font-medium">Securing your access…</p>
+          </div>
+        </main>
+      </>
     );
   }
 
   if (view === "password_setup") {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-cb-green p-5">
+      <>
+        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+        <main className="flex min-h-screen flex-col items-center justify-center bg-cb-green p-5">
         <div className="mb-3 w-full max-w-md">
           <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
             View All Plans
@@ -333,12 +380,15 @@ function AccessInner() {
           </div>
         </div>
       </main>
+      </>
     );
   }
 
   if (view === "password_done") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+      <>
+        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
         <div
           className="cb-card max-w-md text-center"
           role="status"
@@ -359,12 +409,15 @@ function AccessInner() {
           </p>
         </div>
       </main>
+      </>
     );
   }
 
   if (view === "error") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+      <>
+        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
         <div className="cb-card max-w-md">
           <h1 className="cb-card-title text-center">
             {invalidSession ? "This link has expired" : "Something went wrong"}
@@ -393,12 +446,15 @@ function AccessInner() {
           </div>
         </div>
       </main>
+      </>
     );
   }
 
   if (view === "resend_email") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+      <>
+        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
         <div className="cb-card max-w-md">
           <h1 className="cb-card-title text-center">Send a new access email</h1>
           <p className="cb-card-subtitle mt-2 text-center">Use the same email you used at checkout.</p>
@@ -424,12 +480,15 @@ function AccessInner() {
           </form>
         </div>
       </main>
+      </>
     );
   }
 
   if (view === "secure_link_sent") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+      <>
+        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
         <div className="cb-card max-w-md text-center">
           <h1 className="cb-card-title">Check your email</h1>
           <p className="cb-card-subtitle mt-2">
@@ -440,11 +499,14 @@ function AccessInner() {
           </button>
         </div>
       </main>
+      </>
     );
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-cb-green p-5">
+    <>
+      <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+      <main className="flex min-h-screen flex-col items-center justify-center bg-cb-green p-5">
       <div className="mb-3 w-full max-w-md">
         <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
           View All Plans
@@ -531,6 +593,7 @@ function AccessInner() {
         </div>
       </div>
     </main>
+    </>
   );
 }
 
