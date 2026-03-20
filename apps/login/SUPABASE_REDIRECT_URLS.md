@@ -1,6 +1,6 @@
-# Supabase Auth redirect URLs (access / recovery / magic link)
+# Supabase Auth redirect URLs (access / recovery)
 
-Recovery emails, magic links, and checkout “set password” flows land on the unified **`/access`** page.
+Recovery emails and checkout “set password” flows land on the unified **`/access`** page.
 
 In **Supabase Dashboard** → **Authentication** → **URL Configuration** → **Redirect URLs**, add:
 

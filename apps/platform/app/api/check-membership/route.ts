@@ -14,8 +14,7 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      // No session — nothing to validate (avoid forcing redirect on public platform routes).
-      return NextResponse.json({ valid: true });
+      return NextResponse.json({ valid: false });
     }
 
     const { data: profile, error: profileErr } = await supabase

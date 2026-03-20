@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createAppBrowserClient, isSupabaseConfigured } from "@cb/supabase/browser";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 
@@ -9,8 +9,12 @@ import { LOGIN_APP_URL } from "@cb/shared/urls";
  * sign out and send the user to the login app with context.
  */
 export function MembershipSessionCheck() {
+  const ranRef = useRef(false);
+
   useEffect(() => {
     if (!isSupabaseConfigured) return;
+    if (ranRef.current) return;
+    ranRef.current = true;
 
     let cancelled = false;
 

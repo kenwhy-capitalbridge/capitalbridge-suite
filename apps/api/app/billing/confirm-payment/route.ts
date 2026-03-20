@@ -3,6 +3,8 @@ import { createServiceClient } from "@cb/supabase/service";
 import { getBillplzBill } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
 import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
+import { sendRecoveryEmailAfterPayment } from "@/lib/billingRecoveryEmail";
+import { withRecoveryEmailOncePerBill } from "@/lib/recoveryEmailOncePerBill";
 
 export const runtime = "nodejs";
 
@@ -148,29 +150,9 @@ export async function GET(req: Request) {
       { onConflict: "id" }
     );
 
-  // Trigger recovery email → unified /access (same as webhook)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const apiKey = serviceKey ?? anonKey;
-  if (supabaseUrl && apiKey) {
-    const loginBase =
-      process.env.LOGIN_APP_URL ??
-      process.env.NEXT_PUBLIC_LOGIN_APP_URL ??
-      "https://login.thecapitalbridge.com";
-    const redirectTo = `${loginBase.replace(/\/$/, "")}/access`;
-    const recoverUrl = new URL(`${supabaseUrl}/auth/v1/recover`);
-    recoverUrl.searchParams.set("redirect_to", redirectTo);
-    fetch(recoverUrl.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: apiKey,
-        ...(serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {}),
-      },
-      body: JSON.stringify({ email: userEmail }),
-    }).catch(() => {});
-  }
+  await withRecoveryEmailOncePerBill(svc, billId, () =>
+    sendRecoveryEmailAfterPayment(svc, userId, userEmail)
+  ).catch((e) => console.error("[confirm-payment] recovery email failed", e));
 
   return NextResponse.json({ ok: true, source: "confirm_payment" });
 }

@@ -56,6 +56,7 @@ export type Database = {
           payment_currency: string | null;
           payment_amount: number | null;
           payment_confirmed_at: string | null;
+          recovery_email_sent: boolean;
           created_at: string;
           updated_at: string;
         };

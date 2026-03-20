@@ -121,8 +121,33 @@ function AccessInner() {
     const search = typeof window !== "undefined" ? window.location.search : "";
     const hash = typeof window !== "undefined" ? window.location.hash : "";
     const sp = new URLSearchParams(search);
-    const code = sp.get("code");
 
+    // Recovery flow in URL fragment: strict gate — never call getSession / redirect before this.
+    if (hash && hash.includes("access_token")) {
+      const hp = new URLSearchParams(hash.replace(/^#/, ""));
+      const hashAccess = hp.get("access_token");
+      const hashRefresh = hp.get("refresh_token");
+      if (hashAccess && hashRefresh) {
+        const { error: sErr } = await supabase.auth.setSession({
+          access_token: hashAccess,
+          refresh_token: hashRefresh,
+        });
+        if (!sErr) {
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+          setView("password_setup");
+          return;
+        }
+        setInvalidSession(true);
+        setView("error");
+        return;
+      }
+      // Fragment looks like recovery but tokens are unusable — do not fall through to session redirect.
+      setInvalidSession(true);
+      setView("error");
+      return;
+    }
+
+    const code = sp.get("code");
     if (code) {
       const { error: exErr } = await recoverySupabase.auth.exchangeCodeForSession(code);
       if (!exErr) {
@@ -144,21 +169,6 @@ function AccessInner() {
       });
       if (!sErr) {
         stripQueryParams(["access_token", "refresh_token"]);
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
-        setView("password_setup");
-        return;
-      }
-      setInvalidSession(true);
-      setView("error");
-      return;
-    }
-
-    const hp = new URLSearchParams(hash.replace(/^#/, ""));
-    const access_token = hp.get("access_token");
-    const refresh_token = hp.get("refresh_token");
-    if (access_token && refresh_token) {
-      const { error: sErr } = await supabase.auth.setSession({ access_token, refresh_token });
-      if (!sErr) {
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
         setView("password_setup");
         return;

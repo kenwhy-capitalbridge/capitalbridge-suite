@@ -4,97 +4,10 @@ import { verifyBillplzWebhookSignature } from "@/lib/billplz";
 import { loadPlanMap, getPlanDuration } from "@cb/advisory-graph/plans/planMap";
 import { computeExpiry } from "@cb/advisory-graph/plans/expiry";
 import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
+import { sendRecoveryEmailAfterPayment } from "@/lib/billingRecoveryEmail";
+import { withRecoveryEmailOncePerBill } from "@/lib/recoveryEmailOncePerBill";
 
 export const runtime = "nodejs";
-
-/** Login app access page for recovery / magic links (must be in Supabase Auth → URL Configuration). */
-function getAccessPageRedirectUrl(): string {
-  const base =
-    process.env.LOGIN_APP_URL ??
-    process.env.NEXT_PUBLIC_LOGIN_APP_URL ??
-    "https://login.thecapitalbridge.com";
-  return `${base.replace(/\/$/, "")}/access`;
-}
-
-/**
- * Trigger Supabase Auth to send a "set password" (recovery) email to the user.
- * Uses the project's SMTP (e.g. Resend). Tries service_role first (API already has it), then anon.
- */
-async function sendSetPasswordEmail(email: string): Promise<void> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const apiKey = serviceKey ?? anonKey;
-  if (!url || !apiKey) {
-    console.warn(
-      "[billplz-webhook] skip set-password email: missing NEXT_PUBLIC_SUPABASE_URL or both SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_ANON_KEY"
-    );
-    return;
-  }
-  const redirectTo = getAccessPageRedirectUrl();
-  const recoverUrl = new URL(`${url}/auth/v1/recover`);
-  recoverUrl.searchParams.set("redirect_to", redirectTo);
-  try {
-    const res = await fetch(recoverUrl.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: apiKey,
-        ...(serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {}),
-      },
-      body: JSON.stringify({ email: email.trim() }),
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      console.warn("[billplz-webhook] recover request failed", {
-        status: res.status,
-        email,
-        detail: text.slice(0, 300),
-      });
-      return;
-    }
-    console.info("[billplz-webhook] set-password email triggered", { email });
-  } catch (err) {
-    console.warn("[billplz-webhook] sendSetPasswordEmail error", err);
-  }
-}
-
-/**
- * After paid activation: trigger recovery / set-password email.
- * Prefer admin generateLink (GoTrue); fall back to /recover if generateLink fails.
- */
-async function sendRecoveryEmailAfterPayment(
-  svc: Awaited<ReturnType<typeof createServiceClient>>,
-  userId: string,
-  userEmail: string
-): Promise<void> {
-  const email = userEmail.trim();
-  if (!email) {
-    console.warn("[billplz-webhook] skip recovery email: empty email", { userId });
-    return;
-  }
-
-  const redirectTo = getAccessPageRedirectUrl();
-  const { error: genErr } = await svc.auth.admin.generateLink({
-    type: "recovery",
-    email,
-    options: { redirectTo },
-  });
-
-  if (genErr) {
-    console.warn("[billplz-webhook] generateLink(recovery) failed, using recover endpoint", {
-      userId,
-      message: genErr.message,
-    });
-    await sendSetPasswordEmail(email);
-    return;
-  }
-
-  console.log("Recovery email triggered for:", email);
-
-  // Deliver via Auth recover template (some hosts only return action_link from generateLink).
-  await sendSetPasswordEmail(email);
-}
 
 function logBillingEvent(
   svc: Awaited<ReturnType<typeof createServiceClient>>,
@@ -338,9 +251,9 @@ export async function POST(req: Request) {
         { onConflict: "id" }
       );
 
-    await sendRecoveryEmailAfterPayment(svc, userId, userEmail).catch((e) =>
-      console.error("[billplz-webhook] recovery email failed", e)
-    );
+    await withRecoveryEmailOncePerBill(svc, billId, () =>
+      sendRecoveryEmailAfterPayment(svc, userId, userEmail)
+    ).catch((e) => console.error("[billplz-webhook] recovery email failed", e));
     return NextResponse.json({ ok: true });
   }
 
