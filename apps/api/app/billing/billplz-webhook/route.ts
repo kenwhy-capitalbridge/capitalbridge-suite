@@ -59,16 +59,40 @@ async function sendSetPasswordEmail(email: string): Promise<void> {
   }
 }
 
-async function sendSetPasswordEmailForUserId(
+/**
+ * After paid activation: trigger recovery / set-password email.
+ * Prefer admin generateLink (GoTrue); fall back to /recover if generateLink fails.
+ */
+async function sendRecoveryEmailAfterPayment(
   svc: Awaited<ReturnType<typeof createServiceClient>>,
-  userId: string
+  userId: string,
+  userEmail: string
 ): Promise<void> {
-  const { data: wrap, error } = await svc.auth.admin.getUserById(userId);
-  const email = wrap?.user?.email?.trim();
-  if (error || !email) {
-    console.warn("[billplz-webhook] skip recovery email: could not resolve email for user", { userId });
+  const email = userEmail.trim();
+  if (!email) {
+    console.warn("[billplz-webhook] skip recovery email: empty email", { userId });
     return;
   }
+
+  const redirectTo = getAccessPageRedirectUrl();
+  const { error: genErr } = await svc.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: { redirectTo },
+  });
+
+  if (genErr) {
+    console.warn("[billplz-webhook] generateLink(recovery) failed, using recover endpoint", {
+      userId,
+      message: genErr.message,
+    });
+    await sendSetPasswordEmail(email);
+    return;
+  }
+
+  console.log("Recovery email triggered for:", email);
+
+  // Deliver via Auth recover template (some hosts only return action_link from generateLink).
   await sendSetPasswordEmail(email);
 }
 
@@ -314,8 +338,8 @@ export async function POST(req: Request) {
         { onConflict: "id" }
       );
 
-    await sendSetPasswordEmailForUserId(svc, userId).catch((e) =>
-      console.error("[billplz-webhook] set-password email failed", e)
+    await sendRecoveryEmailAfterPayment(svc, userId, userEmail).catch((e) =>
+      console.error("[billplz-webhook] recovery email failed", e)
     );
     return NextResponse.json({ ok: true });
   }
