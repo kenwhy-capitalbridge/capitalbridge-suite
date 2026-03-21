@@ -632,11 +632,11 @@ function PricingContent() {
         <section className="mt-16 sm:mt-20">
           <div className="text-center -mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
             <h2 className="font-serif text-2xl font-semibold text-cb-gold sm:text-3xl">
-              Select An Advisory Methodology
+              Available Plans
             </h2>
             <p className="mx-auto mt-2 max-w-3xl text-cb-cream/80">
-              Test the platform with a low-cost trial, keep flexible monthly access, or step
-              up to quarterly and strategic yearly tiers.
+              Choose a plan that fits your advisory needs — start with a low‑cost trial, stay
+              flexible with monthly access, or upgrade to quarterly or strategic yearly tiers.
             </p>
           </div>
 
