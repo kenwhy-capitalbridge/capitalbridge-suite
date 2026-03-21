@@ -86,6 +86,25 @@
     color: #0f3d2e;
   }
 
+  /**
+   * Tertiary “View plans” on cream cb-card (auth / checkout). Outline, brand green, low emphasis.
+   * Always visible; smaller than primary CTAs.
+   */
+  .cb-btn-auth-view-plans {
+    @apply inline-flex w-full max-w-full items-center justify-center rounded-xl border border-cb-green/25 bg-transparent px-3 py-2 text-center text-xs font-medium text-cb-green transition;
+  }
+
+  .cb-btn-auth-view-plans:hover:not(:disabled) {
+    @apply border-cb-green/40 bg-cb-green/[0.05] text-cb-green;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(212, 175, 55, 0.5);
+  }
+
+  .cb-btn-auth-view-plans:focus-visible {
+    @apply outline-none ring-2 ring-cb-gold/35 ring-offset-2 ring-offset-cb-cream;
+  }
+
   /* Secondary link: dark gold on light bg for legibility (CSS var avoids @apply issues) */
   .cb-link {
     color: var(--cb-gold-dark);

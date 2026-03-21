@@ -209,8 +209,14 @@ function PaymentHandoffContent() {
             <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
               Continue to set your password
             </button>
-            <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
-              View All Plans
+            <button
+              type="button"
+              className="cb-btn-auth-view-plans max-w-[12rem]"
+              onClick={() => {
+                window.location.href = "/pricing";
+              }}
+            >
+              View plans
             </button>
           </div>
         </div>
@@ -255,8 +261,14 @@ function PaymentHandoffContent() {
               I already paid
             </button>
           )}
-          <button type="button" className="cb-btn-view-plans mx-auto" onClick={() => { window.location.href = "/pricing"; }}>
-            View All Plans
+          <button
+            type="button"
+            className="cb-btn-auth-view-plans mx-auto max-w-[12rem]"
+            onClick={() => {
+              window.location.href = "/pricing";
+            }}
+          >
+            View plans
           </button>
         </div>
       </div>

@@ -19,7 +19,7 @@ const LOGIN_ERROR_COPY =
   "Incorrect email or password. If you've just signed up, check your email to set your password.";
 
 const NO_PASSWORD_HELPER =
-  "New here? Check your email for a link to set your password. Already paid? Use “Send password link again” below — same as Forgot password.";
+  "New here? Check your email for a link to set your password. Already paid? Use Send password link again below.";
 
 type View = "loading" | "set_password" | "login" | "error" | "success";
 
@@ -348,10 +348,6 @@ function AccessInner() {
 
   if (view === "login") {
     const loginDisabled = busy || !email.trim() || !loginPw;
-    const forgotHref =
-      email.trim() !== ""
-        ? `/forgot-password?email=${encodeURIComponent(email.trim())}`
-        : "/forgot-password";
 
     return (
       <>
@@ -413,12 +409,20 @@ function AccessInner() {
               >
                 {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
               </button>
-              <a
-                href={forgotHref}
-                className="text-center text-sm font-medium text-cb-green underline decoration-cb-gold/50 underline-offset-2"
-              >
-                Forgot password? (same link by email)
-              </a>
+              <div className="mt-5 flex flex-col items-center gap-2 border-t border-cb-green/10 pt-5">
+                <p className="text-center text-xs leading-relaxed text-cb-green/70">
+                  Don&apos;t have access yet? View available plans.
+                </p>
+                <button
+                  type="button"
+                  className="cb-btn-auth-view-plans max-w-[12rem]"
+                  onClick={() => {
+                    window.location.href = "/pricing";
+                  }}
+                >
+                  View plans
+                </button>
+              </div>
             </div>
           </div>
         </main>
