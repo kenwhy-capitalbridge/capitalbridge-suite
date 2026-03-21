@@ -10,7 +10,7 @@ import {
   ACCESS_EMAIL_SENDING_LABEL,
 } from "@/lib/resendAccessEmail";
 import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
-import { NotYourEmailChangeButton, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
+import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -158,14 +158,13 @@ function PaymentHandoffContent() {
 
   if (accountReady) {
     return (
-      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+      <main className="cb-auth-main">
         <div className="cb-card max-w-md text-center">
           <h1 className="cb-card-title">Your Account is Ready.</h1>
           {billId && <p className="mt-3 text-xs text-cb-green/60">Reference: {billId}</p>}
           {statusEmail ? (
             <>
               <PaymentTargetEmailLine email={statusEmail} variant="sent" className="mt-4 text-center text-sm" />
-              <NotYourEmailChangeButton checkoutPlan={plan} />
               {resendSuccess && (
                 <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
               )}
@@ -190,7 +189,7 @@ function PaymentHandoffContent() {
               <a href="/access" className="font-semibold underline">
                 account access
               </a>{" "}
-              and use Send password link again with the address you used at checkout.
+              and use Send Password Set Up Email Again with the address you used at checkout.
             </p>
           )}
           <div className="mt-6 flex w-full flex-col items-center gap-3">
@@ -204,7 +203,7 @@ function PaymentHandoffContent() {
                 window.location.href = "/pricing";
               }}
             >
-              View Other Plans
+              View Available Plans
             </button>
           </div>
         </div>
@@ -213,7 +212,7 @@ function PaymentHandoffContent() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+    <main className="cb-auth-main">
       <div className="cb-card max-w-md">
         <h1 className="cb-card-title">Continue to payment</h1>
         <p className="cb-card-subtitle">Plan: {planLabel}</p>
@@ -256,7 +255,7 @@ function PaymentHandoffContent() {
               window.location.href = "/pricing";
             }}
           >
-            View Other Plans
+            View Available Plans
           </button>
         </div>
       </div>
@@ -268,7 +267,7 @@ export default function PaymentHandoffPage() {
   return (
     <Suspense
       fallback={
-        <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <main className="cb-auth-main">
           <div className="cb-card max-w-md text-center">
             <h1 className="cb-card-title">Securing your access…</h1>
             <p className="cb-card-subtitle mt-2">Loading…</p>

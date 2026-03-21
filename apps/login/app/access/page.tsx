@@ -10,7 +10,8 @@ import {
   accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
-import { NotYourEmailChangeButton, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
+import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
+import { RegisteredEmailChangeForm } from "@/components/RegisteredEmailChangeForm";
 
 const PLATFORM_URL =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
@@ -18,9 +19,6 @@ const PLATFORM_URL =
 
 const LOGIN_ERROR_COPY =
   "Incorrect email or password. If you've just signed up, check your email to set your password.";
-
-const NO_PASSWORD_HELPER =
-  "New here? Check your email for a link to set your password. Already paid? Use Send password link again below.";
 
 const SET_PASSWORD_LINK_EXPIRY_HINT =
   "This link will expire in 10 minutes. Please complete this step now.";
@@ -368,7 +366,7 @@ function AccessInner() {
   async function handleResendFromLogin() {
     setError(null);
     if (!email.trim()) {
-      setError("Enter your email above, then tap Send password link again.");
+      setError("Enter your email above, then tap Send Password Set Up Email Again.");
       return;
     }
     await sendAccessEmail(email);
@@ -385,27 +383,27 @@ function AccessInner() {
 
   if (view === "loading") {
     return (
-      <>
+      <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green">
+        <main className="cb-auth-main bg-cb-green">
           <p className="text-white">Loading...</p>
         </main>
-      </>
+      </div>
     );
   }
 
   if (view === "success") {
     return (
-      <>
+      <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green p-5">
           <div className="cb-card max-w-md w-full text-center">
             <p className="text-cb-green">
               You&apos;re all set. Taking you to your dashboard…
             </p>
           </div>
         </main>
-      </>
+      </div>
     );
   }
 
@@ -420,9 +418,9 @@ function AccessInner() {
     const showDisabledHelper = !busy && !formValid && userStartedSetPw;
 
     return (
-      <>
+      <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green p-5">
           <div className="cb-card max-w-md w-full">
             {setPasswordLinkExpired ? (
               <>
@@ -437,7 +435,7 @@ function AccessInner() {
                       variant={resendSuccess ? "sent" : "pending"}
                       className="mt-3 text-center"
                     />
-                    <NotYourEmailChangeButton />
+                    <RegisteredEmailChangeForm billId={null} />
                   </>
                 )}
                 {resendSuccess && (
@@ -558,7 +556,7 @@ function AccessInner() {
             )}
           </div>
         </main>
-      </>
+      </div>
     );
   }
 
@@ -566,11 +564,11 @@ function AccessInner() {
     const loginDisabled = busy || !email.trim() || !loginPw;
 
     return (
-      <>
+      <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green p-5">
           <div className="cb-card max-w-md w-full">
-            <h1 className="cb-card-title text-center">Welcome back</h1>
+            <h1 className="cb-card-title text-center">Welcome Back</h1>
             <p className="cb-card-subtitle mt-2 text-center">
               Enter your email and password to continue.
             </p>
@@ -609,14 +607,12 @@ function AccessInner() {
                 onToggleVisible={() => setShowLoginPassword((s) => !s)}
               />
 
-              <p className="text-sm text-cb-green/80">{NO_PASSWORD_HELPER}</p>
-
               <button className="cb-btn-primary" type="submit" disabled={loginDisabled}>
-                {busy ? "Signing you in…" : "Access dashboard"}
+                {busy ? "Signing you in…" : "Access Platform"}
               </button>
             </form>
 
-            <div className="mt-4 flex flex-col gap-2 border-t border-cb-green/10 pt-4">
+            <div className="mt-4 flex flex-col gap-3 border-t border-cb-green/10 pt-4">
               <button
                 type="button"
                 className="cb-btn-secondary text-sm"
@@ -625,8 +621,8 @@ function AccessInner() {
               >
                 {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
               </button>
-              <div className="mt-5 flex flex-col items-center gap-2 border-t border-cb-green/10 pt-5">
-                <p className="text-center text-xs leading-relaxed text-cb-green/70">
+              <div className="mt-2 flex flex-col items-center gap-2 border-t border-cb-green/10 pt-5">
+                <p className="text-center text-sm leading-relaxed text-cb-green/80">
                   Don&apos;t have access yet? View available plans.
                 </p>
                 <button
@@ -636,21 +632,21 @@ function AccessInner() {
                     window.location.href = "/pricing";
                   }}
                 >
-                  View Other Plans
+                  View Available Plans
                 </button>
               </div>
             </div>
           </div>
         </main>
-      </>
+      </div>
     );
   }
 
   if (view === "error") {
     return (
-      <>
+      <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green p-5">
           <div className="cb-card max-w-md w-full text-center">
             <h1 className="cb-card-title">This link has expired</h1>
             {error && <p className="cb-message-error mt-2 text-sm">{error}</p>}
@@ -665,7 +661,7 @@ function AccessInner() {
                   variant={resendSuccess ? "sent" : "pending"}
                   className="mt-3 text-center"
                 />
-                <NotYourEmailChangeButton />
+                <RegisteredEmailChangeForm billId={null} />
               </>
             )}
 
@@ -716,7 +712,7 @@ function AccessInner() {
             </button>
           </div>
         </main>
-      </>
+      </div>
     );
   }
 
@@ -725,7 +721,13 @@ function AccessInner() {
 
 export default function AccessPage() {
   return (
-    <Suspense fallback={<div />}>
+    <Suspense
+      fallback={
+        <main className="cb-auth-main bg-cb-green">
+          <p className="text-sm text-white/90">Loading…</p>
+        </main>
+      }
+    >
       <AccessInner />
     </Suspense>
   );

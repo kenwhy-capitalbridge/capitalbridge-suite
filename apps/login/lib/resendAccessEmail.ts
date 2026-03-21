@@ -9,5 +9,5 @@ export const ACCESS_EMAIL_SENDING_LABEL = "Sending email...";
 export function accessEmailResendButtonLabel(cooldownSec: number, busy: boolean): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
   if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
-  return "Send password link again";
+  return "Send Password Set Up Email Again";
 }

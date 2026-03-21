@@ -25,7 +25,7 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 const ACCOUNT_EXISTS_MSG =
-  "An account already exists for this email. Log in below, or open account access and use Send password link again if you need a new link.";
+  "An account already exists for this email. Log in below, or open account access and use Send Password Set Up Email Again if you need a new link.";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -136,7 +136,7 @@ function CheckoutContent() {
 
   if (securing) {
     return (
-      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+      <main className="cb-auth-main">
         <div className="cb-card max-w-md text-center">
           <h1 className="cb-card-title">Securing your access…</h1>
           <p className="cb-card-subtitle mt-2">You&apos;re being moved to our secure payment page.</p>
@@ -146,7 +146,7 @@ function CheckoutContent() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+    <main className="cb-auth-main">
       {isDevOrPreview && (
         <div
           aria-hidden
@@ -175,7 +175,7 @@ function CheckoutContent() {
               window.location.href = "/pricing";
             }}
           >
-            View Other Plans
+            View Available Plans
           </button>
         </div>
 
@@ -253,7 +253,7 @@ export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <main className="cb-auth-main">
           <div className="cb-card">
             <h1 className="cb-card-title">Checkout</h1>
             <p style={{ marginTop: "1rem", opacity: 0.9 }}>Loading…</p>

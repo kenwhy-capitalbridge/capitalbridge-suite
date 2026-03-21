@@ -42,6 +42,18 @@
    tailwind.config (cb-green, cb-gold, cb-cream, font-serif, font-sans).
    --------------------------------------------------------------------------- */
 @layer components {
+  /**
+   * Auth pages: fill the flex gap between Header and AuthHelpFooter (avoid min-h-screen
+   * on <main>, which stacks to header + 100vh + footer and hides the footer below the fold).
+   */
+  .cb-auth-shell {
+    @apply flex min-h-0 w-full flex-1 flex-col;
+  }
+
+  .cb-auth-main {
+    @apply flex min-h-0 w-full flex-1 flex-col items-center justify-center px-5 py-8;
+  }
+
   /* Card: cream bg, rounded corners, soft shadow, max-w-md (built-in) */
   .cb-card {
     @apply w-full max-w-md rounded-2xl bg-cb-cream p-8 shadow-lg;
@@ -97,7 +109,7 @@
   }
 
   /**
-   * Tertiary “View Other Plans” on cream cb-card (auth / checkout). Outline, brand green, low emphasis.
+   * Tertiary “View Available Plans” on cream cb-card (auth / checkout). Outline, brand green, low emphasis.
    * Always visible; smaller than primary CTAs.
    */
   .cb-btn-auth-view-plans {

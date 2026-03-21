@@ -17,7 +17,7 @@ function ConfirmPaymentContent() {
   }, [plan, router]);
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+    <main className="cb-auth-main">
       <div className="cb-card">
         <h1 className="cb-card-title">Redirecting…</h1>
         <p className="cb-card-subtitle">Plan: {plan}</p>
@@ -30,7 +30,7 @@ function ConfirmPaymentContent() {
 export default function ConfirmPaymentPage() {
   return (
     <Suspense fallback={
-      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+      <main className="cb-auth-main">
         <div className="cb-card">
           <h1 className="cb-card-title">Preparing your payment</h1>
           <p style={{ marginTop: "1rem", opacity: 0.9 }}>Loading…</p>

@@ -21,7 +21,7 @@ function SignupRedirect() {
   }, [plan, router]);
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+    <main className="cb-auth-main">
       <div className="cb-card">
         <h1 className="cb-card-title">Redirecting…</h1>
         <p className="cb-card-subtitle" style={{ marginTop: "0.5rem" }}>
@@ -36,7 +36,7 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <main className="cb-auth-main">
           <div className="cb-card">
             <h1 className="cb-card-title">Redirecting…</h1>
           </div>

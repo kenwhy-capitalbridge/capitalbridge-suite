@@ -386,7 +386,7 @@ function PricingContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0D3A1D]">
+    <main className="min-h-0 flex-1 bg-[#0D3A1D]">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         {/* Value Anchor Section */}
         <section className="text-center">
@@ -705,21 +705,6 @@ function PricingContent() {
             </div>
           </div>
         </section>
-
-        <p className="mt-12 text-center text-sm text-cb-cream/70">
-          <Link href="/access" className="cb-btn-view-plans inline-flex">
-            Back to account
-          </Link>
-          {" · "}
-          <a
-            href="https://thecapitalbridge.com/advisory-platform/"
-            className="text-cb-gold hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Home
-          </a>
-        </p>
       </div>
       {activePreviewId && (
         <div
@@ -765,7 +750,7 @@ export default function PricingPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#0D3A1D]">
+        <main className="cb-auth-main bg-[#0D3A1D]">
           <p className="text-cb-cream/80">Loading…</p>
         </main>
       }

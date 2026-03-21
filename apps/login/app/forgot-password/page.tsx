@@ -79,7 +79,7 @@ function ForgotPasswordInner() {
 
   if (success) {
     return (
-      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+      <main className="cb-auth-main">
         <div className="cb-card max-w-md text-center">
           <h1 className="cb-card-title">Check your email</h1>
           <p className="cb-card-subtitle mt-2">{ACCESS_EMAIL_SENT_MESSAGE}</p>
@@ -105,12 +105,12 @@ function ForgotPasswordInner() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+    <main className="cb-auth-main">
       <div className="cb-card max-w-md">
         <h1 className="cb-card-title">Forgot password?</h1>
         <p className="cb-card-subtitle">
           Enter your email — we&apos;ll send a link to set your password. This is the same link as{" "}
-          <strong>Send password link again</strong> on the sign-in page.
+          <strong>Send Password Set Up Email Again</strong> on the sign-in page.
         </p>
 
         {!isSupabaseConfigured && (
@@ -139,7 +139,7 @@ function ForgotPasswordInner() {
           </label>
 
           <button className={btnPrimary} type="submit" disabled={loading || !isSupabaseConfigured}>
-            {loading ? ACCESS_EMAIL_SENDING_LABEL : "Send password link"}
+            {loading ? ACCESS_EMAIL_SENDING_LABEL : "Send Password Set Up Email"}
           </button>
         </form>
 
@@ -155,7 +155,7 @@ export default function ForgotPasswordPage() {
   return (
     <Suspense
       fallback={
-        <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
+        <main className="cb-auth-main">
           <div className="cb-card max-w-md text-center">
             <h1 className="cb-card-title">Loading…</h1>
           </div>

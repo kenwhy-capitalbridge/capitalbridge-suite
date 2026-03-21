@@ -149,6 +149,25 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["payment_events"]["Row"]>;
         Relationships: [];
       };
+      admin_billing_email_recoveries: {
+        Row: {
+          id: string;
+          bill_id: string;
+          old_email: string | null;
+          new_email: string;
+          old_user_id: string | null;
+          new_user_id: string | null;
+          membership_id: string | null;
+          status: "completed" | "denied";
+          error_code: string | null;
+          performed_by_actor: string | null;
+          client_ip: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["admin_billing_email_recoveries"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["admin_billing_email_recoveries"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

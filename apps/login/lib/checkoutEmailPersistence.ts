@@ -4,6 +4,9 @@
  */
 export const CHECKOUT_EMAIL_STORAGE_KEY = "cb_checkout_email";
 
+/** Billplz bill id — stable payment handle; survives email corrections (unlike email-only keys). */
+export const CHECKOUT_BILLPLZ_BILL_ID_KEY = "cb_billplz_bill_id";
+
 export function persistCheckoutEmail(email: string): void {
   try {
     const t = email.trim();
@@ -18,6 +21,26 @@ export function readPersistedCheckoutEmail(): string | null {
   try {
     if (typeof localStorage === "undefined") return null;
     const v = localStorage.getItem(CHECKOUT_EMAIL_STORAGE_KEY);
+    return v?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+export function persistBillplzBillId(billId: string): void {
+  try {
+    const t = billId.trim();
+    if (!t || typeof localStorage === "undefined") return;
+    localStorage.setItem(CHECKOUT_BILLPLZ_BILL_ID_KEY, t);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readPersistedBillplzBillId(): string | null {
+  try {
+    if (typeof localStorage === "undefined") return null;
+    const v = localStorage.getItem(CHECKOUT_BILLPLZ_BILL_ID_KEY);
     return v?.trim() || null;
   } catch {
     return null;

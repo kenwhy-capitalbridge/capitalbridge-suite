@@ -10,10 +10,13 @@ Create **three** Vercel projects connected to this repo, each with a different *
    - Env:
      - `NEXT_PUBLIC_SUPABASE_URL`
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+     - `SUPABASE_SERVICE_ROLE_KEY` (required for server routes: payment return recovery, webhooks, etc.)
+     - `PAYMENT_RECOVERY_JWT_SECRET` (min 32 chars) — HMAC secret for short-lived **payment email recovery** tokens (`/api/billing/recovery-token` → `/api/billing/recover-correct-email`). Rotate if leaked.
+     - `NEXT_PUBLIC_LOGIN_APP_URL` or `LOGIN_APP_URL` = canonical login origin (e.g. `https://login.thecapitalbridge.com`) — **production** recovery endpoints reject `Origin`/`Referer` that don’t match (CSRF-style protection).
      - `API_APP_URL` = `https://api.thecapitalbridge.com` (used by login server to call API; use preview URL for preview deployments)
      - `NEXT_PUBLIC_EXIT_LOGIN_URL` (optional) = `https://thecapitalbridge.com/advisory-platform/`
      - `NEXT_PUBLIC_MARKETING_SITE_URL` (optional) = `https://thecapitalbridge.com`
-   - **No** `SUPABASE_SERVICE_ROLE_KEY` or `BILLPLZ_*` on login; billing is done by the API.
+   - **No** `BILLPLZ_*` on login for normal checkout; Billplz lives on the API. Service role is still needed for selected login server routes (recovery, optional webhooks).
    - Payment flow: Browser → `POST /api/bill/create` (same-origin) → login server forwards to `API_APP_URL/billing/create` with Bearer token → API creates membership + Billplz bill.
 
 2. **api** project (billing + webhook)
@@ -26,7 +29,9 @@ Create **three** Vercel projects connected to this repo, each with a different *
      - `BILLPLZ_COLLECTION_ID`
      - `BILLPLZ_CALLBACK_URL` = `https://api.thecapitalbridge.com/billing/billplz-webhook` (recommended)
      - `BILLPLZ_REDIRECT_URL` (optional) = `https://platform.thecapitalbridge.com`
-   - Endpoints: `POST /billing/create` (Bearer token), `POST /billing/billplz-webhook` (Billplz callback).
+     - `BILLING_ADMIN_RECOVERY_SECRET` (min 32 chars) — **support-only** bearer for `POST /billing/admin/recover-email` (wrong-email recovery when the user cannot self-serve). Store in a password manager; rotate if leaked. Requires DB migration `admin_billing_email_recoveries`.
+     - `LOGIN_APP_URL` or `NEXT_PUBLIC_LOGIN_APP_URL` — used for password-setup email redirect (same as other billing emails).
+   - Endpoints: `POST /billing/create` (Bearer token), `POST /billing/billplz-webhook` (Billplz callback), `POST /billing/admin/recover-email` (admin bearer, see `docs/ADMIN_BILLING_EMAIL_RECOVERY.md`).
 
 3. **platform** project
    - Root Directory: `apps/platform`
