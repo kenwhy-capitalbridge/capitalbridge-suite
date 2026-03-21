@@ -62,6 +62,16 @@
     @apply w-full rounded-xl border border-cb-green/20 bg-white px-4 py-3 text-cb-green placeholder-cb-green/50;
   }
 
+  .cb-input-error {
+    @apply border-red-400/90 bg-red-50/40;
+  }
+
+  .cb-input-error:focus,
+  .cb-input-error:focus-visible {
+    border-color: rgb(248 113 113);
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.28);
+  }
+
   /* Primary action: gold bg, green text, rounded, medium weight, hover turns green */
   .cb-btn-primary {
     @apply rounded-xl bg-cb-gold px-4 py-3 font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] transition hover:bg-cb-green hover:text-white disabled:opacity-50;

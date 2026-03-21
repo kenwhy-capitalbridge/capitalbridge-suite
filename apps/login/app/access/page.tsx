@@ -21,7 +21,82 @@ const LOGIN_ERROR_COPY =
 const NO_PASSWORD_HELPER =
   "New here? Check your email for a link to set your password. Already paid? Use Send password link again below.";
 
+const SET_PASSWORD_LINK_EXPIRY_HINT =
+  "This link will expire in 10 minutes. Please complete this step now.";
+
+const PASSWORD_REQUIREMENTS_COPY =
+  "Use at least 6 characters. For better security, include letters, numbers, and symbols.";
+
+const PASSWORD_TOO_SHORT_MSG = "Password must be at least 6 characters.";
+
+const PASSWORD_MISMATCH_MSG = "Passwords do not match.";
+
+const DISABLED_SUBMIT_HELPER = "Please fix the errors above to continue.";
+
+function isLikelySessionExpiredError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("expired") ||
+    m.includes("jwt expired") ||
+    m.includes("invalid jwt") ||
+    m.includes("session expired") ||
+    m.includes("session not found") ||
+    m.includes("invalid refresh token") ||
+    m.includes("refresh token") ||
+    (m.includes("invalid") && m.includes("token"))
+  );
+}
+
 type View = "loading" | "set_password" | "login" | "error" | "success";
+
+function PasswordInputWithToggle({
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  visible,
+  onToggleVisible,
+  hasError,
+  autoFocus,
+  ariaInvalid,
+  ariaDescribedBy,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  autoComplete: string;
+  visible: boolean;
+  onToggleVisible: () => void;
+  hasError?: boolean;
+  autoFocus?: boolean;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
+}) {
+  return (
+    <div className="relative">
+      <input
+        className={`cb-input pr-11 ${hasError ? "cb-input-error" : ""}`}
+        type={visible ? "text" : "password"}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
+      />
+      <button
+        type="button"
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-cb-green/75 transition hover:bg-cb-green/[0.07] hover:text-cb-green focus:outline-none focus-visible:ring-2 focus-visible:ring-cb-gold/45"
+        onClick={onToggleVisible}
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+      >
+        {visible ? "Hide" : "Show"}
+      </button>
+    </div>
+  );
+}
 
 function PlatformAccessNotice({
   membershipInactive,
@@ -61,9 +136,16 @@ function AccessInner() {
 
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+  const [setPwApiError, setSetPwApiError] = useState<string | null>(null);
+  const [setPasswordLinkExpired, setSetPasswordLinkExpired] = useState(false);
+  const [setPwRecoveryEmail, setSetPwRecoveryEmail] = useState("");
 
   const [email, setEmail] = useState("");
   const [loginPw, setLoginPw] = useState("");
+
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   const [busy, setBusy] = useState(false);
 
@@ -84,6 +166,14 @@ function AccessInner() {
     const t = window.setTimeout(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000);
     return () => window.clearTimeout(t);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    if (view !== "set_password") {
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+    }
+    if (view !== "login") setShowLoginPassword(false);
+  }, [view]);
 
   const sendAccessEmail = useCallback(
     async (targetEmail: string) => {
@@ -204,18 +294,12 @@ function AccessInner() {
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault();
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
-    if (password !== confirmPw) {
-      setError("Passwords do not match.");
+    if (password.length < 6 || password !== confirmPw) {
       return;
     }
 
     setBusy(true);
-    setError(null);
+    setSetPwApiError(null);
 
     const { error: updateErr } = await recoverySupabase.auth.updateUser({
       password,
@@ -224,11 +308,29 @@ function AccessInner() {
     setBusy(false);
 
     if (updateErr) {
-      setError(updateErr.message);
+      if (isLikelySessionExpiredError(updateErr.message)) {
+        const { data } = await recoverySupabase.auth.getUser();
+        const fromSession = data.user?.email?.trim() || "";
+        setSetPwRecoveryEmail(fromSession || readPersistedCheckoutEmail() || "");
+        setSetPasswordLinkExpired(true);
+        setSetPwApiError(null);
+        return;
+      }
+      setSetPwApiError(updateErr.message);
       return;
     }
 
     setView("success");
+  }
+
+  async function handleResendFromSetPasswordExpired() {
+    setSetPwApiError(null);
+    const em = setPwRecoveryEmail.trim();
+    if (!em) {
+      setSetPwApiError("Enter the email you used at checkout.");
+      return;
+    }
+    await sendAccessEmail(em);
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -302,44 +404,142 @@ function AccessInner() {
   }
 
   if (view === "set_password") {
-    const passwordSubmitDisabled = busy || password.length < 6 || password !== confirmPw;
+    const passwordTooShort = password.length > 0 && password.length < 6;
+    const passwordsMismatch = confirmPw.length > 0 && password !== confirmPw;
+    const lengthOk = password.length >= 6;
+    const passwordsMatch = lengthOk && confirmPw.length > 0 && password === confirmPw;
+    const formValid = lengthOk && password === confirmPw && confirmPw.length > 0;
+    const passwordSubmitDisabled = busy || !formValid;
+    const userStartedSetPw = password.length > 0 || confirmPw.length > 0;
+    const showDisabledHelper = !busy && !formValid && userStartedSetPw;
 
     return (
       <>
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
         <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
           <div className="cb-card max-w-md w-full">
-            <h1 className="cb-card-title text-center">Set your password</h1>
-            <p className="cb-card-subtitle mt-2 text-center">
-              Set your password to access your account.
-            </p>
+            {setPasswordLinkExpired ? (
+              <>
+                <h1 className="cb-card-title text-center">This link has expired.</h1>
+                <p className="cb-card-subtitle mt-2 text-center">
+                  Request a new email to set your password. Use the same address you used at checkout.
+                </p>
+                {resendSuccess && (
+                  <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">
+                    {resendSuccess}
+                  </p>
+                )}
+                {resendError && <p className="cb-message-error mt-3 text-sm">{resendError}</p>}
+                {setPwApiError && <p className="cb-message-error mt-3 text-sm">{setPwApiError}</p>}
+                <div className="mt-6 flex flex-col gap-3 text-left">
+                  <label className="text-xs font-medium text-cb-green/80">Email</label>
+                  <input
+                    className="cb-input"
+                    type="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    value={setPwRecoveryEmail}
+                    onChange={(e) => {
+                      setSetPwRecoveryEmail(e.target.value);
+                      setResendSuccess(null);
+                      setResendError(null);
+                      setSetPwApiError(null);
+                    }}
+                    onBlur={() => {
+                      const t = setPwRecoveryEmail.trim();
+                      if (t.includes("@")) persistCheckoutEmail(t);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="cb-btn-secondary"
+                    disabled={
+                      resendBusy || resendCooldown > 0 || !setPwRecoveryEmail.trim() || !isSupabaseConfigured
+                    }
+                    onClick={() => void handleResendFromSetPasswordExpired()}
+                  >
+                    {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="cb-card-title text-center">Set your password</h1>
+                <p
+                  className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-center text-xs font-medium leading-relaxed text-cb-green"
+                  role="status"
+                >
+                  {SET_PASSWORD_LINK_EXPIRY_HINT}
+                </p>
+                <p className="cb-card-subtitle mt-3 text-center">
+                  Set your password to access your account.
+                </p>
 
-            {error && <p className="cb-message-error mt-4">{error}</p>}
+                {setPwApiError && <p className="cb-message-error mt-4">{setPwApiError}</p>}
 
-            <form onSubmit={handleSetPassword} className="mt-6 flex flex-col gap-4">
-              <input
-                className="cb-input"
-                type="password"
-                placeholder="New password"
-                autoComplete="new-password"
-                autoFocus
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+                <form onSubmit={handleSetPassword} className="mt-5 flex flex-col gap-4">
+                  <p className="text-sm leading-relaxed text-cb-green/85">{PASSWORD_REQUIREMENTS_COPY}</p>
 
-              <input
-                className="cb-input"
-                type="password"
-                placeholder="Confirm password"
-                autoComplete="new-password"
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-              />
+                  <div className="flex flex-col gap-1">
+                    <PasswordInputWithToggle
+                      value={password}
+                      onChange={(v) => {
+                        setPassword(v);
+                        setSetPwApiError(null);
+                      }}
+                      placeholder="New password"
+                      autoComplete="new-password"
+                      visible={showNewPassword}
+                      onToggleVisible={() => setShowNewPassword((s) => !s)}
+                      hasError={passwordTooShort}
+                      autoFocus
+                      ariaInvalid={passwordTooShort}
+                      ariaDescribedBy={passwordTooShort ? "pw-length-err" : undefined}
+                    />
+                    {passwordTooShort && (
+                      <p id="pw-length-err" className="text-xs text-red-700">
+                        {PASSWORD_TOO_SHORT_MSG}
+                      </p>
+                    )}
+                    {lengthOk && (
+                      <p className="text-xs font-medium text-cb-green">✓ At least 6 characters</p>
+                    )}
+                  </div>
 
-              <button className="cb-btn-primary" type="submit" disabled={passwordSubmitDisabled}>
-                {busy ? "Setting your password…" : "Set password and continue"}
-              </button>
-            </form>
+                  <div className="flex flex-col gap-1">
+                    <PasswordInputWithToggle
+                      value={confirmPw}
+                      onChange={(v) => {
+                        setConfirmPw(v);
+                        setSetPwApiError(null);
+                      }}
+                      placeholder="Confirm password"
+                      autoComplete="new-password"
+                      visible={showConfirmPassword}
+                      onToggleVisible={() => setShowConfirmPassword((s) => !s)}
+                      hasError={passwordsMismatch}
+                      ariaInvalid={passwordsMismatch}
+                      ariaDescribedBy={passwordsMismatch ? "pw-match-err" : undefined}
+                    />
+                    {passwordsMismatch && (
+                      <p id="pw-match-err" className="text-xs text-red-700">
+                        {PASSWORD_MISMATCH_MSG}
+                      </p>
+                    )}
+                    {passwordsMatch && (
+                      <p className="text-xs font-medium text-cb-green">✓ Passwords match</p>
+                    )}
+                  </div>
+
+                  <button className="cb-btn-primary" type="submit" disabled={passwordSubmitDisabled}>
+                    {busy ? "Setting your password…" : "Set password and continue"}
+                  </button>
+                  {showDisabledHelper && (
+                    <p className="text-center text-xs text-cb-green/70">{DISABLED_SUBMIT_HELPER}</p>
+                  )}
+                </form>
+              </>
+            )}
           </div>
         </main>
       </>
@@ -384,13 +584,13 @@ function AccessInner() {
                 }}
               />
 
-              <input
-                className="cb-input"
-                type="password"
+              <PasswordInputWithToggle
+                value={loginPw}
+                onChange={setLoginPw}
                 placeholder="Enter your password"
                 autoComplete="current-password"
-                value={loginPw}
-                onChange={(e) => setLoginPw(e.target.value)}
+                visible={showLoginPassword}
+                onToggleVisible={() => setShowLoginPassword((s) => !s)}
               />
 
               <p className="text-sm text-cb-green/80">{NO_PASSWORD_HELPER}</p>
