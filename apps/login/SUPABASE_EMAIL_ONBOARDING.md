@@ -1,6 +1,11 @@
 # Onboarding email (payment-first) — Reset Password template
 
-Payment-first onboarding **does not** use Supabase **“Confirm Sign Up”**. After Billplz payment, the API sends the same mail as **password recovery** by calling `resetPasswordForEmail` (recover endpoint), with idempotency via `payments.recovery_email_sent`.
+Payment-first onboarding **does not** use Supabase **“Confirm Sign Up”** or `signUp()`.
+
+- Checkout creates users via **admin `createUser`** with **`email_confirm: true`** (see `request-bill` / API billing).
+- After Billplz payment, the webhook resolves the Auth user (`resolveAuthUserForPayment`), then sends **one** email via **`resetPasswordForEmail`** (same as the Recover / Reset Password flow).
+- Idempotency: **`payments.recovery_email_sent`** (see `withOnboardingEmailOncePerBill`).
+- **Backup only:** “Resend access email” on `payment-return` also uses `resetPasswordForEmail` — same mechanism, not a second system.
 
 ## Dashboard: Auth → Email Templates → **Reset Password**
 

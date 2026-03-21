@@ -5,7 +5,8 @@ import { loadPlanMap, getPlanDuration } from "@cb/advisory-graph/plans/planMap";
 import { computeExpiry } from "@cb/advisory-graph/plans/expiry";
 import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
 import { sendRecoveryEmailAfterPayment } from "@/lib/billingRecoveryEmail";
-import { withRecoveryEmailOncePerBill } from "@/lib/recoveryEmailOncePerBill";
+import { withOnboardingEmailOncePerBill } from "@/lib/recoveryEmailOncePerBill";
+import { resolveAuthUserForPayment } from "@/lib/paymentAuthUser";
 
 export const runtime = "nodejs";
 
@@ -136,24 +137,38 @@ export async function POST(req: Request) {
       })
       .eq("id", billingSessionId);
 
+    const sessionEmail = sessionByBill.email as string | null | undefined;
     const preUserId = sessionByBill.user_id as string | null | undefined;
-    if (!preUserId) {
-      console.error("[billplz-webhook] billing_sessions missing user_id", { bill_id: billId, billing_session_id: billingSessionId });
-      return NextResponse.json({ ok: false, error: "missing_user_id" }, { status: 400 });
+    if (!sessionEmail?.trim()) {
+      console.error("[billplz-webhook] billing_sessions missing email", { bill_id: billId, billing_session_id: billingSessionId });
+      return NextResponse.json({ ok: false, error: "missing_session_email" }, { status: 400 });
     }
 
-    const { data: authWrap, error: guErr } = await svc.auth.admin.getUserById(preUserId);
-    if (guErr || !authWrap?.user?.id) {
-      console.error("[billplz-webhook] invalid user_id on billing_session", { bill_id: billId, user_id: preUserId });
-      return NextResponse.json({ ok: false, error: "invalid_user" }, { status: 400 });
+    let userId: string;
+    let userEmail: string;
+    try {
+      const resolved = await resolveAuthUserForPayment(svc, {
+        billingSessionUserId: preUserId,
+        sessionEmail,
+      });
+      userId = resolved.userId;
+      userEmail = resolved.email;
+    } catch (e) {
+      console.error("[billplz-webhook] auth user resolve failed", { bill_id: billId, error: e });
+      return NextResponse.json(
+        { ok: false, error: "auth_user_resolve_failed", detail: e instanceof Error ? e.message : "unknown" },
+        { status: 500 }
+      );
     }
 
-    const userId = authWrap.user.id;
-    const userEmail = (authWrap.user.email ?? "").trim();
-    if (!userEmail) {
-      console.error("[billplz-webhook] user has no email", { bill_id: billId, user_id: userId });
-      return NextResponse.json({ ok: false, error: "user_missing_email" }, { status: 400 });
+    if (userId !== preUserId) {
+      await svc
+        .schema("public")
+        .from("billing_sessions")
+        .update({ user_id: userId, updated_at: now })
+        .eq("id", billingSessionId);
     }
+
     console.info("[billplz-webhook] payment-first session user resolved", { bill_id: billId, user_id: userId });
 
     const { data: planRow } = await svc
@@ -251,9 +266,9 @@ export async function POST(req: Request) {
         { onConflict: "id" }
       );
 
-    await withRecoveryEmailOncePerBill(svc, billId, () =>
+    await withOnboardingEmailOncePerBill(svc, billId, () =>
       sendRecoveryEmailAfterPayment(svc, userId, userEmail)
-    ).catch((e) => console.error("[billplz-webhook] recovery email failed", e));
+    ).catch((e) => console.error("[billplz-webhook] onboarding email failed", e));
     return NextResponse.json({ ok: true });
   }
 

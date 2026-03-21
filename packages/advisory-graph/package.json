@@ -8,6 +8,7 @@
     "./SavedReportsPanel": "./src/SavedReportsPanel.tsx",
     "./supabaseClient": "./src/supabaseClient.ts",
     "./auth/emailCheck": "./src/auth/emailCheck.ts",
+    "./auth/emailAccessState": "./src/auth/emailAccessState.ts",
     "./plans/planMap": "./src/plans/planMap.ts",
     "./plans/expiry": "./src/plans/expiry.ts"
   },

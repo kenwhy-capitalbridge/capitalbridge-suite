@@ -4,7 +4,8 @@ import { getBillplzBill } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
 import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
 import { sendRecoveryEmailAfterPayment } from "@/lib/billingRecoveryEmail";
-import { withRecoveryEmailOncePerBill } from "@/lib/recoveryEmailOncePerBill";
+import { withOnboardingEmailOncePerBill } from "@/lib/recoveryEmailOncePerBill";
+import { resolveAuthUserForPayment } from "@/lib/paymentAuthUser";
 
 export const runtime = "nodejs";
 
@@ -58,20 +59,34 @@ export async function GET(req: Request) {
     })
     .eq("id", session.id);
 
+  const sessionEmail = session.email as string | null | undefined;
   const preUserId = session.user_id as string | null | undefined;
-  if (!preUserId) {
-    return NextResponse.json({ ok: false, error: "missing_user_id" }, { status: 400 });
+  if (!sessionEmail?.trim()) {
+    return NextResponse.json({ ok: false, error: "missing_session_email" }, { status: 400 });
   }
 
-  const { data: authWrap, error: guErr } = await svc.auth.admin.getUserById(preUserId);
-  if (guErr || !authWrap?.user?.id) {
-    return NextResponse.json({ ok: false, error: "invalid_user" }, { status: 400 });
+  let userId: string;
+  let userEmail: string;
+  try {
+    const resolved = await resolveAuthUserForPayment(svc, {
+      billingSessionUserId: preUserId,
+      sessionEmail,
+    });
+    userId = resolved.userId;
+    userEmail = resolved.email;
+  } catch (e) {
+    return NextResponse.json(
+      { ok: false, error: "auth_user_resolve_failed", detail: e instanceof Error ? e.message : "unknown" },
+      { status: 500 }
+    );
   }
 
-  const userId = authWrap.user.id;
-  const userEmail = (authWrap.user.email ?? "").trim();
-  if (!userEmail) {
-    return NextResponse.json({ ok: false, error: "user_missing_email" }, { status: 400 });
+  if (userId !== preUserId) {
+    await svc
+      .schema("public")
+      .from("billing_sessions")
+      .update({ user_id: userId, updated_at: now })
+      .eq("id", session.id);
   }
 
   const { data: planRow } = await svc
@@ -150,9 +165,9 @@ export async function GET(req: Request) {
       { onConflict: "id" }
     );
 
-  await withRecoveryEmailOncePerBill(svc, billId, () =>
+  await withOnboardingEmailOncePerBill(svc, billId, () =>
     sendRecoveryEmailAfterPayment(svc, userId, userEmail)
-  ).catch((e) => console.error("[confirm-payment] recovery email failed", e));
+  ).catch((e) => console.error("[confirm-payment] onboarding email failed", e));
 
   return NextResponse.json({ ok: true, source: "confirm_payment" });
 }

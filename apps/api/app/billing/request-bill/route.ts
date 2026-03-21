@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
     email,
     password: tempPassword,
-    email_confirm: false,
+    email_confirm: true,
     user_metadata: {
       full_name: name,
       name,
