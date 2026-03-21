@@ -1,11 +1,6 @@
 # Onboarding email (payment-first) — Reset Password template
 
-Payment-first onboarding **does not** use Supabase **“Confirm Sign Up”** or `signUp()`.
-
-- Checkout creates users via **admin `createUser`** with **`email_confirm: true`** (see `request-bill` / API billing).
-- After Billplz payment, the webhook resolves the Auth user (`resolveAuthUserForPayment`), then sends **one** email via **`resetPasswordForEmail`** (same as the Recover / Reset Password flow).
-- Idempotency: **`payments.recovery_email_sent`** (see `withOnboardingEmailOncePerBill`).
-- **Backup only:** “Resend access email” on `payment-return` also uses `resetPasswordForEmail` — same mechanism, not a second system.
+Payment-first onboarding **does not** use Supabase **“Confirm Sign Up”**. After Billplz payment, the API sends the same mail as **password recovery** by calling `resetPasswordForEmail` (recover endpoint), with idempotency via `payments.recovery_email_sent`.
 
 ## Dashboard: Auth → Email Templates → **Reset Password**
 
@@ -19,7 +14,7 @@ Rewrite this template so it reads as **onboarding**, not “forgot password”.
 
 > Your account is ready.
 >
-> Click below to set your password and access your dashboard.
+> Click below to set your password and access your dashboard. (In-app success copy: “Email sent. Check your inbox to set your password.”)
 
 **Button / CTA label:** `Set your password`
 
@@ -38,4 +33,6 @@ See also `SUPABASE_REDIRECT_URLS.md`.
 
 ## Backup resend
 
-The **payment-return** page may offer **“Resend access email”** for users who don’t see the first mail. That path also uses `resetPasswordForEmail` → same template.
+The **payment-return** page offers **“Set your password”** / **“Send password link again”** for users who don’t see the first mail. That path also uses `resetPasswordForEmail` → same template.
+
+Use this success line in product copy where relevant: **“Email sent. Check your inbox to set your password.”**

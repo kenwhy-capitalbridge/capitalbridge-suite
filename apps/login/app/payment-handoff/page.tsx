@@ -1,7 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
+import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
+import {
+  ACCESS_EMAIL_COOLDOWN_SEC,
+  ACCESS_EMAIL_SENT_MESSAGE,
+  ACCESS_EMAIL_SENDING_LABEL,
+  accessEmailResendButtonLabel,
+} from "@/lib/resendAccessEmail";
+import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -33,6 +42,25 @@ const btnPrimary =
 const btnSecondary =
   "w-full rounded-xl border-2 border-cb-gold/50 bg-white/90 px-4 py-3 text-center font-medium text-cb-green transition hover:scale-[1.02] block";
 
+function openWebInbox(email: string | null | undefined) {
+  const domain = email?.split("@")[1]?.toLowerCase().trim() ?? "";
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    window.open("https://mail.google.com/mail/u/0/#inbox", "_blank", "noopener,noreferrer");
+    return;
+  }
+  if (["outlook.com", "hotmail.com", "live.com", "msn.com"].includes(domain)) {
+    window.open("https://outlook.live.com/mail/", "_blank", "noopener,noreferrer");
+    return;
+  }
+  window.open("https://mail.google.com/mail/u/0/#inbox", "_blank", "noopener,noreferrer");
+}
+
+function setPasswordPrimaryLabel(busy: boolean, cooldownSec: number): string {
+  if (busy) return ACCESS_EMAIL_SENDING_LABEL;
+  if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
+  return "Set your password";
+}
+
 function PaymentHandoffContent() {
   const searchParams = useSearchParams();
   const paymentUrl = searchParams.get("payment_url");
@@ -42,10 +70,16 @@ function PaymentHandoffContent() {
 
   const [status, setStatus] = useState<BillingStatusResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(!!billId);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+
+  const redirectTo = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
 
   const accessHref = useMemo(
-    () => `/access?redirectTo=${encodeURIComponent(LOGIN_REDIRECT)}`,
-    []
+    () => buildAccessUrl({ redirectTo: LOGIN_REDIRECT, email: status?.email?.trim() ?? undefined }),
+    [status?.email]
   );
 
   useEffect(() => {
@@ -80,27 +114,100 @@ function PaymentHandoffContent() {
     };
   }, [billId]);
 
-  const accountReady = !!status?.account_ready;
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = window.setTimeout(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(t);
+  }, [resendCooldown]);
 
-  function openMailto() {
-    window.location.href = "mailto:";
-  }
+  const accountReady = !!status?.account_ready;
+  const statusEmail = status?.email?.trim() ?? null;
+  const sendDisabled = resendBusy || resendCooldown > 0 || !statusEmail || !isSupabaseConfigured;
+
+  useEffect(() => {
+    if (statusEmail) persistCheckoutEmail(statusEmail);
+  }, [statusEmail]);
+
+  const handleSendSetPasswordEmail = useCallback(async () => {
+    setResendError(null);
+    const em = statusEmail;
+    if (!em) {
+      setResendError("We don't have your email on this screen. Use the same inbox you entered at checkout.");
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      setResendError("Sign-in isn’t configured in this environment.");
+      return;
+    }
+    if (resendCooldown > 0 || resendBusy) return;
+
+    setResendBusy(true);
+    const { error } = await recoverySupabase.auth.resetPasswordForEmail(em, {
+      redirectTo,
+    });
+    setResendBusy(false);
+    if (error) {
+      setResendSuccess(null);
+      setResendError(error.message);
+      return;
+    }
+    persistCheckoutEmail(em);
+    setResendSuccess(ACCESS_EMAIL_SENT_MESSAGE);
+    setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
+  }, [redirectTo, statusEmail, resendCooldown, resendBusy]);
 
   if (accountReady) {
     return (
       <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
         <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">Check your email to activate your account</h1>
+          <h1 className="cb-card-title">Your account is ready.</h1>
           <p className="cb-card-subtitle mt-3 text-base leading-relaxed">
-            We&apos;ve sent you a secure link to set your password and access your dashboard.
+            We&apos;ve emailed you a link to set your password. Open it on this device to finish.
           </p>
           {billId && <p className="mt-4 text-xs text-cb-green/60">Reference: {billId}</p>}
-          <div className="mt-8 flex flex-col items-center gap-4">
-            <button type="button" className="cb-btn-view-plans px-4 py-2 text-sm normal-case tracking-normal" onClick={openMailto}>
-              Open my email
-            </button>
+          {statusEmail ? (
+            <>
+              {resendSuccess && (
+                <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
+              )}
+              {resendError && <p className="cb-message-error mt-3 text-left text-sm">{resendError}</p>}
+              <div className="mt-8 flex w-full flex-col gap-3">
+                <button
+                  type="button"
+                  className={btnPrimary}
+                  disabled={sendDisabled}
+                  onClick={() => void handleSendSetPasswordEmail()}
+                >
+                  {setPasswordPrimaryLabel(resendBusy, resendCooldown)}
+                </button>
+                <p className="text-sm leading-relaxed text-cb-green/85">
+                  Didn&apos;t get the email? Use Send password link again after the timer.
+                </p>
+                <button
+                  type="button"
+                  className={btnSecondary}
+                  disabled={sendDisabled}
+                  onClick={() => void handleSendSetPasswordEmail()}
+                >
+                  {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+                </button>
+                <button type="button" className={btnSecondary} onClick={() => openWebInbox(statusEmail)}>
+                  Open email inbox
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="mt-4 text-sm text-cb-green/85">
+              Go to{" "}
+              <a href="/access" className="font-semibold underline">
+                account access
+              </a>{" "}
+              and use Send password link again with the address you used at checkout.
+            </p>
+          )}
+          <div className="mt-6 flex w-full flex-col items-center gap-3">
             <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
-              I opened my email link — continue
+              Continue to set your password
             </button>
             <button type="button" className="cb-btn-view-plans" onClick={() => { window.location.href = "/pricing"; }}>
               View All Plans
@@ -125,8 +232,8 @@ function PaymentHandoffContent() {
           {loading && <p className="font-medium text-cb-green">Securing your access…</p>}
           {!loading && (
             <p>
-              Open secure payment in a new tab. After you pay, check your email for a link to create your password — you won&apos;t
-              need to sign in until then.
+              Open payment in a new tab. After you pay, we&apos;ll email you a link to set your password — you won&apos;t need to
+              sign in until then.
             </p>
           )}
         </div>

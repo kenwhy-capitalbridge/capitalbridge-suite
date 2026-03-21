@@ -4,6 +4,13 @@ import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
 import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
+import {
+  ACCESS_EMAIL_COOLDOWN_SEC,
+  ACCESS_EMAIL_SENT_MESSAGE,
+  ACCESS_EMAIL_SENDING_LABEL,
+  accessEmailResendButtonLabel,
+} from "@/lib/resendAccessEmail";
+import { persistCheckoutEmail, buildAccessUrl, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -22,7 +29,6 @@ const btnPrimary =
 const btnSecondary =
   "w-full rounded-xl border-2 border-cb-gold/50 bg-white/90 px-4 py-3 text-center font-medium text-cb-green transition hover:scale-[1.02] hover:bg-white disabled:opacity-50 disabled:hover:scale-100";
 
-/** Prefer provider web inbox from checkout email when we know it; else Gmail + user checks other apps. */
 function openWebInbox(email: string | null | undefined) {
   const domain = email?.split("@")[1]?.toLowerCase().trim() ?? "";
   if (domain === "gmail.com" || domain === "googlemail.com") {
@@ -36,6 +42,20 @@ function openWebInbox(email: string | null | undefined) {
   window.open("https://mail.google.com/mail/u/0/#inbox", "_blank", "noopener,noreferrer");
 }
 
+function setPasswordPrimaryLabel(busy: boolean, cooldownSec: number): string {
+  if (busy) return ACCESS_EMAIL_SENDING_LABEL;
+  if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
+  return "Set your password";
+}
+
+function openAccessWithPersistedEmail(e: React.MouseEvent<HTMLAnchorElement>) {
+  const em = readPersistedCheckoutEmail();
+  if (em) {
+    e.preventDefault();
+    window.location.href = buildAccessUrl({ email: em });
+  }
+}
+
 function PaymentReturnContent() {
   const searchParams = useSearchParams();
   const paid = searchParams.get("billplz[paid]") === "true";
@@ -46,8 +66,16 @@ function PaymentReturnContent() {
   const [loading, setLoading] = useState<boolean>(!!billId);
   const [resendBusy, setResendBusy] = useState(false);
   const [resendError, setResendError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
 
   const redirectTo = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = window.setTimeout(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(t);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (!billId) return;
@@ -94,7 +122,14 @@ function PaymentReturnContent() {
   const waitingForWebhook = !accountReady && paid && !!billId;
   const statusEmail = status?.email?.trim() ?? null;
 
-  const handleResendAccessEmail = useCallback(async () => {
+  useEffect(() => {
+    if (statusEmail) persistCheckoutEmail(statusEmail);
+  }, [statusEmail]);
+
+  const sendDisabled =
+    resendBusy || resendCooldown > 0 || !statusEmail || !isSupabaseConfigured;
+
+  const handleSendSetPasswordEmail = useCallback(async () => {
     setResendError(null);
     const em = statusEmail;
     if (!em) {
@@ -105,16 +140,59 @@ function PaymentReturnContent() {
       setResendError("Sign-in isn’t configured in this environment.");
       return;
     }
+    if (resendCooldown > 0 || resendBusy) return;
+
     setResendBusy(true);
     const { error } = await recoverySupabase.auth.resetPasswordForEmail(em, {
       redirectTo,
     });
     setResendBusy(false);
     if (error) {
+      setResendSuccess(null);
       setResendError(error.message);
       return;
     }
-  }, [redirectTo, statusEmail]);
+    persistCheckoutEmail(em);
+    setResendSuccess(ACCESS_EMAIL_SENT_MESSAGE);
+    setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
+  }, [redirectTo, statusEmail, resendCooldown, resendBusy]);
+
+  const accessHrefWithEmail = statusEmail ? buildAccessUrl({ email: statusEmail }) : "/access";
+
+  const emailActions = (
+    <>
+      {resendSuccess && (
+        <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
+      )}
+      {resendError && <p className="cb-message-error mt-3 text-left text-sm">{resendError}</p>}
+      <div className="mt-6 flex flex-col gap-3">
+        <button
+          type="button"
+          className={btnPrimary}
+          disabled={sendDisabled}
+          onClick={() => void handleSendSetPasswordEmail()}
+        >
+          {setPasswordPrimaryLabel(resendBusy, resendCooldown)}
+        </button>
+        <p className="text-sm leading-relaxed text-cb-green/85">
+          Didn&apos;t get the email? Use Send password link again after the timer — you won&apos;t be left without a next step.
+        </p>
+        <button
+          type="button"
+          className={btnSecondary}
+          disabled={sendDisabled}
+          onClick={() => void handleSendSetPasswordEmail()}
+        >
+          {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+        </button>
+        <button type="button" className={btnSecondary} onClick={() => openWebInbox(statusEmail)}>
+          Open email inbox
+        </button>
+        <p className="text-sm text-cb-green/75">Or open your email app and look for our message</p>
+      </div>
+      <p className="mt-6 text-xs leading-relaxed text-cb-green/65">Check your spam folder if you don&apos;t see it</p>
+    </>
+  );
 
   if (!billId) {
     return (
@@ -125,8 +203,15 @@ function PaymentReturnContent() {
             If you just paid, go back to the tab from checkout or check the email you used there.
           </p>
           <p className="mt-3 text-sm text-cb-green/80">
-            If you don&apos;t see the email, check your spam folder or resend it from your account page when you have your bill
-            reference.
+            To set your password or send the link again, open{" "}
+            <a
+              href="/access"
+              className="font-semibold text-cb-green underline"
+              onClick={openAccessWithPersistedEmail}
+            >
+              account access
+            </a>{" "}
+            — your email may be filled in automatically — then tap Send password link again.
           </p>
           <div className="mt-6 flex flex-col gap-3">
             <button type="button" className={btnPrimary} onClick={() => openWebInbox(null)}>
@@ -162,34 +247,33 @@ function PaymentReturnContent() {
     return (
       <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
         <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">Check your email to activate your account</h1>
+          <h1 className="cb-card-title">Your account is ready.</h1>
           <p className="cb-card-subtitle mt-3 text-base leading-relaxed">
-            We&apos;ve sent you a secure link to set your password and access your dashboard.
+            We&apos;ve emailed you a link to set your password. Open it on this device to finish.
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-cb-green/85">
-            If you don&apos;t see the email, check your spam folder or resend it.
-          </p>
-          {resendBusy && (
-            <p className="mt-4 text-sm font-medium text-cb-green">Sending access email…</p>
+          {statusEmail ? (
+            emailActions
+          ) : (
+            <p className="mt-4 text-sm text-cb-green/85">
+              We couldn&apos;t load your email on this screen. Open{" "}
+              <a
+                href="/access"
+                className="font-semibold underline"
+                onClick={openAccessWithPersistedEmail}
+              >
+                account access
+              </a>{" "}
+              and use Send password link again with the address you used at checkout.
+            </p>
           )}
-          {resendError && <p className="cb-message-error mt-3 text-left text-sm">{resendError}</p>}
-          <div className="mt-8 flex flex-col gap-3">
-            <button type="button" className={btnPrimary} onClick={() => openWebInbox(statusEmail)}>
-              Open Gmail
-            </button>
-            <p className="text-sm text-cb-green/75">Or check your email app</p>
-            <button
-              type="button"
-              className={btnSecondary}
-              disabled={resendBusy || !isSupabaseConfigured}
-              onClick={() => void handleResendAccessEmail()}
-            >
-              {resendBusy ? "Sending access email…" : "Resend access email"}
-            </button>
-          </div>
-          <p className="mt-6 text-xs leading-relaxed text-cb-green/65">
-            Check your spam folder if you don&apos;t see it
-          </p>
+          {statusEmail && (
+            <p className="mt-6 text-sm text-cb-green/80">
+              <a href={accessHrefWithEmail} className="font-semibold underline">
+                Open account access
+              </a>{" "}
+              (your email is pre-filled when possible)
+            </p>
+          )}
         </div>
       </main>
     );
@@ -200,10 +284,8 @@ function PaymentReturnContent() {
       <div className="cb-card max-w-md text-center">
         <h1 className="cb-card-title">Payment pending</h1>
         <p className="cb-card-subtitle mt-2">
-          We couldn&apos;t confirm payment from this page yet. Check the email you used at checkout for a link to finish setup.
-        </p>
-        <p className="mt-3 text-sm text-cb-green/85">
-          If you don&apos;t see the email, check your spam folder or resend it.
+          We couldn&apos;t confirm payment from this page yet. When your email appears below, use Set your password to get a
+          link — even if the first email never arrived.
         </p>
         {billId && <p className="mt-4 text-xs text-cb-green/55">Reference: {billId}</p>}
         {status?.next_step === "contact_support" && (
@@ -211,25 +293,17 @@ function PaymentReturnContent() {
             We couldn&apos;t match this payment yet. Contact support with the reference above.
           </p>
         )}
-        {resendBusy && (
-          <p className="mt-4 text-sm font-medium text-cb-green">Sending access email…</p>
+        {statusEmail ? (
+          emailActions
+        ) : (
+          <p className="mt-4 text-sm text-cb-green/85">
+            This page will refresh with your email shortly. You can also open{" "}
+            <a href="/access" className="font-semibold underline" onClick={openAccessWithPersistedEmail}>
+              account access
+            </a>{" "}
+            and use Send password link again.
+          </p>
         )}
-        {resendError && <p className="cb-message-error mt-3 text-sm">{resendError}</p>}
-        <div className="mt-6 flex flex-col gap-3">
-          <button type="button" className={btnPrimary} onClick={() => openWebInbox(statusEmail)}>
-            Open Gmail
-          </button>
-          <p className="text-sm text-cb-green/75">Or check your email app</p>
-          <button
-            type="button"
-            className={btnSecondary}
-            disabled={resendBusy || !isSupabaseConfigured}
-            onClick={() => void handleResendAccessEmail()}
-          >
-            {resendBusy ? "Sending access email…" : "Resend access email"}
-          </button>
-        </div>
-        <p className="mt-6 text-xs text-cb-green/65">Check your spam folder if you don&apos;t see it</p>
       </div>
     </main>
   );

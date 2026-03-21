@@ -1,26 +1,27 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { getEmailAccessState } from "@cb/advisory-graph/auth/emailAccessState";
 import { supabase, recoverySupabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
+import {
+  ACCESS_EMAIL_COOLDOWN_SEC,
+  ACCESS_EMAIL_SENT_MESSAGE,
+  accessEmailResendButtonLabel,
+} from "@/lib/resendAccessEmail";
+import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 
 const PLATFORM_URL =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
   "https://platform.thecapitalbridge.com";
 
-const RESEND_COOLDOWN_SEC = 45;
+const LOGIN_ERROR_COPY =
+  "Incorrect email or password. If you've just signed up, check your email to set your password.";
 
-type AccessScreen =
-  | { kind: "loading" }
-  | { kind: "set_password" }
-  | { kind: "set_password_success" }
-  | { kind: "link_error" }
-  | { kind: "email" }
-  | { kind: "no_account"; email: string }
-  | { kind: "needs_activation"; email: string }
-  | { kind: "sign_in"; email: string };
+const NO_PASSWORD_HELPER =
+  "New here? Check your email for a link to set your password. Already paid? Use “Send password link again” below — same as Forgot password.";
+
+type View = "loading" | "set_password" | "login" | "error" | "success";
 
 function PlatformAccessNotice({
   membershipInactive,
@@ -55,30 +56,57 @@ function AccessInner() {
     [searchParams]
   );
 
-  const [screen, setScreen] = useState<AccessScreen>({ kind: "loading" });
+  const [view, setView] = useState<View>("loading");
   const [error, setError] = useState<string | null>(null);
-  const [stepError, setStepError] = useState<string | null>(null);
 
-  const [emailInput, setEmailInput] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+
+  const [email, setEmail] = useState("");
   const [loginPw, setLoginPw] = useState("");
 
   const [busy, setBusy] = useState(false);
-  const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
+
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [errorScreenEmail, setErrorScreenEmail] = useState("");
+
+  const loginEmailHydrated = useRef(false);
+  const errorEmailHydrated = useRef(false);
 
   const destination = useMemo(() => `${PLATFORM_URL.replace(/\/$/, "")}/`, []);
-  const authEmailRedirect = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
+  const redirectTo = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
 
   useEffect(() => {
-    if (resendSecondsLeft <= 0) return;
-    const t = window.setTimeout(() => setResendSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    if (resendCooldown <= 0) return;
+    const t = window.setTimeout(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000);
     return () => window.clearTimeout(t);
-  }, [resendSecondsLeft]);
+  }, [resendCooldown]);
 
-  const startResendCooldown = useCallback(() => {
-    setResendSecondsLeft(RESEND_COOLDOWN_SEC);
-  }, []);
+  const sendAccessEmail = useCallback(
+    async (targetEmail: string) => {
+      const em = targetEmail.trim();
+      if (!em || !isSupabaseConfigured || resendCooldown > 0) return false;
+      setResendError(null);
+      setResendBusy(true);
+      setResendSuccess(null);
+      const { error: err } = await recoverySupabase.auth.resetPasswordForEmail(em, {
+        redirectTo,
+      });
+      setResendBusy(false);
+      if (err) {
+        setResendError(err.message);
+        return false;
+      }
+      persistCheckoutEmail(em);
+      setResendSuccess(ACCESS_EMAIL_SENT_MESSAGE);
+      setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
+      return true;
+    },
+    [redirectTo, resendCooldown]
+  );
 
   useEffect(() => {
     const init = async () => {
@@ -100,7 +128,7 @@ function AccessInner() {
             if (err) throw err;
 
             window.history.replaceState(null, "", window.location.pathname);
-            setScreen({ kind: "set_password" });
+            setView("set_password");
             return;
           }
 
@@ -113,7 +141,7 @@ function AccessInner() {
           if (err) throw err;
 
           window.history.replaceState(null, "", window.location.pathname);
-          setScreen({ kind: "set_password" });
+          setView("set_password");
           return;
         }
 
@@ -124,11 +152,11 @@ function AccessInner() {
           return;
         }
 
-        setScreen({ kind: "email" });
+        setView("login");
       } catch (err: unknown) {
         console.error(err);
         setError(err instanceof Error ? err.message : "Something went wrong");
-        setScreen({ kind: "link_error" });
+        setView("error");
       }
     };
 
@@ -136,12 +164,42 @@ function AccessInner() {
   }, [destination]);
 
   useEffect(() => {
-    if (screen.kind !== "set_password_success") return;
+    if (view !== "login" || loginEmailHydrated.current) return;
+    loginEmailHydrated.current = true;
+    const qp = searchParams.get("email")?.trim();
+    const stored = readPersistedCheckoutEmail();
+    const next = qp || stored || "";
+    if (next) setEmail(next);
+    if (qp && typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      p.delete("email");
+      const path = `${window.location.pathname}${p.toString() ? `?${p.toString()}` : ""}${window.location.hash}`;
+      window.history.replaceState(null, "", path);
+    }
+  }, [view, searchParams]);
+
+  useEffect(() => {
+    if (view !== "error" || errorEmailHydrated.current) return;
+    errorEmailHydrated.current = true;
+    const qp = searchParams.get("email")?.trim();
+    const stored = readPersistedCheckoutEmail();
+    const next = qp || stored || "";
+    if (next) setErrorScreenEmail(next);
+    if (qp && typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      p.delete("email");
+      const path = `${window.location.pathname}${p.toString() ? `?${p.toString()}` : ""}${window.location.hash}`;
+      window.history.replaceState(null, "", path);
+    }
+  }, [view, searchParams]);
+
+  useEffect(() => {
+    if (view !== "success") return;
     const t = window.setTimeout(() => {
       window.location.href = destination;
     }, 2500);
     return () => window.clearTimeout(t);
-  }, [screen.kind, destination]);
+  }, [view, destination]);
 
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -170,96 +228,54 @@ function AccessInner() {
       return;
     }
 
-    setScreen({ kind: "set_password_success" });
+    setView("success");
   }
 
-  async function handleEmailContinue(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setStepError(null);
-    const em = emailInput.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
-      setStepError("Please enter a valid email address.");
-      return;
-    }
-    if (!isSupabaseConfigured) {
-      setStepError("Sign-in isn’t configured in this environment.");
-      return;
-    }
 
     setBusy(true);
-    await supabase.auth.signOut();
+    setError(null);
+    setResendSuccess(null);
+    setResendError(null);
 
-    const { state, rawError } = await getEmailAccessState(supabase, em);
-    setBusy(false);
-
-    if (rawError) {
-      setStepError("We couldn’t verify this email. Please try again.");
-      return;
-    }
-
-    switch (state) {
-      case "unknown":
-        setScreen({ kind: "no_account", email: em });
-        break;
-      case "unconfirmed":
-        setScreen({ kind: "needs_activation", email: em });
-        break;
-      case "active":
-        setLoginPw("");
-        setScreen({ kind: "sign_in", email: em });
-        break;
-      default:
-        setStepError("Something went wrong. Please try again.");
-    }
-  }
-
-  async function handleSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    if (screen.kind !== "sign_in") return;
-
-    setBusy(true);
-    setStepError(null);
+    const trimmed = email.trim();
+    if (trimmed) persistCheckoutEmail(trimmed);
 
     const { error: signErr } = await supabase.auth.signInWithPassword({
-      email: screen.email,
+      email: trimmed,
       password: loginPw,
     });
 
     setBusy(false);
 
     if (signErr) {
-      setStepError("Incorrect password. Please try again.");
+      setError(LOGIN_ERROR_COPY);
       return;
     }
 
     window.location.href = destination;
   }
 
-  async function sendAccessEmail(targetEmail: string) {
-    if (!isSupabaseConfigured || resendSecondsLeft > 0) return;
-    setBusy(true);
-    setStepError(null);
-    const { error: err } = await recoverySupabase.auth.resetPasswordForEmail(targetEmail, {
-      redirectTo: authEmailRedirect,
-    });
-    setBusy(false);
-    if (err) {
-      setStepError(err.message);
+  async function handleResendFromLogin() {
+    setError(null);
+    if (!email.trim()) {
+      setError("Enter your email above, then tap Send password link again.");
       return;
     }
-    startResendCooldown();
+    await sendAccessEmail(email);
   }
 
-  async function handleForgotPassword() {
-    if (screen.kind !== "sign_in" || resendSecondsLeft > 0) return;
-    await sendAccessEmail(screen.email);
+  async function handleResendFromErrorScreen() {
+    setError(null);
+    if (!errorScreenEmail.trim()) {
+      setError("Enter the email you used at checkout.");
+      return;
+    }
+    await sendAccessEmail(errorScreenEmail);
   }
 
-  const passwordSubmitDisabled = busy || password.length < 6 || password !== confirmPw;
-  const signInDisabled = busy || !loginPw;
-  const continueDisabled = busy || !emailInput.trim();
-
-  if (screen.kind === "loading") {
+  if (view === "loading") {
     return (
       <>
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
@@ -270,7 +286,7 @@ function AccessInner() {
     );
   }
 
-  if (screen.kind === "set_password_success") {
+  if (view === "success") {
     return (
       <>
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
@@ -285,7 +301,9 @@ function AccessInner() {
     );
   }
 
-  if (screen.kind === "set_password") {
+  if (view === "set_password") {
+    const passwordSubmitDisabled = busy || password.length < 6 || password !== confirmPw;
+
     return (
       <>
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
@@ -293,7 +311,7 @@ function AccessInner() {
           <div className="cb-card max-w-md w-full">
             <h1 className="cb-card-title text-center">Set your password</h1>
             <p className="cb-card-subtitle mt-2 text-center">
-              You&apos;re one step away from accessing your account.
+              Set your password to access your account.
             </p>
 
             {error && <p className="cb-message-error mt-4">{error}</p>}
@@ -302,7 +320,7 @@ function AccessInner() {
               <input
                 className="cb-input"
                 type="password"
-                placeholder="Password"
+                placeholder="New password"
                 autoComplete="new-password"
                 autoFocus
                 value={password}
@@ -319,7 +337,7 @@ function AccessInner() {
               />
 
               <button className="cb-btn-primary" type="submit" disabled={passwordSubmitDisabled}>
-                {busy ? "Securing your account…" : "Continue to dashboard"}
+                {busy ? "Setting your password…" : "Set password and continue"}
               </button>
             </form>
           </div>
@@ -328,196 +346,143 @@ function AccessInner() {
     );
   }
 
-  if (screen.kind === "link_error") {
-    return (
-      <>
-        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-          <div className="cb-card max-w-md text-center">
-            <h1 className="cb-card-title">This link has expired</h1>
-            {error && <p className="cb-message-error mt-2 text-sm">{error}</p>}
-            <p className="mt-2 text-sm text-cb-green/90">
-              Your access link is no longer valid. Request a new one to continue.
-            </p>
+  if (view === "login") {
+    const loginDisabled = busy || !email.trim() || !loginPw;
+    const forgotHref =
+      email.trim() !== ""
+        ? `/forgot-password?email=${encodeURIComponent(email.trim())}`
+        : "/forgot-password";
 
-            <button
-              type="button"
-              className="cb-btn-primary mt-6"
-              onClick={() => {
-                setError(null);
-                setScreen({ kind: "email" });
-              }}
-            >
-              Back to login
-            </button>
-          </div>
-        </main>
-      </>
-    );
-  }
-
-  if (screen.kind === "email") {
-    return (
-      <>
-        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-          <div className="cb-card max-w-md w-full">
-            <h1 className="cb-card-title text-center">Access your account</h1>
-            <p className="cb-card-subtitle mt-2 text-center">Enter your email to continue.</p>
-
-            {stepError && <p className="cb-message-error mt-4">{stepError}</p>}
-
-            <form onSubmit={handleEmailContinue} className="mt-6 flex flex-col gap-4">
-              <input
-                className="cb-input"
-                type="email"
-                placeholder="Email"
-                autoComplete="email"
-                autoFocus
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-              />
-
-              <button className="cb-btn-primary" type="submit" disabled={continueDisabled}>
-                {busy ? "Please wait…" : "Continue"}
-              </button>
-            </form>
-          </div>
-        </main>
-      </>
-    );
-  }
-
-  if (screen.kind === "no_account") {
-    return (
-      <>
-        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-          <div className="cb-card max-w-md w-full text-center">
-            <h1 className="cb-card-title">This email isn&apos;t registered yet.</h1>
-            <p className="cb-card-subtitle mt-3">Subscribe to a plan to get access.</p>
-            <div className="mt-8 flex flex-col gap-3">
-              <button
-                type="button"
-                className="cb-btn-primary"
-                onClick={() => {
-                  window.location.href = "/pricing";
-                }}
-              >
-                View all plans
-              </button>
-              <button
-                type="button"
-                className="cb-btn-secondary"
-                onClick={() => {
-                  setEmailInput("");
-                  setScreen({ kind: "email" });
-                }}
-              >
-                Already subscribed? Check your email
-              </button>
-            </div>
-          </div>
-        </main>
-      </>
-    );
-  }
-
-  if (screen.kind === "needs_activation") {
-    return (
-      <>
-        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
-          <div className="cb-card max-w-md w-full text-center">
-            <h1 className="cb-card-title">Your account isn&apos;t activated yet.</h1>
-            <p className="cb-card-subtitle mt-3">Check your email for the activation link.</p>
-            <p className="mt-2 text-xs text-cb-green/70">
-              Didn&apos;t receive it? We can send another link to {screen.email}.
-            </p>
-
-            {stepError && <p className="cb-message-error mt-4 text-left text-sm">{stepError}</p>}
-
-            <div className="mt-8 flex flex-col gap-3">
-              <button
-                type="button"
-                className="cb-btn-primary"
-                disabled={busy || resendSecondsLeft > 0}
-                onClick={() => void sendAccessEmail(screen.email)}
-              >
-                {resendSecondsLeft > 0
-                  ? `Wait ${resendSecondsLeft}s to resend`
-                  : busy
-                    ? "Sending…"
-                    : "Resend activation email"}
-              </button>
-              <button
-                type="button"
-                className="cb-btn-secondary"
-                onClick={() => {
-                  setEmailInput("");
-                  setScreen({ kind: "email" });
-                }}
-              >
-                Use a different email
-              </button>
-            </div>
-          </div>
-        </main>
-      </>
-    );
-  }
-
-  if (screen.kind === "sign_in") {
     return (
       <>
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
         <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
           <div className="cb-card max-w-md w-full">
             <h1 className="cb-card-title text-center">Welcome back</h1>
-            <p className="cb-card-subtitle mt-2 text-center">Enter your password to continue.</p>
-            <p className="mt-2 text-center text-sm text-cb-green/80">{screen.email}</p>
+            <p className="cb-card-subtitle mt-2 text-center">
+              Enter your email and password to continue.
+            </p>
 
-            {stepError && <p className="cb-message-error mt-4">{stepError}</p>}
+            {error && <p className="cb-message-error mt-4">{error}</p>}
+            {resendSuccess && (
+              <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
+            )}
+            {resendError && <p className="cb-message-error mt-3 text-sm">{resendError}</p>}
 
-            <form onSubmit={handleSignIn} className="mt-6 flex flex-col gap-4">
-              <div className="overflow-hidden transition-all duration-300 ease-out">
-                <input
-                  className="cb-input"
-                  type="password"
-                  placeholder="Password"
-                  autoComplete="current-password"
-                  autoFocus
-                  value={loginPw}
-                  onChange={(e) => setLoginPw(e.target.value)}
-                />
-              </div>
+            <form onSubmit={handleLogin} className="mt-6 flex flex-col gap-4">
+              <input
+                className="cb-input"
+                type="email"
+                placeholder="Email"
+                autoComplete="email"
+                autoFocus
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setResendSuccess(null);
+                  setResendError(null);
+                }}
+                onBlur={() => {
+                  const t = email.trim();
+                  if (t.includes("@")) persistCheckoutEmail(t);
+                }}
+              />
 
-              <button className="cb-btn-primary" type="submit" disabled={signInDisabled}>
-                {busy ? "Signing you in…" : "Sign in"}
+              <input
+                className="cb-input"
+                type="password"
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                value={loginPw}
+                onChange={(e) => setLoginPw(e.target.value)}
+              />
+
+              <p className="text-sm text-cb-green/80">{NO_PASSWORD_HELPER}</p>
+
+              <button className="cb-btn-primary" type="submit" disabled={loginDisabled}>
+                {busy ? "Signing you in…" : "Access dashboard"}
               </button>
-
-              <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:gap-4">
-                <button
-                  type="button"
-                  className="text-sm font-medium text-cb-green underline decoration-cb-gold/50 underline-offset-2 hover:text-cb-green/90"
-                  disabled={busy || resendSecondsLeft > 0}
-                  onClick={() => void handleForgotPassword()}
-                >
-                  {resendSecondsLeft > 0 ? `Forgot password? (${resendSecondsLeft}s)` : "Forgot password?"}
-                </button>
-                <button
-                  type="button"
-                  className="text-sm font-medium text-cb-green/80 hover:text-cb-green"
-                  onClick={() => {
-                    setEmailInput(screen.email);
-                    setLoginPw("");
-                    setScreen({ kind: "email" });
-                  }}
-                >
-                  Use a different email
-                </button>
-              </div>
             </form>
+
+            <div className="mt-4 flex flex-col gap-2 border-t border-cb-green/10 pt-4">
+              <button
+                type="button"
+                className="cb-btn-secondary text-sm"
+                disabled={resendBusy || resendCooldown > 0 || !email.trim() || !isSupabaseConfigured}
+                onClick={() => void handleResendFromLogin()}
+              >
+                {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+              </button>
+              <a
+                href={forgotHref}
+                className="text-center text-sm font-medium text-cb-green underline decoration-cb-gold/50 underline-offset-2"
+              >
+                Forgot password? (same link by email)
+              </a>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (view === "error") {
+    return (
+      <>
+        <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
+        <main className="flex min-h-screen items-center justify-center bg-cb-green p-5">
+          <div className="cb-card max-w-md w-full text-center">
+            <h1 className="cb-card-title">This link has expired</h1>
+            {error && <p className="cb-message-error mt-2 text-sm">{error}</p>}
+            <p className="mt-2 text-sm text-cb-green/90">
+              Send yourself a fresh link below, or go back to sign in.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 text-left">
+              <label className="text-xs font-medium text-cb-green/80">Email you used at checkout</label>
+              <input
+                className="cb-input"
+                type="email"
+                placeholder="Email"
+                autoComplete="email"
+                value={errorScreenEmail}
+                onChange={(e) => {
+                  setErrorScreenEmail(e.target.value);
+                  setResendSuccess(null);
+                  setResendError(null);
+                }}
+                onBlur={() => {
+                  const t = errorScreenEmail.trim();
+                  if (t.includes("@")) persistCheckoutEmail(t);
+                }}
+              />
+              {resendSuccess && (
+                <p className="rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
+              )}
+              {resendError && <p className="cb-message-error text-sm">{resendError}</p>}
+              <button
+                type="button"
+                className="cb-btn-secondary"
+                disabled={resendBusy || resendCooldown > 0 || !errorScreenEmail.trim() || !isSupabaseConfigured}
+                onClick={() => void handleResendFromErrorScreen()}
+              >
+                {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="cb-btn-primary mt-6 w-full"
+              onClick={() => {
+                setEmail(errorScreenEmail.trim() || email);
+                setError(null);
+                setResendSuccess(null);
+                setResendError(null);
+                setView("login");
+              }}
+            >
+              Back to sign in
+            </button>
           </div>
         </main>
       </>

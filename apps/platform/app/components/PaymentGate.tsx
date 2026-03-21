@@ -54,7 +54,7 @@ export function PaymentGate({ userId, plan }: { userId: string; plan?: string | 
           margin: "0 0 0.75rem",
         }}
       >
-        Activate Capital Bridge Advisory Platform
+        Unlock Capital Bridge Advisory Platform
       </h1>
       <p
         style={{
@@ -64,7 +64,7 @@ export function PaymentGate({ userId, plan }: { userId: string; plan?: string | 
           marginBottom: "1.25rem",
         }}
       >
-        Your login is recognised, but there is no active advisory membership on file. Activate access to unlock the
+        Your login is recognised, but there is no active advisory membership on file. Complete payment to unlock the
         full platform.
       </p>
 

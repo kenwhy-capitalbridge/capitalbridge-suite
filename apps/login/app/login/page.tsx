@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 /**
- * Legacy /login → unified /access (recovery, password setup, secure email link, sign-in).
+ * Legacy /login → unified /access (set password from email link, sign-in).
  */
 export default function LoginRedirectPage({
   searchParams,

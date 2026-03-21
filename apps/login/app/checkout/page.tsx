@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
+import { persistCheckoutEmail, buildAccessUrl } from "@/lib/checkoutEmailPersistence";
 
 const isDevOrPreview =
   typeof process !== "undefined" &&
@@ -24,7 +25,7 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 const ACCOUNT_EXISTS_MSG =
-  "An account already exists for this email. Use “Log in to existing account” below, or open the account page for password help.";
+  "An account already exists for this email. Log in below, or open account access and use Send password link again if you need a new link.";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -116,6 +117,7 @@ function CheckoutContent() {
 
       const checkoutUrl = data?.checkoutUrl ?? data?.payment_url;
       if (typeof checkoutUrl === "string" && checkoutUrl) {
+        persistCheckoutEmail(trimmedEmail);
         setSecuring(true);
         setLoading(false);
         window.setTimeout(() => {
@@ -186,7 +188,11 @@ function CheckoutContent() {
                 if (emailFieldError) setEmailFieldError(null);
               }}
               onBlur={() => {
-                if (email.trim()) validateEmail(email);
+                const t = email.trim();
+                if (t) {
+                  validateEmail(email);
+                  if (t.includes("@")) persistCheckoutEmail(t);
+                }
               }}
               type="email"
               required
@@ -218,7 +224,7 @@ function CheckoutContent() {
             {loading ? "Securing your access…" : "Continue to Payment"}
           </button>
           <p className="text-center text-sm leading-relaxed text-cb-green/80">
-            You&apos;ll set your password after payment via a secure email.
+            After payment, we&apos;ll email you a link to set your password.
           </p>
         </form>
 
@@ -226,7 +232,8 @@ function CheckoutContent() {
           type="button"
           className="cb-btn-secondary mt-5 w-full rounded-xl py-3 font-medium transition hover:scale-[1.02]"
           onClick={() => {
-            window.location.href = "/access";
+            const t = email.trim();
+            window.location.href = t.includes("@") ? buildAccessUrl({ email: t }) : "/access";
           }}
         >
           Log in to existing account
