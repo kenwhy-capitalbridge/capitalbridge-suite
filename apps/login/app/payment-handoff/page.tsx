@@ -11,6 +11,7 @@ import {
   accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
 import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
+import { NotYourEmailChangeLink, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -167,6 +168,8 @@ function PaymentHandoffContent() {
           {billId && <p className="mt-4 text-xs text-cb-green/60">Reference: {billId}</p>}
           {statusEmail ? (
             <>
+              <PaymentTargetEmailLine email={statusEmail} variant="sent" className="mt-3 text-center" />
+              <NotYourEmailChangeLink checkoutPlan={plan} />
               {resendSuccess && (
                 <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
               )}

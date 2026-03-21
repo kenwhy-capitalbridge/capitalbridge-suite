@@ -10,6 +10,7 @@ import {
   accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
+import { NotYourEmailChangeLink, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 const PLATFORM_URL =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
@@ -32,6 +33,11 @@ const PASSWORD_TOO_SHORT_MSG = "Password must be at least 6 characters.";
 const PASSWORD_MISMATCH_MSG = "Passwords do not match.";
 
 const DISABLED_SUBMIT_HELPER = "Please fix the errors above to continue.";
+
+function looksLikeEmail(value: string): boolean {
+  const t = value.trim();
+  return t.length > 3 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
 
 function isLikelySessionExpiredError(message: string): boolean {
   const m = message.toLowerCase();
@@ -424,6 +430,16 @@ function AccessInner() {
                 <p className="cb-card-subtitle mt-2 text-center">
                   Request a new email to set your password. Use the same address you used at checkout.
                 </p>
+                {looksLikeEmail(setPwRecoveryEmail) && (
+                  <>
+                    <PaymentTargetEmailLine
+                      email={setPwRecoveryEmail}
+                      variant={resendSuccess ? "sent" : "pending"}
+                      className="mt-3 text-center"
+                    />
+                    <NotYourEmailChangeLink />
+                  </>
+                )}
                 {resendSuccess && (
                   <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">
                     {resendSuccess}
@@ -641,6 +657,17 @@ function AccessInner() {
             <p className="mt-2 text-sm text-cb-green/90">
               Send yourself a fresh link below, or go back to sign in.
             </p>
+
+            {looksLikeEmail(errorScreenEmail) && (
+              <>
+                <PaymentTargetEmailLine
+                  email={errorScreenEmail}
+                  variant={resendSuccess ? "sent" : "pending"}
+                  className="mt-3 text-center"
+                />
+                <NotYourEmailChangeLink />
+              </>
+            )}
 
             <div className="mt-6 flex flex-col gap-3 text-left">
               <label className="text-xs font-medium text-cb-green/80">Email you used at checkout</label>

@@ -11,6 +11,7 @@ import {
   accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
 import { persistCheckoutEmail, buildAccessUrl, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
+import { NotYourEmailChangeLink, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -159,8 +160,21 @@ function PaymentReturnContent() {
 
   const accessHrefWithEmail = statusEmail ? buildAccessUrl({ email: statusEmail }) : "/access";
 
+  const passwordEmailVariant: "pending" | "sent" =
+    accountReady || !!resendSuccess ? "sent" : "pending";
+
   const emailActions = (
     <>
+      {statusEmail && (
+        <>
+          <PaymentTargetEmailLine
+            email={statusEmail}
+            variant={passwordEmailVariant}
+            className="mt-3 text-center"
+          />
+          <NotYourEmailChangeLink />
+        </>
+      )}
       {resendSuccess && (
         <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
       )}
