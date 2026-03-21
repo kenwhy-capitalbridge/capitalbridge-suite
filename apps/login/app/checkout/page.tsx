@@ -167,10 +167,10 @@ function CheckoutContent() {
         <h1 className="cb-card-title">Start Building Your Capital Strategy</h1>
         <p className="cb-card-subtitle">Set up your access in seconds.</p>
         <p style={{ marginTop: "0.75rem", fontSize: "0.9rem", opacity: 0.9 }}>Plan: {planLabel}</p>
-        <div className="mt-2 flex justify-center">
+        <div className="mt-2 flex justify-start">
           <button
             type="button"
-            className="cb-btn-auth-view-plans max-w-[12rem]"
+            className="cb-btn-auth-view-plans w-auto max-w-[12rem]"
             onClick={() => {
               window.location.href = "/pricing";
             }}
