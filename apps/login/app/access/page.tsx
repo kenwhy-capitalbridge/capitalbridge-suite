@@ -10,7 +10,7 @@ import {
   accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
-import { NotYourEmailChangeLink, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
+import { NotYourEmailChangeButton, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 const PLATFORM_URL =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
@@ -437,7 +437,7 @@ function AccessInner() {
                       variant={resendSuccess ? "sent" : "pending"}
                       className="mt-3 text-center"
                     />
-                    <NotYourEmailChangeLink />
+                    <NotYourEmailChangeButton />
                   </>
                 )}
                 {resendSuccess && (
@@ -665,7 +665,7 @@ function AccessInner() {
                   variant={resendSuccess ? "sent" : "pending"}
                   className="mt-3 text-center"
                 />
-                <NotYourEmailChangeLink />
+                <NotYourEmailChangeButton />
               </>
             )}
 

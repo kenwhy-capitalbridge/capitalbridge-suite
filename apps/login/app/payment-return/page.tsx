@@ -8,10 +8,9 @@ import {
   ACCESS_EMAIL_COOLDOWN_SEC,
   ACCESS_EMAIL_SENT_MESSAGE,
   ACCESS_EMAIL_SENDING_LABEL,
-  accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
-import { persistCheckoutEmail, buildAccessUrl, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
-import { NotYourEmailChangeLink, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
+import { buildAccessUrl, persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
+import { NotYourEmailChangeButton, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -43,10 +42,10 @@ function openWebInbox(email: string | null | undefined) {
   window.open("https://mail.google.com/mail/u/0/#inbox", "_blank", "noopener,noreferrer");
 }
 
-function setPasswordPrimaryLabel(busy: boolean, cooldownSec: number): string {
+function sendPasswordSetupPrimaryLabel(busy: boolean, cooldownSec: number): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
   if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
-  return "Set your password";
+  return "Send Password Setup Email";
 }
 
 function openAccessWithPersistedEmail(e: React.MouseEvent<HTMLAnchorElement>) {
@@ -158,8 +157,6 @@ function PaymentReturnContent() {
     setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
   }, [redirectTo, statusEmail, resendCooldown, resendBusy]);
 
-  const accessHrefWithEmail = statusEmail ? buildAccessUrl({ email: statusEmail }) : "/access";
-
   const passwordEmailVariant: "pending" | "sent" =
     accountReady || !!resendSuccess ? "sent" : "pending";
 
@@ -170,9 +167,9 @@ function PaymentReturnContent() {
           <PaymentTargetEmailLine
             email={statusEmail}
             variant={passwordEmailVariant}
-            className="mt-3 text-center"
+            className="mt-4 text-center text-sm"
           />
-          <NotYourEmailChangeLink />
+          <NotYourEmailChangeButton />
         </>
       )}
       {resendSuccess && (
@@ -186,25 +183,12 @@ function PaymentReturnContent() {
           disabled={sendDisabled}
           onClick={() => void handleSendSetPasswordEmail()}
         >
-          {setPasswordPrimaryLabel(resendBusy, resendCooldown)}
-        </button>
-        <p className="text-sm leading-relaxed text-cb-green/85">
-          Didn&apos;t get the email? Use Send password link again after the timer — you won&apos;t be left without a next step.
-        </p>
-        <button
-          type="button"
-          className={btnSecondary}
-          disabled={sendDisabled}
-          onClick={() => void handleSendSetPasswordEmail()}
-        >
-          {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+          {sendPasswordSetupPrimaryLabel(resendBusy, resendCooldown)}
         </button>
         <button type="button" className={btnSecondary} onClick={() => openWebInbox(statusEmail)}>
-          Open email inbox
+          Open Email Inbox
         </button>
-        <p className="text-sm text-cb-green/75">Or open your email app and look for our message</p>
       </div>
-      <p className="mt-6 text-xs leading-relaxed text-cb-green/65">Check your spam folder if you don&apos;t see it</p>
     </>
   );
 
@@ -261,14 +245,11 @@ function PaymentReturnContent() {
     return (
       <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
         <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">Your account is ready.</h1>
-          <p className="cb-card-subtitle mt-3 text-base leading-relaxed">
-            We&apos;ve emailed you a link to set your password. Open it on this device to finish.
-          </p>
+          <h1 className="cb-card-title">Your Account is Ready.</h1>
           {statusEmail ? (
             emailActions
           ) : (
-            <p className="mt-4 text-sm text-cb-green/85">
+            <p className="mt-4 text-sm leading-relaxed text-cb-green/80">
               We couldn&apos;t load your email on this screen. Open{" "}
               <a
                 href="/access"
@@ -280,14 +261,6 @@ function PaymentReturnContent() {
               and use Send password link again with the address you used at checkout.
             </p>
           )}
-          {statusEmail && (
-            <p className="mt-6 text-sm text-cb-green/80">
-              <a href={accessHrefWithEmail} className="font-semibold underline">
-                Open account access
-              </a>{" "}
-              (your email is pre-filled when possible)
-            </p>
-          )}
         </div>
       </main>
     );
@@ -297,9 +270,9 @@ function PaymentReturnContent() {
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
       <div className="cb-card max-w-md text-center">
         <h1 className="cb-card-title">Payment pending</h1>
-        <p className="cb-card-subtitle mt-2">
-          We couldn&apos;t confirm payment from this page yet. When your email appears below, use Set your password to get a
-          link — even if the first email never arrived.
+        <p className="cb-card-subtitle mt-2 text-sm leading-relaxed">
+          We couldn&apos;t confirm payment from this page yet. When your email appears below, use Send Password Setup Email
+          to get a link — even if the first email never arrived.
         </p>
         {billId && <p className="mt-4 text-xs text-cb-green/55">Reference: {billId}</p>}
         {status?.next_step === "contact_support" && (

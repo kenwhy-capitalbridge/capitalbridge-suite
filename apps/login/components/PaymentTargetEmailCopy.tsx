@@ -1,14 +1,15 @@
 /**
- * Shared copy for payment return / handoff / resend flows: which inbox receives the set-password email.
+ * Shared copy for payment return / handoff / access resend flows: registered checkout email.
  */
 
 export function PaymentTargetEmailLine({
   email,
-  variant,
+  variant: _variant,
   className = "",
 }: {
   email: string | null | undefined;
-  variant: "pending" | "sent";
+  /** @deprecated Kept for call-site compatibility; display is always "Registered Email:" */
+  variant?: "pending" | "sent";
   className?: string;
 }) {
   const em = email?.trim();
@@ -18,19 +19,15 @@ export function PaymentTargetEmailLine({
 
   return (
     <p className={`text-sm leading-relaxed text-cb-green/80 ${className}`.trim()}>
-      {variant === "sent" ? (
-        <>Password email sent to {emailMark}.</>
-      ) : (
-        <>We&apos;ll send the password email to {emailMark}.</>
-      )}
+      Registered Email: {emailMark}.
     </p>
   );
 }
 
-export function NotYourEmailChangeLink({
+/** Subtle tertiary control — navigates to checkout to change email. */
+export function NotYourEmailChangeButton({
   checkoutPlan,
 }: {
-  /** When set, links to `/checkout?plan=…` so the user can restart with the same plan. */
   checkoutPlan?: string | null;
 }) {
   const href =
@@ -39,13 +36,16 @@ export function NotYourEmailChangeLink({
       : "/checkout";
 
   return (
-    <p className="mt-1.5 text-center text-xs text-cb-green/70">
+    <div className="mt-3 flex justify-center">
       <a
         href={href}
-        className="font-medium text-cb-green/90 underline decoration-cb-gold/45 underline-offset-2 transition hover:text-cb-green"
+        className="inline-flex items-center justify-center rounded-lg border border-cb-green/20 bg-white/90 px-3 py-2 text-xs font-medium text-cb-green/85 shadow-sm transition hover:border-cb-gold/45 hover:bg-cb-cream hover:text-cb-green focus:outline-none focus-visible:ring-2 focus-visible:ring-cb-gold/35"
       >
-        Not your email? Change it
+        Not Your Email? Change It
       </a>
-    </p>
+    </div>
   );
 }
+
+/** @deprecated Use NotYourEmailChangeButton */
+export const NotYourEmailChangeLink = NotYourEmailChangeButton;

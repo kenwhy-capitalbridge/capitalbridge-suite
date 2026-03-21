@@ -8,10 +8,9 @@ import {
   ACCESS_EMAIL_COOLDOWN_SEC,
   ACCESS_EMAIL_SENT_MESSAGE,
   ACCESS_EMAIL_SENDING_LABEL,
-  accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
 import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
-import { NotYourEmailChangeLink, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
+import { NotYourEmailChangeButton, PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -56,10 +55,10 @@ function openWebInbox(email: string | null | undefined) {
   window.open("https://mail.google.com/mail/u/0/#inbox", "_blank", "noopener,noreferrer");
 }
 
-function setPasswordPrimaryLabel(busy: boolean, cooldownSec: number): string {
+function sendPasswordSetupPrimaryLabel(busy: boolean, cooldownSec: number): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
   if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
-  return "Set your password";
+  return "Send Password Setup Email";
 }
 
 function PaymentHandoffContent() {
@@ -161,41 +160,27 @@ function PaymentHandoffContent() {
     return (
       <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.25rem" }}>
         <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">Your account is ready.</h1>
-          <p className="cb-card-subtitle mt-3 text-base leading-relaxed">
-            We&apos;ve emailed you a link to set your password. Open it on this device to finish.
-          </p>
-          {billId && <p className="mt-4 text-xs text-cb-green/60">Reference: {billId}</p>}
+          <h1 className="cb-card-title">Your Account is Ready.</h1>
+          {billId && <p className="mt-3 text-xs text-cb-green/60">Reference: {billId}</p>}
           {statusEmail ? (
             <>
-              <PaymentTargetEmailLine email={statusEmail} variant="sent" className="mt-3 text-center" />
-              <NotYourEmailChangeLink checkoutPlan={plan} />
+              <PaymentTargetEmailLine email={statusEmail} variant="sent" className="mt-4 text-center text-sm" />
+              <NotYourEmailChangeButton checkoutPlan={plan} />
               {resendSuccess && (
                 <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
               )}
               {resendError && <p className="cb-message-error mt-3 text-left text-sm">{resendError}</p>}
-              <div className="mt-8 flex w-full flex-col gap-3">
+              <div className="mt-6 flex w-full flex-col gap-3">
                 <button
                   type="button"
                   className={btnPrimary}
                   disabled={sendDisabled}
                   onClick={() => void handleSendSetPasswordEmail()}
                 >
-                  {setPasswordPrimaryLabel(resendBusy, resendCooldown)}
-                </button>
-                <p className="text-sm leading-relaxed text-cb-green/85">
-                  Didn&apos;t get the email? Use Send password link again after the timer.
-                </p>
-                <button
-                  type="button"
-                  className={btnSecondary}
-                  disabled={sendDisabled}
-                  onClick={() => void handleSendSetPasswordEmail()}
-                >
-                  {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+                  {sendPasswordSetupPrimaryLabel(resendBusy, resendCooldown)}
                 </button>
                 <button type="button" className={btnSecondary} onClick={() => openWebInbox(statusEmail)}>
-                  Open email inbox
+                  Open Email Inbox
                 </button>
               </div>
             </>
