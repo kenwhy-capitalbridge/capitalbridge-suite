@@ -170,7 +170,7 @@ function PaymentReturnContent() {
             If you don&apos;t see the email, check your spam folder or resend it.
           </p>
           {resendBusy && (
-            <p className="mt-4 text-sm font-medium text-cb-green">Sending secure access link…</p>
+            <p className="mt-4 text-sm font-medium text-cb-green">Sending access email…</p>
           )}
           {resendError && <p className="cb-message-error mt-3 text-left text-sm">{resendError}</p>}
           <div className="mt-8 flex flex-col gap-3">
@@ -184,7 +184,7 @@ function PaymentReturnContent() {
               disabled={resendBusy || !isSupabaseConfigured}
               onClick={() => void handleResendAccessEmail()}
             >
-              {resendBusy ? "Sending secure access link…" : "Resend access email"}
+              {resendBusy ? "Sending access email…" : "Resend access email"}
             </button>
           </div>
           <p className="mt-6 text-xs leading-relaxed text-cb-green/65">
@@ -212,7 +212,7 @@ function PaymentReturnContent() {
           </p>
         )}
         {resendBusy && (
-          <p className="mt-4 text-sm font-medium text-cb-green">Sending secure access link…</p>
+          <p className="mt-4 text-sm font-medium text-cb-green">Sending access email…</p>
         )}
         {resendError && <p className="cb-message-error mt-3 text-sm">{resendError}</p>}
         <div className="mt-6 flex flex-col gap-3">
@@ -226,7 +226,7 @@ function PaymentReturnContent() {
             disabled={resendBusy || !isSupabaseConfigured}
             onClick={() => void handleResendAccessEmail()}
           >
-            {resendBusy ? "Sending secure access link…" : "Resend access email"}
+            {resendBusy ? "Sending access email…" : "Resend access email"}
           </button>
         </div>
         <p className="mt-6 text-xs text-cb-green/65">Check your spam folder if you don&apos;t see it</p>

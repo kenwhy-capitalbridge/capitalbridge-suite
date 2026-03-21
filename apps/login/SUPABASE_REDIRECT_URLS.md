@@ -1,6 +1,6 @@
 # Supabase Auth redirect URLs (access / recovery)
 
-Recovery emails and checkout “set password” flows land on the unified **`/access`** page.
+Payment-first onboarding emails (sent via **`resetPasswordForEmail`**, same as the **Reset Password** template) land on the unified **`/access`** page. See **`SUPABASE_EMAIL_ONBOARDING.md`** for suggested template copy (onboarding, not “forgot password”).
 
 In **Supabase Dashboard** → **Authentication** → **URL Configuration** → **Redirect URLs**, add:
 
