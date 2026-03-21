@@ -242,7 +242,7 @@ function CheckoutContent() {
             window.location.href = t.includes("@") ? buildAccessUrl({ email: t }) : "/access";
           }}
         >
-          Log in to existing account
+          Log in to Existing Account
         </button>
       </div>
     </main>
