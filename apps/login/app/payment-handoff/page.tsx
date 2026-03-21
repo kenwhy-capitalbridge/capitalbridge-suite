@@ -219,7 +219,7 @@ function PaymentHandoffContent() {
                 window.location.href = "/pricing";
               }}
             >
-              View plans
+              View Other Plans
             </button>
           </div>
         </div>
@@ -271,7 +271,7 @@ function PaymentHandoffContent() {
               window.location.href = "/pricing";
             }}
           >
-            View plans
+            View Other Plans
           </button>
         </div>
       </div>

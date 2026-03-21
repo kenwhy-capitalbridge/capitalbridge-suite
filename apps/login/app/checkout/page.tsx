@@ -175,7 +175,7 @@ function CheckoutContent() {
               window.location.href = "/pricing";
             }}
           >
-            View plans
+            View Other Plans
           </button>
         </div>
 

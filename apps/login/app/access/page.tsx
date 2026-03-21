@@ -636,7 +636,7 @@ function AccessInner() {
                     window.location.href = "/pricing";
                   }}
                 >
-                  View plans
+                  View Other Plans
                 </button>
               </div>
             </div>
