@@ -72,11 +72,18 @@
   }
 
   /**
-   * Small outlined control for “View All Plans” (not input-like).
-   * Use on checkout, payment screens, optional on access.
+   * “View all plans” / secondary nav on dark green — base state must be readable
+   * without hover (high contrast). Hover enhances only.
    */
   .cb-btn-view-plans {
-    @apply inline-flex w-auto max-w-full items-center justify-center rounded-lg border border-cb-gold/30 bg-transparent px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-cb-green/90 shadow-none transition hover:border-cb-gold/50 hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-cb-gold/40;
+    @apply inline-flex w-auto max-w-full items-center justify-center rounded-lg border-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-none transition focus:outline-none focus:ring-2 focus:ring-cb-gold/40;
+    background-color: #1f6b45;
+    border-color: #d4af37;
+  }
+
+  .cb-btn-view-plans:hover {
+    background-color: #d4af37;
+    color: #0f3d2e;
   }
 
   /* Secondary link: dark gold on light bg for legibility (CSS var avoids @apply issues) */
