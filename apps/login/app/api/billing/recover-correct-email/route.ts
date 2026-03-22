@@ -282,6 +282,11 @@ export async function POST(req: Request) {
     );
   }
 
-  recoveryAudit("recover_ok", { bill_id: billId, ip, new_email_domain: emailDomain(newEmail) });
+  recoveryAudit("recover_ok", {
+    bill_id: billId,
+    ip,
+    old_email_domain: registeredEmail ? emailDomain(registeredEmail) : null,
+    new_email_domain: emailDomain(newEmail),
+  });
   return NextResponse.json({ ok: true });
 }

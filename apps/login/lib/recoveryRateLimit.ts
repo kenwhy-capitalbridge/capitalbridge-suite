@@ -24,6 +24,8 @@ const mintByBill = new Map<string, number[]>();
 const mintByIp = new Map<string, number[]>();
 const recoverByBill = new Map<string, number[]>();
 const recoverByIp = new Map<string, number[]>();
+const setupEmailByBill = new Map<string, number[]>();
+const setupEmailByIp = new Map<string, number[]>();
 
 /** Mint recovery token: per bill_id */
 export const MINT_LIMIT_PER_BILL = 24;
@@ -50,5 +52,19 @@ export function allowMintToken(billId: string, ip: string): boolean {
 export function allowRecoverAttempt(billId: string, ip: string): boolean {
   if (!hit(recoverByBill, billId, RECOVER_LIMIT_PER_BILL, RECOVER_BILL_WINDOW_MS)) return false;
   if (!hit(recoverByIp, ip, RECOVER_LIMIT_PER_IP, RECOVER_IP_WINDOW_MS)) return false;
+  return true;
+}
+
+/** POST send-setup-email-for-bill: per bill_id */
+export const SETUP_EMAIL_LIMIT_PER_BILL = 36;
+export const SETUP_EMAIL_BILL_WINDOW_MS = 60 * 60 * 1000;
+
+/** POST send-setup-email-for-bill: per client IP */
+export const SETUP_EMAIL_LIMIT_PER_IP = 120;
+export const SETUP_EMAIL_IP_WINDOW_MS = 60 * 60 * 1000;
+
+export function allowSendSetupEmailForBill(billId: string, ip: string): boolean {
+  if (!hit(setupEmailByBill, billId, SETUP_EMAIL_LIMIT_PER_BILL, SETUP_EMAIL_BILL_WINDOW_MS)) return false;
+  if (!hit(setupEmailByIp, ip, SETUP_EMAIL_LIMIT_PER_IP, SETUP_EMAIL_IP_WINDOW_MS)) return false;
   return true;
 }

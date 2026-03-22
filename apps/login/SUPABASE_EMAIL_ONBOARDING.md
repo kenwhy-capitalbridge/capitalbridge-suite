@@ -31,8 +31,10 @@ In **Authentication** → **URL Configuration** → **Redirect URLs**, allow:
 
 See also `SUPABASE_REDIRECT_URLS.md`.
 
-## Backup resend
+## Backup resend (billing flows)
 
-The **payment-return** page offers **“Set your password”** / **“Send password link again”** for users who don’t see the first mail. That path also uses `resetPasswordForEmail` → same template.
+**payment-return** and **payment-handoff** resend the same template via **`POST /api/billing/send-setup-email-for-bill`**: the server reads **`billing_sessions.email`** (and `user_id`) and calls the same GoTrue recover path as the API — **no client-side** `resetPasswordForEmail` for those pages (avoids stale email / race with wrong-email correction).
 
-Use this success line in product copy where relevant: **“Email sent. Check your inbox to set your password.”**
+**`/access`** and **forgot-password** still call `resetPasswordForEmail` from the browser when the user types an email and there is **no** `bill_id` context.
+
+Use this success line where relevant: **“Password setup email sent to {email}”** (or the generic inbox reminder).

@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
-import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
+import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
   ACCESS_EMAIL_COOLDOWN_SEC,
-  ACCESS_EMAIL_SENT_MESSAGE,
   ACCESS_EMAIL_SENDING_LABEL,
 } from "@/lib/resendAccessEmail";
 import {
@@ -91,8 +89,6 @@ function PaymentReturnContent() {
   useEffect(() => {
     recoveryRef.current = { token: recoveryToken, exp: recoveryTokenExp };
   }, [recoveryToken, recoveryTokenExp]);
-
-  const redirectTo = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -232,36 +228,77 @@ function PaymentReturnContent() {
     if (statusEmail) persistCheckoutEmail(statusEmail);
   }, [statusEmail]);
 
+  /** Password setup email is server-only: requires bill_id; delivery address always from billing_sessions.email. */
   const sendDisabled =
-    resendBusy || resendCooldown > 0 || !statusEmail || !isSupabaseConfigured;
+    resendBusy ||
+    resendCooldown > 0 ||
+    !isSupabaseConfigured ||
+    !accountReady ||
+    !billId;
 
   const handleSendSetPasswordEmail = useCallback(async () => {
     setResendError(null);
-    const em = statusEmail;
-    if (!em) {
-      setResendError("We don't have your email on this screen. Use the same inbox you entered at checkout.");
-      return;
-    }
     if (!isSupabaseConfigured) {
       setResendError("Sign-in isn’t configured in this environment.");
       return;
     }
     if (resendCooldown > 0 || resendBusy) return;
-
-    setResendBusy(true);
-    const { error } = await recoverySupabase.auth.resetPasswordForEmail(em, {
-      redirectTo,
-    });
-    setResendBusy(false);
-    if (error) {
+    if (!billId) {
       setResendSuccess(null);
-      setResendError(error.message);
+      setResendError(
+        "We couldn’t verify your session. Please restart from checkout or contact support."
+      );
       return;
     }
-    persistCheckoutEmail(em);
-    setResendSuccess(ACCESS_EMAIL_SENT_MESSAGE);
-    setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
-  }, [redirectTo, statusEmail, resendCooldown, resendBusy]);
+
+    setResendBusy(true);
+    try {
+      const res = await fetch("/api/billing/send-setup-email-for-bill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bill_id: billId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        delivery_email?: string;
+        error?: string;
+        message?: string;
+      };
+      if (!res.ok) {
+        setResendSuccess(null);
+        setResendError(
+          data.error === "rate_limited"
+            ? "Too many attempts. Wait a few minutes and try again."
+            : data.error === "forbidden_origin"
+              ? "Please refresh this page, then try again."
+              : data.message ?? data.error ?? "Could not send email. Try again."
+        );
+        return;
+      }
+      const delivered = data.delivery_email?.trim() ?? "";
+      if (!delivered) {
+        setResendSuccess(null);
+        setResendError(
+          "We couldn’t verify your session. Please restart from checkout or contact support."
+        );
+        return;
+      }
+      persistCheckoutEmail(delivered);
+      setResendSuccess(`Password setup email sent to ${delivered}`);
+      setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
+      try {
+        const st = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
+          cache: "no-store",
+        });
+        const next = (await st.json().catch(() => ({}))) as BillingStatusResponse;
+        if (st.ok && next?.bill_id) setStatus(next);
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      setResendBusy(false);
+    }
+  }, [resendCooldown, resendBusy, billId]);
 
   const handleWrongEmailSubmit = useCallback(async () => {
     setWrongError(null);
@@ -311,13 +348,13 @@ function PaymentReturnContent() {
         return;
       }
       persistCheckoutEmail(em);
-      setWrongSuccess(ACCESS_EMAIL_SENT_MESSAGE);
+      setWrongSuccess(`Password setup email sent to ${em}`);
       setWrongCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
       setWrongEmail("");
       try {
         const st = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, { cache: "no-store" });
         const next = (await st.json().catch(() => ({}))) as BillingStatusResponse;
-        if (next?.email) setStatus(next);
+        if (st.ok && next?.bill_id) setStatus(next);
       } catch {
         /* ignore */
       }
@@ -373,7 +410,7 @@ function PaymentReturnContent() {
         <div className="mt-6 border-t border-cb-green/15 pt-5 text-left">
           <p className="text-center text-sm text-cb-green/80">Not your email? Enter the correct one below.</p>
           <p className="mt-2 text-center text-sm leading-relaxed text-cb-green/75">
-            Your payment stays tied to the Bill ID above — this only changes where we send your password link.
+            Used the wrong email? No problem. Enter the correct one and we&apos;ll send your access link there.
           </p>
           {recoveryMintError && (
             <p className="cb-message-error mt-2 text-center text-sm">{recoveryMintError}</p>

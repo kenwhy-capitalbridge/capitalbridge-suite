@@ -10,7 +10,10 @@ type RecoveryAuditEvent =
   | "recover_token_expired"
   | "recover_mismatch"
   | "recover_payment_missing"
-  | "recover_error";
+  | "recover_error"
+  | "password_setup_bill_ok"
+  | "password_setup_bill_denied"
+  | "password_setup_bill_rate_limited";
 
 export function recoveryAudit(
   event: RecoveryAuditEvent,

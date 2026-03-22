@@ -2,11 +2,9 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
-import { isSupabaseConfigured, recoverySupabase } from "@/lib/supabaseClient";
+import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
   ACCESS_EMAIL_COOLDOWN_SEC,
-  ACCESS_EMAIL_SENT_MESSAGE,
   ACCESS_EMAIL_SENDING_LABEL,
 } from "@/lib/resendAccessEmail";
 import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
@@ -75,8 +73,6 @@ function PaymentHandoffContent() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
 
-  const redirectTo = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
-
   const accessHref = useMemo(
     () => buildAccessUrl({ redirectTo: LOGIN_REDIRECT, email: status?.email?.trim() ?? undefined }),
     [status?.email]
@@ -122,7 +118,12 @@ function PaymentHandoffContent() {
 
   const accountReady = !!status?.account_ready;
   const statusEmail = status?.email?.trim() ?? null;
-  const sendDisabled = resendBusy || resendCooldown > 0 || !statusEmail || !isSupabaseConfigured;
+  const sendDisabled =
+    resendBusy ||
+    resendCooldown > 0 ||
+    !isSupabaseConfigured ||
+    !accountReady ||
+    !billId;
 
   useEffect(() => {
     if (statusEmail) persistCheckoutEmail(statusEmail);
@@ -130,31 +131,67 @@ function PaymentHandoffContent() {
 
   const handleSendSetPasswordEmail = useCallback(async () => {
     setResendError(null);
-    const em = statusEmail;
-    if (!em) {
-      setResendError("We don't have your email on this screen. Use the same inbox you entered at checkout.");
-      return;
-    }
     if (!isSupabaseConfigured) {
       setResendError("Sign-in isn’t configured in this environment.");
       return;
     }
     if (resendCooldown > 0 || resendBusy) return;
-
-    setResendBusy(true);
-    const { error } = await recoverySupabase.auth.resetPasswordForEmail(em, {
-      redirectTo,
-    });
-    setResendBusy(false);
-    if (error) {
+    if (!billId) {
       setResendSuccess(null);
-      setResendError(error.message);
+      setResendError(
+        "We couldn’t verify your session. Please restart from checkout or contact support."
+      );
       return;
     }
-    persistCheckoutEmail(em);
-    setResendSuccess(ACCESS_EMAIL_SENT_MESSAGE);
-    setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
-  }, [redirectTo, statusEmail, resendCooldown, resendBusy]);
+
+    setResendBusy(true);
+    try {
+      const res = await fetch("/api/billing/send-setup-email-for-bill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bill_id: billId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        delivery_email?: string;
+        error?: string;
+        message?: string;
+      };
+      if (!res.ok) {
+        setResendSuccess(null);
+        setResendError(
+          data.error === "rate_limited"
+            ? "Too many attempts. Wait a few minutes and try again."
+            : data.error === "forbidden_origin"
+              ? "Please refresh this page, then try again."
+              : data.message ?? data.error ?? "Could not send email. Try again."
+        );
+        return;
+      }
+      const delivered = data.delivery_email?.trim() ?? "";
+      if (!delivered) {
+        setResendSuccess(null);
+        setResendError(
+          "We couldn’t verify your session. Please restart from checkout or contact support."
+        );
+        return;
+      }
+      persistCheckoutEmail(delivered);
+      setResendSuccess(`Password setup email sent to ${delivered}`);
+      setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
+      try {
+        const st = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
+          cache: "no-store",
+        });
+        const next = (await st.json().catch(() => ({}))) as BillingStatusResponse;
+        if (st.ok && next?.bill_id) setStatus(next);
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      setResendBusy(false);
+    }
+  }, [billId, resendCooldown, resendBusy]);
 
   if (accountReady) {
     return (
@@ -162,9 +199,16 @@ function PaymentHandoffContent() {
         <div className="cb-card max-w-md text-center">
           <h1 className="cb-card-title">Your Account is Ready.</h1>
           {billId && <p className="mt-3 text-xs text-cb-green/60">Reference: {billId}</p>}
-          {statusEmail ? (
+          {billId ? (
             <>
-              <PaymentTargetEmailLine email={statusEmail} variant="sent" className="mt-4 text-center text-sm" />
+              {statusEmail ? (
+                <PaymentTargetEmailLine email={statusEmail} variant="sent" className="mt-4 text-center text-sm" />
+              ) : (
+                <p className="mt-4 text-center text-sm text-cb-green/80">
+                  Loading your registered email… You can still send the password setup email — it goes to the address we have
+                  for this payment.
+                </p>
+              )}
               {resendSuccess && (
                 <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
               )}
@@ -185,11 +229,11 @@ function PaymentHandoffContent() {
             </>
           ) : (
             <p className="mt-4 text-sm text-cb-green/85">
-              Go to{" "}
+              We couldn&apos;t verify this payment reference.{" "}
               <a href="/access" className="font-semibold underline">
-                account access
+                Open account access
               </a>{" "}
-              and use Send Password Set Up Email Again with the address you used at checkout.
+              or contact support.
             </p>
           )}
           <div className="mt-6 flex w-full flex-col items-center gap-3">
