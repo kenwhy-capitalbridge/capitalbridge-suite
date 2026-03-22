@@ -78,37 +78,25 @@ function PaymentHandoffContent() {
     [status?.email]
   );
 
+  const fetchStatusOnce = useCallback(async () => {
+    if (!billId) return;
+    try {
+      const res = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as BillingStatusResponse;
+      setStatus(data);
+      setLoading(false);
+    } catch {
+      setLoading(false);
+    }
+  }, [billId]);
+
+  /** Single fetch on mount — no interval (aligns with payment-return: user triggers refresh if needed). */
   useEffect(() => {
     if (!billId) return;
-
-    let cancelled = false;
-
-    async function pollStatus() {
-      if (!billId) return;
-      try {
-        const res = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
-          cache: "no-store",
-        });
-        const data = (await res.json().catch(() => ({}))) as BillingStatusResponse;
-        if (!cancelled) {
-          setStatus(data);
-          setLoading(false);
-        }
-      } catch {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void pollStatus();
-    const intervalId = window.setInterval(() => {
-      void pollStatus();
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-    };
-  }, [billId]);
+    void fetchStatusOnce();
+  }, [billId, fetchStatusOnce]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -272,6 +260,15 @@ function PaymentHandoffContent() {
               Open payment in a new tab. After you pay, we&apos;ll email you a link to set your password — you won&apos;t need to
               sign in until then.
             </p>
+          )}
+          {!loading && billId && (
+            <button
+              type="button"
+              className={btnSecondary}
+              onClick={() => void fetchStatusOnce()}
+            >
+              Check payment status
+            </button>
           )}
         </div>
 

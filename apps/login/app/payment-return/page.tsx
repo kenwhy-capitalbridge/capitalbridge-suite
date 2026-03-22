@@ -13,7 +13,6 @@ import {
   persistCheckoutEmail,
   readPersistedCheckoutEmail,
 } from "@/lib/checkoutEmailPersistence";
-import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -27,10 +26,21 @@ type BillingStatusResponse = {
   error?: string;
 };
 
-const btnPrimary =
-  "w-full rounded-xl bg-cb-gold px-4 py-3.5 text-center text-base font-semibold text-cb-green shadow-lg transition hover:scale-[1.02] hover:bg-cb-green hover:text-white disabled:opacity-50 disabled:hover:scale-100";
-const btnSecondary =
-  "w-full rounded-xl border-2 border-cb-gold/50 bg-white/90 px-4 py-3 text-center font-medium text-cb-green transition hover:scale-[1.02] hover:bg-white disabled:opacity-50 disabled:hover:scale-100";
+type OnboardMode = "confirmation" | "processing" | "ready";
+
+/** Spec: single primary control style across phases */
+const primaryBtnClass =
+  "w-full mt-6 rounded-lg bg-neutral-900 px-4 py-3 text-center text-base font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50";
+
+const secondaryBtnClass =
+  "w-full mt-3 rounded-lg border border-neutral-300 bg-white px-4 py-3 text-center text-base font-medium text-neutral-800 transition hover:bg-neutral-50 disabled:opacity-50";
+
+const shellClass = "min-h-screen flex items-center justify-center bg-neutral-50 px-4";
+const cardClass =
+  "w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm";
+const titleClass = "text-center text-xl font-semibold text-neutral-900";
+const bodyClass = "mt-2 text-center text-base text-neutral-600";
+const metaClass = "mt-2 text-center text-sm text-neutral-500";
 
 function openWebInbox(email: string | null | undefined) {
   const domain = email?.split("@")[1]?.toLowerCase().trim() ?? "";
@@ -65,8 +75,16 @@ function PaymentReturnContent() {
   const paidAt = searchParams.get("billplz[paid_at]");
   const billId = searchParams.get("billplz[id]");
 
-  const [status, setStatus] = useState<BillingStatusResponse | null>(null);
+  const [finalData, setFinalData] = useState<BillingStatusResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(!!billId);
+  const [onboardMode, setOnboardMode] = useState<OnboardMode>("confirmation");
+  const [stageIndex, setStageIndex] = useState(0);
+  const [progressWidth, setProgressWidth] = useState(0);
+  const [processingWaitHint, setProcessingWaitHint] = useState(false);
+
+  const finalDataRef = useRef<BillingStatusResponse | null>(null);
+  finalDataRef.current = finalData;
+
   const [resendBusy, setResendBusy] = useState(false);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -78,7 +96,6 @@ function PaymentReturnContent() {
   const [wrongSuccess, setWrongSuccess] = useState<string | null>(null);
   const [wrongCooldown, setWrongCooldown] = useState(0);
 
-  /** Short-lived recovery token (minted server-side when account is ready). */
   const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
   const [recoveryTokenExp, setRecoveryTokenExp] = useState<number>(0);
   const [recoveryMintBusy, setRecoveryMintBusy] = useState(false);
@@ -106,6 +123,21 @@ function PaymentReturnContent() {
     if (billId) persistBillplzBillId(billId);
   }, [billId]);
 
+  const fetchStatusOnce = useCallback(async (): Promise<BillingStatusResponse | null> => {
+    if (!billId) return null;
+    try {
+      const res = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as BillingStatusResponse;
+      setFinalData(data);
+      return data;
+    } catch {
+      return null;
+    }
+  }, [billId]);
+
+  /** Initial load: confirm-payment + status (unchanged endpoints). No interval polling; no standalone delayed refetch — staged retries live only in the processing phase. */
   useEffect(() => {
     if (!billId) return;
 
@@ -118,38 +150,21 @@ function PaymentReturnContent() {
       }).catch(() => {});
     }
 
-    async function pollStatus() {
-      if (!billId) return;
-      try {
-        const res = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
-          cache: "no-store",
-        });
-        const data = (await res.json().catch(() => ({}))) as BillingStatusResponse;
-        if (!cancelled) {
-          setStatus(data);
-          setLoading(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setLoading(false);
-        }
+    void (async () => {
+      await fetchStatusOnce();
+      if (!cancelled) {
+        setLoading(false);
       }
-    }
-
-    void pollStatus();
-    const intervalId = window.setInterval(() => {
-      void pollStatus();
-    }, 5000);
+    })();
 
     return () => {
       cancelled = true;
-      window.clearInterval(intervalId);
     };
-  }, [billId, paid]);
+  }, [billId, paid, fetchStatusOnce]);
 
-  const accountReady = !!status?.account_ready;
-  const waitingForWebhook = !accountReady && paid && !!billId;
-  const statusEmail = status?.email?.trim() ?? null;
+  const accountReady = !!finalData?.account_ready;
+  const statusEmail = finalData?.email?.trim() ?? null;
+  const deliveryEmail = statusEmail;
 
   const mintRecoveryToken = useCallback(async (): Promise<string | null> => {
     if (!billId) return null;
@@ -176,7 +191,6 @@ function PaymentReturnContent() {
                 ? "Account isn’t ready yet — this page will update automatically."
                 : "Could not prepare email change. Refresh the page or try again shortly.";
         recoveryMintMsgRef.current = msg;
-        // Don’t show a red banner for origin issues — avoids duplicate/confusing warnings; submit surfaces one hint if needed.
         setRecoveryMintError(data.error === "forbidden_origin" ? null : msg);
         setRecoveryToken(null);
         setRecoveryTokenExp(0);
@@ -204,7 +218,6 @@ function PaymentReturnContent() {
     }
   }, [billId]);
 
-  /** When payment is confirmed and account is ready, mint a recovery token in the background. */
   useEffect(() => {
     if (!accountReady || !billId) return;
     let cancelled = false;
@@ -228,7 +241,6 @@ function PaymentReturnContent() {
     if (statusEmail) persistCheckoutEmail(statusEmail);
   }, [statusEmail]);
 
-  /** Password setup email is server-only: requires bill_id; delivery address always from billing_sessions.email. */
   const sendDisabled =
     resendBusy ||
     resendCooldown > 0 ||
@@ -291,7 +303,7 @@ function PaymentReturnContent() {
           cache: "no-store",
         });
         const next = (await st.json().catch(() => ({}))) as BillingStatusResponse;
-        if (st.ok && next?.bill_id) setStatus(next);
+        if (st.ok && next?.bill_id) setFinalData(next);
       } catch {
         /* ignore */
       }
@@ -354,7 +366,7 @@ function PaymentReturnContent() {
       try {
         const st = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, { cache: "no-store" });
         const next = (await st.json().catch(() => ({}))) as BillingStatusResponse;
-        if (st.ok && next?.bill_id) setStatus(next);
+        if (st.ok && next?.bill_id) setFinalData(next);
       } catch {
         /* ignore */
       }
@@ -363,10 +375,7 @@ function PaymentReturnContent() {
     }
   }, [billId, wrongEmail, wrongCooldown, wrongBusy, ensureValidRecoveryToken, mintRecoveryToken]);
 
-  const passwordEmailVariant: "pending" | "sent" =
-    accountReady || !!resendSuccess || !!wrongSuccess ? "sent" : "pending";
-
-  const showWrongEmailFix = accountReady && !!statusEmail && !!billId;
+  const showWrongEmailFix = accountReady && !!deliveryEmail && !!billId;
   const wrongDisabled =
     wrongBusy ||
     recoveryMintBusy ||
@@ -374,48 +383,116 @@ function PaymentReturnContent() {
     !wrongEmail.trim() ||
     !isSupabaseConfigured;
 
-  const emailActions = (
+  /** Phase 2: staged timing via chained setTimeouts only (no setInterval). */
+  useEffect(() => {
+    if (onboardMode !== "processing") return;
+
+    setStageIndex(0);
+    setProgressWidth(0);
+    setProcessingWaitHint(false);
+
+    const tProgress1 = window.setTimeout(() => setProgressWidth(33), 80);
+    const tStage1 = window.setTimeout(() => {
+      setStageIndex(1);
+      setProgressWidth(33);
+    }, 2000);
+    const tProgress2 = window.setTimeout(() => setProgressWidth(66), 2000 + 80);
+    const tStage2 = window.setTimeout(() => {
+      setStageIndex(2);
+      setProgressWidth(66);
+    }, 2000 + 3500);
+    const tProgress3 = window.setTimeout(() => setProgressWidth(100), 2000 + 3500 + 80);
+    const tStage3 = window.setTimeout(() => {
+      setStageIndex(3);
+      setProgressWidth(100);
+    }, 2000 + 3500 + 2500);
+
+    const tFinish = window.setTimeout(() => {
+      void (async () => {
+        let data = finalDataRef.current;
+        if (!data?.account_ready) {
+          data = (await fetchStatusOnce()) ?? data;
+        }
+        if (!data?.account_ready) {
+          await new Promise((r) => window.setTimeout(r, 3000));
+          data = (await fetchStatusOnce()) ?? data;
+        }
+        if (data?.account_ready) {
+          setOnboardMode("ready");
+          setProcessingWaitHint(false);
+        } else {
+          setProcessingWaitHint(true);
+        }
+      })();
+    }, 2000 + 3500 + 2500 + 400);
+
+    return () => {
+      window.clearTimeout(tProgress1);
+      window.clearTimeout(tStage1);
+      window.clearTimeout(tProgress2);
+      window.clearTimeout(tStage2);
+      window.clearTimeout(tProgress3);
+      window.clearTimeout(tStage3);
+      window.clearTimeout(tFinish);
+    };
+  }, [onboardMode, fetchStatusOnce]);
+
+  const handleContinueFromConfirmation = useCallback(() => {
+    setOnboardMode("processing");
+  }, []);
+
+  const handleCheckStatusAgain = useCallback(() => {
+    setProcessingWaitHint(false);
+    void (async () => {
+      const data = await fetchStatusOnce();
+      if (data?.account_ready) {
+        setOnboardMode("ready");
+      } else {
+        setProcessingWaitHint(true);
+      }
+    })();
+  }, [fetchStatusOnce]);
+
+  /** Ready phase: display email from finalData only (never localStorage). */
+  const readyEmailLine = (
+    <p className={`${metaClass} font-medium text-neutral-700`}>{deliveryEmail ? deliveryEmail : "—"}</p>
+  );
+
+  const readyActions = (
     <>
+      {readyEmailLine}
       {billId && (
-        <p className="mt-1 text-center text-[11px] leading-relaxed text-cb-green/50">
-          Payment reference — keep this page or save your Bill ID (support may ask for it):<br />
-          <span className="font-mono text-cb-green/65">Bill ID: {billId}</span>
+        <p className={metaClass}>
+          Payment reference — save your Bill ID if support asks:
+          <br />
+          <span className="font-mono text-neutral-600">{billId}</span>
         </p>
       )}
-      {statusEmail && (
-        <PaymentTargetEmailLine
-          email={statusEmail}
-          variant={passwordEmailVariant}
-          className="mt-4 text-center text-sm"
-        />
-      )}
       {resendSuccess && (
-        <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
+        <p className="mt-4 rounded-lg bg-neutral-100 px-3 py-2 text-center text-base font-medium text-neutral-800">
+          {resendSuccess}
+        </p>
       )}
-      {resendError && <p className="cb-message-error mt-3 text-left text-sm">{resendError}</p>}
-      <div className="mt-6 flex flex-col gap-3">
-        <button
-          type="button"
-          className={btnPrimary}
-          disabled={sendDisabled}
-          onClick={() => void handleSendSetPasswordEmail()}
-        >
-          {sendPasswordSetupPrimaryLabel(resendBusy, resendCooldown)}
-        </button>
-        <button type="button" className={btnSecondary} onClick={() => openWebInbox(statusEmail)}>
-          Open Email Inbox
-        </button>
-      </div>
+      {resendError && <p className="mt-3 text-center text-base text-red-700">{resendError}</p>}
+      <button
+        type="button"
+        className={primaryBtnClass}
+        disabled={sendDisabled}
+        onClick={() => void handleSendSetPasswordEmail()}
+      >
+        {sendPasswordSetupPrimaryLabel(resendBusy, resendCooldown)}
+      </button>
+      <button type="button" className={secondaryBtnClass} onClick={() => openWebInbox(deliveryEmail)}>
+        Open Email Inbox
+      </button>
       {showWrongEmailFix && (
-        <div className="mt-6 border-t border-cb-green/15 pt-5 text-left">
-          <p className="text-center text-sm text-cb-green/80">Not your email? Enter the correct one below.</p>
-          <p className="mt-2 text-center text-sm leading-relaxed text-cb-green/75">
+        <div className="mt-6 border-t border-neutral-200 pt-5 text-left">
+          <p className="text-center text-base text-neutral-700">Not your email? Enter the correct one below.</p>
+          <p className={`${bodyClass} mt-2`}>
             Used the wrong email? No problem. Enter the correct one and we&apos;ll send your access link there.
           </p>
-          {recoveryMintError && (
-            <p className="cb-message-error mt-2 text-center text-sm">{recoveryMintError}</p>
-          )}
-          <label className="mt-3 block text-xs font-medium text-cb-green/75" htmlFor="payment-return-wrong-email">
+          {recoveryMintError && <p className="mt-2 text-center text-base text-red-700">{recoveryMintError}</p>}
+          <label className="mt-3 block text-sm font-medium text-neutral-600" htmlFor="payment-return-wrong-email">
             Correct email
           </label>
           <input
@@ -423,7 +500,7 @@ function PaymentReturnContent() {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
-            className="cb-input mt-1.5"
+            className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-base text-neutral-900 outline-none focus:border-neutral-500"
             value={wrongEmail}
             onChange={(e) => {
               setWrongEmail(e.target.value);
@@ -434,7 +511,7 @@ function PaymentReturnContent() {
           />
           <button
             type="button"
-            className={`${btnPrimary} mt-3`}
+            className={`${primaryBtnClass} mt-3`}
             disabled={wrongDisabled}
             onClick={() => void handleWrongEmailSubmit()}
           >
@@ -445,123 +522,231 @@ function PaymentReturnContent() {
                 : "Send Password Setup Email"}
           </button>
           {!wrongSuccess && (
-            <p className="mt-3 text-center text-sm leading-relaxed text-cb-green/75">
-              Your access will be linked to this email.
-            </p>
+            <p className={`${bodyClass} mt-3`}>Your access will be linked to this email.</p>
           )}
           {wrongSuccess && (
-            <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-sm font-medium text-cb-green">
+            <p className="mt-3 rounded-lg bg-neutral-100 px-3 py-2 text-center text-base font-medium text-neutral-800">
               {wrongSuccess}
             </p>
           )}
-          {wrongError && <p className="cb-message-error mt-2 text-sm">{wrongError}</p>}
+          {wrongError && <p className="mt-2 text-center text-base text-red-700">{wrongError}</p>}
         </div>
       )}
     </>
   );
 
+  /* --- No bill_id --- */
   if (!billId) {
     return (
-      <main className="cb-auth-main">
-        <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">Payment</h1>
-          <p className="cb-card-subtitle mt-2">
+      <main className={shellClass}>
+        <div className={cardClass}>
+          <h1 className={titleClass}>Payment</h1>
+          <p className={bodyClass}>
             If you just paid, go back to the tab from checkout or check the email you used there.
           </p>
-          <p className="mt-3 text-sm text-cb-green/80">
+          <p className={bodyClass}>
             To set your password or send the link again, open{" "}
             <a
               href="/access"
-              className="font-semibold text-cb-green underline"
+              className="font-semibold text-neutral-900 underline"
               onClick={openAccessWithPersistedEmail}
             >
               account access
             </a>{" "}
             — your email may be filled in automatically — then tap Send Password Set Up Email Again.
           </p>
-          <div className="mt-6 flex flex-col gap-3">
-            <button type="button" className={btnPrimary} onClick={() => openWebInbox(null)}>
-              Open Gmail
+          <button type="button" className={primaryBtnClass} onClick={() => openWebInbox(null)}>
+            Open Gmail
+          </button>
+          <p className={metaClass}>Or check your email app</p>
+        </div>
+      </main>
+    );
+  }
+
+  /* --- Loading first status --- */
+  if (loading) {
+    return (
+      <main className={shellClass}>
+        <div className={cardClass}>
+          <h1 className={titleClass}>One moment</h1>
+          <p className={bodyClass}>We&apos;re loading your payment details.</p>
+        </div>
+      </main>
+    );
+  }
+
+  /* --- Paid: guided 3-phase flow (Billplz success path) --- */
+  if (paid) {
+    if (onboardMode === "confirmation") {
+      return (
+        <main className={shellClass}>
+          <div className={cardClass}>
+            <h1 className={titleClass}>Payment successful</h1>
+            <p className={bodyClass}>A receipt has been sent to your email.</p>
+            {paidAt ? <p className={metaClass}>Paid at: {paidAt}</p> : null}
+            <button type="button" className={primaryBtnClass} onClick={handleContinueFromConfirmation}>
+              Continue to set up your account
             </button>
-            <p className="text-sm text-cb-green/75">Or check your email app</p>
           </div>
-        </div>
-      </main>
-    );
-  }
+        </main>
+      );
+    }
 
-  if (loading || waitingForWebhook) {
-    return (
-      <main className="cb-auth-main">
-        <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">Securing your access…</h1>
-          <p className="cb-card-subtitle mt-2">
-            {paid
-              ? "We're confirming your payment. This usually takes just a moment."
-              : "Checking your payment status…"}
-          </p>
-          {paidAt && <p className="mt-4 text-sm text-cb-green/75">Paid at: {paidAt}</p>}
-          {waitingForWebhook && (
-            <p className="mt-4 text-sm text-cb-green/80">This page updates automatically every few seconds.</p>
-          )}
-        </div>
-      </main>
-    );
-  }
-
-  if (accountReady) {
-    return (
-      <main className="cb-auth-main">
-        <div className="cb-card max-w-md text-center">
-          <h1 className="cb-card-title">Your Account is Ready.</h1>
-          {statusEmail ? (
-            emailActions
-          ) : (
-            <p className="mt-4 text-sm leading-relaxed text-cb-green/80">
-              We couldn&apos;t load your email on this screen. Open{" "}
-              <a
-                href="/access"
-                className="font-semibold underline"
-                onClick={openAccessWithPersistedEmail}
+    if (onboardMode === "processing") {
+      return (
+        <main className={shellClass}>
+          <div className={cardClass}>
+            <h1 className={titleClass}>Setting up your access</h1>
+            <p className={bodyClass}>Please keep this page open for a moment.</p>
+            <ul className="mt-6 list-none space-y-4 text-left">
+              <li className={stageIndex >= 1 ? "text-base text-neutral-800" : "text-base font-medium text-neutral-900"}>
+                {stageIndex >= 1 ? "✓ Payment received" : "Payment received"}
+              </li>
+              <li
+                className={
+                  stageIndex >= 2
+                    ? "text-base text-neutral-800"
+                    : stageIndex === 1
+                      ? "text-base font-medium text-neutral-900"
+                      : "text-base text-neutral-500"
+                }
               >
+                {stageIndex >= 2
+                  ? "✓ Securing your account and verifying your access"
+                  : "🔒 Securing your account and verifying your access"}
+              </li>
+              <li
+                className={
+                  stageIndex >= 3
+                    ? "text-base text-neutral-800"
+                    : stageIndex === 2
+                      ? "text-base font-medium text-neutral-900"
+                      : "text-base text-neutral-500"
+                }
+              >
+                {stageIndex >= 3 ? "✓ Finalising your setup" : "⏳ Finalising your setup"}
+              </li>
+            </ul>
+            <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+              <div
+                className="h-full rounded-full bg-neutral-900 transition-[width] duration-1000 ease-out"
+                style={{ width: `${progressWidth}%` }}
+              />
+            </div>
+            {processingWaitHint && (
+              <>
+                <p className={`${bodyClass} mt-6`}>
+                  We&apos;re still confirming your payment with your bank. This can take a little longer.
+                </p>
+                <button type="button" className={primaryBtnClass} onClick={handleCheckStatusAgain}>
+                  Check status
+                </button>
+              </>
+            )}
+          </div>
+        </main>
+      );
+    }
+
+    /* ready — only after processing phase completes (user-controlled gate). */
+    if (onboardMode === "ready" && accountReady && deliveryEmail) {
+      return (
+        <main className={shellClass}>
+          <div className={cardClass}>
+            <h1 className={titleClass}>Your account is ready</h1>
+            <p className={bodyClass}>We&apos;ll send your access link to:</p>
+            {readyActions}
+          </div>
+        </main>
+      );
+    }
+
+    if (onboardMode === "ready" && accountReady && !deliveryEmail) {
+      return (
+        <main className={shellClass}>
+          <div className={cardClass}>
+            <h1 className={titleClass}>Your account is ready</h1>
+            <p className={bodyClass}>
+              We couldn&apos;t load your email on this screen. Open{" "}
+              <a href="/access" className="font-semibold underline" onClick={openAccessWithPersistedEmail}>
                 account access
               </a>{" "}
               and use Send password link again with the address you used at checkout.
             </p>
-          )}
+          </div>
+        </main>
+      );
+    }
+
+    if (onboardMode === "ready" && !accountReady) {
+      return (
+        <main className={shellClass}>
+          <div className={cardClass}>
+            <h1 className={titleClass}>Almost there</h1>
+            <p className={bodyClass}>
+              Your payment was received, but we&apos;re still finishing account setup. Tap below to refresh status.
+            </p>
+            {billId ? <p className={metaClass}>Bill ID: {billId}</p> : null}
+            <button type="button" className={primaryBtnClass} onClick={handleCheckStatusAgain}>
+              Check status
+            </button>
+          </div>
+        </main>
+      );
+    }
+
+    return (
+      <main className={shellClass}>
+        <div className={cardClass}>
+          <h1 className={titleClass}>One moment</h1>
+          <p className={bodyClass}>Please refresh this page and try again.</p>
+          <button type="button" className={primaryBtnClass} onClick={() => window.location.reload()}>
+            Refresh page
+          </button>
         </div>
       </main>
     );
   }
 
+  /* --- billId but not paid query param: pending / support --- */
   return (
-    <main className="cb-auth-main">
-      <div className="cb-card max-w-md text-center">
-        <h1 className="cb-card-title">Payment pending</h1>
-        <p className="cb-card-subtitle mt-2 text-sm leading-relaxed">
-          We couldn&apos;t confirm payment from this page yet. When your email appears below, use Send Password Setup Email
-          to get a link — even if the first email never arrived.
+    <main className={shellClass}>
+      <div className={cardClass}>
+        <h1 className={titleClass}>Payment pending</h1>
+        <p className={bodyClass}>
+          We couldn&apos;t confirm payment from this page yet. When your email appears below, use Send Password Setup
+          Email to get a link — even if the first email never arrived.
         </p>
         {billId && (
-          <p className="mt-4 text-xs text-cb-green/55">
+          <p className={metaClass}>
             Bill ID: <span className="font-mono">{billId}</span>
           </p>
         )}
-        {status?.next_step === "contact_support" && (
-          <p className="cb-message-error mt-4 text-sm">
+        {finalData?.next_step === "contact_support" && (
+          <p className="mt-4 text-center text-base text-red-700">
             We couldn&apos;t match this payment yet. Contact support with the reference above.
           </p>
         )}
-        {statusEmail ? (
-          emailActions
+        {deliveryEmail ? (
+          readyActions
         ) : (
-          <p className="mt-4 text-sm text-cb-green/85">
+          <p className={bodyClass}>
             This page will refresh with your email shortly. You can also open{" "}
             <a href="/access" className="font-semibold underline" onClick={openAccessWithPersistedEmail}>
               account access
             </a>{" "}
             and use Send Password Set Up Email Again.
           </p>
+        )}
+        {!deliveryEmail && (
+          <button
+            type="button"
+            className={primaryBtnClass}
+            onClick={() => void fetchStatusOnce()}
+          >
+            Check status
+          </button>
         )}
       </div>
     </main>
@@ -572,10 +757,10 @@ export default function PaymentReturnPage() {
   return (
     <Suspense
       fallback={
-        <main className="cb-auth-main">
-          <div className="cb-card max-w-md text-center">
-            <h1 className="cb-card-title">Securing your access…</h1>
-            <p className="cb-card-subtitle mt-2">One moment.</p>
+        <main className={shellClass}>
+          <div className={cardClass}>
+            <h1 className={titleClass}>One moment</h1>
+            <p className={bodyClass}>Loading…</p>
           </div>
         </main>
       }
