@@ -42,27 +42,68 @@ export function getClientIp(req: Request): string {
 }
 
 /**
- * Require browser same-origin for recovery endpoints (mitigate cross-site token mint).
+ * Public URL of this deployment (Vercel / proxies set forwarded headers).
+ */
+function originFromForwardedHeaders(req: Request): string | null {
+  const host =
+    req.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    req.headers.get("host")?.split(",")[0]?.trim();
+  if (!host) return null;
+  const proto =
+    req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
+  try {
+    return new URL(`${proto}://${host}`).origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Require browser requests to match an allowed origin (mitigate cross-site abuse).
+ * Allows: configured LOGIN URL, this handler's URL origin, and forwarded Host
+ * (fixes prod when env points at a different host than login.* or env is unset).
  */
 export function isAllowedRecoveryOrigin(req: Request): boolean {
   if (process.env.NODE_ENV !== "production") {
     return true;
   }
+
+  const allowed = new Set<string>();
+
   const base =
     process.env.NEXT_PUBLIC_LOGIN_APP_URL?.replace(/\/$/, "") ||
     process.env.LOGIN_APP_URL?.replace(/\/$/, "") ||
     "";
-  if (!base) return false;
-  let allowedOrigin: string;
+  if (base) {
+    try {
+      allowed.add(new URL(base).origin);
+    } catch {
+      /* ignore */
+    }
+  }
+
   try {
-    allowedOrigin = new URL(base).origin;
+    const u = new URL(req.url);
+    if (u.origin && u.origin !== "null") {
+      allowed.add(u.origin);
+    }
   } catch {
+    /* ignore */
+  }
+
+  const forwarded = originFromForwardedHeaders(req);
+  if (forwarded) {
+    allowed.add(forwarded);
+  }
+
+  if (allowed.size === 0) {
     return false;
   }
+
   const origin = req.headers.get("origin");
   if (origin) {
     try {
-      return new URL(origin).origin === allowedOrigin;
+      return allowed.has(new URL(origin).origin);
     } catch {
       return false;
     }
@@ -70,7 +111,7 @@ export function isAllowedRecoveryOrigin(req: Request): boolean {
   const referer = req.headers.get("referer");
   if (referer) {
     try {
-      return new URL(referer).origin === allowedOrigin;
+      return allowed.has(new URL(referer).origin);
     } catch {
       return false;
     }
