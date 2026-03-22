@@ -175,12 +175,13 @@ function PaymentReturnContent() {
           data.error === "rate_limited"
             ? "Too many attempts. Wait a few minutes and try again."
             : data.error === "forbidden_origin"
-              ? "Open this page from the official Capital Bridge login site."
+              ? "Please refresh this page, then try again."
               : data.error === "payment_not_confirmed" || data.error === "membership_not_ready"
                 ? "Account isn’t ready yet — this page will update automatically."
                 : "Could not prepare email change. Refresh the page or try again shortly.";
         recoveryMintMsgRef.current = msg;
-        setRecoveryMintError(msg);
+        // Don’t show a red banner for origin issues — avoids duplicate/confusing warnings; submit surfaces one hint if needed.
+        setRecoveryMintError(data.error === "forbidden_origin" ? null : msg);
         setRecoveryToken(null);
         setRecoveryTokenExp(0);
         return null;
@@ -371,11 +372,11 @@ function PaymentReturnContent() {
       {showWrongEmailFix && (
         <div className="mt-6 border-t border-cb-green/15 pt-5 text-left">
           <p className="text-center text-sm text-cb-green/80">Not your email? Enter the correct one below.</p>
-          <p className="mt-2 text-center text-[11px] leading-snug text-cb-green/45">
+          <p className="mt-2 text-center text-sm leading-relaxed text-cb-green/75">
             Your payment stays tied to the Bill ID above — this only changes where we send your password link.
           </p>
           {recoveryMintError && (
-            <p className="cb-message-error mt-2 text-center text-xs">{recoveryMintError}</p>
+            <p className="cb-message-error mt-2 text-center text-sm">{recoveryMintError}</p>
           )}
           <label className="mt-3 block text-xs font-medium text-cb-green/75" htmlFor="payment-return-wrong-email">
             Correct email
@@ -396,7 +397,7 @@ function PaymentReturnContent() {
           />
           <button
             type="button"
-            className="cb-btn-secondary mt-3 w-full py-3 text-sm"
+            className={`${btnPrimary} mt-3`}
             disabled={wrongDisabled}
             onClick={() => void handleWrongEmailSubmit()}
           >
@@ -404,8 +405,13 @@ function PaymentReturnContent() {
               ? ACCESS_EMAIL_SENDING_LABEL
               : wrongCooldown > 0
                 ? `Resend in ${wrongCooldown}s`
-                : "Send password email"}
+                : "Send Password Setup Email"}
           </button>
+          {!wrongSuccess && (
+            <p className="mt-3 text-center text-sm leading-relaxed text-cb-green/75">
+              Your access will be linked to this email.
+            </p>
+          )}
           {wrongSuccess && (
             <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-sm font-medium text-cb-green">
               {wrongSuccess}
