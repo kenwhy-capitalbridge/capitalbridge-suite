@@ -6,9 +6,6 @@
 export const SUPPORT_EMAIL = "admin@thecapitalbridge.com";
 export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
 
-/** Plain @ in user-facing sentences (linkify in UI). */
-const AT = SUPPORT_EMAIL;
-
 export type TierKind =
   | "link"
   | "resend"
@@ -79,39 +76,43 @@ export function getTieredCalmMessage(kind: TierKind, attempt: number): string {
 
   switch (kind) {
     case "link":
-      if (t === 1) return "This link can’t be used anymore. Please request a new one.";
-      if (t === 2) return "This link isn’t working. Try requesting a new one.";
-      return `Please request a new link or go back to sign in. If you’re stuck, email us at ${AT}.`;
+      if (t === 1) {
+        return "This link has expired or has already been used. Request a new link to continue.";
+      }
+      if (t === 2) {
+        return "This link isn’t working. Please request a new one and try again.";
+      }
+      return "Please request a new link or return to sign in.";
 
     case "resend":
       if (t === 1) return "We couldn’t send the email. Please try again.";
-      if (t === 2) return "Still not going through. Please wait a moment and try again.";
-      return `Please wait a minute, then try again. Check spam or email ${AT} if nothing arrives.`;
+      if (t === 2) return "Still not going through. Wait a moment, then try again.";
+      return "Please wait a minute, then try again. Check your spam folder if you don’t see the email.";
 
     case "password":
       if (t === 1) return "We couldn’t update your password. Please try again.";
-      if (t === 2) return "Still not working. Try again or request a new link.";
-      return `Please request a new link and try again. If you’re still stuck, email ${AT}.`;
+      if (t === 2) return "Still not working. Request a new link and try again.";
+      return "Please request a new link to reset your password.";
 
     case "email_change":
       if (t === 1) return "We couldn’t update your email. Please try again.";
       if (t === 2) return "Still not working. Please try again in a moment.";
-      return `Please try again later. If you need help, email ${AT}.`;
+      return "Please try again later.";
 
     case "network":
-      if (t === 1) return "Connection issue. Please try again.";
-      if (t === 2) return "Still not connecting. Check your internet and try again.";
-      return `Please check your connection or try again later. If it keeps failing, email ${AT}.`;
+      if (t === 1) return "Connection issue. Please check your internet and try again.";
+      if (t === 2) return "Still not connecting. Try again in a moment.";
+      return "Please check your connection or try again later.";
 
     case "rate_limit":
-      if (t === 1) return "Too many tries. Please wait a moment.";
-      if (t === 2) return "Please wait a minute before trying again.";
-      return `Please wait a few minutes, then try again. If sign-in still fails, email ${AT} with the address you use for your account.`;
+      if (t === 1) return "Too many attempts. Please wait a moment before trying again.";
+      if (t === 2) return "Please wait a minute, then try again.";
+      return "Please wait a few minutes before trying again.";
 
     case "login":
-      if (t === 1) return "Email or password doesn’t look right. Please try again.";
-      if (t === 2) return "Still not correct. Please check and try again.";
-      return `Try Send Me A New Link below to reset your password, or email ${AT} if you need help verifying your account.`;
+      if (t === 1) return "Your email or password may be incorrect. Please try again.";
+      if (t === 2) return "Still not correct. Please check your details and try again.";
+      return "Reset your password using “Send Me A New Link”.";
 
     default:
       return getTieredCalmMessage("link", attempt);
@@ -132,16 +133,15 @@ export function resolveCalmAuthMessage(
   return { kind, message, level: tierLevel(Math.max(1, attempt)) };
 }
 
-/**
- * Shown on the first sign-in failure when the provider classifies the error as rate-limit-like.
- * Users often see this after an expired recovery link or burst requests, not “many wrong passwords”.
- */
+/** First sign-in failure when provider looks like rate-limit (often wrong password or throttle). */
 export const LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS =
-  "We couldn’t sign you in. That notice sometimes appears when a password link has expired (links are only valid a short time) or sign-in was tried too quickly — not only from many wrong passwords. Tap Send Me A New Link below to get a fresh email, open it soon, then set your password. Or wait a minute and try your email and password again.";
+  "We couldn’t sign you in. Your email or password may be incorrect, or your link may have expired. Try again, or use “Send Me A New Link” to reset your password.";
 
-/** Second try when Supabase still reports a rate-style limit — stay actionable, no “chat”. */
 export const LOGIN_SIGNIN_RATE_LIMIT_RETRY =
-  "We still couldn’t sign you in. Sign-in can be temporarily limited for a few minutes — wait, then try again. Or tap Send Me A New Link below to reset your password; open the email soon and use the same address you used at checkout.";
+  "We still couldn’t sign you in. This can happen after several attempts. Wait a minute, then try again, or reset your password using “Send Me A New Link”.";
+
+export const LOGIN_SIGNIN_RATE_LIMIT_FINAL =
+  "Please wait a few minutes before trying again. If you still can’t sign in, reset your password using “Send Me A New Link”.";
 
 export function resolveLoginCalmAuthMessage(
   attempt: number,
@@ -165,7 +165,7 @@ export function resolveLoginCalmAuthMessage(
     }
     return {
       kind: "login",
-      message: `Please wait several minutes before trying again. If you still can’t access your account, email ${AT} from the address you use for Capital Bridge.`,
+      message: LOGIN_SIGNIN_RATE_LIMIT_FINAL,
       level: 3,
     };
   }
@@ -174,9 +174,9 @@ export function resolveLoginCalmAuthMessage(
 
 // --- Static copy: access error view & forms (edit here only) ---
 
-export const ACCESS_ERROR_PAGE_TITLE = "This link can’t be used anymore";
+export const ACCESS_ERROR_PAGE_TITLE = "This link has expired";
 
-export const ACCESS_ERROR_PAGE_SUBTITLE = "Request a new link or go back to sign in.";
+export const ACCESS_ERROR_PAGE_SUBTITLE = "Request a new link or return to sign in.";
 
 export const ACCESS_EMAIL_FIELD_LABEL = "Enter your email";
 
@@ -184,36 +184,38 @@ export const ACCESS_EMAIL_PLACEHOLDER = "Email";
 
 export const ACCESS_PRIMARY_CTA = "Back to sign in";
 
-export const ACCESS_SUPPORT_HINT = `Need help? Email us at ${SUPPORT_EMAIL}`;
+export const ACCESS_SUPPORT_HINT = `Need help? Contact support at ${SUPPORT_EMAIL}`;
 
 export const SESSION_SIGNED_OUT_LINE = "You’ve been signed out. Please sign in again.";
 
-export const ACCESS_REMOVED_LINE = `Your access is no longer active. Email ${SUPPORT_EMAIL} for help.`;
+export const ACCESS_REMOVED_LINE =
+  "Your access is no longer active. Please sign in with the correct account or restart from checkout.";
 
 export const FORM_EMPTY_EMAIL = "Please enter your email.";
 
-export const FORM_PASSWORD_TOO_SHORT = "Password is too short.";
+export const FORM_PASSWORD_TOO_SHORT = "Your password must be at least 6 characters.";
 
 export const FORM_PASSWORD_MISMATCH = "Passwords do not match.";
 
-export const FORM_COMPLETE_TO_CONTINUE = "Please complete the form to continue.";
+export const FORM_COMPLETE_TO_CONTINUE = "Please complete all required fields to continue.";
 
-export const LOGIN_PROMPT_THEN_NEW_LINK = "Please enter your email, then tap Send Me A New Link.";
+export const LOGIN_PROMPT_THEN_NEW_LINK = "Enter your email, then tap “Send Me A New Link”.";
 
-export const FORM_EMAIL_INVALID = "Please enter a valid email.";
+export const FORM_EMAIL_INVALID = "Please enter a valid email address.";
 
-export const EMAIL_ON_PAYMENT_SAME = "That’s already the email for this payment.";
+export const EMAIL_ON_PAYMENT_SAME = "This is already the email used for this payment.";
 
-export const EMAIL_CHANGE_CHECK_INBOX = "Check your new inbox for a confirmation email to finish the change.";
+export const EMAIL_CHANGE_CHECK_INBOX = "Check your new email inbox to confirm the change.";
 
 export const EMAIL_CHANGE_NO_SESSION =
-  "To use a different email, start checkout again with the address you want, or sign in if you already have an account.";
+  "To use a different email, start again from checkout or sign in with your existing account.";
 
-export const DEV_PREVIEW_NO_EMAIL = "This preview can’t send email yet. Try the live site.";
+export const DEV_PREVIEW_NO_EMAIL =
+  "Email sending is not available in this environment. Please use the live site.";
 
-export const SET_PASSWORD_EXPIRED_TITLE = "This link can’t be used anymore";
+export const SET_PASSWORD_EXPIRED_TITLE = "This link has expired";
 
 export const SET_PASSWORD_EXPIRED_SUB =
-  "Request a new email to set your password. Use the same address you used at checkout.";
+  "Request a new email to set your password using the same email from checkout.";
 
 export const SET_PASSWORD_EMPTY_EMAIL_FOR_RESEND = "Please enter your email.";

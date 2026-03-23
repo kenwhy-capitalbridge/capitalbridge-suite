@@ -6,13 +6,20 @@ import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
   ACCESS_EMAIL_COOLDOWN_SEC,
   ACCESS_EMAIL_SENDING_LABEL,
+  accessEmailResendCooldownLabel,
 } from "@/lib/resendAccessEmail";
 import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
-import { SUPPORT_EMAIL } from "@/lib/sanitizeAuthErrorMessage";
-
-const PAYMENT_HANDOFF_HELP_LINE = `Need help? Email us at ${SUPPORT_EMAIL}`;
+import {
+  HANDOFF_FORBIDDEN_ORIGIN,
+  HANDOFF_SUCCESS_EMAIL_SENT,
+  PAYMENT_ERROR_EMAIL,
+  PAYMENT_ERROR_NOT_CONFIGURED,
+  PAYMENT_ERROR_RATE_LIMIT,
+  PAYMENT_ERROR_SESSION,
+  PAYMENT_HELP_LINE,
+} from "@/lib/paymentFlowMessages";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -59,7 +66,7 @@ function openWebInbox(email: string | null | undefined) {
 
 function sendPasswordSetupPrimaryLabel(busy: boolean, cooldownSec: number): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
-  if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
+  if (cooldownSec > 0) return accessEmailResendCooldownLabel(cooldownSec);
   return "Send Password Setup Email";
 }
 
@@ -124,15 +131,13 @@ function PaymentHandoffContent() {
   const handleSendSetPasswordEmail = useCallback(async () => {
     setResendError(null);
     if (!isSupabaseConfigured) {
-      setResendError("Sign-in isn’t configured in this environment.");
+      setResendError(PAYMENT_ERROR_NOT_CONFIGURED);
       return;
     }
     if (resendCooldown > 0 || resendBusy) return;
     if (!billId) {
       setResendSuccess(null);
-      setResendError(
-        "We couldn’t verify your session. Please restart from checkout or contact support."
-      );
+      setResendError(PAYMENT_ERROR_SESSION);
       return;
     }
 
@@ -153,23 +158,21 @@ function PaymentHandoffContent() {
         setResendSuccess(null);
         setResendError(
           data.error === "rate_limited"
-            ? "Too many attempts. Wait a few minutes and try again."
+            ? PAYMENT_ERROR_RATE_LIMIT
             : data.error === "forbidden_origin"
-              ? "Please refresh this page, then try again."
-              : data.message ?? data.error ?? "Could not send email. Try again."
+              ? HANDOFF_FORBIDDEN_ORIGIN
+              : data.message ?? data.error ?? PAYMENT_ERROR_EMAIL
         );
         return;
       }
       const delivered = data.delivery_email?.trim() ?? "";
       if (!delivered) {
         setResendSuccess(null);
-        setResendError(
-          "We couldn’t verify your session. Please restart from checkout or contact support."
-        );
+        setResendError(PAYMENT_ERROR_SESSION);
         return;
       }
       persistCheckoutEmail(delivered);
-      setResendSuccess(`Password setup email sent to ${delivered}`);
+      setResendSuccess(HANDOFF_SUCCESS_EMAIL_SENT);
       setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
       try {
         const st = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
@@ -244,7 +247,7 @@ function PaymentHandoffContent() {
           </div>
           <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
             <CalmAuthMessage
-              text={PAYMENT_HANDOFF_HELP_LINE}
+              text={PAYMENT_HELP_LINE}
               className="text-center text-sm leading-relaxed text-cb-green/55"
             />
           </div>
@@ -311,7 +314,7 @@ function PaymentHandoffContent() {
         </div>
         <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
           <CalmAuthMessage
-            text={PAYMENT_HANDOFF_HELP_LINE}
+            text={PAYMENT_HELP_LINE}
             className="text-center text-sm leading-relaxed text-cb-green/55"
           />
         </div>

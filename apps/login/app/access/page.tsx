@@ -9,6 +9,13 @@ import {
   ACCESS_EMAIL_SENT_MESSAGE,
   accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
+import {
+  PASSWORD_BUTTON,
+  PASSWORD_BUTTON_LOADING,
+  PASSWORD_PLACEHOLDER,
+  PASSWORD_REQUIREMENTS_COPY,
+  SET_PASSWORD_LINK_EXPIRY_HINT,
+} from "@/lib/accessPageCopy";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { RegisteredEmailChangeForm } from "@/components/RegisteredEmailChangeForm";
@@ -37,11 +44,6 @@ import {
 const PLATFORM_URL =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
   "https://platform.thecapitalbridge.com";
-
-const SET_PASSWORD_LINK_EXPIRY_HINT =
-  "Please finish on this page soon — it may stop working if you wait too long.";
-
-const PASSWORD_REQUIREMENTS_COPY = "Use at least 6 letters, numbers, or symbols for a stronger password.";
 
 /** Dev-only: survives Strict Mode / second init after URL query is stripped (see preview_success flow). */
 const DEV_ACCESS_SUCCESS_PREVIEW_KEY = "cb_dev_access_success_preview";
@@ -716,7 +718,7 @@ function AccessInner() {
                     type="submit"
                     disabled={passwordSubmitDisabled}
                   >
-                    {busy ? "Setting your password…" : "Set password and continue"}
+                    {busy ? PASSWORD_BUTTON_LOADING : PASSWORD_BUTTON}
                   </button>
                   {showDisabledHelper && (
                     <p className="text-center text-sm text-cb-green/75">{FORM_COMPLETE_TO_CONTINUE}</p>
@@ -786,7 +788,7 @@ function AccessInner() {
                 <PasswordInputWithToggle
                   value={loginPw}
                   onChange={setLoginPw}
-                  placeholder="Enter your password"
+                  placeholder={PASSWORD_PLACEHOLDER}
                   autoComplete="current-password"
                   visible={showLoginPassword}
                   onToggleVisible={() => setShowLoginPassword((s) => !s)}

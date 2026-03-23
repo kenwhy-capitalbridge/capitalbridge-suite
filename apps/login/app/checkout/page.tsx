@@ -6,6 +6,12 @@ import { supabase } from "@/lib/supabaseClient";
 import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
 import { persistCheckoutEmail, buildAccessUrl } from "@/lib/checkoutEmailPersistence";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import {
+  CHECKOUT_ACCOUNT_EXISTS,
+  CHECKOUT_ERROR_INVALID_RESPONSE,
+  CHECKOUT_ERROR_NETWORK,
+  CHECKOUT_ERROR_START_PAYMENT,
+} from "@/lib/checkoutMessages";
 import { ACCESS_SUPPORT_HINT } from "@/lib/sanitizeAuthErrorMessage";
 
 /** Assistive only — common domain typos (does not block submit). */
@@ -35,9 +41,6 @@ const PLAN_LABELS: Record<string, string> = {
   yearly_full: "Strategic (365 Days)",
   strategic: "Strategic Execution (365 Days)",
 };
-
-const ACCOUNT_EXISTS_MSG =
-  "An account already exists for this email. Log in below, or open account access and use Send Password Set Up Email Again if you need a new link.";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -96,7 +99,7 @@ function CheckoutContent() {
     try {
       const exists = await emailExists(supabase, normalizedEmail);
       if (exists) {
-        setError(ACCOUNT_EXISTS_MSG);
+        setError(CHECKOUT_ACCOUNT_EXISTS);
         setEmailAlreadyExists(true);
         emailInputRef.current?.focus();
         return;
@@ -121,7 +124,7 @@ function CheckoutContent() {
           data?.error === "account_exists" ||
           String(data?.detail ?? "").toLowerCase().includes("already exists")
         ) {
-          setError(ACCOUNT_EXISTS_MSG);
+          setError(CHECKOUT_ACCOUNT_EXISTS);
           setEmailAlreadyExists(true);
           emailInputRef.current?.focus();
           return;
@@ -129,7 +132,7 @@ function CheckoutContent() {
         const message = typeof data?.message === "string" ? data.message : null;
         const detail = typeof data?.detail === "string" ? data.detail : null;
         const errorCode = typeof data?.error === "string" ? data.error : null;
-        setError(message || detail || errorCode || "Could not start payment.");
+        setError(message || detail || errorCode || CHECKOUT_ERROR_START_PAYMENT);
         return;
       }
 
@@ -144,9 +147,9 @@ function CheckoutContent() {
         }, 400);
         return;
       }
-      setError("Invalid response from server.");
+      setError(CHECKOUT_ERROR_INVALID_RESPONSE);
     } catch {
-      setError("Network error. Please try again.");
+      setError(CHECKOUT_ERROR_NETWORK);
     } finally {
       if (!redirectingRef.current) {
         setLoading(false);

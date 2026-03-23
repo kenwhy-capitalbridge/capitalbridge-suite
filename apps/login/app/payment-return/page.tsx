@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
   ACCESS_EMAIL_COOLDOWN_SEC,
   ACCESS_EMAIL_SENDING_LABEL,
+  accessEmailResendCooldownLabel,
 } from "@/lib/resendAccessEmail";
 import {
   buildAccessUrl,
@@ -14,9 +15,15 @@ import {
   readPersistedCheckoutEmail,
 } from "@/lib/checkoutEmailPersistence";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
-import { SUPPORT_EMAIL } from "@/lib/sanitizeAuthErrorMessage";
-
-const PAYMENT_RETURN_HELP_LINE = `Need Help? Email us at ${SUPPORT_EMAIL}`;
+import {
+  PAYMENT_ERROR_ACTION,
+  PAYMENT_ERROR_EMAIL,
+  PAYMENT_ERROR_NOT_CONFIGURED,
+  PAYMENT_ERROR_NOT_FOUND,
+  PAYMENT_ERROR_RATE_LIMIT,
+  PAYMENT_ERROR_SESSION,
+  PAYMENT_HELP_LINE,
+} from "@/lib/paymentFlowMessages";
 
 type BillingStatusResponse = {
   mode?: string;
@@ -60,7 +67,7 @@ function openWebInbox(email: string | null | undefined) {
 
 function sendPasswordSetupPrimaryLabel(busy: boolean, cooldownSec: number): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
-  if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
+  if (cooldownSec > 0) return accessEmailResendCooldownLabel(cooldownSec);
   return "Send Password Setup Email";
 }
 
@@ -159,14 +166,12 @@ function PaymentReturnContent() {
   const handleSendSetPasswordEmail = useCallback(async () => {
     setResendError(null);
     if (!isSupabaseConfigured) {
-      setResendError("Sign-in isn’t configured in this environment.");
+      setResendError(PAYMENT_ERROR_NOT_CONFIGURED);
       return;
     }
     if (resendCooldown > 0 || resendBusy) return;
     if (!billId) {
-      setResendError(
-        "We couldn’t verify your session. Please restart from checkout or contact support."
-      );
+      setResendError(PAYMENT_ERROR_SESSION);
       return;
     }
 
@@ -186,18 +191,16 @@ function PaymentReturnContent() {
       if (!res.ok) {
         setResendError(
           data.error === "rate_limited"
-            ? "Too many attempts. Wait a few minutes and try again."
+            ? PAYMENT_ERROR_RATE_LIMIT
             : data.error === "forbidden_origin"
-              ? "Could not complete that action from this page. Try again in a moment."
-              : data.message ?? data.error ?? "Could not send email. Try again."
+              ? PAYMENT_ERROR_ACTION
+              : data.message ?? data.error ?? PAYMENT_ERROR_EMAIL
         );
         return;
       }
       const delivered = data.delivery_email?.trim() ?? "";
       if (!delivered) {
-        setResendError(
-          "We couldn’t verify your session. Please restart from checkout or contact support."
-        );
+        setResendError(PAYMENT_ERROR_SESSION);
         return;
       }
       persistCheckoutEmail(delivered);
@@ -318,7 +321,7 @@ function PaymentReturnContent() {
       </button>
       <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
         <CalmAuthMessage
-          text={PAYMENT_RETURN_HELP_LINE}
+          text={PAYMENT_HELP_LINE}
           className="text-center text-sm leading-relaxed text-cb-green/55"
         />
       </div>
@@ -382,7 +385,7 @@ function PaymentReturnContent() {
             </button>
             <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
               <CalmAuthMessage
-                text={PAYMENT_RETURN_HELP_LINE}
+                text={PAYMENT_HELP_LINE}
                 className="text-center text-sm leading-relaxed text-cb-green/55"
               />
             </div>
@@ -479,7 +482,7 @@ function PaymentReturnContent() {
             </p>
             <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
               <CalmAuthMessage
-                text={PAYMENT_RETURN_HELP_LINE}
+                text={PAYMENT_HELP_LINE}
                 className="text-center text-sm leading-relaxed text-cb-green/55"
               />
             </div>
@@ -535,9 +538,7 @@ function PaymentReturnContent() {
           </p>
         )}
         {finalData?.next_step === "contact_support" && (
-          <p className="cb-message-error mt-4 text-center text-sm sm:text-base">
-            We couldn&apos;t match this payment yet. Contact support with the reference above.
-          </p>
+          <p className="cb-message-error mt-4 text-center text-sm sm:text-base">{PAYMENT_ERROR_NOT_FOUND}</p>
         )}
         {deliveryEmail ? (
           readyActions
@@ -562,7 +563,7 @@ function PaymentReturnContent() {
         {!deliveryEmail && (
           <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
             <CalmAuthMessage
-              text={PAYMENT_RETURN_HELP_LINE}
+              text={PAYMENT_HELP_LINE}
               className="text-center text-sm leading-relaxed text-cb-green/55"
             />
           </div>
