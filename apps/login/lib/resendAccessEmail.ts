@@ -1,7 +1,12 @@
 /** Shared cooldown for set-password / access emails (recover flow). */
 export const ACCESS_EMAIL_COOLDOWN_SEC = 45;
 
-export const ACCESS_EMAIL_SENT_MESSAGE = "Email sent. Check your inbox to set your password.";
+/**
+ * Supabase does not tell the browser whether the address exists — the API can succeed even when no mail is sent.
+ * Be honest so users check spam, wait, and verify the email matches signup.
+ */
+export const ACCESS_EMAIL_SENT_MESSAGE =
+  "If an account exists for this email, we’ve sent a link to set your password. Check your inbox and spam — it can take a few minutes. If nothing arrives, confirm you’re using the same email you used to sign up, then try again after the wait.";
 
 export const ACCESS_EMAIL_SENDING_LABEL = "Sending email...";
 

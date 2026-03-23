@@ -763,7 +763,9 @@ function AccessInner() {
               </div>
             )}
             {resendSuccess && (
-              <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
+              <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-xs font-normal leading-relaxed text-cb-green sm:text-sm">
+                {resendSuccess}
+              </p>
             )}
             {resendError && (
               <div className={`${calmNoticeClass} mt-3`}>
