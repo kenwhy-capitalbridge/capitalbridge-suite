@@ -119,8 +119,7 @@ export const ACCESS_EMAIL_PLACEHOLDER = "Email";
 
 export const ACCESS_PRIMARY_CTA = "Back to sign in";
 
-export const ACCESS_SUPPORT_HINT =
-  "Need help? Chat with us or email admin@thecapitalbridge.com";
+export const ACCESS_SUPPORT_HINT = `Need help? Email us at ${SUPPORT_EMAIL}`;
 
 export const SESSION_SIGNED_OUT_LINE = "You’ve been signed out. Please sign in again.";
 

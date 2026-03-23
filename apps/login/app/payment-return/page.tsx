@@ -374,12 +374,18 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Payment successful</h1>
+            <h1 className={titleClass}>Payment Successful</h1>
             <p className={bodyClass}>A receipt has been sent to your email.</p>
             {paidAt ? <p className={metaClass}>Paid at: {paidAt}</p> : null}
             <button type="button" className={primaryBtnClass} onClick={handleContinueFromConfirmation}>
-              Continue to set up your account
+              Continue to Set Up Your Account
             </button>
+            <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
+              <CalmAuthMessage
+                text={PAYMENT_RETURN_HELP_LINE}
+                className="text-center text-sm leading-relaxed text-cb-green/55"
+              />
+            </div>
           </div>
         </main>
       );

@@ -43,6 +43,9 @@ const SET_PASSWORD_LINK_EXPIRY_HINT =
 
 const PASSWORD_REQUIREMENTS_COPY = "Use at least 6 letters, numbers, or symbols for a stronger password.";
 
+/** Dev-only: survives Strict Mode / second init after URL query is stripped (see preview_success flow). */
+const DEV_ACCESS_SUCCESS_PREVIEW_KEY = "cb_dev_access_success_preview";
+
 function looksLikeEmail(value: string): boolean {
   const t = value.trim();
   return t.length > 3 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
@@ -174,6 +177,8 @@ function AccessInner() {
   const [passwordTier, setPasswordTier] = useState<1 | 2 | 3>(1);
   const [loginTier, setLoginTier] = useState<1 | 2 | 3>(1);
   const [errorScreenEmail, setErrorScreenEmail] = useState("");
+  /** Success screen: seconds left before we suggest using the manual dashboard link. */
+  const [successRedirectSeconds, setSuccessRedirectSeconds] = useState(3);
 
   const loginEmailHydrated = useRef(false);
   const errorEmailHydrated = useRef(false);
@@ -235,6 +240,31 @@ function AccessInner() {
       try {
         const hash = window.location.hash;
         const params = new URLSearchParams(window.location.search);
+
+        /**
+         * Dev-only preview of the success screen. URL param is stripped on first init; keep a sessionStorage
+         * flag so a second init (Strict Mode / effect re-run) does not fall through to getSession() and
+         * immediately redirect away.
+         */
+        if (process.env.NODE_ENV === "development") {
+          if (sessionStorage.getItem(DEV_ACCESS_SUCCESS_PREVIEW_KEY) === "1") {
+            setView("success");
+            return;
+          }
+          if (params.get("preview_success") === "1") {
+            sessionStorage.setItem(DEV_ACCESS_SUCCESS_PREVIEW_KEY, "1");
+            const clean = new URLSearchParams(window.location.search);
+            clean.delete("preview_success");
+            const qs = clean.toString();
+            window.history.replaceState(
+              null,
+              "",
+              `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`
+            );
+            setView("success");
+            return;
+          }
+        }
 
         if (hash && hash.includes("access_token")) {
           const hp = new URLSearchParams(hash.replace(/^#/, ""));
@@ -319,12 +349,39 @@ function AccessInner() {
     }
   }, [view, searchParams]);
 
+  /** 3s countdown on success screen (matches auto-redirect timing below). */
   useEffect(() => {
     if (view !== "success") return;
-    const t = window.setTimeout(() => {
-      window.location.href = destination;
-    }, 2500);
-    return () => window.clearTimeout(t);
+    setSuccessRedirectSeconds(3);
+    const id = window.setInterval(() => {
+      setSuccessRedirectSeconds((n) => (n <= 1 ? 0 : n - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [view]);
+
+  /** After password set: send users to platform (~3s, backup ~4.5s). Dev preview: no auto-redirect. */
+  useEffect(() => {
+    if (view !== "success") return;
+    if (
+      process.env.NODE_ENV === "development" &&
+      typeof window !== "undefined" &&
+      sessionStorage.getItem(DEV_ACCESS_SUCCESS_PREVIEW_KEY) === "1"
+    ) {
+      return;
+    }
+    const go = () => {
+      try {
+        window.location.replace(destination);
+      } catch {
+        window.location.href = destination;
+      }
+    };
+    const t1 = window.setTimeout(go, 3_000);
+    const t2 = window.setTimeout(go, 4_500);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
   }, [view, destination]);
 
   async function handleSetPassword(e: React.FormEvent) {
@@ -367,6 +424,26 @@ function AccessInner() {
 
     passwordFailRef.current = 0;
     setPasswordTier(1);
+
+    /** Copy recovery session into the app client so platform (cookies / shared auth) sees the user after redirect. */
+    try {
+      const { data: rec } = await recoverySupabase.auth.getSession();
+      const s = rec.session;
+      if (s?.access_token && s.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: s.access_token,
+          refresh_token: s.refresh_token,
+        });
+      }
+    } catch {
+      /* still show success + redirect; user may sign in on platform if needed */
+    }
+
+    try {
+      sessionStorage.removeItem(DEV_ACCESS_SUCCESS_PREVIEW_KEY);
+    } catch {
+      /* ignore */
+    }
     setView("success");
   }
 
@@ -449,6 +526,30 @@ function AccessInner() {
             <p className="text-sm text-cb-green sm:text-base">
               You&apos;re all set. Taking you to your dashboard…
             </p>
+            {successRedirectSeconds > 0 ? (
+              <p className="mt-4 text-sm leading-relaxed text-cb-green/85 sm:text-base">
+                If you aren&apos;t logged into your account automatically in{" "}
+                <span className="font-semibold tabular-nums text-cb-green">{successRedirectSeconds}</span> seconds, click{" "}
+                <span className="font-semibold text-cb-green">Continue to Dashboard</span> below to log into your account.
+              </p>
+            ) : (
+              <p className="mt-4 text-sm leading-relaxed text-cb-green/85 sm:text-base">
+                Still on this page? Click continue to dashboard below to log into your account.
+              </p>
+            )}
+            <a
+              href={destination}
+              className="cb-btn-primary mt-6 inline-block w-full max-w-xs text-center font-semibold no-underline"
+              onClick={() => {
+                try {
+                  sessionStorage.removeItem(DEV_ACCESS_SUCCESS_PREVIEW_KEY);
+                } catch {
+                  /* ignore */
+                }
+              }}
+            >
+              Continue to Dashboard
+            </a>
           </div>
         </main>
       </div>
@@ -721,7 +822,7 @@ function AccessInner() {
                     window.location.href = "/pricing";
                   }}
                 >
-                  View available plans
+                  View Available Plans
                 </button>
               </div>
             </div>
