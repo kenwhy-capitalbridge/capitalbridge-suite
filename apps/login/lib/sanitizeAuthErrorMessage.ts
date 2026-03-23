@@ -54,24 +54,12 @@ export function classifySupabaseRaw(raw: string | null | undefined): "network" |
     return undefined;
   }
 
-  /**
-   * GoTrue uses 429 / “too many” for several cases. Prefer specific wording over a generic
-   * rate-limit screen when the string clearly points at credentials or flow limits.
-   */
-  if (
-    m.includes("invalid") &&
-    (m.includes("credential") || m.includes("password") || m.includes("email") || m.includes("user"))
-  ) {
-    return undefined;
-  }
-
   if (
     m.includes("rate limit") ||
     m.includes("too many requests") ||
     m.includes("email rate limit") ||
     m.includes("too many tries") ||
-    m.includes("too_many") ||
-    m.includes("over_request_rate_limit")
+    m.includes("too_many")
   ) {
     return "rate_limit";
   }
