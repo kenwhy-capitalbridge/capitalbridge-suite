@@ -1,31 +1,47 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { isSupabaseConfigured, recoverySupabase, supabase } from "@/lib/supabaseClient";
+import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { SupportEscalationActions } from "@/components/SupportEscalationActions";
+import {
+  ACCESS_SUPPORT_HINT,
+  DEV_PREVIEW_NO_EMAIL,
+  EMAIL_CHANGE_CHECK_INBOX,
+  EMAIL_CHANGE_NO_SESSION,
+  EMAIL_ON_PAYMENT_SAME,
+  FORM_EMAIL_INVALID,
+  resolveCalmAuthMessage,
+} from "@/lib/sanitizeAuthErrorMessage";
 
 const inputClass =
-  "w-full rounded-xl border border-cb-green/20 bg-white px-4 py-3 text-sm text-cb-green placeholder-cb-green/50 shadow-sm";
-const btnSubmitClass =
-  "w-full rounded-xl border-2 border-cb-gold/50 bg-white/90 px-4 py-3 text-center text-sm font-medium text-cb-green transition hover:scale-[1.01] hover:bg-cb-cream disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100";
+  "w-full rounded-xl border border-cb-green/20 bg-white px-3 py-2.5 text-sm text-cb-green placeholder-cb-green/50 shadow-sm sm:px-4 sm:py-3 sm:text-base";
+
+const calmNoticeClass =
+  "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-xs text-cb-green sm:px-3 sm:py-2 sm:text-sm";
 
 /**
- * Lets the user request a Supabase email change: server-backed when `billId` is present
- * (admin update + billing row sync), otherwise `auth.updateUser` when a recovery session exists.
+ * Lets the user request an email change: server-backed when `billId` is present,
+ * otherwise `auth.updateUser` when a recovery session exists.
  */
 export function RegisteredEmailChangeForm({
   billId,
-  checkoutPlan,
+  checkoutPlan: _checkoutPlan,
   className = "",
+  showSupportHint = true,
 }: {
   billId: string | null | undefined;
   checkoutPlan?: string | null;
-  /** Optional; e.g. `mt-0` when wrapped in a section with its own spacing */
   className?: string;
+  /** When false, omit footer hint (parent card already shows it). */
+  showSupportHint?: boolean;
 }) {
   const [newEmail, setNewEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tier, setTier] = useState<1 | 2 | 3>(1);
+  const emailChangeFailRef = useRef(0);
 
   const submit = useCallback(async () => {
     const em = newEmail.trim().toLowerCase();
@@ -33,7 +49,8 @@ export function RegisteredEmailChangeForm({
     setError(null);
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
-      setError("Enter a valid email address.");
+      setError(FORM_EMAIL_INVALID);
+      setTier(1);
       return;
     }
 
@@ -49,19 +66,31 @@ export function RegisteredEmailChangeForm({
         const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
         if (!res.ok) {
           if (data.error === "same_email") {
-            setError("That’s already the email on this payment.");
-          } else {
-            setError(data.message ?? data.error ?? "Could not update email. Try again or contact support.");
+            setError(EMAIL_ON_PAYMENT_SAME);
+            setTier(1);
+            return;
           }
+          emailChangeFailRef.current += 1;
+          const raw = [data.message, data.error].filter(Boolean).join(" ");
+          const { message: calm, level } = resolveCalmAuthMessage(
+            "email_change",
+            emailChangeFailRef.current,
+            raw
+          );
+          setError(calm);
+          setTier(level);
           return;
         }
-        setMessage("Check your new inbox for a confirmation email from Supabase to finish the change.");
+        emailChangeFailRef.current = 0;
+        setTier(1);
+        setMessage(EMAIL_CHANGE_CHECK_INBOX);
         setNewEmail("");
         return;
       }
 
       if (!isSupabaseConfigured) {
-        setError("Sign-in isn’t configured in this environment.");
+        setError(DEV_PREVIEW_NO_EMAIL);
+        setTier(1);
         return;
       }
 
@@ -73,29 +102,39 @@ export function RegisteredEmailChangeForm({
       }
 
       if (!session?.user) {
-        setError(
-          "To use a different email, start checkout again with the address you want — or sign in if you already have an account."
-        );
+        setError(EMAIL_CHANGE_NO_SESSION);
+        setTier(1);
         return;
       }
 
       const { error: updErr } = await authClient.auth.updateUser({ email: em });
       if (updErr) {
-        setError(updErr.message);
+        emailChangeFailRef.current += 1;
+        const { message: calm, level } = resolveCalmAuthMessage(
+          "email_change",
+          emailChangeFailRef.current,
+          updErr.message
+        );
+        setError(calm);
+        setTier(level);
         return;
       }
 
-      setMessage("Check your new inbox for a confirmation email to finish the change.");
+      emailChangeFailRef.current = 0;
+      setTier(1);
+      setMessage(EMAIL_CHANGE_CHECK_INBOX);
       setNewEmail("");
     } finally {
       setBusy(false);
     }
   }, [billId, newEmail]);
 
+  void _checkoutPlan;
+
   return (
     <div className={["mt-4 w-full text-left", className].filter(Boolean).join(" ")}>
-      <label htmlFor="registered-email-reset" className="block text-xs font-medium text-cb-green/75">
-        Reset Email Address
+      <label htmlFor="registered-email-reset" className="block text-sm font-medium text-cb-green/80">
+        Reset email address
       </label>
       <input
         id="registered-email-reset"
@@ -111,15 +150,30 @@ export function RegisteredEmailChangeForm({
         }}
         disabled={busy}
       />
-      <button type="button" className={`${btnSubmitClass} mt-3`} onClick={() => void submit()} disabled={busy}>
-        {busy ? "Sending…" : "Send Email Change"}
+      <button
+        type="button"
+        className="cb-btn-primary mt-4 w-full font-semibold disabled:opacity-50 sm:mt-5"
+        onClick={() => void submit()}
+        disabled={busy}
+      >
+        {busy ? "Sending…" : "Send email change"}
       </button>
       {message && (
         <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-sm font-medium text-cb-green">
           {message}
         </p>
       )}
-      {error && <p className="cb-message-error mt-2 text-center text-sm">{error}</p>}
+      {error && (
+        <div className={`${calmNoticeClass} mt-3 text-center`}>
+          <CalmAuthMessage text={error} className="text-sm leading-relaxed text-cb-green" />
+        </div>
+      )}
+      <SupportEscalationActions visible={tier >= 3} />
+      {showSupportHint && (
+        <div className="mt-6 border-t border-cb-green/10 pt-5">
+          <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+        </div>
+      )}
     </div>
   );
 }

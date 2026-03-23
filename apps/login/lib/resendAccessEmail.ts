@@ -8,6 +8,6 @@ export const ACCESS_EMAIL_SENDING_LABEL = "Sending email...";
 /** Secondary / cooldown label for the same recover-email action */
 export function accessEmailResendButtonLabel(cooldownSec: number, busy: boolean): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
-  if (cooldownSec > 0) return `Resend in ${cooldownSec}s`;
-  return "Send Password Set Up Email Again";
+  if (cooldownSec > 0) return `Wait ${cooldownSec}s, then try again`;
+  return "Send Me A New Link";
 }

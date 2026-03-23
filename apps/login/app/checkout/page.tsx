@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
 import { persistCheckoutEmail, buildAccessUrl } from "@/lib/checkoutEmailPersistence";
+import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { ACCESS_SUPPORT_HINT } from "@/lib/sanitizeAuthErrorMessage";
 
 /** Assistive only — common domain typos (does not block submit). */
 function getEmailTypoSuggestion(raw: string): string | null {
@@ -157,8 +159,12 @@ function CheckoutContent() {
     return (
       <main className="cb-auth-main">
         <div className="cb-card mx-auto w-full max-w-md text-center">
-          <h1 className="font-serif text-xl font-semibold text-cb-green">Securing your access…</h1>
-          <p className="mt-2 text-base text-cb-green/80">You&apos;re being moved to our secure payment page.</p>
+          <h1 className="font-serif text-lg font-semibold text-cb-green sm:text-xl">
+            Securing your access…
+          </h1>
+          <p className="mt-2 text-sm text-cb-green/80 sm:text-base">
+            You&apos;re being moved to our secure payment page.
+          </p>
         </div>
       </main>
     );
@@ -175,25 +181,25 @@ function CheckoutContent() {
         </div>
       )}
       <div className="cb-card mx-auto w-full max-w-md">
-        <h1 className="text-center font-serif text-xl font-semibold text-cb-green">
+        <h1 className="text-center font-serif text-lg font-semibold text-cb-green sm:text-xl">
           Start Building Your Capital Strategy
         </h1>
         <p className="cb-card-subtitle text-center">Set up your access in seconds.</p>
-        <p className="mt-3 text-center text-sm text-cb-green/85">Plan: {planLabel}</p>
-        <div className="mt-2 flex justify-start">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-cb-green/85">
+          <p className="min-w-0 flex-1 text-left">Plan: {planLabel}</p>
           <button
             type="button"
-            className="cb-btn-auth-view-plans w-auto max-w-[12rem]"
+            className="cb-btn-auth-view-plans w-auto shrink-0"
             onClick={() => {
               window.location.href = "/pricing";
             }}
           >
-            View Available Plans
+            View Other Plans
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
-          {error && <p className="cb-message-error text-base">{error}</p>}
+        <form onSubmit={handleSubmit} className="mt-4 grid gap-3 sm:mt-6 sm:gap-4" noValidate>
+          {error && <p className="cb-message-error text-sm sm:text-base">{error}</p>}
 
           <label className="grid gap-1.5">
             <span className="text-sm font-semibold text-cb-green">Email</span>
@@ -220,7 +226,8 @@ function CheckoutContent() {
               placeholder="you@example.com"
             />
             <p className="text-sm leading-relaxed text-cb-green/75">
-              We&apos;ll send your access link to this email.
+              We&apos;ll send your access link to this email. Please ensure your email is correct before
+              continuing.
             </p>
             {typoSuggestion && typoSuggestion !== email.trim().toLowerCase() && (
               <p className="text-sm text-cb-green/80">
@@ -246,31 +253,36 @@ function CheckoutContent() {
             />
           </label>
 
+          <p className="text-center text-sm leading-relaxed text-cb-green/75">
+            You&apos;ll receive a secure email to set your password after payment.
+          </p>
+
           <button
-            className="cb-btn-primary w-full rounded-xl py-3.5 text-base font-semibold transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+            className="cb-btn-primary w-full rounded-xl font-semibold transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             type="submit"
             disabled={loading || emailAlreadyExists}
           >
             {loading ? "Securing your access…" : "Continue to Payment"}
           </button>
-          <p className="text-center text-sm leading-relaxed text-cb-green/75">
-            Please make sure your email is correct before continuing.
-          </p>
-          <p className="text-center text-sm leading-relaxed text-cb-green/75">
-            You&apos;ll receive a secure email to set your password after payment.
-          </p>
         </form>
 
         <button
           type="button"
-          className="cb-btn-secondary mt-5 w-full rounded-xl py-3 text-base font-medium transition hover:scale-[1.02]"
+          className="cb-btn-secondary mt-4 w-full rounded-xl font-medium transition hover:scale-[1.02] sm:mt-5"
           onClick={() => {
             const t = email.trim().toLowerCase();
             window.location.href = t.includes("@") ? buildAccessUrl({ email: t }) : "/access";
           }}
         >
-          Log in to Existing Account
+          Log into An Existing Account
         </button>
+
+        <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
+          <CalmAuthMessage
+            text={ACCESS_SUPPORT_HINT}
+            className="text-center text-sm leading-relaxed text-cb-green/55"
+          />
+        </div>
       </div>
     </main>
   );
@@ -282,8 +294,8 @@ export default function CheckoutPage() {
       fallback={
         <main className="cb-auth-main">
           <div className="cb-card mx-auto w-full max-w-md text-center">
-            <h1 className="font-serif text-xl font-semibold text-cb-green">Checkout</h1>
-            <p className="mt-3 text-base text-cb-green/80">Loading…</p>
+            <h1 className="font-serif text-lg font-semibold text-cb-green sm:text-xl">Checkout</h1>
+            <p className="mt-3 text-sm text-cb-green/80 sm:text-base">Loading…</p>
           </div>
         </main>
       }

@@ -8,23 +8,40 @@ import {
   ACCESS_EMAIL_COOLDOWN_SEC,
   ACCESS_EMAIL_SENT_MESSAGE,
   ACCESS_EMAIL_SENDING_LABEL,
-  accessEmailResendButtonLabel,
 } from "@/lib/resendAccessEmail";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
+import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { SupportEscalationActions } from "@/components/SupportEscalationActions";
+import {
+  ACCESS_SUPPORT_HINT,
+  DEV_PREVIEW_NO_EMAIL,
+  FORM_EMPTY_EMAIL,
+  resolveCalmAuthMessage,
+} from "@/lib/sanitizeAuthErrorMessage";
 
-const btnBase =
-  "w-full rounded-xl px-4 py-3 font-medium transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100";
-const btnPrimary = `${btnBase} cb-btn-primary`;
-const btnSecondary = `${btnBase} cb-btn-secondary`;
+const btnPrimary =
+  "cb-btn-primary w-full font-semibold transition hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100";
+
+const calmNoticeClass =
+  "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-xs text-cb-green sm:px-3 sm:py-2 sm:text-sm";
+
+/** Forgot-password page only — Account Access keeps “Send Me A New Link”. */
+function forgotPasswordActionLabel(cooldownSec: number, busy: boolean): string {
+  if (busy) return ACCESS_EMAIL_SENDING_LABEL;
+  if (cooldownSec > 0) return `Wait ${cooldownSec}s, then try again`;
+  return "Reset Password";
+}
 
 function ForgotPasswordInner() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [tier, setTier] = useState<1 | 2 | 3>(1);
   const hydrated = useRef(false);
+  const resendFailRef = useRef(0);
 
   useEffect(() => {
     if (hydrated.current) return;
@@ -42,12 +59,13 @@ function ForgotPasswordInner() {
   }, [cooldown]);
 
   async function sendPasswordLink() {
-    setError(null);
+    setFormMessage(null);
     if (cooldown > 0 || loading) return false;
 
     const trimmed = email.trim();
     if (!trimmed) {
-      setError("Enter your email.");
+      setFormMessage(FORM_EMPTY_EMAIL);
+      setTier(1);
       return false;
     }
 
@@ -59,9 +77,14 @@ function ForgotPasswordInner() {
     setLoading(false);
 
     if (resetError) {
-      setError(resetError.message);
+      resendFailRef.current += 1;
+      const { message, level } = resolveCalmAuthMessage("resend", resendFailRef.current, resetError.message);
+      setFormMessage(message);
+      setTier(level);
       return false;
     }
+    resendFailRef.current = 0;
+    setTier(1);
     persistCheckoutEmail(trimmed);
     setCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
     return true;
@@ -84,21 +107,35 @@ function ForgotPasswordInner() {
           <h1 className="cb-card-title">Check your email</h1>
           <p className="cb-card-subtitle mt-2">{ACCESS_EMAIL_SENT_MESSAGE}</p>
           <p className="mt-2 text-sm text-cb-green/80">
-            If an account exists for <strong>{email}</strong>, open the link to set your password — same email we send after
+            If an account exists for <strong>{email}</strong>, open the link to set your password — same link we send after
             checkout.
           </p>
-          {error && <p className="cb-message-error mt-3 text-sm">{error}</p>}
+          {formMessage && (
+            <div className={`${calmNoticeClass} mt-3 text-left`}>
+              <CalmAuthMessage text={formMessage} className="text-sm leading-relaxed text-cb-green" />
+            </div>
+          )}
+          <SupportEscalationActions visible={tier >= 3} />
           <button
             type="button"
-            className={`${btnSecondary} mt-6`}
+            className={`${btnPrimary} mt-8`}
             disabled={loading || cooldown > 0 || !isSupabaseConfigured}
             onClick={() => void handleResendFromSuccess()}
           >
-            {accessEmailResendButtonLabel(cooldown, loading)}
+            {forgotPasswordActionLabel(cooldown, loading)}
           </button>
-          <button type="button" className={`${btnPrimary} mt-3`} onClick={() => { window.location.href = "/access"; }}>
-            Back to account access
+          <button
+            type="button"
+            className="cb-btn-quiet mt-4"
+            onClick={() => {
+              window.location.href = "/access";
+            }}
+          >
+            Back to Login Page
           </button>
+          <div className="mt-8 border-t border-cb-green/10 pt-6">
+            <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+          </div>
         </div>
       </main>
     );
@@ -107,27 +144,33 @@ function ForgotPasswordInner() {
   return (
     <main className="cb-auth-main">
       <div className="cb-card max-w-md">
-        <h1 className="cb-card-title">Forgot password?</h1>
+        <h1 className="cb-card-title">Forgot Your Password?</h1>
         <p className="cb-card-subtitle">
-          Enter your email — we&apos;ll send a link to set your password. This is the same link as{" "}
-          <strong>Send Password Set Up Email Again</strong> on the sign-in page.
+          Enter your email and we&apos;ll send you a link to reset it.
         </p>
 
         {!isSupabaseConfigured && (
-          <p className="cb-message-error" style={{ marginTop: "1rem" }}>
-            Sign-in isn&apos;t configured for this environment.
-          </p>
+          <div className={`${calmNoticeClass} mt-4`}>
+            <CalmAuthMessage text={DEV_PREVIEW_NO_EMAIL} className="text-sm leading-relaxed text-cb-green" />
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ marginTop: "1.75rem", display: "grid", gap: "1rem" }}>
-          {error && <p className="cb-message-error">{error}</p>}
+        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
+          {formMessage && (
+            <div className={calmNoticeClass}>
+              <CalmAuthMessage text={formMessage} className="text-sm leading-relaxed text-cb-green" />
+            </div>
+          )}
 
-          <label style={{ display: "grid", gap: "0.35rem" }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Email</span>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-semibold text-cb-green">Email</span>
             <input
               className="cb-input"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setFormMessage(null);
+              }}
               onBlur={() => {
                 const t = email.trim();
                 if (t.includes("@")) persistCheckoutEmail(t);
@@ -139,13 +182,25 @@ function ForgotPasswordInner() {
           </label>
 
           <button className={btnPrimary} type="submit" disabled={loading || !isSupabaseConfigured}>
-            {loading ? ACCESS_EMAIL_SENDING_LABEL : "Send Password Set Up Email"}
+            {forgotPasswordActionLabel(0, loading)}
           </button>
         </form>
 
-        <button type="button" className={`${btnSecondary} mt-4`} onClick={() => { window.location.href = "/access"; }}>
-          Back to account access
+        <SupportEscalationActions visible={tier >= 3} />
+
+        <button
+          type="button"
+          className="cb-btn-quiet mt-8"
+          onClick={() => {
+            window.location.href = "/access";
+          }}
+        >
+          Back to Login Page
         </button>
+
+        <div className="mt-8 border-t border-cb-green/10 pt-6">
+          <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+        </div>
       </div>
     </main>
   );

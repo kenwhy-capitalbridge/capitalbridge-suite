@@ -9,6 +9,10 @@ import {
 } from "@/lib/resendAccessEmail";
 import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
+import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { SUPPORT_EMAIL } from "@/lib/sanitizeAuthErrorMessage";
+
+const PAYMENT_HANDOFF_HELP_LINE = `Need help? Email us at ${SUPPORT_EMAIL}`;
 
 type BillingStatusResponse = {
   mode?: string;
@@ -36,9 +40,9 @@ const platformBase =
 const LOGIN_REDIRECT = platformBase.replace(/\/$/, "");
 
 const btnPrimary =
-  "w-full rounded-xl bg-cb-gold px-4 py-3.5 text-center text-base font-semibold text-cb-green shadow-lg transition hover:scale-[1.02] hover:bg-cb-green hover:text-white disabled:opacity-50 block";
+  "cb-btn-primary block w-full text-center font-semibold shadow-lg transition hover:scale-[1.02] disabled:opacity-50";
 const btnSecondary =
-  "w-full rounded-xl border-2 border-cb-gold/50 bg-white/90 px-4 py-3 text-center font-medium text-cb-green transition hover:scale-[1.02] block";
+  "cb-btn-secondary block w-full text-center font-medium transition hover:scale-[1.02]";
 
 function openWebInbox(email: string | null | undefined) {
   const domain = email?.split("@")[1]?.toLowerCase().trim() ?? "";
@@ -201,7 +205,7 @@ function PaymentHandoffContent() {
                 <p className="mt-4 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
               )}
               {resendError && <p className="cb-message-error mt-3 text-left text-sm">{resendError}</p>}
-              <div className="mt-6 flex w-full flex-col gap-3">
+              <div className="mt-4 flex w-full flex-col gap-2 sm:mt-6 sm:gap-3">
                 <button
                   type="button"
                   className={btnPrimary}
@@ -224,7 +228,7 @@ function PaymentHandoffContent() {
               or contact support.
             </p>
           )}
-          <div className="mt-6 flex w-full flex-col items-center gap-3">
+          <div className="mt-4 flex w-full flex-col items-center gap-2 sm:mt-6 sm:gap-3">
             <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
               Continue to set your password
             </button>
@@ -235,8 +239,14 @@ function PaymentHandoffContent() {
                 window.location.href = "/pricing";
               }}
             >
-              View Available Plans
+              View Other Plans
             </button>
+          </div>
+          <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
+            <CalmAuthMessage
+              text={PAYMENT_HANDOFF_HELP_LINE}
+              className="text-center text-sm leading-relaxed text-cb-green/55"
+            />
           </div>
         </div>
       </main>
@@ -246,7 +256,7 @@ function PaymentHandoffContent() {
   return (
     <main className="cb-auth-main">
       <div className="cb-card max-w-md">
-        <h1 className="cb-card-title">Continue to payment</h1>
+        <h1 className="cb-card-title">Continue to Payment</h1>
         <p className="cb-card-subtitle">Plan: {planLabel}</p>
 
         <div style={{ marginTop: "1rem", display: "grid", gap: "0.5rem", fontSize: "0.92rem", opacity: 0.9 }}>
@@ -256,9 +266,9 @@ function PaymentHandoffContent() {
         <div style={{ marginTop: "1.25rem", display: "grid", gap: "0.9rem", fontSize: "0.95rem", lineHeight: 1.6 }}>
           {loading && <p className="font-medium text-cb-green">Securing your access…</p>}
           {!loading && (
-            <p>
-              Open payment in a new tab. After you pay, we&apos;ll email you a link to set your password — you won&apos;t need to
-              sign in until then.
+            <p className="text-sm leading-relaxed text-cb-green/90 sm:text-base">
+              Complete the payment in a new tab. We&apos;ll email you a secure link to set your password upon
+              confirmation.
             </p>
           )}
           {!loading && billId && (
@@ -272,7 +282,7 @@ function PaymentHandoffContent() {
           )}
         </div>
 
-        <div style={{ marginTop: "1.5rem", display: "grid", gap: "0.75rem" }}>
+        <div className="mt-4 grid gap-2 sm:mt-6 sm:gap-3">
           {paymentUrl && (
             <a className={btnPrimary} href={paymentUrl} target="_blank" rel="noreferrer">
               Open secure payment
@@ -296,8 +306,14 @@ function PaymentHandoffContent() {
               window.location.href = "/pricing";
             }}
           >
-            View Available Plans
+            View Other Plans
           </button>
+        </div>
+        <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
+          <CalmAuthMessage
+            text={PAYMENT_HANDOFF_HELP_LINE}
+            className="text-center text-sm leading-relaxed text-cb-green/55"
+          />
         </div>
       </div>
     </main>

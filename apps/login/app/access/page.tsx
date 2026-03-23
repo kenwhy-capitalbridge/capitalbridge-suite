@@ -12,25 +12,36 @@ import {
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { RegisteredEmailChangeForm } from "@/components/RegisteredEmailChangeForm";
+import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { SupportEscalationActions } from "@/components/SupportEscalationActions";
+import {
+  ACCESS_ERROR_PAGE_SUBTITLE,
+  ACCESS_ERROR_PAGE_TITLE,
+  ACCESS_EMAIL_FIELD_LABEL,
+  ACCESS_EMAIL_PLACEHOLDER,
+  ACCESS_PRIMARY_CTA,
+  ACCESS_REMOVED_LINE,
+  ACCESS_SUPPORT_HINT,
+  FORM_COMPLETE_TO_CONTINUE,
+  FORM_EMPTY_EMAIL,
+  FORM_PASSWORD_MISMATCH,
+  FORM_PASSWORD_TOO_SHORT,
+  LOGIN_PROMPT_THEN_NEW_LINK,
+  resolveCalmAuthMessage,
+  SESSION_SIGNED_OUT_LINE,
+  SET_PASSWORD_EXPIRED_SUB,
+  SET_PASSWORD_EXPIRED_TITLE,
+  SET_PASSWORD_EMPTY_EMAIL_FOR_RESEND,
+} from "@/lib/sanitizeAuthErrorMessage";
 
 const PLATFORM_URL =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PLATFORM_APP_URL : undefined) ??
   "https://platform.thecapitalbridge.com";
 
-const LOGIN_ERROR_COPY =
-  "Incorrect email or password. If you've just signed up, check your email to set your password.";
-
 const SET_PASSWORD_LINK_EXPIRY_HINT =
-  "This link will expire in 10 minutes. Please complete this step now.";
+  "Please finish on this page soon — it may stop working if you wait too long.";
 
-const PASSWORD_REQUIREMENTS_COPY =
-  "Use at least 6 characters. For better security, include letters, numbers, and symbols.";
-
-const PASSWORD_TOO_SHORT_MSG = "Password must be at least 6 characters.";
-
-const PASSWORD_MISMATCH_MSG = "Passwords do not match.";
-
-const DISABLED_SUBMIT_HELPER = "Please fix the errors above to continue.";
+const PASSWORD_REQUIREMENTS_COPY = "Use at least 6 letters, numbers, or symbols for a stronger password.";
 
 function looksLikeEmail(value: string): boolean {
   const t = value.trim();
@@ -112,11 +123,9 @@ function PlatformAccessNotice({
   if (!membershipInactive && !sessionCleared) return null;
 
   return (
-    <div className="w-full border-b border-cb-gold/40 bg-amber-50 px-4 py-3 text-center text-cb-green">
-      <p className="text-sm font-semibold">
-        {sessionCleared
-          ? "Your session expired. Please sign in again."
-          : "Your access is no longer active."}
+    <div className="w-full border-b border-cb-gold/40 bg-amber-50 px-3 py-2.5 text-center text-cb-green sm:px-4 sm:py-3">
+      <p className="text-xs font-semibold sm:text-sm">
+        {sessionCleared ? SESSION_SIGNED_OUT_LINE : ACCESS_REMOVED_LINE}
       </p>
     </div>
   );
@@ -136,7 +145,11 @@ function AccessInner() {
   );
 
   const [view, setView] = useState<View>("loading");
-  const [error, setError] = useState<string | null>(null);
+  /** Login form guidance (wrong sign-in, empty field hints). */
+  const [loginFieldMessage, setLoginFieldMessage] = useState<string | null>(null);
+  /** Link error view: extra line for 2nd+ load (title + subtitle always shown). */
+  const [linkDetailMessage, setLinkDetailMessage] = useState<string | null>(null);
+  const [linkTier, setLinkTier] = useState<1 | 2 | 3>(1);
 
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -157,10 +170,20 @@ function AccessInner() {
   const [resendBusy, setResendBusy] = useState(false);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
+  const [resendTier, setResendTier] = useState<1 | 2 | 3>(1);
+  const [passwordTier, setPasswordTier] = useState<1 | 2 | 3>(1);
+  const [loginTier, setLoginTier] = useState<1 | 2 | 3>(1);
   const [errorScreenEmail, setErrorScreenEmail] = useState("");
 
   const loginEmailHydrated = useRef(false);
   const errorEmailHydrated = useRef(false);
+  const linkFailRef = useRef(0);
+  const resendFailRef = useRef(0);
+  const passwordFailRef = useRef(0);
+  const loginFailRef = useRef(0);
+
+  const calmNoticeClass =
+    "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-xs text-cb-green sm:px-3 sm:py-2 sm:text-sm";
 
   const destination = useMemo(() => `${PLATFORM_URL.replace(/\/$/, "")}/`, []);
   const redirectTo = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
@@ -191,9 +214,14 @@ function AccessInner() {
       });
       setResendBusy(false);
       if (err) {
-        setResendError(err.message);
+        resendFailRef.current += 1;
+        const { message, level } = resolveCalmAuthMessage("resend", resendFailRef.current, err.message);
+        setResendError(message);
+        setResendTier(level);
         return false;
       }
+      resendFailRef.current = 0;
+      setResendTier(1);
       persistCheckoutEmail(em);
       setResendSuccess(ACCESS_EMAIL_SENT_MESSAGE);
       setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
@@ -249,7 +277,11 @@ function AccessInner() {
         setView("login");
       } catch (err: unknown) {
         console.error(err);
-        setError(err instanceof Error ? err.message : "Something went wrong");
+        linkFailRef.current += 1;
+        const raw = err instanceof Error ? err.message : "";
+        const { message, level } = resolveCalmAuthMessage("link", linkFailRef.current, raw);
+        setLinkDetailMessage(level >= 2 ? message : null);
+        setLinkTier(level);
         setView("error");
       }
     };
@@ -318,12 +350,23 @@ function AccessInner() {
         setSetPwRecoveryEmail(fromSession || readPersistedCheckoutEmail() || "");
         setSetPasswordLinkExpired(true);
         setSetPwApiError(null);
+        setPasswordTier(1);
+        passwordFailRef.current = 0;
         return;
       }
-      setSetPwApiError(updateErr.message);
+      passwordFailRef.current += 1;
+      const { message, level } = resolveCalmAuthMessage(
+        "password",
+        passwordFailRef.current,
+        updateErr.message
+      );
+      setSetPwApiError(message);
+      setPasswordTier(level);
       return;
     }
 
+    passwordFailRef.current = 0;
+    setPasswordTier(1);
     setView("success");
   }
 
@@ -331,7 +374,7 @@ function AccessInner() {
     setSetPwApiError(null);
     const em = setPwRecoveryEmail.trim();
     if (!em) {
-      setSetPwApiError("Enter the email you used at checkout.");
+      setSetPwApiError(SET_PASSWORD_EMPTY_EMAIL_FOR_RESEND);
       return;
     }
     await sendAccessEmail(em);
@@ -341,7 +384,7 @@ function AccessInner() {
     e.preventDefault();
 
     setBusy(true);
-    setError(null);
+    setLoginFieldMessage(null);
     setResendSuccess(null);
     setResendError(null);
 
@@ -356,26 +399,31 @@ function AccessInner() {
     setBusy(false);
 
     if (signErr) {
-      setError(LOGIN_ERROR_COPY);
+      loginFailRef.current += 1;
+      const { message, level } = resolveCalmAuthMessage("login", loginFailRef.current, signErr.message);
+      setLoginFieldMessage(message);
+      setLoginTier(level);
       return;
     }
 
+    loginFailRef.current = 0;
+    setLoginTier(1);
     window.location.href = destination;
   }
 
   async function handleResendFromLogin() {
-    setError(null);
+    setLoginFieldMessage(null);
     if (!email.trim()) {
-      setError("Enter your email above, then tap Send Password Set Up Email Again.");
+      setLoginFieldMessage(LOGIN_PROMPT_THEN_NEW_LINK);
       return;
     }
     await sendAccessEmail(email);
   }
 
   async function handleResendFromErrorScreen() {
-    setError(null);
+    setResendError(null);
     if (!errorScreenEmail.trim()) {
-      setError("Enter the email you used at checkout.");
+      setResendError(FORM_EMPTY_EMAIL);
       return;
     }
     await sendAccessEmail(errorScreenEmail);
@@ -386,7 +434,7 @@ function AccessInner() {
       <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
         <main className="cb-auth-main bg-cb-green">
-          <p className="text-white">Loading...</p>
+          <p className="text-sm text-white sm:text-base">One moment…</p>
         </main>
       </div>
     );
@@ -396,9 +444,9 @@ function AccessInner() {
     return (
       <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="cb-auth-main bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green">
           <div className="cb-card max-w-md w-full text-center">
-            <p className="text-cb-green">
+            <p className="text-sm text-cb-green sm:text-base">
               You&apos;re all set. Taking you to your dashboard…
             </p>
           </div>
@@ -420,14 +468,12 @@ function AccessInner() {
     return (
       <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="cb-auth-main bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green">
           <div className="cb-card max-w-md w-full">
             {setPasswordLinkExpired ? (
               <>
-                <h1 className="cb-card-title text-center">This link has expired.</h1>
-                <p className="cb-card-subtitle mt-2 text-center">
-                  Request a new email to set your password. Use the same address you used at checkout.
-                </p>
+                <h1 className="cb-card-title text-center">{SET_PASSWORD_EXPIRED_TITLE}</h1>
+                <p className="cb-card-subtitle mt-2 text-center">{SET_PASSWORD_EXPIRED_SUB}</p>
                 {looksLikeEmail(setPwRecoveryEmail) && (
                   <>
                     <PaymentTargetEmailLine
@@ -435,7 +481,7 @@ function AccessInner() {
                       variant={resendSuccess ? "sent" : "pending"}
                       className="mt-3 text-center"
                     />
-                    <RegisteredEmailChangeForm billId={null} />
+                    <RegisteredEmailChangeForm billId={null} showSupportHint={false} />
                   </>
                 )}
                 {resendSuccess && (
@@ -443,10 +489,18 @@ function AccessInner() {
                     {resendSuccess}
                   </p>
                 )}
-                {resendError && <p className="cb-message-error mt-3 text-sm">{resendError}</p>}
-                {setPwApiError && <p className="cb-message-error mt-3 text-sm">{setPwApiError}</p>}
-                <div className="mt-6 flex flex-col gap-3 text-left">
-                  <label className="text-xs font-medium text-cb-green/80">Email</label>
+                {resendError && (
+                  <div className={`${calmNoticeClass} mt-3`}>
+                    <CalmAuthMessage text={resendError} className="text-sm leading-relaxed text-cb-green" />
+                  </div>
+                )}
+                {setPwApiError && (
+                  <div className={`${calmNoticeClass} mt-3`}>
+                    <CalmAuthMessage text={setPwApiError} className="text-sm leading-relaxed text-cb-green" />
+                  </div>
+                )}
+                <div className="mt-4 flex flex-col gap-2.5 text-left sm:mt-6 sm:gap-3">
+                  <label className="text-xs font-medium text-cb-green/90 sm:text-sm">{ACCESS_EMAIL_FIELD_LABEL}</label>
                   <input
                     className="cb-input"
                     type="email"
@@ -466,7 +520,7 @@ function AccessInner() {
                   />
                   <button
                     type="button"
-                    className="cb-btn-secondary"
+                    className="cb-btn-primary mt-2 w-full font-semibold"
                     disabled={
                       resendBusy || resendCooldown > 0 || !setPwRecoveryEmail.trim() || !isSupabaseConfigured
                     }
@@ -480,7 +534,7 @@ function AccessInner() {
               <>
                 <h1 className="cb-card-title text-center">Set your password</h1>
                 <p
-                  className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-center text-xs font-medium leading-relaxed text-cb-green"
+                  className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-center text-sm font-medium leading-relaxed text-cb-green"
                   role="status"
                 >
                   {SET_PASSWORD_LINK_EXPIRY_HINT}
@@ -489,12 +543,16 @@ function AccessInner() {
                   Set your password to access your account.
                 </p>
 
-                {setPwApiError && <p className="cb-message-error mt-4">{setPwApiError}</p>}
+                {setPwApiError && (
+                  <div className={`${calmNoticeClass} mt-4`}>
+                    <CalmAuthMessage text={setPwApiError} className="text-sm leading-relaxed text-cb-green" />
+                  </div>
+                )}
 
-                <form onSubmit={handleSetPassword} className="mt-5 flex flex-col gap-4">
+                <form onSubmit={handleSetPassword} className="mt-4 flex flex-col gap-4 sm:mt-6 sm:gap-5">
                   <p className="text-sm leading-relaxed text-cb-green/85">{PASSWORD_REQUIREMENTS_COPY}</p>
 
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     <PasswordInputWithToggle
                       value={password}
                       onChange={(v) => {
@@ -511,8 +569,8 @@ function AccessInner() {
                       ariaDescribedBy={passwordTooShort ? "pw-length-err" : undefined}
                     />
                     {passwordTooShort && (
-                      <p id="pw-length-err" className="text-xs text-red-700">
-                        {PASSWORD_TOO_SHORT_MSG}
+                      <p id="pw-length-err" className="text-sm text-cb-green">
+                        {FORM_PASSWORD_TOO_SHORT}
                       </p>
                     )}
                     {lengthOk && (
@@ -520,7 +578,7 @@ function AccessInner() {
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     <PasswordInputWithToggle
                       value={confirmPw}
                       onChange={(v) => {
@@ -536,8 +594,8 @@ function AccessInner() {
                       ariaDescribedBy={passwordsMismatch ? "pw-match-err" : undefined}
                     />
                     {passwordsMismatch && (
-                      <p id="pw-match-err" className="text-xs text-red-700">
-                        {PASSWORD_MISMATCH_MSG}
+                      <p id="pw-match-err" className="text-sm text-cb-green">
+                        {FORM_PASSWORD_MISMATCH}
                       </p>
                     )}
                     {passwordsMatch && (
@@ -545,15 +603,30 @@ function AccessInner() {
                     )}
                   </div>
 
-                  <button className="cb-btn-primary" type="submit" disabled={passwordSubmitDisabled}>
+                  <button
+                    className="cb-btn-primary mt-2 w-full font-semibold"
+                    type="submit"
+                    disabled={passwordSubmitDisabled}
+                  >
                     {busy ? "Setting your password…" : "Set password and continue"}
                   </button>
                   {showDisabledHelper && (
-                    <p className="text-center text-xs text-cb-green/70">{DISABLED_SUBMIT_HELPER}</p>
+                    <p className="text-center text-sm text-cb-green/75">{FORM_COMPLETE_TO_CONTINUE}</p>
                   )}
                 </form>
               </>
             )}
+            <SupportEscalationActions
+              visible={
+                resendTier >= 3 ||
+                (passwordTier >= 3 &&
+                  !!setPwApiError &&
+                  setPwApiError !== SET_PASSWORD_EMPTY_EMAIL_FOR_RESEND)
+              }
+            />
+            <div className="mt-5 border-t border-cb-green/10 pt-4 sm:mt-8 sm:pt-6">
+              <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+            </div>
           </div>
         </main>
       </div>
@@ -566,75 +639,97 @@ function AccessInner() {
     return (
       <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="cb-auth-main bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green">
           <div className="cb-card max-w-md w-full">
             <h1 className="cb-card-title text-center">Welcome Back</h1>
             <p className="cb-card-subtitle mt-2 text-center">
               Enter your email and password to continue.
             </p>
 
-            {error && <p className="cb-message-error mt-4">{error}</p>}
+            {loginFieldMessage && (
+              <div className={`${calmNoticeClass} mt-4`}>
+                <CalmAuthMessage text={loginFieldMessage} className="text-sm leading-relaxed text-cb-green" />
+              </div>
+            )}
             {resendSuccess && (
               <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
             )}
-            {resendError && <p className="cb-message-error mt-3 text-sm">{resendError}</p>}
+            {resendError && (
+              <div className={`${calmNoticeClass} mt-3`}>
+                <CalmAuthMessage text={resendError} className="text-sm leading-relaxed text-cb-green" />
+              </div>
+            )}
 
-            <form onSubmit={handleLogin} className="mt-6 flex flex-col gap-4">
-              <input
-                className="cb-input"
-                type="email"
-                placeholder="Email"
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setResendSuccess(null);
-                  setResendError(null);
-                }}
-                onBlur={() => {
-                  const t = email.trim();
-                  if (t.includes("@")) persistCheckoutEmail(t);
-                }}
-              />
+            <form onSubmit={handleLogin} className="mt-5 flex flex-col sm:mt-8">
+              <div className="flex flex-col gap-3 sm:gap-4">
+                <input
+                  className="cb-input"
+                  type="email"
+                  placeholder={ACCESS_EMAIL_PLACEHOLDER}
+                  autoComplete="email"
+                  autoFocus
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setLoginFieldMessage(null);
+                    setResendSuccess(null);
+                    setResendError(null);
+                  }}
+                  onBlur={() => {
+                    const t = email.trim();
+                    if (t.includes("@")) persistCheckoutEmail(t);
+                  }}
+                />
 
-              <PasswordInputWithToggle
-                value={loginPw}
-                onChange={setLoginPw}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                visible={showLoginPassword}
-                onToggleVisible={() => setShowLoginPassword((s) => !s)}
-              />
+                <PasswordInputWithToggle
+                  value={loginPw}
+                  onChange={setLoginPw}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  visible={showLoginPassword}
+                  onToggleVisible={() => setShowLoginPassword((s) => !s)}
+                />
+              </div>
 
-              <button className="cb-btn-primary" type="submit" disabled={loginDisabled}>
+              <button
+                className="cb-btn-primary mt-5 w-full font-semibold sm:mt-8"
+                type="submit"
+                disabled={loginDisabled}
+              >
                 {busy ? "Signing you in…" : "Access Platform"}
               </button>
             </form>
 
-            <div className="mt-4 flex flex-col gap-3 border-t border-cb-green/10 pt-4">
-              <button
-                type="button"
-                className="cb-btn-secondary text-sm"
-                disabled={resendBusy || resendCooldown > 0 || !email.trim() || !isSupabaseConfigured}
-                onClick={() => void handleResendFromLogin()}
-              >
-                {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
-              </button>
-              <div className="mt-2 flex flex-col items-center gap-2 border-t border-cb-green/10 pt-5">
-                <p className="text-center text-sm leading-relaxed text-cb-green/80">
-                  Don&apos;t have access yet? View available plans.
-                </p>
+            <button
+              type="button"
+              className="cb-btn-quiet mt-5 sm:mt-8"
+              disabled={resendBusy || resendCooldown > 0 || !email.trim() || !isSupabaseConfigured}
+              onClick={() => void handleResendFromLogin()}
+            >
+              {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
+            </button>
+
+            <div className="mt-6 border-t border-cb-green/10 pt-5 sm:mt-10 sm:pt-8">
+              <p className="text-center text-xs leading-relaxed text-cb-green/75 sm:text-sm">
+                Don&apos;t have access yet?
+              </p>
+              <div className="mt-2 flex w-full justify-center sm:mt-3">
                 <button
                   type="button"
-                  className="cb-btn-auth-view-plans max-w-[12rem]"
+                  className="cb-btn-auth-view-plans !w-auto max-w-[min(100%,14rem)] px-3 sm:max-w-[14rem] sm:px-5"
                   onClick={() => {
                     window.location.href = "/pricing";
                   }}
                 >
-                  View Available Plans
+                  View available plans
                 </button>
               </div>
+            </div>
+
+            <SupportEscalationActions visible={loginTier >= 3 || resendTier >= 3} />
+
+            <div className="mt-5 border-t border-cb-green/10 pt-4 sm:mt-8 sm:pt-6">
+              <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
             </div>
           </div>
         </main>
@@ -646,13 +741,15 @@ function AccessInner() {
     return (
       <div className="cb-auth-shell">
         <PlatformAccessNotice membershipInactive={membershipInactive} sessionCleared={sessionCleared} />
-        <main className="cb-auth-main bg-cb-green p-5">
+        <main className="cb-auth-main bg-cb-green">
           <div className="cb-card max-w-md w-full text-center">
-            <h1 className="cb-card-title">This link has expired</h1>
-            {error && <p className="cb-message-error mt-2 text-sm">{error}</p>}
-            <p className="mt-2 text-sm text-cb-green/90">
-              Send yourself a fresh link below, or go back to sign in.
-            </p>
+            <h1 className="cb-card-title">{ACCESS_ERROR_PAGE_TITLE}</h1>
+            {linkDetailMessage && (
+              <div className={`${calmNoticeClass} mt-3 text-left`}>
+                <CalmAuthMessage text={linkDetailMessage} className="text-sm leading-relaxed text-cb-green" />
+              </div>
+            )}
+            <p className="mt-3 text-sm leading-relaxed text-cb-green/90">{ACCESS_ERROR_PAGE_SUBTITLE}</p>
 
             {looksLikeEmail(errorScreenEmail) && (
               <>
@@ -661,16 +758,16 @@ function AccessInner() {
                   variant={resendSuccess ? "sent" : "pending"}
                   className="mt-3 text-center"
                 />
-                <RegisteredEmailChangeForm billId={null} />
+                <RegisteredEmailChangeForm billId={null} showSupportHint={false} />
               </>
             )}
 
-            <div className="mt-6 flex flex-col gap-3 text-left">
-              <label className="text-xs font-medium text-cb-green/80">Email you used at checkout</label>
+            <div className="mt-5 flex flex-col gap-3 text-left sm:mt-8 sm:gap-4">
+              <label className="text-xs font-medium text-cb-green/90 sm:text-sm">{ACCESS_EMAIL_FIELD_LABEL}</label>
               <input
                 className="cb-input"
                 type="email"
-                placeholder="Email"
+                placeholder={ACCESS_EMAIL_PLACEHOLDER}
                 autoComplete="email"
                 value={errorScreenEmail}
                 onChange={(e) => {
@@ -686,10 +783,14 @@ function AccessInner() {
               {resendSuccess && (
                 <p className="rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">{resendSuccess}</p>
               )}
-              {resendError && <p className="cb-message-error text-sm">{resendError}</p>}
+              {resendError && (
+                <div className={calmNoticeClass}>
+                  <CalmAuthMessage text={resendError} className="text-sm leading-relaxed text-cb-green" />
+                </div>
+              )}
               <button
                 type="button"
-                className="cb-btn-secondary"
+                className="cb-btn-primary mt-2 w-full font-semibold"
                 disabled={resendBusy || resendCooldown > 0 || !errorScreenEmail.trim() || !isSupabaseConfigured}
                 onClick={() => void handleResendFromErrorScreen()}
               >
@@ -697,19 +798,26 @@ function AccessInner() {
               </button>
             </div>
 
+            <SupportEscalationActions visible={linkTier >= 3 || resendTier >= 3} />
+
             <button
               type="button"
-              className="cb-btn-primary mt-6 w-full"
+              className="cb-btn-quiet mt-4 sm:mt-6"
               onClick={() => {
                 setEmail(errorScreenEmail.trim() || email);
-                setError(null);
+                setLinkDetailMessage(null);
+                setLoginFieldMessage(null);
                 setResendSuccess(null);
                 setResendError(null);
                 setView("login");
               }}
             >
-              Back to sign in
+              {ACCESS_PRIMARY_CTA}
             </button>
+
+            <div className="mt-5 border-t border-cb-green/10 pt-4 sm:mt-8 sm:pt-6">
+              <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+            </div>
           </div>
         </main>
       </div>

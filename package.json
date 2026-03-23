@@ -7,7 +7,11 @@
     "packages/*"
   ],
   "scripts": {
+    "ports:kill": "for p in 3000 3001 3002 3003 3004 3005 3006; do lsof -ti :$p | xargs kill -9 2>/dev/null || true; done; echo 'Cleared dev ports 3000–3006 (macOS/Linux).'",
+    "dev": "npm run dev -w @cb/login",
+    "dev:fresh": "npm run ports:kill && npm run dev",
     "dev:login": "npm run dev -w @cb/login",
+    "dev:3000": "npm run dev -w @cb/platform",
     "dev:platform": "npm run dev -w @cb/platform",
     "dev:api": "npm run dev -w @cb/api",
     "dev:capitalstress": "npm run dev -w @cb/capitalstress",

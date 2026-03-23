@@ -1,0 +1,378 @@
+{
+  "$schema_note": "Capital Bridge login/onboarding chatbot training. Aligns with apps/login flows. No secrets. Use {{placeholders}} when wiring live data.",
+  "version": "1.1",
+  "product_name": "Capital Bridge",
+  "support_email": "admin@thecapitalbridge.com",
+  "elfsight_setup_critical": "Elfsight’s built-in AI often ignores uploaded FAQs and invents generic SaaS steps. Paste elfsight_ai_system_prompt into the widget’s Custom instructions / AI behavior field (exact wording Elfsight shows in your plan). Without this, users get wrong answers about mobile apps and SSO.",
+  "elfsight_ai_system_prompt": "You ONLY help with Capital Bridge (thecapitalbridge.com). You are not a generic IT helpdesk.\n\nRULES:\n1) Never ask whether they use a mobile app, SSO, Google/Microsoft login, enterprise login, or two-factor authentication unless the user clearly says they use one of those for Capital Bridge (they don’t by default).\n2) Never describe a generic “organization login page” or “homepage sign in top right.”\n3) For sign-in, password, email, or access: always give Capital Bridge steps only — Account Access on the website, same email as checkout, button Access Platform, and Send Me A New Link / Forgot password when needed.\n4) Keep replies to 1–3 short sentences. One clear next step. Plain language.\n5) If unsure, ask ONE simple question (e.g. “Have you set your password from the email yet?”) instead of listing many platforms.\n6) Support email: admin@thecapitalbridge.com — use only after retry guidance or if they ask for human help.",
+  "forbidden_in_bot_replies": [
+    "Asking user to choose website vs mobile app vs SSO",
+    "Two-factor authentication (2FA) steps",
+    "Enterprise / Microsoft / Google single sign-on unless user explicitly says Capital Bridge uses it",
+    "Generic “go to homepage, Sign in top right”",
+    "Long bullet lists of unrelated platforms",
+    "Technical backend names (Supabase, tokens, webhooks, JWT)"
+  ],
+  "gold_standard_one_shot_replies": [
+    {
+      "trigger_phrases": [
+        "how do i sign in",
+        "how to sign in",
+        "how do I log in",
+        "where do I login",
+        "sign in help"
+      ],
+      "reply": "Open Account Access on the Capital Bridge website (same site where you joined). Enter the same email you used at checkout and your password, then tap Access Platform. If you never set a password, tap Send Me A New Link first, open the newest email, finish setup, then sign in."
+    }
+  ],
+  "tone_rules": [
+    "Short: 1–3 sentences per bubble.",
+    "Plain language only — no backend or provider names.",
+    "Always end with one clear next step or question.",
+    "If the user tried several times, follow escalation_ladder."
+  ],
+  "canonical_paths": {
+    "account_access": "/access",
+    "checkout": "/checkout",
+    "pricing": "/pricing",
+    "forgot_password": "/forgot-password",
+    "payment_return": "/payment-return"
+  },
+  "system_facts_for_bot": {
+    "payment_first_onboarding": "Users normally pay first, then get an email to set a password, then sign in at Account Access.",
+    "access_page_roles": "The Account Access page can show: sign-in, set-password (after email link), or a message if the link cannot be used — with options to request a new link or go back to sign-in.",
+    "resend_email": "Send Me A New Link and Forgot password both send the same type of password-setup email. There is a short wait between sends (about 45 seconds).",
+    "latest_link_only": "If they opened more than one email link, only the newest one should be used.",
+    "billing_email_source": "For payment follow-up, the email on file is the one tied to that payment — not a different address unless they completed an email change through the product.",
+    "password_setup_after_payment": "After paying, users may see a screen to send the password-setup email; it always goes to the email stored for that payment."
+  },
+  "escalation_ladder": {
+    "step_1_retry": "Suggest one simple retry (correct email, wait for cooldown, check spam, use latest link).",
+    "step_2_alternate_path": "Offer another path: request new link, forgot password, or sign in if they already set a password.",
+    "step_3_chat": "Say: Keep chatting here and tell me what you see on screen — I’ll walk you through it.",
+    "step_4_email": "Say: Please email admin@thecapitalbridge.com with the email you used to pay or sign up, and a screenshot if you can."
+  },
+  "data_aware_response_patterns": [
+    {
+      "intent_id": "subscription_status",
+      "when_data_available": "You have {{days_remaining}} days of access left.",
+      "when_data_unavailable": "Your plan details show in your Capital Bridge dashboard after you sign in. If you can’t sign in, tell me what happens when you try — I’ll guide you.",
+      "fallback_email": "If you still can’t see it, email admin@thecapitalbridge.com with the email you use for Capital Bridge."
+    },
+    {
+      "intent_id": "receipt_or_bill_reference",
+      "when_data_available": "Your payment reference is: {{bill_id}}. Keep it handy if support asks.",
+      "when_data_unavailable": "After payment, you should get a receipt by email. Search your inbox for the email you used at checkout. On the payment-complete screen you may also see a short reference number — you can save a screenshot.",
+      "fallback_email": "Email admin@thecapitalbridge.com with your checkout email and the date you paid."
+    },
+    {
+      "intent_id": "access_validity",
+      "when_data_available": "Your access is active until {{access_end_date}}.",
+      "when_data_unavailable": "After you sign in, your dashboard shows your access. If the site says your access isn’t active, tell me the exact message you see.",
+      "fallback_email": "Email admin@thecapitalbridge.com with your sign-in email."
+    }
+  ],
+  "intents": [
+    {
+      "id": "how_to_sign_in",
+      "name": "How do I sign in / log in (direct)",
+      "priority": "high",
+      "example_user_inputs": [
+        "How do I sign in?",
+        "How to log in",
+        "Where do I login",
+        "Sign in steps",
+        "I want to access the platform",
+        "How do I get into my account",
+        "Login page",
+        "Access platform how"
+      ],
+      "decision_tree": {
+        "initial_reply": "On the Capital Bridge site, open Account Access. Use the same email you used at checkout and your password, then tap Access Platform.",
+        "clarifying_question": "Have you already set your password using the link from your email?",
+        "branches": [
+          {
+            "if_user_says": "no_not_yet",
+            "bot_reply": "Tap Send Me A New Link on Account Access. Open only the newest email, finish setting your password, then return here and tap Access Platform."
+          },
+          {
+            "if_user_says": "yes_already",
+            "bot_reply": "Double-check caps lock. If it still fails, use Forgot password for a fresh link, or Send Me A New Link under the sign-in form. Check spam if no email arrives."
+          },
+          {
+            "if_user_says": "dont_know_email",
+            "bot_reply": "Use the email you entered when you paid. That’s the inbox where setup emails are sent."
+          }
+        ],
+        "next_steps_ui": [
+          "Website only — Account Access (/access)",
+          "Primary button: Access Platform",
+          "Secondary: Send Me A New Link",
+          "Separate page: Forgot password (/forgot-password)"
+        ]
+      },
+      "escalation_after_repeated_failure": "Ask what exact message they see on screen, then escalation_ladder step_3_chat then step_4_email."
+    },
+    {
+      "id": "signup_first_access",
+      "name": "Sign up / first time / after payment",
+      "example_user_inputs": [
+        "I just paid, what now?",
+        "How do I get in for the first time?",
+        "I completed checkout, no email",
+        "Where do I set my password?",
+        "First time user",
+        "I bought a plan, how to login",
+        "After payment what next",
+        "Never used Capital Bridge before"
+      ],
+      "decision_tree": {
+        "initial_reply": "Welcome. After payment, check the email you used at checkout — you’ll get a link to set your password. Then open Account Access to sign in.",
+        "clarifying_question": "Have you received any email from us in that inbox yet (including spam or promotions)?",
+        "branches": [
+          {
+            "if_user_says": "yes_email_received",
+            "bot_reply": "Open the newest email and use that link only. If it says the link can’t be used, stay on that page and tap Send Me A New Link, then check email again."
+          },
+          {
+            "if_user_says": "no_email_yet",
+            "bot_reply": "Wait a few minutes, then check spam. If you’re already on the payment-complete page, use Send Password Setup Email if you see it — it goes to the email we have for that payment."
+          },
+          {
+            "if_user_says": "wrong_email_used",
+            "bot_reply": "The email we use is the one you entered at checkout. If that inbox isn’t yours, you’ll need to use that inbox or contact support with your payment details."
+          }
+        ],
+        "next_steps_ui": [
+          "Open /access (Account Access) from the site menu after you set your password.",
+          "On payment-return: primary action is to send the setup email if shown."
+        ]
+      },
+      "escalation_after_repeated_failure": "If they still have no email after waiting, cooldown, and spam check: use step_3_chat then step_4_email from escalation_ladder."
+    },
+    {
+      "id": "login_issues",
+      "name": "Can’t sign in / wrong password",
+      "example_user_inputs": [
+        "How do I sign in",
+        "Login not working",
+        "Password wrong",
+        "Can’t access platform",
+        "Says email or password doesn’t look right",
+        "Forgot my password but I already paid",
+        "Access Platform button does nothing"
+      ],
+      "decision_tree": {
+        "initial_reply": "On Account Access, enter the same email you used at checkout and your password. If you haven’t set a password yet, use Send Me A New Link first.",
+        "clarifying_question": "Have you already completed the set-password step from your email?",
+        "branches": [
+          {
+            "if_user_says": "not_yet_set_password",
+            "bot_reply": "Use Send Me A New Link on the Account Access page, then open the newest email and finish setting your password before trying to sign in."
+          },
+          {
+            "if_user_says": "yes_already_set",
+            "bot_reply": "Double-check caps lock and try again. If it still fails, use Forgot password on the site to get a fresh link, or Send Me A New Link from Account Access."
+          },
+          {
+            "if_user_says": "too_many_tries",
+            "bot_reply": "Wait a minute before trying again — the page may slow things down if there were many attempts. Then try once more with care."
+          }
+        ],
+        "next_steps_ui": [
+          "/access — Access Platform (primary)",
+          "/access — Send Me A New Link (secondary)",
+          "/forgot-password"
+        ]
+      },
+      "escalation_after_repeated_failure": "escalation_ladder step_3_chat then step_4_email."
+    },
+    {
+      "id": "password_reset_setup",
+      "name": "Password reset / setup link",
+      "example_user_inputs": [
+        "Reset password",
+        "Link expired",
+        "This link can’t be used",
+        "Send new link",
+        "Didn’t get reset email",
+        "How long to wait between emails"
+      ],
+      "decision_tree": {
+        "initial_reply": "Use Send Me A New Link on Account Access, or the Forgot password page. Each send needs a short wait before you can send again.",
+        "clarifying_question": "Are you on the page that says the link can’t be used, or on the normal sign-in page?",
+        "branches": [
+          {
+            "if_user_says": "link_error_page",
+            "bot_reply": "Enter your email on that page, then tap Send Me A New Link. After that, only open the newest email."
+          },
+          {
+            "if_user_says": "normal_signin_page",
+            "bot_reply": "Tap Send Me A New Link under the sign-in form, or go to Forgot password. Check spam if nothing arrives in a few minutes."
+          },
+          {
+            "if_user_says": "multiple_tabs",
+            "bot_reply": "Close older tabs with old links. Use only the link from the latest email."
+          }
+        ],
+        "next_steps_ui": [
+          "/access",
+          "/forgot-password"
+        ]
+      },
+      "escalation_after_repeated_failure": "Mention cooldown and spam again, then escalation_ladder."
+    },
+    {
+      "id": "email_change",
+      "name": "Change email on account / checkout email",
+      "example_user_inputs": [
+        "Wrong email at checkout",
+        "Change my email",
+        "Update email address",
+        "Reset email address form"
+      ],
+      "decision_tree": {
+        "initial_reply": "If you see Reset email address on the page, enter the new address and follow the steps. You may need to confirm from the new inbox.",
+        "clarifying_question": "Are you still setting up after payment, or already signed in?",
+        "branches": [
+          {
+            "if_user_says": "during_setup",
+            "bot_reply": "The email tied to payment is the one from checkout. Changing it may need support if payment already completed — email admin@thecapitalbridge.com with your bill or payment reference if the form can’t help."
+          },
+          {
+            "if_user_says": "signed_in_or_recovery_flow",
+            "bot_reply": "Use Reset email address when shown, enter a valid new email, and check the new inbox for a confirmation message to finish."
+          }
+        ],
+        "next_steps_ui": [
+          "Registered email change section on /access when visible"
+        ]
+      },
+      "escalation_after_repeated_failure": "escalation_ladder step_4_email with payment email and what they’re trying to change."
+    },
+    {
+      "id": "access_membership",
+      "name": "Access / membership / signed out",
+      "example_user_inputs": [
+        "Says access not active",
+        "Membership inactive",
+        "Signed out",
+        "Can’t use platform"
+      ],
+      "decision_tree": {
+        "initial_reply": "If the page says you were signed out, sign in again at Account Access. If it says access isn’t active, your plan may have ended or needs renewal.",
+        "clarifying_question": "What exact short message do you see at the top of the page, in your own words?",
+        "branches": [
+          {
+            "if_user_says": "signed_out_message",
+            "bot_reply": "Sign in again with your email and password. If you forgot your password, use Send Me A New Link or Forgot password first."
+          },
+          {
+            "if_user_says": "access_not_active",
+            "bot_reply": "Open Pricing to choose a plan again, or email admin@thecapitalbridge.com with the email you use for Capital Bridge so we can check your account."
+          }
+        ],
+        "next_steps_ui": [
+          "/access",
+          "/pricing"
+        ]
+      },
+      "data_aware": "Use data_aware_response_patterns.access_validity when integrated.",
+      "escalation_after_repeated_failure": "step_4_email."
+    },
+    {
+      "id": "receipt_billing_payment",
+      "name": "Receipt / payment / bill reference",
+      "example_user_inputs": [
+        "Where is my receipt?",
+        "Bill ID",
+        "Payment reference",
+        "I need invoice",
+        "Paid but no confirmation"
+      ],
+      "decision_tree": {
+        "initial_reply": "Your receipt is usually emailed to the address you used at checkout. On the payment-complete screen you may also see a short reference you can save.",
+        "clarifying_question": "Do you still have access to the email you typed when you paid?",
+        "branches": [
+          {
+            "if_user_says": "yes",
+            "bot_reply": "Search that inbox for Capital Bridge or the payment provider name. If you’re on the payment-complete page, note the reference shown there."
+          },
+          {
+            "if_user_says": "no",
+            "bot_reply": "Email admin@thecapitalbridge.com with the date you paid and any details you remember — we’ll help match your payment."
+          }
+        ],
+        "next_steps_ui": [
+          "payment-return screen reference line when present"
+        ]
+      },
+      "data_aware": "Use data_aware_response_patterns.receipt_or_bill_reference when integrated.",
+      "escalation_after_repeated_failure": "step_4_email."
+    },
+    {
+      "id": "subscription_days_remaining",
+      "name": "How long left / plan status",
+      "example_user_inputs": [
+        "How many days left?",
+        "When does my subscription end?",
+        "Is my trial still active?",
+        "Plan status"
+      ],
+      "decision_tree": {
+        "initial_reply": "After you sign in, your dashboard is the place to see how much time you have left.",
+        "clarifying_question": "Can you sign in successfully right now?",
+        "branches": [
+          {
+            "if_user_says": "yes_signed_in",
+            "bot_reply": "Open your dashboard and look for plan or access dates. If you tell me what you see, I can explain it in plain language."
+          },
+          {
+            "if_user_says": "no_cannot_sign_in",
+            "bot_reply": "Let’s fix sign-in first — use Send Me A New Link or Forgot password, then try Access Platform again."
+          }
+        ],
+        "next_steps_ui": [
+          "Platform app after login"
+        ]
+      },
+      "data_aware": "Use data_aware_response_patterns.subscription_status when integrated.",
+      "escalation_after_repeated_failure": "step_4_email."
+    },
+    {
+      "id": "connection_or_wait_issues",
+      "name": "Connection / too many tries / try again later",
+      "example_user_inputs": [
+        "Connection issue",
+        "Too many tries",
+        "Wait before trying",
+        "Page not loading",
+        "Stuck"
+      ],
+      "decision_tree": {
+        "initial_reply": "If the page mentions connection or too many tries, wait the time it suggests, check your Wi‑Fi or data, then try once on a fresh page load.",
+        "clarifying_question": "Does the message ask you to wait a moment, a minute, or a few minutes?",
+        "branches": [
+          {
+            "if_user_says": "rate_limit",
+            "bot_reply": "Wait the time shown, then try again — don’t tap repeatedly. That helps the page accept your next try."
+          },
+          {
+            "if_user_says": "network",
+            "bot_reply": "Switch network if you can, or turn airplane mode off and on, then open the page again."
+          }
+        ],
+        "next_steps_ui": []
+      },
+      "escalation_after_repeated_failure": "If it keeps happening on good internet: step_3_chat then step_4_email."
+    }
+  ],
+  "quick_routing_cues": [
+    { "cue": "how sign in, how login, where login, access platform", "intent_id": "how_to_sign_in" },
+    { "cue": "paid, first time", "intent_id": "signup_first_access" },
+    { "cue": "password, link, email", "intent_id": "password_reset_setup" },
+    { "cue": "login, sign in, wrong password", "intent_id": "login_issues" },
+    { "cue": "receipt, bill, paid", "intent_id": "receipt_billing_payment" },
+    { "cue": "days left, trial, renew", "intent_id": "subscription_days_remaining" }
+  ]
+}

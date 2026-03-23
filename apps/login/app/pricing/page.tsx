@@ -209,9 +209,9 @@ function PlanCard({
   const useGlow = planExt.glow;
   const cardInner = (
     <div
-      className={`relative flex flex-col rounded-2xl bg-[#e5e4df] p-6 shadow-lg ${
+      className={`relative flex flex-col rounded-2xl bg-[#e5e4df] p-4 shadow-lg sm:p-6 ${
         plan.recommended || !!planExt.badgeLabel
-          ? "ring-2 ring-cb-gold ring-offset-2 ring-offset-[#0D3A1D]"
+          ? "ring-2 ring-cb-gold ring-offset-1 ring-offset-[#0D3A1D] sm:ring-offset-2"
           : ""
       }`}
     >
@@ -226,7 +226,7 @@ function PlanCard({
           {badgeText}
         </div>
       )}
-      <h3 className="font-serif text-xl font-semibold text-cb-green">{plan.name}</h3>
+      <h3 className="font-serif text-lg font-semibold text-cb-green sm:text-xl">{plan.name}</h3>
       {planExt.identityLine && plan.id !== "yearly_full" && (
         <p className="mt-1 text-sm text-cb-green/70">{planExt.identityLine}</p>
       )}
@@ -239,8 +239,8 @@ function PlanCard({
           and usually require at least USD1 million to get started.
         </p>
       )}
-      <div className="mt-2 flex items-baseline gap-1">
-        <span className="font-serif text-3xl font-semibold text-cb-green">
+      <div className="mt-2 flex flex-wrap items-baseline gap-1">
+        <span className="font-serif text-2xl font-semibold text-cb-green sm:text-3xl">
           RM{plan.price.toLocaleString()}
         </span>
         {plan.price > 0 && (
@@ -387,14 +387,14 @@ function PricingContent() {
 
   return (
     <main className="min-h-0 flex-1 bg-[#0D3A1D]">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+      <div className="mx-auto max-w-5xl px-3 py-6 sm:px-4 sm:py-10 md:py-14">
         {/* Value Anchor Section */}
         <section className="text-center">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h1 className="font-serif text-3xl font-semibold text-cb-gold sm:text-4xl lg:text-5xl">
+            <h1 className="font-serif text-2xl font-semibold text-cb-gold sm:text-4xl lg:text-5xl">
               The Capital Bridge Advisory Framework
             </h1>
-            <div className="mx-auto mt-4 max-w-3xl text-lg text-cb-cream/85">
+            <div className="mx-auto mt-3 max-w-3xl text-base text-cb-cream/85 sm:mt-4 sm:text-lg">
               <p className="font-semibold text-cb-cream">
                 A Clear Path To Growing Capital And Building Income That Lasts A Lifetime
               </p>
@@ -405,9 +405,9 @@ function PricingContent() {
               </p>
             </div>
           </div>
-          <div className="mt-10 grid grid-cols-1 items-stretch gap-6 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:gap-4">
-            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-6 py-5 text-center">
-              <h3 className="font-serif text-lg font-semibold text-cb-gold">
+          <div className="mt-8 grid grid-cols-1 items-stretch gap-4 sm:mt-10 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:gap-4">
+            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-4 py-4 text-center sm:px-6 sm:py-5">
+              <h3 className="font-serif text-base font-semibold text-cb-gold sm:text-lg">
                 Income Assessment
               </h3>
               <p className="mt-2 flex-1 text-sm text-cb-cream/80">
@@ -439,8 +439,8 @@ function PricingContent() {
                 <path d="M2 12h20M14 4l8 8-8 8" />
               </svg>
             </div>
-            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-6 py-5 text-center">
-              <h3 className="font-serif text-lg font-semibold text-cb-gold">
+            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-4 py-4 text-center sm:px-6 sm:py-5">
+              <h3 className="font-serif text-base font-semibold text-cb-gold sm:text-lg">
                 Capital Engineering
               </h3>
               <p className="mt-2 flex-1 text-sm text-cb-cream/80">
@@ -472,8 +472,8 @@ function PricingContent() {
                 <path d="M2 12h20M14 4l8 8-8 8" />
               </svg>
             </div>
-            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-6 py-5 text-center">
-              <h3 className="font-serif text-lg font-semibold text-cb-gold">
+            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-4 py-4 text-center sm:px-6 sm:py-5">
+              <h3 className="font-serif text-base font-semibold text-cb-gold sm:text-lg">
                 Stress Test Income & Capital Resilience
               </h3>
               <p className="mt-2 flex-1 text-sm text-cb-cream/80">
@@ -488,7 +488,7 @@ function PricingContent() {
         <section className="mt-16 sm:mt-20">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6 flex flex-col items-center gap-3">
             <div className="text-center">
-              <h2 className="font-serif text-2xl font-semibold text-cb-gold sm:text-3xl">
+              <h2 className="font-serif text-xl font-semibold text-cb-gold sm:text-2xl md:text-3xl">
                 Capital Bridge Outcome Preview
               </h2>
               <p className="mx-auto mt-2 max-w-3xl text-cb-cream/80">
@@ -585,7 +585,7 @@ function PricingContent() {
             </p>
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="flex gap-4 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-5 py-4">
+            <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
                 <p className="font-medium text-cb-cream">Scenario-Based Stress Testing</p>
@@ -595,7 +595,7 @@ function PricingContent() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-4 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-5 py-4">
+            <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
                 <p className="font-medium text-cb-cream">
@@ -606,7 +606,7 @@ function PricingContent() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-4 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-5 py-4">
+            <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
                 <p className="font-medium text-cb-cream">Structured Advisory Framework</p>
@@ -615,7 +615,7 @@ function PricingContent() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-4 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-5 py-4">
+            <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
                 <p className="font-medium text-cb-cream">Transparent Modelling Logic</p>
@@ -631,7 +631,7 @@ function PricingContent() {
         {/* Pricing Section */}
         <section className="mt-16 sm:mt-20">
           <div className="text-center -mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h2 className="font-serif text-2xl font-semibold text-cb-gold sm:text-3xl">
+            <h2 className="font-serif text-xl font-semibold text-cb-gold sm:text-2xl md:text-3xl">
               Available Plans
             </h2>
             <p className="mx-auto mt-2 max-w-3xl text-cb-cream/80">
@@ -657,8 +657,8 @@ function PricingContent() {
             </div>
           )}
 
-          <div className="mt-8">
-            <div className="grid gap-6 sm:grid-cols-2">
+          <div className="mt-6 sm:mt-8">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
               {INDIVIDUAL_PLANS.map((plan) => (
                 <PlanCard
                   key={plan.id}
@@ -671,8 +671,8 @@ function PricingContent() {
             </div>
           </div>
 
-          <div className="mt-12">
-            <div className="grid gap-6 sm:grid-cols-2">
+          <div className="mt-8 sm:mt-12">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
               {ADVISOR_PLANS.map((plan) => (
                 <PlanCard
                   key={plan.id}
@@ -689,7 +689,7 @@ function PricingContent() {
         {/* Trusted Framework Section (below pricing) */}
         <section className="mt-10 sm:mt-12 text-center">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h3 className="font-serif text-xl font-semibold text-cb-cream">
+            <h3 className="font-serif text-lg font-semibold text-cb-cream sm:text-xl">
               <span className="text-cb-gold">Not in moments of excess</span>, but in <span className="font-bold text-cb-gold">decades of precision</span> Financial Modelling Framework
             </h3>
             <div className="mx-auto mt-3 max-w-3xl space-y-1.5 text-sm text-cb-cream/80">

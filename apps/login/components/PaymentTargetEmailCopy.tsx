@@ -18,7 +18,7 @@ export function PaymentTargetEmailLine({
   const emailMark = <span className="font-bold text-cb-green">{em}</span>;
 
   return (
-    <p className={`text-sm leading-relaxed text-cb-green/80 ${className}`.trim()}>
+    <p className={`text-xs leading-relaxed text-cb-green/80 sm:text-sm ${className}`.trim()}>
       Registered Email: {emailMark}.
     </p>
   );

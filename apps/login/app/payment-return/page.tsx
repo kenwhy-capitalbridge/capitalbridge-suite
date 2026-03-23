@@ -30,15 +30,16 @@ type OnboardMode = "confirmation" | "processing" | "ready";
 
 /** Capital Bridge: gold primary, outlined secondary (globals.css) */
 const primaryBtnClass =
-  "cb-btn-primary w-full mt-6 text-center text-base font-semibold disabled:cursor-not-allowed";
+  "cb-btn-primary w-full mt-4 text-center font-semibold disabled:cursor-not-allowed sm:mt-6";
 
-const secondaryBtnClass = "cb-btn-secondary w-full mt-3 text-center text-base font-medium";
+const secondaryBtnClass =
+  "cb-btn-secondary w-full mt-2 text-center font-medium sm:mt-3";
 
 const shellClass = "cb-auth-main";
 const cardClass = "cb-card w-full max-w-md";
-const titleClass = "cb-card-title text-center text-xl";
-const bodyClass = "mt-2 text-center text-base text-cb-green/85";
-const metaClass = "mt-2 text-center text-sm text-cb-green/70";
+const titleClass = "cb-card-title text-center";
+const bodyClass = "mt-2 text-center text-sm text-cb-green/85 sm:text-base";
+const metaClass = "mt-2 text-center text-xs text-cb-green/70 sm:text-sm";
 
 function openWebInbox(email: string | null | undefined) {
   const domain = email?.split("@")[1]?.toLowerCase().trim() ?? "";
@@ -302,9 +303,11 @@ function PaymentReturnContent() {
         </p>
       )}
       {resendSuccess && (
-        <p className="cb-message-success mt-4 text-center text-base font-medium">{resendSuccess}</p>
+        <p className="cb-message-success mt-4 text-center text-sm font-medium sm:text-base">{resendSuccess}</p>
       )}
-      {resendError && <p className="cb-message-error mt-3 text-center text-base">{resendError}</p>}
+      {resendError && (
+        <p className="cb-message-error mt-3 text-center text-sm sm:text-base">{resendError}</p>
+      )}
       <button
         type="button"
         className={primaryBtnClass}
@@ -325,24 +328,26 @@ function PaymentReturnContent() {
       <main className={shellClass}>
         <div className={cardClass}>
           <h1 className={titleClass}>Payment</h1>
+          <p className={bodyClass}>Your payment is being processed.</p>
           <p className={bodyClass}>
-            If you just paid, go back to the tab from checkout or check the email you used there.
+            If you&apos;ve just completed checkout, you can return to your email — we&apos;ll send you a secure link to set
+            your password once everything is ready.
           </p>
           <p className={bodyClass}>
-            To set your password or send the link again, open{" "}
+            If you don&apos;t see the email shortly, you can resend it via{" "}
             <a
               href="/access"
-              className="cb-link font-semibold underline"
+              className="cb-link font-bold underline decoration-cb-gold-dark/60 underline-offset-[3px] hover:text-cb-green"
               onClick={openAccessWithPersistedEmail}
             >
-              account access
-            </a>{" "}
-            — your email may be filled in automatically — then tap Send Password Set Up Email Again.
+              Account Access
+            </a>
+            . Your email may already be filled in.
           </p>
           <button type="button" className={primaryBtnClass} onClick={() => openWebInbox(null)}>
-            Open Gmail
+            Open Inbox
           </button>
-          <p className={metaClass}>Or check your email app</p>
+          <p className={metaClass}>Or use your email app</p>
         </div>
       </main>
     );
@@ -383,10 +388,10 @@ function PaymentReturnContent() {
           <div className={cardClass}>
             <h1 className={titleClass}>Setting up your access</h1>
             <p className={bodyClass}>Please keep this page open for a moment.</p>
-            <ul className="mt-6 list-none space-y-4 text-left">
+            <ul className="mt-4 list-none space-y-3 text-left text-sm sm:mt-6 sm:space-y-4 sm:text-base">
               <li
                 className={
-                  stageIndex >= 1 ? "text-base text-cb-green/85" : "text-base font-medium text-cb-green"
+                  stageIndex >= 1 ? "text-cb-green/85" : "font-medium text-cb-green"
                 }
               >
                 {stageIndex >= 1 ? "✓ Payment received" : "Payment received"}
@@ -394,10 +399,10 @@ function PaymentReturnContent() {
               <li
                 className={
                   stageIndex >= 2
-                    ? "text-base text-cb-green/85"
+                    ? "text-cb-green/85"
                     : stageIndex === 1
-                      ? "text-base font-medium text-cb-green"
-                      : "text-base text-cb-green/50"
+                      ? "font-medium text-cb-green"
+                      : "text-cb-green/50"
                 }
               >
                 {stageIndex >= 2
@@ -407,16 +412,16 @@ function PaymentReturnContent() {
               <li
                 className={
                   stageIndex >= 3
-                    ? "text-base text-cb-green/85"
+                    ? "text-cb-green/85"
                     : stageIndex === 2
-                      ? "text-base font-medium text-cb-green"
-                      : "text-base text-cb-green/50"
+                      ? "font-medium text-cb-green"
+                      : "text-cb-green/50"
                 }
               >
                 {stageIndex >= 3 ? "✓ Finalising your setup" : "⏳ Finalising your setup"}
               </li>
             </ul>
-            <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-cb-green/15">
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-cb-green/15 sm:mt-6">
               <div
                 className="h-full rounded-full bg-cb-gold transition-[width] duration-1000 ease-out"
                 style={{ width: `${progressWidth}%` }}
@@ -424,7 +429,7 @@ function PaymentReturnContent() {
             </div>
             {processingWaitHint && (
               <>
-                <p className={`${bodyClass} mt-6`}>
+                <p className={`${bodyClass} mt-4 sm:mt-6`}>
                   We&apos;re still confirming your payment with your bank. This can take a little longer.
                 </p>
                 <button type="button" className={primaryBtnClass} onClick={handleCheckStatusAgain}>
@@ -515,7 +520,7 @@ function PaymentReturnContent() {
           </p>
         )}
         {finalData?.next_step === "contact_support" && (
-          <p className="cb-message-error mt-4 text-center text-base">
+          <p className="cb-message-error mt-4 text-center text-sm sm:text-base">
             We couldn&apos;t match this payment yet. Contact support with the reference above.
           </p>
         )}

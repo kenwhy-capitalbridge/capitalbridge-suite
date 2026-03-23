@@ -1,9 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* ---------------------------------------------------------------------------
    Capital Bridge Design System – Design tokens (match Tailwind theme)
@@ -51,27 +48,27 @@
   }
 
   .cb-auth-main {
-    @apply flex min-h-0 w-full flex-1 flex-col items-center justify-center px-5 py-8;
+    @apply flex min-h-0 w-full flex-1 flex-col items-center justify-center px-3 py-5 sm:px-5 sm:py-8;
   }
 
   /* Card: cream bg, rounded corners, soft shadow, max-w-md (built-in) */
   .cb-card {
-    @apply w-full max-w-md rounded-2xl bg-cb-cream p-8 shadow-lg;
+    @apply w-full max-w-md rounded-2xl bg-cb-cream p-5 shadow-lg sm:p-7 md:p-8;
   }
 
   /* Card title: "Capital Bridge Advisory Platform" style */
   .cb-card-title {
-    @apply font-serif text-2xl font-semibold text-cb-green;
+    @apply font-serif text-xl font-semibold text-cb-green sm:text-2xl;
   }
 
   /* Supporting text under the title */
   .cb-card-subtitle {
-    @apply mt-1 text-sm text-cb-green/80;
+    @apply mt-1 text-xs text-cb-green/80 sm:text-sm;
   }
 
   /* Inputs: white bg, soft green border, cb-green text, rounded, padding */
   .cb-input {
-    @apply w-full rounded-xl border border-cb-green/20 bg-white px-4 py-3 text-cb-green placeholder-cb-green/50;
+    @apply w-full rounded-xl border border-cb-green/20 bg-white px-3 py-2.5 text-sm text-cb-green placeholder-cb-green/50 sm:px-4 sm:py-3 sm:text-base;
   }
 
   .cb-input-error {
@@ -86,11 +83,16 @@
 
   /* Primary action: gold bg, green text, rounded, medium weight, hover turns green */
   .cb-btn-primary {
-    @apply rounded-xl bg-cb-gold px-4 py-3 font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] transition hover:bg-cb-green hover:text-white disabled:opacity-50;
+    @apply rounded-xl bg-cb-gold px-3 py-2.5 text-sm font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] transition hover:bg-cb-green hover:text-white disabled:opacity-50 sm:px-4 sm:py-3 sm:text-base;
   }
 
   .cb-btn-secondary {
-    @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-4 py-3 font-medium text-cb-green transition hover:bg-white disabled:opacity-50;
+    @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-3 py-2.5 text-sm font-medium text-cb-green transition hover:bg-white disabled:opacity-50 sm:px-4 sm:py-3 sm:text-base;
+  }
+
+  /* Quiet secondary — does not compete with gold primary CTA */
+  .cb-btn-quiet {
+    @apply w-full rounded-xl border border-cb-green/25 bg-transparent px-3 py-2.5 text-xs font-medium text-cb-green/85 transition hover:border-cb-green/40 hover:bg-cb-green/[0.05] hover:text-cb-green disabled:opacity-45 sm:px-4 sm:py-3 sm:text-sm;
   }
 
   /**
@@ -109,7 +111,7 @@
   }
 
   /**
-   * Tertiary “View Available Plans” on cream cb-card (auth / checkout). Outline, brand green, low emphasis.
+   * Tertiary “View Other Plans” on cream cb-card (auth / checkout). Outline, brand green, low emphasis.
    * Always visible; smaller than primary CTAs.
    */
   .cb-btn-auth-view-plans {
@@ -135,11 +137,11 @@
 
   /* Success message (e.g. after signup or password reset sent) */
   .cb-message-success {
-    @apply rounded-lg bg-cb-green/10 px-4 py-2 text-sm text-cb-green;
+    @apply rounded-lg bg-cb-green/10 px-3 py-2 text-xs text-cb-green sm:px-4 sm:text-sm;
   }
 
   /* Error message */
   .cb-message-error {
-    @apply rounded-lg bg-red-100 px-4 py-2 text-sm text-red-800;
+    @apply rounded-lg bg-red-100 px-3 py-2 text-xs text-red-800 sm:px-4 sm:text-sm;
   }
 }
