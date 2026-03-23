@@ -30,11 +30,36 @@ export function tierLevel(attempt: number): 1 | 2 | 3 {
  */
 export function classifySupabaseRaw(raw: string | null | undefined): "network" | "rate_limit" | undefined {
   const m = (raw ?? "").toLowerCase();
+
+  /**
+   * These are not “please wait” rate limits — showing “Too many tries” confuses users who only
+   * attempted sign-in once (e.g. after an expired magic link is still in the URL hash).
+   */
+  const looksLikeCredentialOrLinkIssue =
+    (m.includes("invalid") &&
+      (m.includes("credentials") ||
+        m.includes("jwt") ||
+        m.includes("token") ||
+        m.includes("grant") ||
+        m.includes("login"))) ||
+    m.includes("expired") ||
+    m.includes("otp") ||
+    m.includes("access_denied") ||
+    m.includes("email link") ||
+    m.includes("magic link") ||
+    m.includes("link is invalid") ||
+    (m.includes("session") && m.includes("invalid"));
+
+  if (looksLikeCredentialOrLinkIssue) {
+    return undefined;
+  }
+
   if (
     m.includes("rate limit") ||
     m.includes("too many requests") ||
     m.includes("email rate limit") ||
-    m.includes("too many tries")
+    m.includes("too many tries") ||
+    m.includes("too_many")
   ) {
     return "rate_limit";
   }

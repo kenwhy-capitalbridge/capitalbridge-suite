@@ -238,8 +238,18 @@ function AccessInner() {
   useEffect(() => {
     const init = async () => {
       try {
-        const hash = window.location.hash;
+        let hash = window.location.hash;
         const params = new URLSearchParams(window.location.search);
+
+        /** Expired magic links land with #error=access_denied&error_code=otp_expired… — strip so sign-in isn’t confused. */
+        if (hash && /[#&]error=/.test(hash)) {
+          window.history.replaceState(
+            null,
+            "",
+            `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`
+          );
+          hash = "";
+        }
 
         /**
          * Dev-only preview of the success screen. URL param is stripped on first init; keep a sessionStorage
