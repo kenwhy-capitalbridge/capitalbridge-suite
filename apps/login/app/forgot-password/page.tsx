@@ -11,7 +11,6 @@ import {
 } from "@/lib/resendAccessEmail";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
-import { SupportEscalationActions } from "@/components/SupportEscalationActions";
 import {
   ACCESS_SUPPORT_HINT,
   DEV_PREVIEW_NO_EMAIL,
@@ -39,7 +38,6 @@ function ForgotPasswordInner() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [tier, setTier] = useState<1 | 2 | 3>(1);
   const hydrated = useRef(false);
   const resendFailRef = useRef(0);
 
@@ -65,7 +63,6 @@ function ForgotPasswordInner() {
     const trimmed = email.trim();
     if (!trimmed) {
       setFormMessage(FORM_EMPTY_EMAIL);
-      setTier(1);
       return false;
     }
 
@@ -78,13 +75,11 @@ function ForgotPasswordInner() {
 
     if (resetError) {
       resendFailRef.current += 1;
-      const { message, level } = resolveCalmAuthMessage("resend", resendFailRef.current, resetError.message);
+      const { message } = resolveCalmAuthMessage("resend", resendFailRef.current, resetError.message);
       setFormMessage(message);
-      setTier(level);
       return false;
     }
     resendFailRef.current = 0;
-    setTier(1);
     persistCheckoutEmail(trimmed);
     setCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
     return true;
@@ -115,7 +110,6 @@ function ForgotPasswordInner() {
               <CalmAuthMessage text={formMessage} className="text-sm leading-relaxed text-cb-green" />
             </div>
           )}
-          <SupportEscalationActions visible={tier >= 3} />
           <button
             type="button"
             className={`${btnPrimary} mt-8`}
@@ -185,8 +179,6 @@ function ForgotPasswordInner() {
             {forgotPasswordActionLabel(0, loading)}
           </button>
         </form>
-
-        <SupportEscalationActions visible={tier >= 3} />
 
         <button
           type="button"

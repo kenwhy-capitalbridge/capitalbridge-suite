@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState } from "react";
 import { isSupabaseConfigured, recoverySupabase, supabase } from "@/lib/supabaseClient";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
-import { SupportEscalationActions } from "@/components/SupportEscalationActions";
 import {
   ACCESS_SUPPORT_HINT,
   DEV_PREVIEW_NO_EMAIL,
@@ -40,7 +39,6 @@ export function RegisteredEmailChangeForm({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tier, setTier] = useState<1 | 2 | 3>(1);
   const emailChangeFailRef = useRef(0);
 
   const submit = useCallback(async () => {
@@ -50,7 +48,6 @@ export function RegisteredEmailChangeForm({
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
       setError(FORM_EMAIL_INVALID);
-      setTier(1);
       return;
     }
 
@@ -67,22 +64,19 @@ export function RegisteredEmailChangeForm({
         if (!res.ok) {
           if (data.error === "same_email") {
             setError(EMAIL_ON_PAYMENT_SAME);
-            setTier(1);
             return;
           }
           emailChangeFailRef.current += 1;
           const raw = [data.message, data.error].filter(Boolean).join(" ");
-          const { message: calm, level } = resolveCalmAuthMessage(
+          const { message: calm } = resolveCalmAuthMessage(
             "email_change",
             emailChangeFailRef.current,
             raw
           );
           setError(calm);
-          setTier(level);
           return;
         }
         emailChangeFailRef.current = 0;
-        setTier(1);
         setMessage(EMAIL_CHANGE_CHECK_INBOX);
         setNewEmail("");
         return;
@@ -90,7 +84,6 @@ export function RegisteredEmailChangeForm({
 
       if (!isSupabaseConfigured) {
         setError(DEV_PREVIEW_NO_EMAIL);
-        setTier(1);
         return;
       }
 
@@ -103,25 +96,22 @@ export function RegisteredEmailChangeForm({
 
       if (!session?.user) {
         setError(EMAIL_CHANGE_NO_SESSION);
-        setTier(1);
         return;
       }
 
       const { error: updErr } = await authClient.auth.updateUser({ email: em });
       if (updErr) {
         emailChangeFailRef.current += 1;
-        const { message: calm, level } = resolveCalmAuthMessage(
+        const { message: calm } = resolveCalmAuthMessage(
           "email_change",
           emailChangeFailRef.current,
           updErr.message
         );
         setError(calm);
-        setTier(level);
         return;
       }
 
       emailChangeFailRef.current = 0;
-      setTier(1);
       setMessage(EMAIL_CHANGE_CHECK_INBOX);
       setNewEmail("");
     } finally {
@@ -168,7 +158,6 @@ export function RegisteredEmailChangeForm({
           <CalmAuthMessage text={error} className="text-sm leading-relaxed text-cb-green" />
         </div>
       )}
-      <SupportEscalationActions visible={tier >= 3} />
       {showSupportHint && (
         <div className="mt-6 border-t border-cb-green/10 pt-5">
           <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />

@@ -1,6 +1,5 @@
 /**
- * Minimal footer — support lives inside each card (no duplicate help lines).
- * Elfsight chat floats above; this bar preserves layout rhythm.
+ * Minimal footer — support lives inside each card (email hint; no duplicate help lines).
  */
 export function AuthHelpFooter() {
   return (

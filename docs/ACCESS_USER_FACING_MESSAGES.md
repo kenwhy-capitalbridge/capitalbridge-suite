@@ -13,8 +13,7 @@ Use **`resolveCalmAuthMessage(kind, attempt, raw?)`** — never show `raw` in th
 ## UI helpers
 
 - **`CalmAuthMessage`** — renders text and linkifies `admin@thecapitalbridge.com`
-- **`SupportEscalationActions`** — “Chat with us” (scrolls to footer `#support-chat-entry`) when tier ≥ 3
-- **`AuthHelpFooter`** — footer anchor for chat + email
+- **`AuthHelpFooter`** — minimal layout footer (support copy lives in each card)
 
 ## Pages
 

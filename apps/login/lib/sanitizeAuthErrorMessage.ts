@@ -93,37 +93,37 @@ export function getTieredCalmMessage(kind: TierKind, attempt: number): string {
     case "link":
       if (t === 1) return "This link can’t be used anymore. Please request a new one.";
       if (t === 2) return "This link isn’t working. Try requesting a new one.";
-      return `Please request a new link or go back to sign in. You can also chat with us for help or email us at ${AT}.`;
+      return `Please request a new link or go back to sign in. If you’re stuck, email us at ${AT}.`;
 
     case "resend":
       if (t === 1) return "We couldn’t send the email. Please try again.";
       if (t === 2) return "Still not going through. Please wait a moment and try again.";
-      return `Please wait a minute, then try again. You can also chat with us or email ${AT}.`;
+      return `Please wait a minute, then try again. Check spam or email ${AT} if nothing arrives.`;
 
     case "password":
       if (t === 1) return "We couldn’t update your password. Please try again.";
       if (t === 2) return "Still not working. Try again or request a new link.";
-      return `Please request a new link and try again. You can also chat with us or email ${AT}.`;
+      return `Please request a new link and try again. If you’re still stuck, email ${AT}.`;
 
     case "email_change":
       if (t === 1) return "We couldn’t update your email. Please try again.";
       if (t === 2) return "Still not working. Please try again in a moment.";
-      return `Please try again later or chat with us. You can also email ${AT}.`;
+      return `Please try again later. If you need help, email ${AT}.`;
 
     case "network":
       if (t === 1) return "Connection issue. Please try again.";
       if (t === 2) return "Still not connecting. Check your internet and try again.";
-      return "Please check your connection or try again later. You can also chat with us.";
+      return `Please check your connection or try again later. If it keeps failing, email ${AT}.`;
 
     case "rate_limit":
       if (t === 1) return "Too many tries. Please wait a moment.";
       if (t === 2) return "Please wait a minute before trying again.";
-      return "Please wait a few minutes, then try again. If you need help, chat with us.";
+      return `Please wait a few minutes, then try again. If sign-in still fails, email ${AT} with the address you use for your account.`;
 
     case "login":
       if (t === 1) return "Email or password doesn’t look right. Please try again.";
       if (t === 2) return "Still not correct. Please check and try again.";
-      return "Please reset your password or chat with us for help.";
+      return `Try Send Me A New Link below to reset your password, or email ${AT} if you need help verifying your account.`;
 
     default:
       return getTieredCalmMessage("link", attempt);
@@ -151,16 +151,34 @@ export function resolveCalmAuthMessage(
 export const LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS =
   "We couldn’t sign you in. That notice sometimes appears when a password link has expired (links are only valid a short time) or sign-in was tried too quickly — not only from many wrong passwords. Tap Send Me A New Link below to get a fresh email, open it soon, then set your password. Or wait a minute and try your email and password again.";
 
+/** Second try when Supabase still reports a rate-style limit — stay actionable, no “chat”. */
+export const LOGIN_SIGNIN_RATE_LIMIT_RETRY =
+  "We still couldn’t sign you in. Sign-in can be temporarily limited for a few minutes — wait, then try again. Or tap Send Me A New Link below to reset your password; open the email soon and use the same address you used at checkout.";
+
 export function resolveLoginCalmAuthMessage(
   attempt: number,
   raw?: string | null
 ): { kind: TierKind; message: string; level: 1 | 2 | 3 } {
   const resolved = resolveCalmAuthMessage("login", attempt, raw);
-  if (resolved.kind === "rate_limit" && attempt === 1) {
+  if (resolved.kind === "rate_limit") {
+    if (attempt === 1) {
+      return {
+        kind: "login",
+        message: LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS,
+        level: 1,
+      };
+    }
+    if (attempt === 2) {
+      return {
+        kind: "login",
+        message: LOGIN_SIGNIN_RATE_LIMIT_RETRY,
+        level: 2,
+      };
+    }
     return {
       kind: "login",
-      message: LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS,
-      level: resolved.level,
+      message: `Please wait several minutes before trying again. If you still can’t access your account, email ${AT} from the address you use for Capital Bridge.`,
+      level: 3,
     };
   }
   return resolved;
@@ -182,8 +200,7 @@ export const ACCESS_SUPPORT_HINT = `Need help? Email us at ${SUPPORT_EMAIL}`;
 
 export const SESSION_SIGNED_OUT_LINE = "You’ve been signed out. Please sign in again.";
 
-export const ACCESS_REMOVED_LINE =
-  "Your access is no longer active. Chat with us or email admin@thecapitalbridge.com for help.";
+export const ACCESS_REMOVED_LINE = `Your access is no longer active. Email ${SUPPORT_EMAIL} for help.`;
 
 export const FORM_EMPTY_EMAIL = "Please enter your email.";
 

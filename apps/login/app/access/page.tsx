@@ -13,7 +13,6 @@ import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkout
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { RegisteredEmailChangeForm } from "@/components/RegisteredEmailChangeForm";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
-import { SupportEscalationActions } from "@/components/SupportEscalationActions";
 import {
   ACCESS_ERROR_PAGE_SUBTITLE,
   ACCESS_ERROR_PAGE_TITLE,
@@ -28,6 +27,7 @@ import {
   FORM_PASSWORD_TOO_SHORT,
   LOGIN_PROMPT_THEN_NEW_LINK,
   resolveCalmAuthMessage,
+  resolveLoginCalmAuthMessage,
   SESSION_SIGNED_OUT_LINE,
   SET_PASSWORD_EXPIRED_SUB,
   SET_PASSWORD_EXPIRED_TITLE,
@@ -175,7 +175,6 @@ function AccessInner() {
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendTier, setResendTier] = useState<1 | 2 | 3>(1);
   const [passwordTier, setPasswordTier] = useState<1 | 2 | 3>(1);
-  const [loginTier, setLoginTier] = useState<1 | 2 | 3>(1);
   const [errorScreenEmail, setErrorScreenEmail] = useState("");
   /** Success screen: seconds left before we suggest using the manual dashboard link. */
   const [successRedirectSeconds, setSuccessRedirectSeconds] = useState(3);
@@ -487,14 +486,12 @@ function AccessInner() {
 
     if (signErr) {
       loginFailRef.current += 1;
-      const { message, level } = resolveCalmAuthMessage("login", loginFailRef.current, signErr.message);
+      const { message } = resolveLoginCalmAuthMessage(loginFailRef.current, signErr.message);
       setLoginFieldMessage(message);
-      setLoginTier(level);
       return;
     }
 
     loginFailRef.current = 0;
-    setLoginTier(1);
     window.location.href = destination;
   }
 
@@ -727,14 +724,6 @@ function AccessInner() {
                 </form>
               </>
             )}
-            <SupportEscalationActions
-              visible={
-                resendTier >= 3 ||
-                (passwordTier >= 3 &&
-                  !!setPwApiError &&
-                  setPwApiError !== SET_PASSWORD_EMPTY_EMAIL_FOR_RESEND)
-              }
-            />
             <div className="mt-5 border-t border-cb-green/10 pt-4 sm:mt-8 sm:pt-6">
               <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
             </div>
@@ -839,8 +828,6 @@ function AccessInner() {
               </div>
             </div>
 
-            <SupportEscalationActions visible={loginTier >= 3 || resendTier >= 3} />
-
             <div className="mt-5 border-t border-cb-green/10 pt-4 sm:mt-8 sm:pt-6">
               <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
             </div>
@@ -910,8 +897,6 @@ function AccessInner() {
                 {accessEmailResendButtonLabel(resendCooldown, resendBusy)}
               </button>
             </div>
-
-            <SupportEscalationActions visible={linkTier >= 3 || resendTier >= 3} />
 
             <button
               type="button"
