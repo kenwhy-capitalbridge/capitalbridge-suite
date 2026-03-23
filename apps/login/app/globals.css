@@ -115,7 +115,7 @@
    * Always visible; smaller than primary CTAs.
    */
   .cb-btn-auth-view-plans {
-    @apply inline-flex w-full max-w-full items-center justify-center rounded-xl border border-cb-green/25 bg-transparent px-3 py-2 text-center text-xs font-medium text-cb-green transition;
+    @apply inline-flex w-full max-w-full items-center justify-center rounded-xl border border-cb-green/25 bg-transparent px-3 py-2 text-center text-xs font-medium leading-relaxed text-cb-green transition sm:text-sm;
   }
 
   .cb-btn-auth-view-plans:hover:not(:disabled) {
