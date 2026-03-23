@@ -13,6 +13,10 @@ import {
   persistCheckoutEmail,
   readPersistedCheckoutEmail,
 } from "@/lib/checkoutEmailPersistence";
+import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { SUPPORT_EMAIL } from "@/lib/sanitizeAuthErrorMessage";
+
+const PAYMENT_RETURN_HELP_LINE = `Need Help? Email us at ${SUPPORT_EMAIL}`;
 
 type BillingStatusResponse = {
   mode?: string;
@@ -87,7 +91,6 @@ function PaymentReturnContent() {
   const [resendBusy, setResendBusy] = useState(false);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -161,7 +164,6 @@ function PaymentReturnContent() {
     }
     if (resendCooldown > 0 || resendBusy) return;
     if (!billId) {
-      setResendSuccess(null);
       setResendError(
         "We couldn’t verify your session. Please restart from checkout or contact support."
       );
@@ -182,7 +184,6 @@ function PaymentReturnContent() {
         message?: string;
       };
       if (!res.ok) {
-        setResendSuccess(null);
         setResendError(
           data.error === "rate_limited"
             ? "Too many attempts. Wait a few minutes and try again."
@@ -194,14 +195,13 @@ function PaymentReturnContent() {
       }
       const delivered = data.delivery_email?.trim() ?? "";
       if (!delivered) {
-        setResendSuccess(null);
         setResendError(
           "We couldn’t verify your session. Please restart from checkout or contact support."
         );
         return;
       }
       persistCheckoutEmail(delivered);
-      setResendSuccess(`Password setup email sent to ${delivered}`);
+      setResendError(null);
       setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
       try {
         const st = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
@@ -302,9 +302,6 @@ function PaymentReturnContent() {
           <span className="font-mono text-cb-green/80">{billId}</span>
         </p>
       )}
-      {resendSuccess && (
-        <p className="cb-message-success mt-4 text-center text-sm font-medium sm:text-base">{resendSuccess}</p>
-      )}
       {resendError && (
         <p className="cb-message-error mt-3 text-center text-sm sm:text-base">{resendError}</p>
       )}
@@ -319,6 +316,12 @@ function PaymentReturnContent() {
       <button type="button" className={secondaryBtnClass} onClick={() => openWebInbox(deliveryEmail)}>
         Open Email Inbox
       </button>
+      <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
+        <CalmAuthMessage
+          text={PAYMENT_RETURN_HELP_LINE}
+          className="text-center text-sm leading-relaxed text-cb-green/55"
+        />
+      </div>
     </>
   );
 
@@ -447,7 +450,7 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Your account is ready</h1>
+            <h1 className={titleClass}>Your Account is Ready</h1>
             <p className={metaClass}>Your payment has been securely processed.</p>
             <p className={bodyClass}>We&apos;ll send your access link to:</p>
             {readyActions}
@@ -460,7 +463,7 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Your account is ready</h1>
+            <h1 className={titleClass}>Your Account is Ready</h1>
             <p className={bodyClass}>
               We couldn&apos;t load your email on this screen. Open{" "}
               <a href="/access" className="cb-link font-semibold underline" onClick={openAccessWithPersistedEmail}>
@@ -468,6 +471,12 @@ function PaymentReturnContent() {
               </a>{" "}
               and use Send password link again with the address you used at checkout.
             </p>
+            <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
+              <CalmAuthMessage
+                text={PAYMENT_RETURN_HELP_LINE}
+                className="text-center text-sm leading-relaxed text-cb-green/55"
+              />
+            </div>
           </div>
         </main>
       );
@@ -543,6 +552,14 @@ function PaymentReturnContent() {
           >
             Check status
           </button>
+        )}
+        {!deliveryEmail && (
+          <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
+            <CalmAuthMessage
+              text={PAYMENT_RETURN_HELP_LINE}
+              className="text-center text-sm leading-relaxed text-cb-green/55"
+            />
+          </div>
         )}
       </div>
     </main>
