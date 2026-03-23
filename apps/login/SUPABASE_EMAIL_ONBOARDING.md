@@ -1,6 +1,14 @@
 # Onboarding email (payment-first) — Reset Password template
 
-Payment-first onboarding **does not** use Supabase **“Confirm Sign Up”**. After Billplz payment, the API sends the same mail as **password recovery** by calling `resetPasswordForEmail` (recover endpoint), with idempotency via `payments.recovery_email_sent`.
+Payment-first onboarding **does not** use Supabase **“Confirm Sign Up”**.
+
+## Primary path: password on payment-return (no email link required)
+
+On **payment-return**, users can **set their password in the browser** via **`POST /api/billing/set-initial-password-for-bill`** (service role updates the auth user). They then sign in at **`/access`** with **email + password** on **any device or browser** — no shared cookies or magic link between checkout and login.
+
+## Backup: onboarding / recovery email
+
+The API may still send the same mail as **password recovery** by calling `resetPasswordForEmail` (recover endpoint), with idempotency via `payments.recovery_email_sent`. Use this for users who prefer a link or who did not finish on the return page.
 
 ## Dashboard: Auth → Email Templates → **Reset Password**
 
@@ -31,9 +39,9 @@ In **Authentication** → **URL Configuration** → **Redirect URLs**, allow:
 
 See also `SUPABASE_REDIRECT_URLS.md`.
 
-## Backup resend (billing flows)
+## Optional email resend (billing flows)
 
-**payment-return** and **payment-handoff** resend the same template via **`POST /api/billing/send-setup-email-for-bill`**: the server reads **`billing_sessions.email`** (and `user_id`) and calls the same GoTrue recover path as the API — **no client-side** `resetPasswordForEmail` for those pages (avoids stale email / race with wrong-email correction).
+**payment-return** and **payment-handoff** can resend the same template via **`POST /api/billing/send-setup-email-for-bill`**: the server reads **`billing_sessions.email`** (and `user_id`) and calls the same GoTrue recover path as the API — **no client-side** `resetPasswordForEmail` for those pages (avoids stale email / race with wrong-email correction).
 
 **`/access`** and **forgot-password** still call `resetPasswordForEmail` from the browser when the user types an email and there is **no** `bill_id` context.
 

@@ -26,6 +26,8 @@ const recoverByBill = new Map<string, number[]>();
 const recoverByIp = new Map<string, number[]>();
 const setupEmailByBill = new Map<string, number[]>();
 const setupEmailByIp = new Map<string, number[]>();
+const setInitialPwByBill = new Map<string, number[]>();
+const setInitialPwByIp = new Map<string, number[]>();
 
 /** Mint recovery token: per bill_id */
 export const MINT_LIMIT_PER_BILL = 24;
@@ -66,5 +68,19 @@ export const SETUP_EMAIL_IP_WINDOW_MS = 60 * 60 * 1000;
 export function allowSendSetupEmailForBill(billId: string, ip: string): boolean {
   if (!hit(setupEmailByBill, billId, SETUP_EMAIL_LIMIT_PER_BILL, SETUP_EMAIL_BILL_WINDOW_MS)) return false;
   if (!hit(setupEmailByIp, ip, SETUP_EMAIL_LIMIT_PER_IP, SETUP_EMAIL_IP_WINDOW_MS)) return false;
+  return true;
+}
+
+/** POST set-initial-password-for-bill: per bill_id */
+export const SET_INITIAL_PW_LIMIT_PER_BILL = 24;
+export const SET_INITIAL_PW_BILL_WINDOW_MS = 60 * 60 * 1000;
+
+/** POST set-initial-password-for-bill: per client IP */
+export const SET_INITIAL_PW_LIMIT_PER_IP = 80;
+export const SET_INITIAL_PW_IP_WINDOW_MS = 60 * 60 * 1000;
+
+export function allowSetInitialPasswordForBill(billId: string, ip: string): boolean {
+  if (!hit(setInitialPwByBill, billId, SET_INITIAL_PW_LIMIT_PER_BILL, SET_INITIAL_PW_BILL_WINDOW_MS)) return false;
+  if (!hit(setInitialPwByIp, ip, SET_INITIAL_PW_LIMIT_PER_IP, SET_INITIAL_PW_IP_WINDOW_MS)) return false;
   return true;
 }

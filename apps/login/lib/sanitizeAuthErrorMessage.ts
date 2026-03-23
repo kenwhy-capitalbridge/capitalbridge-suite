@@ -54,12 +54,24 @@ export function classifySupabaseRaw(raw: string | null | undefined): "network" |
     return undefined;
   }
 
+  /**
+   * GoTrue uses 429 / “too many” for several cases. Prefer specific wording over a generic
+   * rate-limit screen when the string clearly points at credentials or flow limits.
+   */
+  if (
+    m.includes("invalid") &&
+    (m.includes("credential") || m.includes("password") || m.includes("email") || m.includes("user"))
+  ) {
+    return undefined;
+  }
+
   if (
     m.includes("rate limit") ||
     m.includes("too many requests") ||
     m.includes("email rate limit") ||
     m.includes("too many tries") ||
-    m.includes("too_many")
+    m.includes("too_many") ||
+    m.includes("over_request_rate_limit")
   ) {
     return "rate_limit";
   }
@@ -130,6 +142,28 @@ export function resolveCalmAuthMessage(
   const kind: TierKind = classified ?? defaultKind;
   const message = getTieredCalmMessage(kind, attempt);
   return { kind, message, level: tierLevel(Math.max(1, attempt)) };
+}
+
+/**
+ * Shown on the first sign-in failure when the provider classifies the error as rate-limit-like.
+ * Users often see this after an expired recovery link or burst requests, not “many wrong passwords”.
+ */
+export const LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS =
+  "We couldn’t sign you in. That notice sometimes appears when a password link has expired (links are only valid a short time) or sign-in was tried too quickly — not only from many wrong passwords. Tap Send Me A New Link below to get a fresh email, open it soon, then set your password. Or wait a minute and try your email and password again.";
+
+export function resolveLoginCalmAuthMessage(
+  attempt: number,
+  raw?: string | null
+): { kind: TierKind; message: string; level: 1 | 2 | 3 } {
+  const resolved = resolveCalmAuthMessage("login", attempt, raw);
+  if (resolved.kind === "rate_limit" && attempt === 1) {
+    return {
+      kind: "login",
+      message: LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS,
+      level: resolved.level,
+    };
+  }
+  return resolved;
 }
 
 // --- Static copy: access error view & forms (edit here only) ---

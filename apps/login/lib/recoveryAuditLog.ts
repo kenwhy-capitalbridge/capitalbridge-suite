@@ -13,7 +13,13 @@ type RecoveryAuditEvent =
   | "recover_error"
   | "password_setup_bill_ok"
   | "password_setup_bill_denied"
-  | "password_setup_bill_rate_limited";
+  | "password_setup_bill_rate_limited"
+  | "access_password_reset_ok"
+  | "access_password_reset_denied"
+  | "access_password_reset_rate_limited"
+  | "password_set_bill_ok"
+  | "password_set_bill_denied"
+  | "password_set_bill_rate_limited";
 
 export function recoveryAudit(
   event: RecoveryAuditEvent,
