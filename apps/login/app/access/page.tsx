@@ -6,6 +6,7 @@ import { supabase, recoverySupabase, isSupabaseConfigured } from "@/lib/supabase
 import { getAccessRedirectUrlForAuthEmails } from "@/lib/authEmailRedirect";
 import {
   ACCESS_EMAIL_COOLDOWN_SEC,
+  ACCESS_EMAIL_SENDING_LABEL,
   accessEmailResendButtonLabel,
   accessEmailResendCooldownLabel,
 } from "@/lib/resendAccessEmail";
@@ -20,7 +21,6 @@ import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { RegisteredEmailChangeForm } from "@/components/RegisteredEmailChangeForm";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import { RecoveryActions } from "@/components/RecoveryActions";
-import { OnboardingProgressSteps } from "@/components/OnboardingProgressSteps";
 import { SMART_LOCK_MESSAGES } from "@/lib/smartLock";
 import {
   COPY_ALREADY_SIGNED_IN,
@@ -29,7 +29,6 @@ import {
   COPY_EMAIL_MISMATCH,
   COPY_EMAIL_MISMATCH_AFTER_TWO,
   COPY_FINISH_PASSWORD,
-  COPY_LOGIN_EMAIL_HINT,
   COPY_PAYMENT_PREPARING,
   COPY_RESEND_ACCESS_LINK,
   COPY_TRY_AGAIN_BTN,
@@ -63,9 +62,10 @@ const PLATFORM_URL =
   "https://platform.thecapitalbridge.com";
 
 const SETUP_PASSWORD_FIRST_MESSAGE =
-  "Your account is not set up yet. Please check your email and set your password first.";
+  "You’re almost there. Please set your password using the email we sent you.";
 
-const NO_PURCHASE_MESSAGE = "No account found. Please complete your purchase first.";
+const NO_PURCHASE_MESSAGE =
+  "It looks like you haven’t subscribed yet. Please choose a plan to get started.";
 
 const RATE_LIMIT_MESSAGE = COPY_WAIT_RESEND;
 
@@ -172,10 +172,10 @@ function PlatformAccessNotice({
   if (membershipVerifyFailed) {
     return (
       <div className="w-full border-b border-cb-gold/40 bg-amber-50 px-3 py-2.5 text-center text-cb-green sm:px-4 sm:py-3">
-        <p className="text-xs font-semibold sm:text-sm">{COPY_VERIFY_ACCESS_FAILED}</p>
+        <p className="text-sm font-semibold">{COPY_VERIFY_ACCESS_FAILED}</p>
         <button
           type="button"
-          className="mt-2 text-xs font-bold underline decoration-cb-gold-dark/60 underline-offset-2 sm:text-sm"
+          className="mt-2 text-sm font-bold underline decoration-cb-gold-dark/60 underline-offset-2"
           onClick={() => {
             window.location.href = "/access";
           }}
@@ -190,7 +190,7 @@ function PlatformAccessNotice({
 
   return (
     <div className="w-full border-b border-cb-gold/40 bg-amber-50 px-3 py-2.5 text-center text-cb-green sm:px-4 sm:py-3">
-      <p className="text-xs font-semibold sm:text-sm">{line}</p>
+      <p className="text-sm font-semibold">{line}</p>
     </div>
   );
 }
@@ -262,7 +262,7 @@ function AccessInner() {
   const loginFailRef = useRef(0);
 
   const calmNoticeClass =
-    "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-xs text-cb-green sm:px-3 sm:py-2 sm:text-sm";
+    "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-sm text-cb-green sm:px-3 sm:py-2";
 
   const destination = useMemo(() => `${PLATFORM_URL.replace(/\/$/, "")}/`, []);
   const redirectTo = useMemo(() => getAccessRedirectUrlForAuthEmails(), []);
@@ -353,7 +353,7 @@ function AccessInner() {
         setResendError(null);
         return;
       }
-      setResendError(`Too many attempts. Try again in ${waitSec} seconds`);
+      setResendError(`Too many attempts. Please try again in ${waitSec} seconds`);
     };
     tick();
     const id = window.setInterval(tick, 1000);
@@ -1015,7 +1015,6 @@ function AccessInner() {
               </>
             ) : (
               <>
-                <OnboardingProgressSteps current={3} />
                 <h1 className="cb-card-title text-center">Set your password</h1>
                 <p className="cb-card-subtitle mt-3 text-center">{COPY_FINISH_PASSWORD}</p>
 
@@ -1131,12 +1130,10 @@ function AccessInner() {
         />
         <main className="cb-auth-main bg-cb-green">
           <div className="cb-card max-w-md w-full">
-            <OnboardingProgressSteps current={4} />
             <h1 className="cb-card-title text-center">Welcome Back</h1>
             <p className="cb-card-subtitle mt-2 text-center">
               Enter your email and password to continue.
             </p>
-            <p className="mt-3 text-center text-xs text-cb-green/60 sm:text-sm">{COPY_LOGIN_EMAIL_HINT}</p>
 
             {loginFieldMessage && (
               <div className={`${calmNoticeClass} mt-4`}>
@@ -1156,7 +1153,7 @@ function AccessInner() {
               </button>
             )}
             {resendSentEmail && (
-              <div className="mt-3 space-y-1 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-xs font-normal leading-relaxed text-cb-green sm:text-sm">
+              <div className="mt-3 space-y-1 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-sm font-normal leading-relaxed text-cb-green">
                 <p>{`Email sent to ${formatDisplayEmail(resendSentEmail)}`}</p>
                 {resendCooldownSec > 0 ? <p>{accessEmailResendCooldownLabel(resendCooldownSec)}</p> : null}
               </div>
@@ -1223,14 +1220,32 @@ function AccessInner() {
                   }}
                 />
 
-                <PasswordInputWithToggle
-                  value={loginPw}
-                  onChange={setLoginPw}
-                  placeholder={PASSWORD_PLACEHOLDER}
-                  autoComplete="current-password"
-                  visible={showLoginPassword}
-                  onToggleVisible={() => setShowLoginPassword((s) => !s)}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <PasswordInputWithToggle
+                    value={loginPw}
+                    onChange={setLoginPw}
+                    placeholder={PASSWORD_PLACEHOLDER}
+                    autoComplete="current-password"
+                    visible={showLoginPassword}
+                    onToggleVisible={() => setShowLoginPassword((s) => !s)}
+                  />
+                  <p className="text-sm leading-relaxed text-cb-green/85">
+                    {resendBusy ? (
+                      <span>{ACCESS_EMAIL_SENDING_LABEL}</span>
+                    ) : resendCooldownSec > 0 ? (
+                      <span className="text-cb-green/70">{accessEmailResendCooldownLabel(resendCooldownSec)}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="cb-link p-0 text-left text-sm font-medium underline decoration-cb-gold-dark/60 underline-offset-[3px] disabled:cursor-not-allowed disabled:opacity-45 disabled:no-underline"
+                        disabled={!email.trim() || !isSupabaseConfigured}
+                        onClick={() => void handleResendFromLogin()}
+                      >
+                        Reset Password
+                      </button>
+                    )}
+                  </p>
+                </div>
               </div>
 
               <button
@@ -1238,7 +1253,7 @@ function AccessInner() {
                 type="submit"
                 disabled={loginDisabled}
               >
-                {busy ? "Signing you in…" : "Access Platform"}
+                {busy ? "Signing in…" : "Login"}
               </button>
               {(busy || resendBusy) && longActionFeedback ? (
                 <div className="mt-3 flex justify-center" role="status" aria-busy="true">
@@ -1250,18 +1265,8 @@ function AccessInner() {
               ) : null}
             </form>
 
-            <RecoveryActions
-              className="mt-5 sm:mt-8"
-              onTryAgain={() => void runLoginFlow(false)}
-              onSendNewLink={() => void handleResendFromLogin()}
-              tryAgainLabel="Try Again"
-              sendLinkLabel={accessEmailResendButtonLabel(resendCooldownSec, resendBusy)}
-              primaryDisabled={busy || !email.trim() || !loginPw}
-              secondaryDisabled={resendBusy || resendCooldownSec > 0 || !email.trim() || !isSupabaseConfigured}
-            />
-
             <div className="mt-6 border-t border-cb-gold/30 pt-5 sm:mt-10 sm:pt-8">
-              <p className="text-center text-xs leading-relaxed text-cb-green/75 sm:text-sm">
+              <p className="text-center text-sm leading-relaxed text-cb-green/75">
                 Don&apos;t have access yet?
               </p>
               <div className="mt-2 flex w-full justify-center sm:mt-3">
@@ -1350,18 +1355,9 @@ function AccessInner() {
 
             <RecoveryActions
               className="mt-4 sm:mt-6"
-              onTryAgain={() => {
-                setEmail(errorScreenEmail.trim() || email);
-                setLinkDetailMessage(null);
-                setLoginFieldMessage(null);
-                setResendSentEmail(null);
-                setResendError(null);
-                setView("login");
-              }}
               onSendNewLink={() => void handleResendFromErrorScreen()}
-              tryAgainLabel="Try Again"
               sendLinkLabel={accessEmailResendButtonLabel(resendCooldownSec, resendBusy)}
-              secondaryDisabled={resendBusy || resendCooldownSec > 0 || !errorScreenEmail.trim() || !isSupabaseConfigured}
+              disabled={resendBusy || resendCooldownSec > 0 || !errorScreenEmail.trim() || !isSupabaseConfigured}
             />
 
             <div className="mt-5 border-t border-cb-gold/30 pt-4 sm:mt-8 sm:pt-6">

@@ -31,7 +31,8 @@ export function smartLockStatus(kind: SmartLockKind, email: string): {
   const locked = row.lockUntilMs > now;
   const waitSec =
     locked && row.lockUntilMs > now ? Math.max(1, Math.ceil((row.lockUntilMs - now) / 1000)) : 0;
-  const message = locked && waitSec > 0 ? `Too many attempts. Try again in ${waitSec} seconds` : "";
+  const message =
+    locked && waitSec > 0 ? `Too many attempts. Please try again in ${waitSec} seconds` : "";
   const attemptsHint = "";
   return {
     locked,
@@ -56,5 +57,5 @@ export function smartLockRecordSuccess(kind: SmartLockKind, email: string): void
 }
 
 export const SMART_LOCK_MESSAGES = {
-  wait: "Too many attempts. Try again in 30 seconds",
+  wait: "Too many attempts. Please try again in 30 seconds",
 } as const;

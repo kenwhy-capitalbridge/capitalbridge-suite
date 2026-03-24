@@ -63,7 +63,7 @@
 
   /* Supporting text under the title */
   .cb-card-subtitle {
-    @apply mt-1 text-xs text-cb-green/80 sm:text-sm;
+    @apply mt-1 text-sm text-cb-green/80;
   }
 
   /* Inputs: white bg, soft green border, cb-green text, rounded, padding */
@@ -137,11 +137,11 @@
 
   /* Success message (e.g. after signup or password reset sent) */
   .cb-message-success {
-    @apply rounded-lg bg-cb-green/10 px-3 py-2 text-xs text-cb-green sm:px-4 sm:text-sm;
+    @apply rounded-lg bg-cb-green/10 px-3 py-2 text-sm text-cb-green sm:px-4;
   }
 
   /* Error message */
   .cb-message-error {
-    @apply rounded-lg bg-red-100 px-3 py-2 text-xs text-red-800 sm:px-4 sm:text-sm;
+    @apply rounded-lg bg-red-100 px-3 py-2 text-sm text-red-800 sm:px-4;
   }
 }

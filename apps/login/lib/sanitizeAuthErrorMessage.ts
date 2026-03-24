@@ -77,17 +77,17 @@ export function getTieredCalmMessage(kind: TierKind, attempt: number): string {
   switch (kind) {
     case "link":
       if (t === 1) {
-        return "This link has expired or has already been used. Request a new link to continue.";
+        return "This link has expired or has already been used. Please request a new one.";
       }
       if (t === 2) {
-        return "This link isn’t working. Please request a new one and try again.";
+        return "This link isn’t working. Please request a new one.";
       }
-      return "Please request a new link or return to sign in.";
+      return "Request a new link or return to sign in.";
 
     case "resend":
-      if (t === 1) return "We couldn’t send the email. Please try again.";
-      if (t === 2) return "Still not going through. Wait a moment, then try again.";
-      return "Please wait a minute, then try again. Check your spam folder if you don’t see the email.";
+      if (t === 1) return "We couldn’t send your email. Please try again.";
+      if (t === 2) return "Still not sent. Please wait a moment and try again.";
+      return "Please wait a moment, then try again. Check your spam folder if needed.";
 
     case "password":
       if (t === 1) return "We couldn’t update your password. Please try again.";
@@ -100,19 +100,19 @@ export function getTieredCalmMessage(kind: TierKind, attempt: number): string {
       return "Please try again later.";
 
     case "network":
-      if (t === 1) return "Connection issue. Please check your internet and try again.";
-      if (t === 2) return "Still not connecting. Try again in a moment.";
-      return "Please check your connection or try again later.";
+      if (t === 1) return "Please check your connection and try again.";
+      if (t === 2) return "Still not working. Please try again shortly.";
+      return "Please check your connection and try again later.";
 
     case "rate_limit":
-      if (t === 1) return "Too many attempts. Please wait a moment before trying again.";
+      if (t === 1) return "Too many attempts. Please wait a moment.";
       if (t === 2) return "Please wait a minute, then try again.";
-      return "Please wait a few minutes before trying again.";
+      return "Please wait a few minutes, then try again.";
 
     case "login":
-      if (t === 1) return "Your email or password may be incorrect. Please try again.";
-      if (t === 2) return "Still not correct. Please check your details and try again.";
-      return "Reset your password using “Send A New Link”.";
+      if (t === 1) return "Your email or password doesn’t look right. Please try again.";
+      if (t === 2) return "Still not working. Please try again or reset your password.";
+      return "You can reset your password using “Send A New Link”.";
 
     default:
       return getTieredCalmMessage("link", attempt);
@@ -135,13 +135,12 @@ export function resolveCalmAuthMessage(
 
 /** First sign-in failure when provider looks like rate-limit (often wrong password or throttle). */
 export const LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS =
-  "We couldn’t sign you in. Your email or password may be incorrect, or your link may have expired. Try again, or use “Send A New Link” to reset your password.";
+  "We couldn’t sign you in. Please try again, or use “Send A New Link” to reset your password.";
 
 export const LOGIN_SIGNIN_RATE_LIMIT_RETRY =
-  "We still couldn’t sign you in. This can happen after several attempts. Wait a minute, then try again, or reset your password using “Send A New Link”.";
+  "Still not working. Please try again or use “Send A New Link” to reset your password.";
 
-export const LOGIN_SIGNIN_RATE_LIMIT_FINAL =
-  "Please wait a few minutes before trying again. If you still can’t sign in, reset your password using “Send A New Link”.";
+export const LOGIN_SIGNIN_RATE_LIMIT_FINAL = "Please wait a few minutes, then try again.";
 
 export function resolveLoginCalmAuthMessage(
   attempt: number,
@@ -190,19 +189,19 @@ export const ACCESS_SUPPORT_ALERT_HINT = "Need help? Contact us as below.";
 
 export const SESSION_SIGNED_OUT_LINE = "You’ve been signed out. Please sign in again.";
 
-export const ACCESS_REMOVED_LINE = "We couldn't confirm access. Please log in again.";
+export const ACCESS_REMOVED_LINE = "We couldn’t confirm your access. Please try again.";
 
 export const FORM_EMPTY_EMAIL = "Please enter your email.";
 
 export const FORM_PASSWORD_TOO_SHORT = "Your password must be at least 6 characters.";
 
-export const FORM_PASSWORD_MISMATCH = "Passwords do not match.";
+export const FORM_PASSWORD_MISMATCH = "Your passwords don’t match. Please try again.";
 
-export const FORM_COMPLETE_TO_CONTINUE = "Please complete all required fields to continue.";
+export const FORM_COMPLETE_TO_CONTINUE = "Please complete all fields to continue.";
 
-export const LOGIN_PROMPT_THEN_NEW_LINK = "Enter your email, then tap “Send A New Link”.";
+export const LOGIN_PROMPT_THEN_NEW_LINK = "Enter your email and tap “Reset Password”.";
 
-export const FORM_EMAIL_INVALID = "Please enter a valid email address.";
+export const FORM_EMAIL_INVALID = "Please enter a valid email.";
 
 export const EMAIL_ON_PAYMENT_SAME = "This is already the email used for this payment.";
 

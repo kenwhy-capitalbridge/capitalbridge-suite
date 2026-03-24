@@ -24,7 +24,7 @@ const btnPrimary =
   "cb-btn-primary w-full font-semibold transition hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100";
 
 const calmNoticeClass =
-  "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-xs text-cb-green sm:px-3 sm:py-2 sm:text-sm";
+  "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-sm text-cb-green sm:px-3 sm:py-2";
 
 /** Forgot-password page — primary action label separate from Account Access resend. */
 function forgotPasswordActionLabel(cooldownSec: number, busy: boolean): string {

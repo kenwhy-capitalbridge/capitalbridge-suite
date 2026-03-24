@@ -12,7 +12,11 @@ import {
   CHECKOUT_ERROR_NETWORK,
   CHECKOUT_ERROR_START_PAYMENT,
 } from "@/lib/checkoutMessages";
-import { ACCESS_EMAIL_FIELD_LABEL, ACCESS_SUPPORT_HINT } from "@/lib/sanitizeAuthErrorMessage";
+import {
+  ACCESS_EMAIL_FIELD_LABEL,
+  ACCESS_SUPPORT_HINT,
+  FORM_EMAIL_INVALID,
+} from "@/lib/sanitizeAuthErrorMessage";
 
 /** Assistive only — common domain typos (does not block submit). */
 function getEmailTypoSuggestion(raw: string): string | null {
@@ -73,7 +77,7 @@ function CheckoutContent() {
   function validateEmail(value: string): boolean {
     const t = value.trim().toLowerCase();
     if (!t || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) {
-      setEmailFieldError("Please enter a valid email address.");
+      setEmailFieldError(FORM_EMAIL_INVALID);
       return false;
     }
     setEmailFieldError(null);

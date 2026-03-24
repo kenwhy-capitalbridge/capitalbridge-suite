@@ -15,7 +15,6 @@ import {
   readPersistedCheckoutEmail,
 } from "@/lib/checkoutEmailPersistence";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
-import { OnboardingProgressSteps } from "@/components/OnboardingProgressSteps";
 import {
   COPY_EMAIL_NOT_RECEIVED_FALLBACK,
   COPY_EMAIL_TIMING_HINT,
@@ -388,7 +387,6 @@ function PaymentReturnContent() {
   /** Ready phase: display email from finalData only (never localStorage). */
   const readyActions = (
     <>
-      <OnboardingProgressSteps current={2} />
       <p className={`${bodyClass} font-medium`}>
         Access will be sent to: {deliveryEmail ? deliveryEmail : "—"}
       </p>
@@ -471,7 +469,6 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <OnboardingProgressSteps current={1} />
             <h1 className={titleClass}>Payment received</h1>
             <p className={bodyClass}>
               Access will be sent to: {deliveryEmail ? formatDisplayEmail(deliveryEmail) : "—"}
@@ -490,7 +487,6 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <OnboardingProgressSteps current={1} />
             <h1 className={titleClass}>Payment received</h1>
             <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p>
             {statusActionSlow ? (
@@ -553,7 +549,6 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <OnboardingProgressSteps current={1} />
             <h1 className={titleClass}>Payment received</h1>
             <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p>
             {billId ? <p className={metaClass}>Bill ID: {billId}</p> : null}
@@ -583,8 +578,7 @@ function PaymentReturnContent() {
       <div className={cardClass}>
         <h1 className={titleClass}>Payment pending</h1>
         <p className={bodyClass}>
-          We couldn&apos;t confirm payment from this page yet. When your email appears below, use Send Password Setup
-          Email to get a link — even if the first email never arrived.
+          We&apos;re confirming your payment. Once your email appears, send a new link.
         </p>
         {billId && (
           <p className={metaClass}>
