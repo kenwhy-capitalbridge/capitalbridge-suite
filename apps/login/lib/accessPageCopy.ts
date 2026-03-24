@@ -8,6 +8,6 @@ export const PASSWORD_REQUIREMENTS_COPY =
 
 export const PASSWORD_BUTTON_LOADING = "Setting your password…";
 
-export const PASSWORD_BUTTON = "Set password and continue";
+export const PASSWORD_BUTTON = "Set Password & Continue";
 
 export const PASSWORD_PLACEHOLDER = "Enter your password";

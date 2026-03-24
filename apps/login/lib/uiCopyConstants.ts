@@ -20,8 +20,6 @@ export const COPY_RETRY_NOW = "Try Again Now";
 
 export const COPY_EMAIL_TIMING_HINT = "Takes about 10\u201330 seconds";
 
-export const COPY_PAYMENT_RECOVERY_NUDGE = "If this takes too long, click again";
-
 export const COPY_YOURE_ALL_SET = "You're all set";
 
 export const COPY_CONFIRM_ACCESS_TIMEOUT = "Please sign in again.";

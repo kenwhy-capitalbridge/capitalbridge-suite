@@ -1015,7 +1015,7 @@ function AccessInner() {
               </>
             ) : (
               <>
-                <h1 className="cb-card-title text-center">Set your password</h1>
+                <h1 className="cb-card-title text-center">Set Your Password</h1>
                 <p className="cb-card-subtitle mt-3 text-center">{COPY_FINISH_PASSWORD}</p>
 
                 {setPwApiError && (
@@ -1097,16 +1097,6 @@ function AccessInner() {
                     <p className="text-center text-sm text-cb-green/75">{FORM_COMPLETE_TO_CONTINUE}</p>
                   )}
                 </form>
-                <button
-                  type="button"
-                  className="cb-btn-secondary mt-4 w-full font-semibold"
-                  disabled={resendBusy || resendCooldownSec > 0 || !isSupabaseConfigured}
-                  onClick={() => void sendAccessEmail(readPersistedCheckoutEmail() || "")}
-                >
-                  {resendBusy || resendCooldownSec > 0
-                    ? accessEmailResendButtonLabel(resendCooldownSec, resendBusy)
-                    : COPY_RESEND_ACCESS_LINK}
-                </button>
               </>
             )}
             <div className="mt-5 border-t border-cb-gold/30 pt-4 sm:mt-8 sm:pt-6">

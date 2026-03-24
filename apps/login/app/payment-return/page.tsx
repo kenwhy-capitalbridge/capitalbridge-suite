@@ -20,7 +20,6 @@ import {
   COPY_EMAIL_TIMING_HINT,
   COPY_GLOBAL_ERROR,
   COPY_PAYMENT_PREPARING,
-  COPY_PAYMENT_RECOVERY_NUDGE,
   COPY_RETRY_NOW,
   COPY_STILL_CHECKING,
 } from "@/lib/uiCopyConstants";
@@ -390,7 +389,6 @@ function PaymentReturnContent() {
       <p className={`${bodyClass} font-medium`}>
         Access will be sent to: {deliveryEmail ? deliveryEmail : "—"}
       </p>
-      <p className={bodyClass}>Click below to get your access link</p>
       {accessLinkAck ? (
         <div className={`${bodyClass} space-y-1`}>
           <p>Email sent. Check your inbox.</p>
@@ -408,7 +406,6 @@ function PaymentReturnContent() {
       >
         {sendMeMyAccessLinkLabel(resendBusy, resendCooldownSec)}
       </button>
-      <p className="mt-2 text-center text-xs leading-relaxed text-cb-green/60 sm:text-sm">{COPY_PAYMENT_RECOVERY_NUDGE}</p>
     </>
   );
 
