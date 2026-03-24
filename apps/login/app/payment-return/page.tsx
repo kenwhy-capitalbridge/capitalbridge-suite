@@ -60,7 +60,7 @@ const shellClass = "cb-auth-main";
 const cardClass = "cb-card w-full max-w-md";
 const titleClass = "cb-card-title text-center";
 const bodyClass = "mt-2 text-center text-sm text-cb-green/85 sm:text-base";
-const metaClass = "mt-2 text-center text-xs text-cb-green/70 sm:text-sm";
+const metaClass = "mt-2 text-center text-sm text-cb-green/70";
 
 function formatDisplayEmail(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
@@ -469,7 +469,7 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Payment received</h1>
+            <h1 className={titleClass}>Payment Received</h1>
             <p className={bodyClass}>
               Access will be sent to: {deliveryEmail ? formatDisplayEmail(deliveryEmail) : "—"}
             </p>
@@ -487,7 +487,7 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Payment received</h1>
+            <h1 className={titleClass}>Payment Received</h1>
             <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p>
             {statusActionSlow ? (
               <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
@@ -515,7 +515,7 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Payment received</h1>
+            <h1 className={titleClass}>Payment Received</h1>
             {readyActions}
           </div>
         </main>
@@ -549,7 +549,7 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Payment received</h1>
+            <h1 className={titleClass}>Payment Received</h1>
             <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p>
             {billId ? <p className={metaClass}>Bill ID: {billId}</p> : null}
             <button type="button" className={primaryBtnClass} onClick={handleCheckStatusAgain}>
