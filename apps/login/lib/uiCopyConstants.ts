@@ -26,7 +26,7 @@ export const COPY_YOURE_ALL_SET = "You're all set";
 
 export const COPY_CONFIRM_ACCESS_TIMEOUT = "Please sign in again.";
 
-export const COPY_PAYMENT_PREPARING = "Payment detected. Preparing your access…";
+export const COPY_PAYMENT_PREPARING = "Payment confirmed, thank you! Preparing your access...";
 
 export const COPY_GLOBAL_ERROR = "Something went wrong. Please try again.";
 
