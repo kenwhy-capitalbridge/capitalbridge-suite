@@ -101,6 +101,7 @@ export async function POST(req: Request) {
           user_id: user.id,
           email: user.email ?? "",
           plan_id: planRow.id,
+          plan: planRow.slug,
           status: "pending",
           payment_attempt_count: 1,
           updated_at: now.toISOString(),

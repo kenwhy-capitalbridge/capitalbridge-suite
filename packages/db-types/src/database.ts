@@ -69,6 +69,8 @@ export type Database = {
           id: string;
           user_id: string | null;
           plan_id: string;
+          /** Denormalized `plans.slug` (e.g. trial); required alongside plan_id on insert. */
+          plan: string;
           status: "pending" | "bill_created" | "paid";
           bill_id: string | null;
           payment_url: string | null;
