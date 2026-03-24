@@ -87,6 +87,16 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["billing_sessions"]["Row"]>;
         Relationships: [];
       };
+      user_active_session: {
+        Row: {
+          user_id: string;
+          session_id: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["user_active_session"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["user_active_session"]["Row"]>;
+        Relationships: [];
+      };
       active_memberships: {
         Row: {
           user_id: string;
@@ -105,6 +115,7 @@ export type Database = {
           payment_status: string | null;
           pending_plan: string | null;
           email: string | null;
+          plan_change_intent: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;

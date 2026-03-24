@@ -3,7 +3,7 @@ import { createServiceClient } from "@cb/supabase/service";
 
 export const runtime = "nodejs";
 
-/** In-place auth email change; lookup is always by `bill_id` → billing row, never by email alone. */
+/** In-place auth email change; lookup is by `bill_id` → billing_sessions only. */
 
 function normalizeEmail(s: string) {
   return s.trim().toLowerCase();
@@ -36,38 +36,18 @@ export async function POST(req: Request) {
     .eq("bill_id", billId)
     .maybeSingle();
 
-  let userId: string | null = null;
-  let oldEmail: string | null = null;
-  let recordMode: "billing_sessions" | "pending_bills" | null = null;
-
-  if (sessionByBill) {
-    recordMode = "billing_sessions";
-    oldEmail = sessionByBill.email ? normalizeEmail(sessionByBill.email) : null;
-    if (sessionByBill.user_id) {
-      userId = sessionByBill.user_id;
-    } else if (oldEmail) {
-      const { data: listData } = await svc.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      userId =
-        listData?.users?.find((u) => normalizeEmail(u.email ?? "") === oldEmail)?.id ?? null;
-    }
-  } else {
-    const { data: pendingBill } = await svc
-      .schema("public")
-      .from("pending_bills")
-      .select("id, email, plan_id, created_at")
-      .eq("billplz_bill_id", billId)
-      .maybeSingle();
-
-    if (pendingBill?.email) {
-      recordMode = "pending_bills";
-      oldEmail = normalizeEmail(pendingBill.email);
-      const { data: listData } = await svc.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      userId =
-        listData?.users?.find((u) => normalizeEmail(u.email ?? "") === oldEmail)?.id ?? null;
-    }
+  if (!sessionByBill) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
-  if (!userId || !recordMode) {
+  const oldEmail = sessionByBill.email ? normalizeEmail(sessionByBill.email) : null;
+  let userId: string | null = (sessionByBill.user_id as string | null) ?? null;
+  if (!userId && oldEmail) {
+    const { data: listData } = await svc.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    userId = listData?.users?.find((u) => normalizeEmail(u.email ?? "") === oldEmail)?.id ?? null;
+  }
+
+  if (!userId) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
@@ -86,15 +66,7 @@ export async function POST(req: Request) {
     );
   }
 
-  if (recordMode === "billing_sessions") {
-    await svc.schema("public").from("billing_sessions").update({ email: newEmail }).eq("bill_id", billId);
-  } else {
-    await svc
-      .schema("public")
-      .from("pending_bills")
-      .update({ email: newEmail })
-      .eq("billplz_bill_id", billId);
-  }
+  await svc.schema("public").from("billing_sessions").update({ email: newEmail }).eq("bill_id", billId);
 
   return NextResponse.json({ ok: true });
 }

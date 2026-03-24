@@ -154,40 +154,6 @@ export async function performAdminBillingEmailRecovery(
     };
   }
 
-  const { data: paymentRow } = await svc
-    .schema("public")
-    .from("payments")
-    .select("id, membership_id, billplz_bill_id, status")
-    .eq("billplz_bill_id", billId)
-    .maybeSingle();
-
-  if (paymentRow?.id) {
-    if (paymentRow.status !== "paid") {
-      return {
-        ok: false,
-        httpStatus: 400,
-        error: "payment_row_not_paid",
-        bill_id: billId,
-        new_email: newEmail,
-        old_email: registeredEmail,
-        old_user_id: oldUserId,
-        membership_id: membershipId,
-      };
-    }
-    if (paymentRow.membership_id != null && String(paymentRow.membership_id) !== String(membershipId)) {
-      return {
-        ok: false,
-        httpStatus: 409,
-        error: "payment_membership_mismatch",
-        bill_id: billId,
-        new_email: newEmail,
-        old_email: registeredEmail,
-        old_user_id: oldUserId,
-        membership_id: membershipId,
-      };
-    }
-  }
-
   if (registeredEmail && newEmail === registeredEmail) {
     const authUid = await findUserIdByEmail(svc, newEmail);
     if (!authUid) {
@@ -322,10 +288,6 @@ export async function performAdminBillingEmailRecovery(
     };
   }
 
-  if (paymentRow?.id) {
-    await svc.schema("public").from("payments").update({ user_id: targetUserId }).eq("billplz_bill_id", billId);
-  }
-
   await svc
     .schema("public")
     .from("billing_sessions")
@@ -340,7 +302,7 @@ export async function performAdminBillingEmailRecovery(
     .schema("public")
     .from("profiles")
     .upsert(
-      { id: targetUserId, email: newEmail, payment_status: "active", pending_plan: null },
+      { id: targetUserId, email: newEmail },
       { onConflict: "id" }
     );
 

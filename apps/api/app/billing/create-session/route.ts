@@ -40,124 +40,9 @@ function getPaymentFirstRedirectUrl(): string {
   return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
 }
 
-function getBillplzCheckoutUrl(billId: string): string {
-  return `https://billplz.com/bills/${billId}`;
-}
-
-async function createPendingBillFallback(params: {
-  svc: ReturnType<typeof createServiceClient>;
-  headers: Record<string, string>;
-  email: string;
-  name: string;
-  planId: string;
-  planName: string;
-  amountCents: number;
-  billingSessionError?: { message?: string; details?: string } | null;
-}) {
-  const { svc, headers, email, name, planId, planName, amountCents, billingSessionError } = params;
-
-  const { data: existingPendingBill, error: existingPendingErr } = await svc
-    .schema("public")
-    .from("pending_bills")
-    .select("id, billplz_bill_id, created_at")
-    .eq("email", email)
-    .eq("plan_id", planId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (existingPendingErr) {
-    console.warn("[create-session] pending_bills reuse lookup failed:", existingPendingErr.message);
-  }
-
-  if (existingPendingBill?.billplz_bill_id) {
-    const checkoutUrl = getBillplzCheckoutUrl(existingPendingBill.billplz_bill_id);
-    return NextResponse.json(
-      {
-        bill_id: existingPendingBill.billplz_bill_id,
-        payment_url: checkoutUrl,
-        checkoutUrl,
-        mode: "pending_bills_reused",
-      },
-      { headers }
-    );
-  }
-
-  const { data: pendingBill, error: pendingErr } = await svc
-    .schema("public")
-    .from("pending_bills")
-    .insert({
-      email,
-      plan_id: planId,
-      name: name || email,
-    })
-    .select("id")
-    .single();
-
-  if (pendingErr || !pendingBill?.id) {
-    console.error("[create-session] pending_bills insert failed:", pendingErr, "billing_sessions error was:", billingSessionError?.message);
-    return NextResponse.json(
-      {
-        error: "session_create_failed",
-        message: "Could not create billing session. Run the payment-first migration on Supabase (billing_sessions.email, nullable user_id) and ensure pending_bills table exists.",
-        detail: pendingErr?.message ?? "pending_bills insert failed",
-        ...(billingSessionError?.message && { billing_session_error: billingSessionError.message }),
-      },
-      { status: 500, headers }
-    );
-  }
-
-  let paymentUrl: string;
-  let billId: string;
-  try {
-    const result = await createBillplzBill({
-      amountCents,
-      description: `Capital Bridge — ${planName}`,
-      email,
-      name: name || email,
-      reference1: pendingBill.id,
-      redirectUrl: getPaymentFirstRedirectUrl(),
-    });
-    paymentUrl = result.checkoutUrl;
-    billId = result.billId;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const body = err && typeof err === "object" && "body" in err ? String((err as { body?: string }).body) : undefined;
-    console.error("[create-session] Billplz fallback error:", message, body ? { billplz_response: body } : "");
-    return NextResponse.json(
-      {
-        error: "bill_creation_failed",
-        message: "Payment provider could not create the bill.",
-        ...(body && { detail: body }),
-      },
-      { status: 502, headers }
-    );
-  }
-
-  const { error: updatePendingErr } = await svc
-    .schema("public")
-    .from("pending_bills")
-    .update({ billplz_bill_id: billId })
-    .eq("id", pendingBill.id);
-
-  if (updatePendingErr) {
-    console.error("[create-session] pending_bills update failed:", updatePendingErr);
-    return NextResponse.json(
-      { error: "session_update_failed", detail: updatePendingErr.message },
-      { status: 500, headers }
-    );
-  }
-
-  return NextResponse.json(
-    { bill_id: billId, payment_url: paymentUrl, checkoutUrl: paymentUrl, mode: "pending_bills_fallback" },
-    { headers }
-  );
-}
-
 /**
  * Payment-first: create billing_sessions row with email + plan, then Billplz bill.
- * Returns payment_url for frontend redirect. No Supabase user is created here.
- * Requires BILLPLZ_API_KEY and BILLPLZ_COLLECTION_ID (loaded from env).
+ * Returns payment_url for frontend redirect.
  */
 export async function POST(req: Request) {
   const origin = req.headers.get("Origin");
@@ -208,16 +93,14 @@ export async function POST(req: Request) {
 
   if (sessionErr || !session?.id) {
     console.error("[create-session] billing_sessions insert failed:", sessionErr?.message, sessionErr?.details);
-    return createPendingBillFallback({
-      svc,
-      headers,
-      email,
-      name,
-      planId: planRow.id,
-      planName: planRow.name,
-      amountCents: planRow.price_cents,
-      billingSessionError: sessionErr ? { message: sessionErr.message, details: sessionErr.details as string } : null,
-    });
+    return NextResponse.json(
+      {
+        error: "session_create_failed",
+        message: "Could not create billing session.",
+        detail: sessionErr?.message ?? "unknown",
+      },
+      { status: 500, headers }
+    );
   }
 
   let billId: string;
@@ -235,8 +118,8 @@ export async function POST(req: Request) {
     paymentUrl = result.checkoutUrl;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const body = err && typeof err === "object" && "body" in err ? String((err as { body?: string }).body) : undefined;
-    console.error("[create-session] Billplz error:", message, body ? { billplz_response: body } : "");
+    const bodyErr = err && typeof err === "object" && "body" in err ? String((err as { body?: string }).body) : undefined;
+    console.error("[create-session] Billplz error:", message, bodyErr ? { billplz_response: bodyErr } : "");
     await svc
       .schema("public")
       .from("billing_sessions")
@@ -249,7 +132,7 @@ export async function POST(req: Request) {
       {
         error: "bill_creation_failed",
         message: "Payment provider could not create the bill.",
-        ...(body && { detail: body }),
+        ...(bodyErr && { detail: bodyErr }),
       },
       { status: 502, headers }
     );

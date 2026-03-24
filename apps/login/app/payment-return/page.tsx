@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback, useRef } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
@@ -15,6 +15,16 @@ import {
   readPersistedCheckoutEmail,
 } from "@/lib/checkoutEmailPersistence";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { OnboardingProgressSteps } from "@/components/OnboardingProgressSteps";
+import {
+  COPY_EMAIL_NOT_RECEIVED_FALLBACK,
+  COPY_EMAIL_TIMING_HINT,
+  COPY_GLOBAL_ERROR,
+  COPY_PAYMENT_PREPARING,
+  COPY_PAYMENT_RECOVERY_NUDGE,
+  COPY_RETRY_NOW,
+  COPY_STILL_CHECKING,
+} from "@/lib/uiCopyConstants";
 import {
   PAYMENT_ERROR_ACTION,
   PAYMENT_ERROR_EMAIL,
@@ -43,14 +53,19 @@ type OnboardMode = "confirmation" | "processing" | "ready";
 const primaryBtnClass =
   "cb-btn-primary w-full mt-4 text-center font-semibold disabled:cursor-not-allowed sm:mt-6";
 
-const secondaryBtnClass =
-  "cb-btn-secondary w-full mt-2 text-center font-medium sm:mt-3";
+/** Stronger emphasis for “Send Me My Access Link” only (ready phase). */
+const sendAccessLinkPrimaryBtnClass =
+  "cb-btn-primary w-full mt-4 py-3.5 text-center text-base font-semibold shadow-sm ring-1 ring-black/10 disabled:cursor-not-allowed sm:mt-6 sm:py-4";
 
 const shellClass = "cb-auth-main";
 const cardClass = "cb-card w-full max-w-md";
 const titleClass = "cb-card-title text-center";
 const bodyClass = "mt-2 text-center text-sm text-cb-green/85 sm:text-base";
 const metaClass = "mt-2 text-center text-xs text-cb-green/70 sm:text-sm";
+
+function formatDisplayEmail(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase();
+}
 
 function openWebInbox(email: string | null | undefined) {
   const domain = email?.split("@")[1]?.toLowerCase().trim() ?? "";
@@ -65,10 +80,10 @@ function openWebInbox(email: string | null | undefined) {
   window.open("https://mail.google.com/mail/u/0/#inbox", "_blank", "noopener,noreferrer");
 }
 
-function sendPasswordSetupPrimaryLabel(busy: boolean, cooldownSec: number): string {
+function sendMeMyAccessLinkLabel(busy: boolean, cooldownSec: number): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
   if (cooldownSec > 0) return accessEmailResendCooldownLabel(cooldownSec);
-  return "Send Password Setup Email";
+  return "Send Me My Access Link";
 }
 
 function openAccessWithPersistedEmail(e: React.MouseEvent<HTMLAnchorElement>) {
@@ -97,13 +112,58 @@ function PaymentReturnContent() {
 
   const [resendBusy, setResendBusy] = useState(false);
   const [resendError, setResendError] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendCooldownEndsAt, setResendCooldownEndsAt] = useState<number | null>(null);
+  const [cooldownTick, setCooldownTick] = useState(0);
+  const [accessLinkAck, setAccessLinkAck] = useState(false);
+  const [showEmailFallbackLine, setShowEmailFallbackLine] = useState(false);
+  const [initialLoadSlow, setInitialLoadSlow] = useState(false);
+  const [statusActionSlow, setStatusActionSlow] = useState(false);
+
+  const resendCooldownSec = useMemo(() => {
+    if (!resendCooldownEndsAt) return 0;
+    return Math.max(0, Math.ceil((resendCooldownEndsAt - Date.now()) / 1000));
+  }, [resendCooldownEndsAt, cooldownTick]);
 
   useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const t = window.setTimeout(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000);
-    return () => window.clearTimeout(t);
-  }, [resendCooldown]);
+    if (!resendCooldownEndsAt) return;
+    const id = window.setInterval(() => {
+      setCooldownTick((t) => t + 1);
+      if (Date.now() >= resendCooldownEndsAt) setResendCooldownEndsAt(null);
+    }, 500);
+    return () => clearInterval(id);
+  }, [resendCooldownEndsAt]);
+
+  useEffect(() => {
+    const sync = () => setCooldownTick((t) => t + 1);
+    document.addEventListener("visibilitychange", sync);
+    window.addEventListener("focus", sync);
+    return () => {
+      document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!accessLinkAck) {
+      setShowEmailFallbackLine(false);
+      return;
+    }
+    setShowEmailFallbackLine(false);
+    const t = window.setTimeout(() => setShowEmailFallbackLine(true), 12500);
+    return () => clearTimeout(t);
+  }, [accessLinkAck]);
+
+  useEffect(() => {
+    if (!loading) {
+      setInitialLoadSlow(false);
+      return;
+    }
+    const t = window.setTimeout(() => setInitialLoadSlow(true), 1000);
+    return () => {
+      clearTimeout(t);
+      setInitialLoadSlow(false);
+    };
+  }, [loading]);
 
   useEffect(() => {
     if (billId) persistBillplzBillId(billId);
@@ -158,25 +218,33 @@ function PaymentReturnContent() {
 
   const sendDisabled =
     resendBusy ||
-    resendCooldown > 0 ||
+    resendCooldownSec > 0 ||
     !isSupabaseConfigured ||
     !accountReady ||
     !billId;
 
-  const handleSendSetPasswordEmail = useCallback(async () => {
-    setResendError(null);
-    if (!isSupabaseConfigured) {
-      setResendError(PAYMENT_ERROR_NOT_CONFIGURED);
-      return;
-    }
-    if (resendCooldown > 0 || resendBusy) return;
-    if (!billId) {
-      setResendError(PAYMENT_ERROR_SESSION);
-      return;
-    }
+  const sendButtonIdleEnabled =
+    !resendBusy &&
+    resendCooldownSec <= 0 &&
+    isSupabaseConfigured &&
+    accountReady &&
+    !!billId;
 
+  const handleSendSetPasswordEmail = useCallback(async () => {
+    if (resendBusy) return;
     setResendBusy(true);
+    setResendError(null);
     try {
+      if (!isSupabaseConfigured) {
+        setResendError(PAYMENT_ERROR_NOT_CONFIGURED);
+        return;
+      }
+      if (resendCooldownEndsAt != null && Date.now() < resendCooldownEndsAt) return;
+      if (!billId) {
+        setResendError(PAYMENT_ERROR_SESSION);
+        return;
+      }
+
       const res = await fetch("/api/billing/send-setup-email-for-bill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -205,7 +273,18 @@ function PaymentReturnContent() {
       }
       persistCheckoutEmail(delivered);
       setResendError(null);
-      setResendCooldown(ACCESS_EMAIL_COOLDOWN_SEC);
+      setAccessLinkAck(true);
+      setResendCooldownEndsAt(Date.now() + ACCESS_EMAIL_COOLDOWN_SEC * 1000);
+      void fetch("/api/auth/smart-lock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "success", kind: "login", email: delivered }),
+      }).catch(() => {});
+      void fetch("/api/auth/smart-lock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "success", kind: "email_mismatch", email: delivered }),
+      }).catch(() => {});
       try {
         const st = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
           cache: "no-store",
@@ -218,7 +297,7 @@ function PaymentReturnContent() {
     } finally {
       setResendBusy(false);
     }
-  }, [resendCooldown, resendBusy, billId]);
+  }, [resendCooldownEndsAt, resendBusy, billId]);
 
   /** Phase 2: staged timing via chained setTimeouts only (no setInterval). */
   useEffect(() => {
@@ -280,51 +359,58 @@ function PaymentReturnContent() {
 
   const handleCheckStatusAgain = useCallback(() => {
     setProcessingWaitHint(false);
+    setStatusActionSlow(false);
+    const slowT = window.setTimeout(() => setStatusActionSlow(true), 1000);
     void (async () => {
-      const data = await fetchStatusOnce();
-      if (data?.account_ready) {
-        setOnboardMode("ready");
-      } else {
-        setProcessingWaitHint(true);
+      try {
+        const data = await fetchStatusOnce();
+        if (data?.account_ready) {
+          setOnboardMode("ready");
+        } else {
+          setProcessingWaitHint(true);
+        }
+      } finally {
+        window.clearTimeout(slowT);
+        setStatusActionSlow(false);
       }
     })();
   }, [fetchStatusOnce]);
 
-  /** Ready phase: display email from finalData only (never localStorage). */
-  const readyEmailLine = (
-    <p className={`${metaClass} font-medium text-cb-green`}>{deliveryEmail ? deliveryEmail : "—"}</p>
-  );
+  const runFetchStatusWithSlow = useCallback(() => {
+    setStatusActionSlow(false);
+    const slowT = window.setTimeout(() => setStatusActionSlow(true), 1000);
+    void fetchStatusOnce().finally(() => {
+      window.clearTimeout(slowT);
+      setStatusActionSlow(false);
+    });
+  }, [fetchStatusOnce]);
 
+  /** Ready phase: display email from finalData only (never localStorage). */
   const readyActions = (
     <>
-      {readyEmailLine}
-      {billId && (
-        <p className={metaClass}>
-          Payment reference — save your Bill ID if support asks:
-          <br />
-          <span className="font-mono text-cb-green/80">{billId}</span>
-        </p>
-      )}
+      <OnboardingProgressSteps current={2} />
+      <p className={`${bodyClass} font-medium`}>
+        Access will be sent to: {deliveryEmail ? deliveryEmail : "—"}
+      </p>
+      <p className={bodyClass}>Click below to get your access link</p>
+      {accessLinkAck ? (
+        <div className={`${bodyClass} space-y-1`}>
+          <p>Email sent. Check your inbox.</p>
+          <p>{COPY_EMAIL_TIMING_HINT}</p>
+        </div>
+      ) : null}
       {resendError && (
         <p className="cb-message-error mt-3 text-center text-sm sm:text-base">{resendError}</p>
       )}
       <button
         type="button"
-        className={primaryBtnClass}
+        className={sendAccessLinkPrimaryBtnClass}
         disabled={sendDisabled}
         onClick={() => void handleSendSetPasswordEmail()}
       >
-        {sendPasswordSetupPrimaryLabel(resendBusy, resendCooldown)}
+        {sendMeMyAccessLinkLabel(resendBusy, resendCooldownSec)}
       </button>
-      <button type="button" className={secondaryBtnClass} onClick={() => openWebInbox(deliveryEmail)}>
-        Open Email Inbox
-      </button>
-      <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
-        <CalmAuthMessage
-          text={PAYMENT_HELP_LINE}
-          className="text-center text-sm leading-relaxed text-cb-green/55"
-        />
-      </div>
+      <p className="mt-2 text-center text-xs leading-relaxed text-cb-green/60 sm:text-sm">{COPY_PAYMENT_RECOVERY_NUDGE}</p>
     </>
   );
 
@@ -366,6 +452,14 @@ function PaymentReturnContent() {
         <div className={cardClass}>
           <h1 className={titleClass}>One moment</h1>
           <p className={bodyClass}>We&apos;re loading your payment details.</p>
+          {initialLoadSlow ? (
+            <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
+              <span
+                className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
+                aria-hidden
+              />
+            </div>
+          ) : null}
         </div>
       </main>
     );
@@ -377,18 +471,16 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Payment Successful</h1>
-            <p className={bodyClass}>A receipt has been sent to your email.</p>
+            <OnboardingProgressSteps current={1} />
+            <h1 className={titleClass}>Payment received</h1>
+            <p className={bodyClass}>
+              Access will be sent to: {deliveryEmail ? formatDisplayEmail(deliveryEmail) : "—"}
+            </p>
+            {!deliveryEmail ? <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p> : null}
             {paidAt ? <p className={metaClass}>Paid at: {paidAt}</p> : null}
             <button type="button" className={primaryBtnClass} onClick={handleContinueFromConfirmation}>
-              Continue to Set Up Your Account
+              Continue
             </button>
-            <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
-              <CalmAuthMessage
-                text={PAYMENT_HELP_LINE}
-                className="text-center text-sm leading-relaxed text-cb-green/55"
-              />
-            </div>
           </div>
         </main>
       );
@@ -398,57 +490,25 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Setting up your access</h1>
-            <p className={bodyClass}>Please keep this page open for a moment.</p>
-            <ul className="mt-4 list-none space-y-3 text-left text-sm sm:mt-6 sm:space-y-4 sm:text-base">
-              <li
-                className={
-                  stageIndex >= 1 ? "text-cb-green/85" : "font-medium text-cb-green"
-                }
-              >
-                {stageIndex >= 1 ? "✓ Payment received" : "Payment received"}
-              </li>
-              <li
-                className={
-                  stageIndex >= 2
-                    ? "text-cb-green/85"
-                    : stageIndex === 1
-                      ? "font-medium text-cb-green"
-                      : "text-cb-green/50"
-                }
-              >
-                {stageIndex >= 2
-                  ? "✓ Securing your account and verifying your access"
-                  : "🔒 Securing your account and verifying your access"}
-              </li>
-              <li
-                className={
-                  stageIndex >= 3
-                    ? "text-cb-green/85"
-                    : stageIndex === 2
-                      ? "font-medium text-cb-green"
-                      : "text-cb-green/50"
-                }
-              >
-                {stageIndex >= 3 ? "✓ Finalising your setup" : "⏳ Finalising your setup"}
-              </li>
-            </ul>
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-cb-green/15 sm:mt-6">
-              <div
-                className="h-full rounded-full bg-cb-gold transition-[width] duration-1000 ease-out"
-                style={{ width: `${progressWidth}%` }}
-              />
-            </div>
-            {processingWaitHint && (
+            <OnboardingProgressSteps current={1} />
+            <h1 className={titleClass}>Payment received</h1>
+            <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p>
+            {statusActionSlow ? (
+              <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
+                <span
+                  className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
+                  aria-hidden
+                />
+              </div>
+            ) : null}
+            {processingWaitHint ? (
               <>
-                <p className={`${bodyClass} mt-4 sm:mt-6`}>
-                  We&apos;re still confirming your payment with your bank. This can take a little longer.
-                </p>
+                <p className={`${bodyClass} mt-4 sm:mt-6`}>{COPY_STILL_CHECKING}</p>
                 <button type="button" className={primaryBtnClass} onClick={handleCheckStatusAgain}>
-                  Check status
+                  {COPY_RETRY_NOW}
                 </button>
               </>
-            )}
+            ) : null}
           </div>
         </main>
       );
@@ -459,9 +519,7 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Your Account is Ready</h1>
-            <p className={metaClass}>Your payment has been securely processed.</p>
-            <p className={bodyClass}>We&apos;ll send your access link to:</p>
+            <h1 className={titleClass}>Payment received</h1>
             {readyActions}
           </div>
         </main>
@@ -495,13 +553,12 @@ function PaymentReturnContent() {
       return (
         <main className={shellClass}>
           <div className={cardClass}>
-            <h1 className={titleClass}>Almost there</h1>
-            <p className={bodyClass}>
-              Your payment was received, but we&apos;re still finishing account setup. Tap below to refresh status.
-            </p>
+            <OnboardingProgressSteps current={1} />
+            <h1 className={titleClass}>Payment received</h1>
+            <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p>
             {billId ? <p className={metaClass}>Bill ID: {billId}</p> : null}
             <button type="button" className={primaryBtnClass} onClick={handleCheckStatusAgain}>
-              Check status
+              {COPY_RETRY_NOW}
             </button>
           </div>
         </main>
@@ -511,12 +568,9 @@ function PaymentReturnContent() {
     return (
       <main className={shellClass}>
         <div className={cardClass}>
-          <h1 className={titleClass}>One moment</h1>
-          <p className={bodyClass}>
-            Something unexpected happened. Use Refresh below or return from checkout if this keeps happening.
-          </p>
+          <h1 className={titleClass}>{COPY_GLOBAL_ERROR}</h1>
           <button type="button" className={primaryBtnClass} onClick={() => window.location.reload()}>
-            Refresh page
+            Try Again
           </button>
         </div>
       </main>
@@ -552,13 +606,19 @@ function PaymentReturnContent() {
           </p>
         )}
         {!deliveryEmail && (
-          <button
-            type="button"
-            className={primaryBtnClass}
-            onClick={() => void fetchStatusOnce()}
-          >
-            Check status
-          </button>
+          <>
+            {statusActionSlow ? (
+              <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
+                <span
+                  className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
+                  aria-hidden
+                />
+              </div>
+            ) : null}
+            <button type="button" className={primaryBtnClass} onClick={() => void runFetchStatusWithSlow()}>
+              Check status
+            </button>
+          </>
         )}
         {!deliveryEmail && (
           <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">

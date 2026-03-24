@@ -109,8 +109,6 @@ export async function POST(req: Request) {
       {
         id: userId,
         email,
-        payment_status: "pending",
-        pending_plan: planRow.slug,
       },
       { onConflict: "id" }
     );
@@ -121,7 +119,6 @@ export async function POST(req: Request) {
     .insert({
       user_id: userId,
       email,
-      plan: planRow.slug,
       plan_id: planRow.id,
       status: "pending",
       payment_attempt_count: 0,

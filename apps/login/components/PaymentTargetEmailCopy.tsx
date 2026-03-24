@@ -8,18 +8,21 @@ export function PaymentTargetEmailLine({
   className = "",
 }: {
   email: string | null | undefined;
-  /** @deprecated Kept for call-site compatibility; display is always "Registered Email:" */
+  /** @deprecated Kept for call-site compatibility; display is always "Registered email:" */
   variant?: "pending" | "sent";
   className?: string;
 }) {
   const em = email?.trim();
   if (!em) return null;
 
-  const emailMark = <span className="font-bold text-cb-green">{em}</span>;
+  const lower = em.toLowerCase();
 
   return (
-    <p className={`text-xs leading-relaxed text-cb-green/80 sm:text-sm ${className}`.trim()}>
-      Registered Email: {emailMark}.
+    <p className={`text-left text-xs leading-relaxed text-cb-green/80 sm:text-sm ${className}`.trim()}>
+      Registered email:{" "}
+      <a href={`mailto:${lower}`} className="cb-link font-bold text-cb-green underline">
+        {lower}
+      </a>
     </p>
   );
 }

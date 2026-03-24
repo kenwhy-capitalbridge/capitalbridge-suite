@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { isSupabaseConfigured, recoverySupabase, supabase } from "@/lib/supabaseClient";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import {
+  ACCESS_SUPPORT_ALERT_HINT,
   ACCESS_SUPPORT_HINT,
   DEV_PREVIEW_NO_EMAIL,
   EMAIL_CHANGE_CHECK_INBOX,
@@ -14,10 +15,12 @@ import {
 } from "@/lib/sanitizeAuthErrorMessage";
 
 const inputClass =
-  "w-full rounded-xl border border-cb-green/20 bg-white px-3 py-2.5 text-sm text-cb-green placeholder-cb-green/50 shadow-sm sm:px-4 sm:py-3 sm:text-base";
+  "w-full rounded-xl border border-cb-green/20 bg-white px-3 py-2.5 text-sm text-cb-green placeholder:text-cb-green/50 shadow-sm sm:px-4 sm:py-3 sm:text-base";
 
 const calmNoticeClass =
   "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-xs text-cb-green sm:px-3 sm:py-2 sm:text-sm";
+
+const labelClass = "block text-left text-sm font-medium text-cb-green";
 
 /**
  * Lets the user request an email change: server-backed when `billId` is present,
@@ -122,12 +125,14 @@ export function RegisteredEmailChangeForm({
   void _checkoutPlan;
 
   return (
-    <div className={["mt-4 w-full text-left", className].filter(Boolean).join(" ")}>
-      <label htmlFor="registered-email-reset" className="block text-sm font-medium text-cb-green/80">
-        Reset email address
+    <div className={["mt-8 w-full border-t border-cb-gold/30 pt-6 text-left", className].filter(Boolean).join(" ")}>
+      <p className="font-serif text-base font-semibold text-cb-green sm:text-lg">Change email (optional)</p>
+
+      <label htmlFor="registered-email-new" className={`${labelClass} mt-5`}>
+        New email:
       </label>
       <input
-        id="registered-email-reset"
+        id="registered-email-new"
         type="email"
         autoComplete="email"
         placeholder="new.email@example.com"
@@ -146,7 +151,7 @@ export function RegisteredEmailChangeForm({
         onClick={() => void submit()}
         disabled={busy}
       >
-        {busy ? "Sending…" : "Send email change"}
+        {busy ? "Updating…" : "Update Email"}
       </button>
       {message && (
         <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-sm font-medium text-cb-green">
@@ -154,13 +159,14 @@ export function RegisteredEmailChangeForm({
         </p>
       )}
       {error && (
-        <div className={`${calmNoticeClass} mt-3 text-center`}>
+        <div className={`${calmNoticeClass} mt-3 text-left`}>
           <CalmAuthMessage text={error} className="text-sm leading-relaxed text-cb-green" />
+          <p className="mt-2 text-xs leading-relaxed text-cb-green/75">{ACCESS_SUPPORT_ALERT_HINT}</p>
         </div>
       )}
       {showSupportHint && (
-        <div className="mt-6 border-t border-cb-green/10 pt-5">
-          <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+        <div className="mt-6 border-t border-cb-gold/30 pt-5">
+          <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm font-normal leading-relaxed text-cb-green/55" />
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { createServiceClient } from "@cb/supabase/service";
 import { sendPasswordSetupEmailToUser } from "@/lib/sendPasswordSetupEmailServer";
 import { allowSendSetupEmailForBill } from "@/lib/recoveryRateLimit";
 import { getClientIp, isAllowedRecoveryOrigin, recoveryAudit } from "@/lib/recoveryAuditLog";
+import { authEventLog } from "@/lib/authEventLog";
 
 export const runtime = "nodejs";
 
@@ -118,6 +119,8 @@ export async function POST(req: Request) {
     ip,
     email_domain: emailDomain(emailRaw),
   });
+
+  authEventLog("email_sent", { channel: "password_setup_bill", user_id_prefix: userId.slice(0, 8) });
 
   return NextResponse.json({ ok: true, delivery_email: emailRaw });
 }

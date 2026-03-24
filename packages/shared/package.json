@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./urls": "./src/urls.ts",
-    "./plans": "./src/plans.ts"
+    "./plans": "./src/plans.ts",
+    "./sessionFingerprint": "./src/sessionFingerprint.ts"
   }
 }

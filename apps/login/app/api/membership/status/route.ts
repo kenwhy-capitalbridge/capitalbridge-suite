@@ -4,8 +4,7 @@ import { validateSession } from "@cb/auth/session";
 
 /**
  * GET /api/membership/status
- * Returns membership status, plan, and expires_at for the current user.
- * Used by middleware and frontends to enforce access control.
+ * Returns membership status for the current user (memberships.status = active only).
  */
 export async function GET(request: Request) {
   try {
@@ -37,11 +36,8 @@ export async function GET(request: Request) {
       });
     }
 
-    const now = new Date().toISOString();
     const expiresAt = membership.expires_at ?? membership.end_date;
-    const active =
-      (membership.start_date != null || membership.started_at != null) &&
-      (expiresAt == null || expiresAt > now);
+    const active = membership.status === "active";
 
     let planSlug: string | null = null;
     if (membership.plan_id) {

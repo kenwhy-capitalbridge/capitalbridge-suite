@@ -2,16 +2,17 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { getBillplzBill } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
-import { insertBillplzPaymentThenActivate } from "@/lib/billplzActivateFromPayment";
-import { sendRecoveryEmailAfterPayment } from "@/lib/billingRecoveryEmail";
-import { withRecoveryEmailOncePerBill } from "@/lib/recoveryEmailOncePerBill";
+import { activateMembershipFromPaidBillingSession } from "@/lib/activateMembershipFromBillingSession";
 
 export const runtime = "nodejs";
 
+function normalizeEmail(s: string) {
+  return s.trim().toLowerCase();
+}
+
 /**
  * Fallback when Billplz callback never fires: user returns to payment-return with bill_id.
- * We check Billplz API for payment status and, if paid, create user + membership + send set-password email.
- * Idempotent: if session already paid, returns ok without re-processing.
+ * Idempotent: if session already paid and membership linked, returns ok.
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -26,14 +27,15 @@ export async function GET(req: Request) {
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
-    .select("id, email, plan_id, status, user_id")
+    .select("id, email, plan_id, status, user_id, membership_id")
     .eq("bill_id", billId)
     .maybeSingle();
 
   if (sessionErr || !session) {
     return NextResponse.json({ ok: false, error: "session_not_found" }, { status: 404 });
   }
-  if (session.status === "paid") {
+
+  if (session.status === "paid" && session.membership_id) {
     return NextResponse.json({ ok: true, already_processed: true });
   }
 
@@ -45,18 +47,20 @@ export async function GET(req: Request) {
   const now = new Date().toISOString();
   const amountNum = bill.paid_amount ?? bill.amount ?? null;
 
-  await svc
-    .schema("public")
-    .from("billing_sessions")
-    .update({
-      status: "paid",
-      payment_confirmed_at: now,
-      payment_provider: "billplz",
-      payment_currency: "MYR",
-      payment_amount: amountNum != null ? amountNum / 100 : null,
-      updated_at: now,
-    })
-    .eq("id", session.id);
+  if (session.status !== "paid") {
+    await svc
+      .schema("public")
+      .from("billing_sessions")
+      .update({
+        status: "paid",
+        payment_confirmed_at: now,
+        payment_provider: "billplz",
+        payment_currency: "MYR",
+        payment_amount: amountNum != null ? amountNum / 100 : null,
+        updated_at: now,
+      })
+      .eq("id", session.id);
+  }
 
   const preUserId = session.user_id as string | null | undefined;
   if (!preUserId) {
@@ -69,7 +73,12 @@ export async function GET(req: Request) {
   }
 
   const userId = authWrap.user.id;
-  const userEmail = (authWrap.user.email ?? "").trim();
+  const sessionEmail = typeof session.email === "string" ? session.email.trim() : "";
+  const authEmail = (authWrap.user.email ?? "").trim();
+  if (sessionEmail && authEmail && normalizeEmail(sessionEmail) !== normalizeEmail(authEmail)) {
+    return NextResponse.json({ ok: false, error: "email_mismatch" }, { status: 409 });
+  }
+  const userEmail = sessionEmail || authEmail;
   if (!userEmail) {
     return NextResponse.json({ ok: false, error: "user_missing_email" }, { status: 400 });
   }
@@ -77,11 +86,11 @@ export async function GET(req: Request) {
   const { data: planRow } = await svc
     .schema("public")
     .from("plans")
-    .select("id, is_trial, slug")
+    .select("id, is_trial")
     .eq("id", session.plan_id)
     .maybeSingle();
 
-  if (!planRow?.slug) {
+  if (!planRow?.id) {
     return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
   }
 
@@ -91,44 +100,24 @@ export async function GET(req: Request) {
   await svc
     .schema("public")
     .from("profiles")
-    .upsert(
-      { id: userId, email: userEmail, trial_use_count: newTrialCount },
-      { onConflict: "id" }
-    );
+    .upsert({ id: userId, email: userEmail, trial_use_count: newTrialCount }, { onConflict: "id" });
 
-  const activate = await insertBillplzPaymentThenActivate({
+  const activate = await activateMembershipFromPaidBillingSession({
     svc,
-    billId,
-    userId,
-    planId: planRow.id,
-    planSlug: planRow.slug,
-    userEmail,
-    amountCents: amountNum != null ? Math.round(amountNum) : null,
-    paymentConfirmedAtIso: now,
-    rawWebhook: {
-      source: "confirm_payment",
-      bill_id: billId,
-      paid: true,
-    },
     billingSessionId: session.id,
+    userId,
   });
 
   if (!activate.ok || !activate.membershipId) {
-    console.error("[confirm-payment] payment insert / activate failed", {
+    console.error("[confirm-payment] membership activation failed", {
       billId,
-      error: activate.error,
+      error: activate.ok ? undefined : activate.error,
     });
     return NextResponse.json(
-      { ok: false, error: "payment_or_activate_failed", detail: activate.error },
+      { ok: false, error: "membership_activate_failed", detail: activate.ok ? undefined : activate.error },
       { status: 500 }
     );
   }
-
-  await svc
-    .schema("public")
-    .from("billing_sessions")
-    .update({ user_id: userId, membership_id: activate.membershipId, updated_at: now })
-    .eq("id", session.id);
 
   if (planRow.is_trial) {
     void svc.rpc("increment_trial_use_count" as never, { user_id: userId }).then(() => {}, () => {});
@@ -141,18 +130,6 @@ export async function GET(req: Request) {
   } catch {
     /* noop */
   }
-
-  await svc
-    .schema("public")
-    .from("profiles")
-    .upsert(
-      { id: userId, email: userEmail, payment_status: "active", pending_plan: null },
-      { onConflict: "id" }
-    );
-
-  await withRecoveryEmailOncePerBill(svc, billId, () =>
-    sendRecoveryEmailAfterPayment(svc, userId, userEmail)
-  ).catch((e) => console.error("[confirm-payment] recovery email failed", e));
 
   return NextResponse.json({ ok: true, source: "confirm_payment" });
 }

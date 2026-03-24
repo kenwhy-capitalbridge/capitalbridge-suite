@@ -9,22 +9,8 @@ const SESSION_REUSE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 type Body = { plan?: string };
 
-function logBillingEvent(
-  svc: Awaited<ReturnType<typeof createServiceClient>>,
-  payload: { event_type: string; user_id?: string; membership_id?: string; payment_id?: string; metadata?: Record<string, unknown> }
-) {
-  return svc.schema("public").from("billing_events").insert({
-    event_type: payload.event_type,
-    user_id: payload.user_id ?? null,
-    membership_id: payload.membership_id ?? null,
-    payment_id: payload.payment_id ?? null,
-    metadata: (payload.metadata ?? null) as Record<string, unknown> | null,
-  }).then(() => {}, () => {});
-}
-
 /**
- * Idempotent billing: one billing session = at most one bill, one payment, one membership activation.
- * Reuses existing session/bill when user retries or refreshes within SESSION_REUSE_MS.
+ * Authenticated billing: one billing_sessions row = one Billplz bill; payment webhook creates membership.
  */
 export async function POST(req: Request) {
   try {
@@ -77,11 +63,10 @@ export async function POST(req: Request) {
     const now = new Date();
     const reuseCutoff = new Date(now.getTime() - SESSION_REUSE_MS);
 
-    // --- PART 2: Idempotent bill creation — reuse existing session/bill when valid ---
     const { data: existingSession } = await svc
       .schema("public")
       .from("billing_sessions")
-      .select("id, status, bill_id, payment_url, membership_id, created_at, payment_attempt_count")
+      .select("id, status, bill_id, payment_url, created_at, payment_attempt_count")
       .eq("user_id", user.id)
       .eq("plan_id", planRow.id)
       .in("status", ["pending", "bill_created"])
@@ -90,7 +75,6 @@ export async function POST(req: Request) {
       .limit(1)
       .maybeSingle();
 
-    // Diagnostics: increment payment attempt count when touching this session
     if (existingSession?.id) {
       const attemptCount = (existingSession as { payment_attempt_count?: number }).payment_attempt_count ?? 0;
       await svc
@@ -105,74 +89,9 @@ export async function POST(req: Request) {
     }
 
     if (existingSession?.bill_id && existingSession?.payment_url && existingSession.status === "bill_created") {
-      logBillingEvent(svc, {
-        event_type: "bill_reused",
-        user_id: user.id,
-        metadata: { billing_session_id: existingSession.id, bill_id: existingSession.bill_id, plan: requestedPlan },
-      });
-      // Ensure payment row exists (in case first request failed after creating bill)
-      if (existingSession.membership_id) {
-        await svc.schema("public").from("payments").upsert(
-          {
-            membership_id: existingSession.membership_id,
-            billplz_bill_id: existingSession.bill_id,
-            billplz_collection_id: process.env.BILLPLZ_COLLECTION_ID ?? null,
-            status: "pending",
-            amount_cents: planRow.price_cents,
-            billing_session_id: existingSession.id,
-          },
-          { onConflict: "membership_id" }
-        );
-      }
       return NextResponse.json({ bill_id: existingSession.bill_id, checkoutUrl: existingSession.payment_url });
     }
 
-    // --- Get or create membership (one pending per user+plan) ---
-    let membershipId = existingSession?.membership_id ?? null;
-    if (!membershipId) {
-      const { data: existingPending } = await svc
-        .schema("public")
-        .from("memberships")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("plan_id", planRow.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      membershipId = existingPending?.id ?? null;
-    }
-
-    if (!membershipId) {
-      const { data: created, error: createErr } = await svc
-        .schema("public")
-        .from("memberships")
-        .insert({
-          user_id: user.id,
-          plan_id: planRow.id,
-          status: "pending",
-        })
-        .select("id")
-        .single();
-
-      if (createErr || !created?.id) {
-        const message = createErr?.message ?? "no id returned";
-        console.error("[api/billing/create] membership insert failed:", createErr?.code, message);
-        return NextResponse.json(
-          { error: "membership_create_failed", detail: message },
-          { status: 500 }
-        );
-      }
-      membershipId = created.id;
-      logBillingEvent(svc, {
-        event_type: "membership_created",
-        user_id: user.id,
-        membership_id: membershipId,
-        metadata: { plan: requestedPlan },
-      });
-    }
-
-    // --- Get or create billing session ---
     let sessionId = existingSession?.id ?? null;
     if (!sessionId) {
       const { data: newSession, error: sessionErr } = await svc
@@ -183,7 +102,6 @@ export async function POST(req: Request) {
           email: user.email ?? "",
           plan_id: planRow.id,
           status: "pending",
-          membership_id: membershipId,
           payment_attempt_count: 1,
           updated_at: now.toISOString(),
         })
@@ -198,20 +116,8 @@ export async function POST(req: Request) {
         );
       }
       sessionId = newSession.id;
-      logBillingEvent(svc, {
-        event_type: "session_created",
-        user_id: user.id,
-        metadata: { billing_session_id: sessionId, plan: requestedPlan },
-      });
-    } else if (existingSession?.membership_id !== membershipId) {
-      await svc
-        .schema("public")
-        .from("billing_sessions")
-        .update({ membership_id: membershipId, updated_at: now.toISOString() })
-        .eq("id", sessionId);
     }
 
-    // --- Create Billplz bill (only if session does not already have one) ---
     let billId: string;
     let checkoutUrl: string;
 
@@ -225,7 +131,7 @@ export async function POST(req: Request) {
           description: `Capital Bridge — ${planRow.name}`,
           email: user.email ?? "client@thecapitalbridge.com",
           name: user.email ?? "Capital Bridge Client",
-          reference1: membershipId!,
+          reference1: sessionId!,
           redirectUrl: process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com",
         });
         billId = result.billId;
@@ -263,40 +169,6 @@ export async function POST(req: Request) {
           updated_at: now.toISOString(),
         })
         .eq("id", sessionId);
-
-      // SECTION 6: Store state in membership table — pending → bill_created
-      await svc
-        .schema("public")
-        .from("memberships")
-        .update({ status: "bill_created" })
-        .eq("id", membershipId!);
-
-      logBillingEvent(svc, {
-        event_type: "bill_created",
-        user_id: user.id,
-        metadata: { billing_session_id: sessionId, bill_id: billId, plan: requestedPlan },
-      });
-    }
-
-    // --- Payment record (upsert by membership_id); link to billing_session for audit ---
-    const { error: payErr } = await svc.schema("public").from("payments").upsert(
-      {
-        membership_id: membershipId,
-        billplz_bill_id: billId,
-        billplz_collection_id: process.env.BILLPLZ_COLLECTION_ID ?? null,
-        status: "pending",
-        amount_cents: planRow.price_cents,
-        billing_session_id: sessionId,
-      },
-      { onConflict: "membership_id" }
-    );
-
-    if (payErr) {
-      console.error("[api/billing/create] payment upsert failed:", payErr);
-      return NextResponse.json(
-        { error: "payment_record_failed", detail: payErr.message },
-        { status: 500 }
-      );
     }
 
     return NextResponse.json({ bill_id: billId, checkoutUrl });

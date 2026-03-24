@@ -1,12 +1,18 @@
 import { createAppServerClient } from "@cb/supabase/server";
-import type { Database } from "@cb/db-types/database";
 
-export type Membership = Database["public"]["Tables"]["active_memberships"]["Row"] | null;
+export type ServerMembership = {
+  user_id: string;
+  plan: string | null;
+  start_date: string | null;
+  end_date: string | null;
+} | null;
 
 export async function getServerUser() {
   try {
     const supabase = await createAppServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     return user ?? null;
   } catch {
     return null;
@@ -15,19 +21,35 @@ export async function getServerUser() {
 
 export async function getServerUserAndMembership(): Promise<{
   user: { id: string; email?: string | null; name?: string | null } | null;
-  membership: Membership;
+  membership: ServerMembership;
 }> {
   try {
     const supabase = await createAppServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return { user: null, membership: null };
 
     const { data: membership } = await supabase
       .schema("public")
-      .from("active_memberships")
-      .select("user_id, plan, start_date, end_date")
+      .from("memberships")
+      .select("user_id, plan_id, start_date, end_date, status")
       .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
+
+    let planSlug: string | null = null;
+    if (membership?.plan_id) {
+      const { data: plan } = await supabase
+        .schema("public")
+        .from("plans")
+        .select("slug")
+        .eq("id", membership.plan_id)
+        .maybeSingle();
+      planSlug = plan?.slug ?? null;
+    }
 
     const name =
       (user.user_metadata?.name as string | undefined)?.trim() ||
@@ -39,10 +61,16 @@ export async function getServerUserAndMembership(): Promise<{
         email: user.email ?? null,
         name: name || null,
       },
-      membership: (membership as Membership) ?? null,
+      membership: membership
+        ? {
+            user_id: membership.user_id,
+            plan: planSlug,
+            start_date: membership.start_date,
+            end_date: membership.end_date,
+          }
+        : null,
     };
   } catch {
     return { user: null, membership: null };
   }
 }
-

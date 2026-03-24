@@ -12,7 +12,7 @@ import {
   CHECKOUT_ERROR_NETWORK,
   CHECKOUT_ERROR_START_PAYMENT,
 } from "@/lib/checkoutMessages";
-import { ACCESS_SUPPORT_HINT } from "@/lib/sanitizeAuthErrorMessage";
+import { ACCESS_EMAIL_FIELD_LABEL, ACCESS_SUPPORT_HINT } from "@/lib/sanitizeAuthErrorMessage";
 
 /** Assistive only — common domain typos (does not block submit). */
 function getEmailTypoSuggestion(raw: string): string | null {
@@ -204,8 +204,8 @@ function CheckoutContent() {
         <form onSubmit={handleSubmit} className="mt-4 grid gap-3 sm:mt-6 sm:gap-4" noValidate>
           {error && <p className="cb-message-error text-sm sm:text-base">{error}</p>}
 
-          <label className="grid gap-1.5">
-            <span className="text-sm font-semibold text-cb-green">Email</span>
+          <label className="grid gap-1.5 text-left">
+            <span className="text-sm font-medium text-cb-green">{ACCESS_EMAIL_FIELD_LABEL}</span>
             <input
               ref={emailInputRef}
               className="cb-input"
@@ -244,8 +244,8 @@ function CheckoutContent() {
             {emailFieldError && <p className="cb-message-error mt-1 text-sm">{emailFieldError}</p>}
           </label>
 
-          <label className="grid gap-1.5">
-            <span className="text-sm font-semibold text-cb-green">Name</span>
+          <label className="grid gap-1.5 text-left">
+            <span className="text-sm font-medium text-cb-green">Name:</span>
             <input
               className="cb-input"
               value={name}
@@ -283,7 +283,7 @@ function CheckoutContent() {
         <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
           <CalmAuthMessage
             text={ACCESS_SUPPORT_HINT}
-            className="text-center text-sm leading-relaxed text-cb-green/55"
+            className="text-center text-sm font-normal leading-relaxed text-cb-green/55"
           />
         </div>
       </div>

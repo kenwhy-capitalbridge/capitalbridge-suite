@@ -1,7 +1,7 @@
 /** `/access` set-password UI (non-tier strings). */
 
 export const SET_PASSWORD_LINK_EXPIRY_HINT =
-  "Please complete this step soon as the link may expire.";
+  "Use the same email you used at checkout. You can try again if needed — focus on matching that email.";
 
 export const PASSWORD_REQUIREMENTS_COPY =
   "Use at least 6 characters with letters, numbers, or symbols.";

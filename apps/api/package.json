@@ -11,6 +11,7 @@
   "dependencies": {
     "@cb/advisory-graph": "*",
     "@cb/db-types": "*",
+    "@cb/membership": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
     "next": "^14.2.35",

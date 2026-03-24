@@ -91,7 +91,7 @@ async function sendRecoverViaHttp(email: string, redirectTo: string): Promise<vo
 
 /**
  * Primary onboarding email after payment: recover flow → `/access` (set password).
- * Idempotency (payments.recovery_email_sent) is enforced by `withRecoveryEmailOncePerBill`.
+ * Call only from user-triggered flows (e.g. manual “send setup email” after payment).
  * Does not use signUp() or "Confirm Sign Up".
  */
 export async function sendOnboardingEmailAfterPayment(

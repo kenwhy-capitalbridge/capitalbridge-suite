@@ -4,9 +4,7 @@ import { validateSession } from "@cb/auth/session";
 import { hasActiveMembership } from "@cb/membership/status";
 
 /**
- * Returns whether the current user has an active membership.
- * Used after login to show "Membership expired" before redirecting to platform.
- * Validates session (token reuse protection): if no user_sessions row or token mismatch, returns 401.
+ * Returns whether the current user has an active membership (memberships table only).
  */
 export async function GET(request: Request) {
   try {

@@ -112,7 +112,7 @@ export function getTieredCalmMessage(kind: TierKind, attempt: number): string {
     case "login":
       if (t === 1) return "Your email or password may be incorrect. Please try again.";
       if (t === 2) return "Still not correct. Please check your details and try again.";
-      return "Reset your password using “Send Me A New Link”.";
+      return "Reset your password using “Send A New Link”.";
 
     default:
       return getTieredCalmMessage("link", attempt);
@@ -135,13 +135,13 @@ export function resolveCalmAuthMessage(
 
 /** First sign-in failure when provider looks like rate-limit (often wrong password or throttle). */
 export const LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS =
-  "We couldn’t sign you in. Your email or password may be incorrect, or your link may have expired. Try again, or use “Send Me A New Link” to reset your password.";
+  "We couldn’t sign you in. Your email or password may be incorrect, or your link may have expired. Try again, or use “Send A New Link” to reset your password.";
 
 export const LOGIN_SIGNIN_RATE_LIMIT_RETRY =
-  "We still couldn’t sign you in. This can happen after several attempts. Wait a minute, then try again, or reset your password using “Send Me A New Link”.";
+  "We still couldn’t sign you in. This can happen after several attempts. Wait a minute, then try again, or reset your password using “Send A New Link”.";
 
 export const LOGIN_SIGNIN_RATE_LIMIT_FINAL =
-  "Please wait a few minutes before trying again. If you still can’t sign in, reset your password using “Send Me A New Link”.";
+  "Please wait a few minutes before trying again. If you still can’t sign in, reset your password using “Send A New Link”.";
 
 export function resolveLoginCalmAuthMessage(
   attempt: number,
@@ -174,22 +174,23 @@ export function resolveLoginCalmAuthMessage(
 
 // --- Static copy: access error view & forms (edit here only) ---
 
-export const ACCESS_ERROR_PAGE_TITLE = "This link has expired";
+export const ACCESS_ERROR_PAGE_TITLE = "Something went wrong. Please try again.";
 
-export const ACCESS_ERROR_PAGE_SUBTITLE = "Request a new link or return to sign in.";
+export const ACCESS_ERROR_PAGE_SUBTITLE = "";
 
-export const ACCESS_EMAIL_FIELD_LABEL = "Enter your email";
+export const ACCESS_EMAIL_FIELD_LABEL = "Enter your email:";
 
 export const ACCESS_EMAIL_PLACEHOLDER = "Email";
 
-export const ACCESS_PRIMARY_CTA = "Back to sign in";
+export const ACCESS_PRIMARY_CTA = "Back to Sign In";
 
-export const ACCESS_SUPPORT_HINT = `Need help? Contact support at ${SUPPORT_EMAIL}`;
+export const ACCESS_SUPPORT_HINT = `Need help? Contact us at ${SUPPORT_EMAIL}`;
+
+export const ACCESS_SUPPORT_ALERT_HINT = "Need help? Contact us as below.";
 
 export const SESSION_SIGNED_OUT_LINE = "You’ve been signed out. Please sign in again.";
 
-export const ACCESS_REMOVED_LINE =
-  "Your access is no longer active. Please sign in with the correct account or restart from checkout.";
+export const ACCESS_REMOVED_LINE = "We couldn't confirm access. Please log in again.";
 
 export const FORM_EMPTY_EMAIL = "Please enter your email.";
 
@@ -199,7 +200,7 @@ export const FORM_PASSWORD_MISMATCH = "Passwords do not match.";
 
 export const FORM_COMPLETE_TO_CONTINUE = "Please complete all required fields to continue.";
 
-export const LOGIN_PROMPT_THEN_NEW_LINK = "Enter your email, then tap “Send Me A New Link”.";
+export const LOGIN_PROMPT_THEN_NEW_LINK = "Enter your email, then tap “Send A New Link”.";
 
 export const FORM_EMAIL_INVALID = "Please enter a valid email address.";
 
@@ -213,9 +214,8 @@ export const EMAIL_CHANGE_NO_SESSION =
 export const DEV_PREVIEW_NO_EMAIL =
   "Email sending is not available in this environment. Please use the live site.";
 
-export const SET_PASSWORD_EXPIRED_TITLE = "This link has expired";
+export const SET_PASSWORD_EXPIRED_TITLE = "This Link Has Expired";
 
-export const SET_PASSWORD_EXPIRED_SUB =
-  "Request a new email to set your password using the same email from checkout.";
+export const SET_PASSWORD_EXPIRED_SUB = "Request a new link or return to sign in.";
 
 export const SET_PASSWORD_EMPTY_EMAIL_FOR_RESEND = "Please enter your email.";

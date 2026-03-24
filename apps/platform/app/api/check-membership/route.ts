@@ -3,8 +3,11 @@ import { createAppServerClient } from "@cb/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+export type CheckMembershipReason = "inactive" | "error" | "unauthenticated";
+
 /**
- * Client-side guard: valid only if user has a profile and an active_memberships row.
+ * Client-side guard: valid only if user has an active membership row.
+ * Distinguishes inactive (no access) vs transient errors (retry / safe mode).
  */
 export async function GET() {
   try {
@@ -14,34 +17,30 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ valid: false });
+      return NextResponse.json({ valid: false as const, reason: "unauthenticated" satisfies CheckMembershipReason });
     }
 
-    const { data: profile, error: profileErr } = await supabase
+    const { data: membership, error: memErr } = await supabase
       .schema("public")
-      .from("profiles")
+      .from("memberships")
       .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profileErr || !profile) {
-      return NextResponse.json({ valid: false });
-    }
-
-    const { data: activeMembership, error: amErr } = await supabase
-      .schema("public")
-      .from("active_memberships")
-      .select("user_id")
       .eq("user_id", user.id)
+      .eq("status", "active")
       .limit(1)
       .maybeSingle();
 
-    if (amErr || !activeMembership) {
-      return NextResponse.json({ valid: false });
+    if (memErr) {
+      console.error("[check-membership] lookup failed", memErr.message);
+      return NextResponse.json({ valid: false as const, reason: "error" satisfies CheckMembershipReason });
     }
 
-    return NextResponse.json({ valid: true });
-  } catch {
-    return NextResponse.json({ valid: false });
+    if (!membership) {
+      return NextResponse.json({ valid: false as const, reason: "inactive" satisfies CheckMembershipReason });
+    }
+
+    return NextResponse.json({ valid: true as const });
+  } catch (e) {
+    console.error("[check-membership]", e);
+    return NextResponse.json({ valid: false as const, reason: "error" satisfies CheckMembershipReason });
   }
 }

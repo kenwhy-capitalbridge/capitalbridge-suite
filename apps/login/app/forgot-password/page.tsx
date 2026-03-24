@@ -12,6 +12,8 @@ import {
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import {
+  ACCESS_EMAIL_FIELD_LABEL,
+  ACCESS_PRIMARY_CTA,
   ACCESS_SUPPORT_HINT,
   DEV_PREVIEW_NO_EMAIL,
   FORM_EMPTY_EMAIL,
@@ -24,7 +26,7 @@ const btnPrimary =
 const calmNoticeClass =
   "rounded-lg border border-amber-200/80 bg-amber-50/95 px-2.5 py-1.5 text-xs text-cb-green sm:px-3 sm:py-2 sm:text-sm";
 
-/** Forgot-password page only — Account Access keeps “Send Me A New Link”. */
+/** Forgot-password page — primary action label separate from Account Access resend. */
 function forgotPasswordActionLabel(cooldownSec: number, busy: boolean): string {
   if (busy) return ACCESS_EMAIL_SENDING_LABEL;
   if (cooldownSec > 0) return `Wait ${cooldownSec}s, then try again`;
@@ -125,10 +127,10 @@ function ForgotPasswordInner() {
               window.location.href = "/access";
             }}
           >
-            Back to Login Page
+            {ACCESS_PRIMARY_CTA}
           </button>
-          <div className="mt-8 border-t border-cb-green/10 pt-6">
-            <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+          <div className="mt-8 border-t border-cb-gold/30 pt-6">
+            <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm font-normal leading-relaxed text-cb-green/55" />
           </div>
         </div>
       </main>
@@ -156,8 +158,8 @@ function ForgotPasswordInner() {
             </div>
           )}
 
-          <label className="grid gap-1.5">
-            <span className="text-sm font-semibold text-cb-green">Email</span>
+          <label className="grid gap-1.5 text-left">
+            <span className="text-sm font-medium text-cb-green">{ACCESS_EMAIL_FIELD_LABEL}</span>
             <input
               className="cb-input"
               value={email}
@@ -187,11 +189,11 @@ function ForgotPasswordInner() {
             window.location.href = "/access";
           }}
         >
-          Back to Login Page
+          {ACCESS_PRIMARY_CTA}
         </button>
 
-        <div className="mt-8 border-t border-cb-green/10 pt-6">
-          <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm leading-relaxed text-cb-green/55" />
+        <div className="mt-8 border-t border-cb-gold/30 pt-6">
+          <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm font-normal leading-relaxed text-cb-green/55" />
         </div>
       </div>
     </main>

@@ -168,24 +168,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "membership_session_mismatch" }, { status: 409 });
   }
 
-  const { data: paymentRow } = await svc
-    .schema("public")
-    .from("payments")
-    .select("id, membership_id, billplz_bill_id")
-    .eq("billplz_bill_id", billId)
-    .maybeSingle();
-
-  if (!paymentRow?.id) {
-    recoveryAudit("recover_payment_missing", {
-      bill_id: billId,
-      ip,
-      note: "continuing_with_session_only",
-    });
-  } else if (paymentRow.membership_id != null && String(paymentRow.membership_id) !== String(membershipId)) {
-    recoveryAudit("recover_mismatch", { kind: "payment_membership", bill_id: billId, ip });
-    return NextResponse.json({ error: "payment_membership_mismatch" }, { status: 409 });
-  }
-
   let targetUserId = await findUserIdByEmail(svc, newEmail);
 
   if (!targetUserId) {
@@ -244,10 +226,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "transfer_failed", message: transferErr.message }, { status: 500 });
   }
 
-  if (paymentRow?.id) {
-    await svc.schema("public").from("payments").update({ user_id: targetUserId }).eq("billplz_bill_id", billId);
-  }
-
   await svc
     .schema("public")
     .from("billing_sessions")
@@ -261,10 +239,7 @@ export async function POST(req: Request) {
   await svc
     .schema("public")
     .from("profiles")
-    .upsert(
-      { id: targetUserId, email: newEmail, payment_status: "active", pending_plan: null },
-      { onConflict: "id" }
-    );
+    .upsert({ id: targetUserId, email: newEmail }, { onConflict: "id" });
 
   try {
     await sendPasswordSetupEmailToUser(svc, targetUserId, newEmail);

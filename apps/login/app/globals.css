@@ -83,11 +83,11 @@
 
   /* Primary action: gold bg, green text, rounded, medium weight, hover turns green */
   .cb-btn-primary {
-    @apply rounded-xl bg-cb-gold px-3 py-2.5 text-sm font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] transition hover:bg-cb-green hover:text-white disabled:opacity-50 sm:px-4 sm:py-3 sm:text-base;
+    @apply rounded-xl bg-cb-gold px-3 py-2.5 text-sm font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] transition hover:bg-cb-green hover:text-white disabled:opacity-55 disabled:hover:bg-cb-gold disabled:hover:text-cb-green sm:px-4 sm:py-3 sm:text-base;
   }
 
   .cb-btn-secondary {
-    @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-3 py-2.5 text-sm font-medium text-cb-green transition hover:bg-white disabled:opacity-50 sm:px-4 sm:py-3 sm:text-base;
+    @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-3 py-2.5 text-sm font-medium text-cb-green transition hover:border-cb-gold/90 hover:bg-cb-green/[0.12] hover:text-cb-green disabled:opacity-50 disabled:hover:border-cb-gold/60 disabled:hover:bg-white/90 sm:px-4 sm:py-3 sm:text-base;
   }
 
   /* Quiet secondary — does not compete with gold primary CTA */
