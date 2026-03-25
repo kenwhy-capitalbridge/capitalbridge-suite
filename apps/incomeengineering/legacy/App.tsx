@@ -3,6 +3,7 @@
 import React, { useMemo, useRef } from 'react';
 import './index.css';
 import { useCalculatorStore } from './store/useCalculatorStore';
+import { CalculatorStoreProvider } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
 import { PersistentSummaryHeader } from './components/PersistentSummaryHeader';
 import { CurrencySelectorEmbedded } from './components/CurrencySelector';
@@ -18,7 +19,7 @@ import { Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-const App: React.FC = () => {
+const AppInner: React.FC = () => {
   const currency = useCalculatorStore((s) => s.currency);
   const monthlyExpenses = useCalculatorStore((s) => s.monthlyExpenses);
   const incomeRows = useCalculatorStore((s) => s.incomeRows);
@@ -179,5 +180,11 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const App: React.FC = () => (
+  <CalculatorStoreProvider>
+    <AppInner />
+  </CalculatorStoreProvider>
+);
 
 export default App;
