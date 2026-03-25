@@ -93,3 +93,12 @@ If the live site still shows legacy copy (e.g. “To request access…”) or no
 4. If you use **Cloudflare** (or another CDN) in front of Vercel, **purge cache** for `platform.thecapitalbridge.com`.
 
 After you are signed in and the home page loads, responses include **`X-CB-Commit`** (Git SHA on Vercel builds). Compare that SHA to the latest commit on `main` in GitHub to confirm the right deploy.
+
+**Quick check (no login):** open or run:
+
+`https://platform.thecapitalbridge.com/api/build-info`
+
+You should see JSON like `{ "app": "platform", "monorepo": "capitalbridge-suite", "commit": "<sha>", ... }`.
+
+- **404** → this hostname is **not** the monorepo `apps/platform` app (wrong Vercel project or old deploy).
+- **`commit` matches `main`** but the page still shows the old footer → **browser or CDN cache**; hard-refresh, clear site data for this host, or purge Cloudflare.
