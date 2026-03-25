@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 /** Logo + "Exit Login" — main marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
 
-/** Routes that show only "← Back to Login" (link to /access) */
+/** Routes that show only "Login" (link to /access) */
 const BACK_TO_LOGIN_NAV_PATHS = new Set(["/pricing", "/checkout"]);
 
 export default function Header() {
@@ -48,7 +48,7 @@ export default function Header() {
           <div className="flex max-w-[52%] shrink-0 items-center text-cb-gold sm:max-w-none">
             <a href="/access" className={navTextLinkClass}>
               <span className="sm:hidden">← Login</span>
-              <span className="hidden sm:inline">← Back to Login</span>
+              <span className="hidden sm:inline">Login</span>
             </a>
           </div>
         ) : (
