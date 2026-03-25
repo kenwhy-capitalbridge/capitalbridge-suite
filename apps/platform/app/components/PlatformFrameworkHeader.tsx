@@ -1,8 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
 import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
 import { PlatformLogoutToMarketing } from "./PlatformLogoutToMarketing";
+import { PlatformLoginButton } from "./PlatformLoginButton";
 
 function marketingHomeUrl(): string {
   const base = MARKETING_SITE_URL.replace(/\/+$/, "");
@@ -96,25 +96,7 @@ export async function PlatformFrameworkHeader({
             Framework
           </span>
 
-          <Link
-            href="/login"
-            style={{
-              justifySelf: "end",
-              padding: "0.35rem 0.75rem",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "rgba(255, 204, 106, 0.95)",
-              backgroundColor: "transparent",
-              border: "1px solid rgba(255, 204, 106, 0.55)",
-              borderRadius: 4,
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Login
-          </Link>
+          <PlatformLoginButton href="/login" />
         </div>
       </header>
     );

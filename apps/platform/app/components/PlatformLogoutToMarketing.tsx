@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { createAppBrowserClient } from "@cb/supabase/browser";
+import { Loader2 } from "lucide-react";
 import { platformPostLogoutUrl } from "@cb/shared/urls";
 
 /**
@@ -15,13 +16,31 @@ export function PlatformLogoutToMarketing() {
     if (pending) return;
     setPending(true);
     try {
-      await fetch("/api/clear-active-session", { method: "POST", credentials: "include" }).catch(
-        () => {}
-      );
+      await fetch("/api/clear-active-session", {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
+
       const supabase = createAppBrowserClient();
-      await supabase.auth.signOut();
-      window.location.replace(platformPostLogoutUrl());
-    } catch {
+      const target = platformPostLogoutUrl();
+      const [prefix, hash = ""] = target.split("#");
+      // Force a real navigation even if you're already on the same `#:~:text=` URL
+      // (hash changes alone may not re-render server components).
+      const finalTarget = `${prefix}?logout=1${hash ? `#${hash}` : ""}`;
+
+      const timeoutMs = 8000;
+      const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+
+      try {
+        await Promise.race([supabase.auth.signOut(), timeoutPromise]);
+      } catch (e) {
+        // If signOut fails (missing env/network), we still redirect so the user exits the platform.
+        console.warn("[platform] signOut failed; redirecting anyway:", e);
+      }
+
+      window.location.replace(finalTarget);
+    } finally {
+      // If redirect didn't happen for some reason, ensure the UI recovers.
       setPending(false);
     }
   }, [pending]);
@@ -32,6 +51,7 @@ export function PlatformLogoutToMarketing() {
       onClick={onLogout}
       disabled={pending}
       aria-busy={pending}
+      aria-disabled={pending}
       style={{
         justifySelf: "end",
         padding: "0.35rem 0.75rem",
@@ -44,12 +64,21 @@ export function PlatformLogoutToMarketing() {
         border: "1px solid rgba(255, 204, 106, 0.55)",
         borderRadius: 4,
         cursor: pending ? "wait" : "pointer",
-        opacity: pending ? 0.75 : 1,
+        opacity: pending ? 0.6 : 1,
         transition: "opacity 0.15s ease",
+        pointerEvents: pending ? "none" : "auto",
         whiteSpace: "nowrap",
       }}
     >
-      {pending ? "…" : "Logout"}
+      <style>{`@keyframes cbSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+      {pending ? (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Loader2 size={14} style={{ animation: "cbSpin 0.8s linear infinite" }} />
+          Signing out…
+        </span>
+      ) : (
+        "Logout"
+      )}
     </button>
   );
 }
