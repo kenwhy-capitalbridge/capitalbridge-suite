@@ -1,0 +1,102 @@
+/* Migrated from standalone index.html — avoid `overflow-x: hidden` on html/body so the
+   shared ModelAppHeader (layout) keeps viewport `position: fixed`. */
+
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background-color: #0d3a1d;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  letter-spacing: -0.011em;
+}
+
+h1,
+h2,
+.serif-font {
+  font-family: "Crimson Pro", Georgia, serif;
+}
+
+.cb-gold {
+  color: #c6a24d;
+}
+.cb-bg-gold {
+  background-color: #c6a24d;
+}
+.cb-border-gold {
+  border-color: #c6a24d;
+}
+.cb-dark-green {
+  background-color: #002b1b;
+}
+
+button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scenario-amount-input {
+  font-size: 0.875rem;
+}
+@media (min-width: 768px) {
+  .scenario-amount-input {
+    font-size: 1.25rem;
+  }
+}
+
+/* Screen: hide print-only report */
+#print-report {
+  display: none !important;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  #screen-content {
+    display: none !important;
+  }
+  #print-report {
+    display: block !important;
+  }
+  body {
+    background-color: white !important;
+    color: #0d3a1d !important;
+  }
+  .bg-\[\#002B1B\],
+  .bg-\[\#C6A24D\],
+  .bg-\[\#0D3A1D\] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    size: A4;
+    margin: 18mm 20mm 22mm;
+  }
+  .print-report-root {
+    background: #fff !important;
+    color: #0d3a1d !important;
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+  .print-section {
+    page-break-inside: avoid;
+  }
+  .print-chart-wrap {
+    page-break-inside: avoid;
+  }
+  .print-page-break-before {
+    page-break-before: always;
+  }
+  .print-keep-with-next {
+    page-break-after: avoid;
+  }
+  .print-journey-table thead {
+    display: table-header-group;
+  }
+}

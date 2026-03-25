@@ -3,8 +3,8 @@ import { ModelAppHeader } from "@cb/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CapitalStress | Capital Bridge",
-  description: "CapitalStress financial tool — Capital Bridge Advisory.",
+  title: "Capital Stress | Capital Bridge",
+  description: "Capital Stress model — Capital Bridge Advisory.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
