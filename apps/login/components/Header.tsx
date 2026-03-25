@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-/** Logo + "Exit Login" — main marketing site (default https://thecapitalbridge.com/) */
+/** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
 
 /** Routes that show LOGIN → /access (not marketing exit link) */
@@ -23,7 +23,7 @@ export default function Header() {
   const loginButtonClass =
     "inline-flex min-h-[36px] min-w-[3.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-cb-gold/85 bg-cb-gold/15 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-cb-gold transition hover:bg-cb-gold/30 hover:text-cb-cream active:bg-cb-gold/40 sm:min-h-0 sm:min-w-0 sm:rounded-full sm:px-4 sm:py-1.5 sm:text-xs";
 
-  /** Same base as Exit Login link so color wins over body { color: !important } quirks */
+  /** Same base as exit link so color wins over body { color: !important } quirks */
   const homepageLinkClass =
     `${navTextLinkClass} shrink-0 font-semibold uppercase tracking-wide`;
 
@@ -82,8 +82,8 @@ export default function Header() {
         ) : (
           <div className="flex max-w-[52%] shrink-0 items-center text-cb-gold sm:max-w-none">
             <a href={MARKETING_URL} className={navTextLinkClass}>
-              <span className="sm:hidden">← Exit</span>
-              <span className="hidden sm:inline">← Exit Login</span>
+              <span className="sm:hidden">← EXIT</span>
+              <span className="hidden sm:inline">← EXIT LOGIN</span>
             </a>
           </div>
         )}
