@@ -17,6 +17,7 @@ import {
   PASSWORD_REQUIREMENTS_COPY,
 } from "@/lib/accessPageCopy";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
+import { suppressTabSignOutForAuthNavigation } from "@/lib/suppressTabSignOutNav";
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { RegisteredEmailChangeForm } from "@/components/RegisteredEmailChangeForm";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
@@ -494,9 +495,15 @@ function AccessInner() {
           return;
         }
 
-        const { data } = await supabase.auth.getSession();
+        const { data: sessionData } = await supabase.auth.getSession();
 
-        if (data.session) {
+        if (sessionData.session) {
+          const { data: userData, error: userErr } = await supabase.auth.getUser();
+          if (userErr || !userData.user) {
+            await supabase.auth.signOut();
+            setView("login");
+            return;
+          }
           setView("already_signed_in");
           return;
         }
@@ -568,8 +575,10 @@ function AccessInner() {
     }
     const go = () => {
       try {
+        suppressTabSignOutForAuthNavigation();
         window.location.replace(destination);
       } catch {
+        suppressTabSignOutForAuthNavigation();
         window.location.href = destination;
       }
     };
@@ -809,6 +818,7 @@ function AccessInner() {
       }
 
       setSessionConflictOpen(false);
+      suppressTabSignOutForAuthNavigation();
       window.location.href = appendAllSetParam(destination);
     } finally {
       setBusy(false);
@@ -877,6 +887,7 @@ function AccessInner() {
               type="button"
               className="cb-btn-primary mt-6 w-full font-semibold"
               onClick={() => {
+                suppressTabSignOutForAuthNavigation();
                 window.location.href = appendAllSetParam(destination);
               }}
             >
@@ -916,6 +927,7 @@ function AccessInner() {
               href={destination}
               className="cb-btn-primary mt-6 inline-block w-full max-w-xs text-center font-semibold no-underline"
               onClick={() => {
+                suppressTabSignOutForAuthNavigation();
                 try {
                   sessionStorage.removeItem(DEV_ACCESS_SUCCESS_PREVIEW_KEY);
                 } catch {
