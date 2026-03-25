@@ -77,7 +77,13 @@ export async function fetchPersona(
 function normalizePlan(v: unknown): Plan | null {
   if (v == null) return null;
   const s = String(v).toLowerCase();
-  if (s === "trial" || s === "monthly" || s === "quarterly" || s === "yearly")
+  if (
+    s === "trial" ||
+    s === "monthly" ||
+    s === "quarterly" ||
+    s === "yearly" ||
+    s === "strategic"
+  )
     return s as Plan;
   return null;
 }
@@ -91,6 +97,7 @@ export function deriveEntitlements(plan: Plan | null): Entitlements {
   const flagship = p === "yearly" || p === "strategic";
   return {
     plan: p,
+    /** Paid plans (incl. strategic 365-day) may persist snapshots to advisory_v2. */
     canSaveToServer: p !== "trial",
     canSeeVerdict: p !== "trial",
     canUseStressModel: p !== "trial",
@@ -120,6 +127,39 @@ export async function startSession(
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return { error: message };
+  }
+}
+
+/** After each save, keep at most `max` newest rows per user + model (deletes older). */
+export async function trimReportsToLimit(
+  supabase: SupabaseClient,
+  userId: string,
+  modelType: ModelType,
+  max = 20
+): Promise<void> {
+  try {
+    const { data: excess, error } = await supabase
+      .schema("advisory_v2")
+      .from("advisory_reports")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("model_type", modelType)
+      .order("created_at", { ascending: false })
+      .range(max, 99999);
+    if (error) {
+      console.warn("[platformAccess] trimReportsToLimit select failed:", error.message);
+      return;
+    }
+    if (!excess?.length) return;
+    const ids = excess.map((r: { id: string }) => r.id);
+    const { error: delErr } = await supabase
+      .schema("advisory_v2")
+      .from("advisory_reports")
+      .delete()
+      .in("id", ids);
+    if (delErr) console.warn("[platformAccess] trimReportsToLimit delete failed:", delErr.message);
+  } catch (e) {
+    console.warn("[platformAccess] trimReportsToLimit error:", e);
   }
 }
 
@@ -154,6 +194,7 @@ export async function saveReport(
     const id = data?.id;
     const created_at = data?.created_at;
     if (!id) return { error: "No report id returned" };
+    await trimReportsToLimit(supabase, params.userId, params.modelType, 20);
     return {
       id: String(id),
       created_at: created_at != null ? String(created_at) : new Date().toISOString(),

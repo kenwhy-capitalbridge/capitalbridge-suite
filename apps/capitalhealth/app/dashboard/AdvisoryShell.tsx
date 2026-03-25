@@ -30,6 +30,7 @@ export function AdvisoryShell({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [canSave, setCanSave] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "ok" | "error">("idle");
+  const [reportsRefresh, setReportsRefresh] = useState(0);
   const [supabase, setSupabase] = useState<ReturnType<typeof createSupabaseBrowserClient> | null>(null);
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export function AdvisoryShell({
       return;
     }
     setSaveStatus("ok");
+    setReportsRefresh((n) => n + 1);
     setTimeout(() => setSaveStatus("idle"), 2000);
   }, [supabase, sessionId, userId, getInputs, getResults]);
 
@@ -103,6 +105,7 @@ export function AdvisoryShell({
             modelType={MODEL_TYPE}
             canSaveToServer={canSave}
             onRestore={handleRestore}
+            refreshToken={reportsRefresh}
           />
         </>
       )}

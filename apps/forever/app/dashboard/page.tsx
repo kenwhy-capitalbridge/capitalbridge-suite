@@ -1,14 +1,19 @@
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
-import { AdvisoryShell } from "./AdvisoryShell";
+import { ForeverDashboardClient } from "./ForeverDashboardClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function ForeverDashboard() {
   const supabase = await createAppServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`${LOGIN_APP_URL}/access?redirectTo=${encodeURIComponent("https://forever.thecapitalbridge.com/dashboard")}`);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    redirect(
+      `${LOGIN_APP_URL}/access?redirectTo=${encodeURIComponent("https://forever.thecapitalbridge.com/dashboard")}`
+    );
 
   const now = new Date().toISOString();
   const { data: membership } = await supabase
@@ -25,10 +30,7 @@ export default async function ForeverDashboard() {
 
   return (
     <main>
-      <AdvisoryShell userId={user.id}>
-        <h1>Forever Income</h1>
-        <p>Legacy planning tool. Signed in as {user.email ?? "user"}.</p>
-      </AdvisoryShell>
+      <ForeverDashboardClient userId={user.id} />
     </main>
   );
 }

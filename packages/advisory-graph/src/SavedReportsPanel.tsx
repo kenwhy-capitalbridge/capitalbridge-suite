@@ -48,6 +48,8 @@ export type SavedReportsPanelProps = {
   onRestore: (inputs: Record<string, unknown>) => void;
   /** Optional: class name for container */
   className?: string;
+  /** Bump after a successful save so the list reloads (max 20 rows). */
+  refreshToken?: number;
 };
 
 export function SavedReportsPanel({
@@ -57,23 +59,26 @@ export function SavedReportsPanel({
   canSaveToServer,
   onRestore,
   className = "",
+  refreshToken = 0,
 }: SavedReportsPanelProps) {
   const [items, setItems] = useState<{ id: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [restoredMessage, setRestoredMessage] = useState<string | null>(null);
+  const [selectValue, setSelectValue] = useState<string>("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const list = await listReports(supabase, userId, modelType, LIMIT);
     setItems(list);
+    setSelectValue("");
     setLoading(false);
   }, [supabase, userId, modelType]);
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, refreshToken]);
 
   const handleClick = async (id: string, created_at: string) => {
     setError(null);
@@ -107,8 +112,53 @@ export function SavedReportsPanel({
           marginBottom: 8,
         }}
       >
-        Saved reports ({items.length})
+        Saved snapshots ({items.length}/{LIMIT})
       </div>
+
+      {!loading && items.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <label
+            htmlFor="saved-report-select"
+            style={{
+              display: "block",
+              fontSize: "0.75rem",
+              color: "rgba(246,245,241,0.75)",
+              marginBottom: 6,
+            }}
+          >
+            Load saved inputs (date &amp; time)
+          </label>
+          <select
+            id="saved-report-select"
+            value={selectValue}
+            onChange={async (e) => {
+              const id = e.target.value;
+              setSelectValue(id);
+              if (!id) return;
+              const item = items.find((x) => x.id === id);
+              if (item) await handleClick(item.id, item.created_at);
+            }}
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              padding: "10px 12px",
+              fontSize: "0.85rem",
+              borderRadius: 6,
+              border: "1px solid rgba(255,204,106,0.35)",
+              backgroundColor: "rgba(0,0,0,0.25)",
+              color: "rgba(246,245,241,0.95)",
+              cursor: "pointer",
+            }}
+          >
+            <option value="">— Select —</option>
+            {items.map((item) => (
+              <option key={item.id} value={item.id}>
+                {formatTimestamp(item.created_at)} ({relativeTime(item.created_at)})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {restoredMessage && (
         <p
@@ -154,55 +204,6 @@ export function SavedReportsPanel({
           No saved reports yet.
           {!canSaveToServer && " Server saves are available on paid plans."}
         </p>
-      )}
-
-      {!loading && items.length > 0 && (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {items.map((item, i) => (
-            <li
-              key={item.id}
-              style={{
-                borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.1)",
-                padding: "8px 0",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => handleClick(item.id, item.created_at)}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "8px 12px",
-                  fontSize: "0.8rem",
-                  color: "rgba(246,245,241,0.9)",
-                  background: "transparent",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = "rgba(255,204,106,0.12)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.outline = "2px solid rgba(255,204,106,0.6)";
-                  e.currentTarget.style.outlineOffset = "2px";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.outline = "none";
-                }}
-              >
-                <span style={{ display: "block" }}>{formatTimestamp(item.created_at)}</span>
-                <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>
-                  {relativeTime(item.created_at)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
       )}
 
       {!loading && (

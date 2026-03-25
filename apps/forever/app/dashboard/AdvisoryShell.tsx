@@ -20,6 +20,8 @@ type AdvisoryShellProps = {
   getInputs?: () => Record<string, unknown>;
   /** Return current results for save. Default () => ({}). */
   getResults?: () => Record<string, unknown>;
+  /** When user picks a saved snapshot, rehydrate calculator state from stored inputs. */
+  onRestoreInputs?: (inputs: Record<string, unknown>) => void;
   children: React.ReactNode;
 };
 
@@ -27,11 +29,13 @@ export function AdvisoryShell({
   userId,
   getInputs = () => ({}),
   getResults = () => ({}),
+  onRestoreInputs,
   children,
 }: AdvisoryShellProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [canSave, setCanSave] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "ok" | "error">("idle");
+  const [reportsRefresh, setReportsRefresh] = useState(0);
   const [supabase, setSupabase] = useState<ReturnType<typeof createSupabaseBrowserClient> | null>(null);
 
   useEffect(() => {
@@ -71,12 +75,16 @@ export function AdvisoryShell({
       return;
     }
     setSaveStatus("ok");
+    setReportsRefresh((n) => n + 1);
     setTimeout(() => setSaveStatus("idle"), 2000);
   }, [supabase, sessionId, userId, getInputs, getResults]);
 
-  const handleRestore = useCallback((_inputs: Record<string, unknown>) => {
-    // TODO: rehydrate app state from _inputs when app has form state
-  }, []);
+  const handleRestore = useCallback(
+    (inputs: Record<string, unknown>) => {
+      onRestoreInputs?.(inputs);
+    },
+    [onRestoreInputs]
+  );
 
   if (!useV2) {
     return <>{children}</>;
@@ -122,6 +130,7 @@ export function AdvisoryShell({
             modelType={MODEL_TYPE}
             canSaveToServer={canSave}
             onRestore={handleRestore}
+            refreshToken={reportsRefresh}
           />
         </>
       )}
