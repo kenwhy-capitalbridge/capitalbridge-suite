@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerUserAndMembership } from "@/lib/auth";
+import { HeaderLogout } from "./components/HeaderLogout";
 import { PaymentGate } from "./components/PaymentGate";
 import { PersonaHeader } from "./dashboard/components/PersonaHeader";
 import { DashboardTiles } from "./dashboard/components/DashboardTiles";
@@ -90,6 +91,7 @@ export default async function Page({
             </p>
           )}
         </div>
+        <HeaderLogout />
       </header>
 
       <section style={{ padding: "1rem 0 2rem" }}>
