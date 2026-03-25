@@ -1,0 +1,74 @@
+.wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.5rem;
+  min-height: 52px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.35rem 1rem;
+  box-sizing: border-box;
+}
+
+.titleBase {
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 204, 106, 0.95);
+  font-family: ui-serif, "Roboto Serif", Georgia, serif;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.titleSingle {
+  font-size: 0.72rem;
+}
+
+@media (max-width: 640px) {
+  .titleSingle {
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+  }
+}
+
+.titleFull {
+  font-size: 0.72rem;
+}
+
+.titleCompact {
+  display: none;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+}
+
+@media (max-width: 640px) {
+  .titleFull {
+    display: none;
+  }
+
+  .titleCompact {
+    display: block;
+    font-size: 0.58rem;
+  }
+}
+
+.back {
+  justify-self: end;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(13, 58, 29, 0.95);
+  background-color: rgba(255, 204, 106, 0.92);
+  border: 1px solid rgba(255, 204, 106, 0.55);
+  border-radius: 4px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.back:hover {
+  opacity: 0.92;
+}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ModelAppHeader } from "@cb/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,5 +8,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en"><body>{children}</body></html>;
+  return (
+    <html lang="en">
+      <body>
+        <ModelAppHeader titleDesktop="FOREVER INCOME MODEL" />
+        {children}
+      </body>
+    </html>
+  );
 }
