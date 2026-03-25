@@ -6,8 +6,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-/** Plan slug from persona or default. */
-export type Plan = "trial" | "monthly" | "quarterly" | "yearly";
+/** Plan slug from persona or default (`strategic` = catalog 365-day tier; same feature gates as `yearly`). */
+export type Plan = "trial" | "monthly" | "quarterly" | "yearly" | "strategic";
 
 /** Persona returned by advisory_v2.get_user_persona. */
 export type Persona = {
@@ -88,12 +88,13 @@ function normalizePlan(v: unknown): Plan | null {
  */
 export function deriveEntitlements(plan: Plan | null): Entitlements {
   const p: Plan = plan ?? "trial";
+  const flagship = p === "yearly" || p === "strategic";
   return {
     plan: p,
     canSaveToServer: p !== "trial",
     canSeeVerdict: p !== "trial",
     canUseStressModel: p !== "trial",
-    canSeeSolutions: p === "yearly",
+    canSeeSolutions: flagship,
   };
 }
 
