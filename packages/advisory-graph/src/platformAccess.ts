@@ -41,33 +41,78 @@ function isRpcNotFound(err: { code?: string; message?: string }): boolean {
   return code === "PGRST202" || code === "42883" || msg.includes("could not find") || msg.includes("does not exist");
 }
 
+function personaFromRpcRow(data: unknown): Persona | null {
+  if (!data || typeof data !== "object") return null;
+  const row = data as Record<string, unknown>;
+  const rawPlan = row.active_plan ?? row.plan_slug ?? row.plan;
+  return {
+    user_id: String(row.user_id ?? ""),
+    full_name: row.full_name != null ? String(row.full_name) : null,
+    email: row.email != null ? String(row.email) : null,
+    active_plan: normalizePlan(rawPlan),
+    expires_at: row.expires_at != null ? String(row.expires_at) : null,
+  };
+}
+
+/** Higher = paid / more capable (used to pick best persona when merging RPCs). */
+function planTier(plan: Plan | null): number {
+  const p = plan ?? "trial";
+  if (p === "trial") return 0;
+  if (p === "monthly") return 1;
+  if (p === "quarterly") return 2;
+  if (p === "yearly" || p === "strategic") return 3;
+  return 0;
+}
+
+function isWeakPersona(p: Persona | null): boolean {
+  if (!p?.user_id) return true;
+  return deriveEntitlements(p.active_plan).plan === "trial";
+}
+
 /**
  * Fetches current user persona via RPC: tries public.get_user_persona first, then advisory_v2.get_user_persona.
- * Returns null on error (logs concise warning).
+ * If public succeeds but returns trial/empty plan, also reads advisory_v2 and keeps the stronger plan (fixes
+ * catalog slug / naming mismatches and divergent RPC logic).
  */
 export async function fetchPersona(
   supabase: SupabaseClient
 ): Promise<Persona | null> {
-  const client = supabase as { rpc: (name: string) => ReturnType<SupabaseClient["rpc"]>; schema: (s: string) => { rpc: (name: string) => ReturnType<SupabaseClient["rpc"]> } };
+  const client = supabase as {
+    rpc: (name: string) => ReturnType<SupabaseClient["rpc"]>;
+    schema: (s: string) => { rpc: (name: string) => ReturnType<SupabaseClient["rpc"]> };
+  };
   try {
-    let result = await client.rpc("get_user_persona");
-    if (result.error && isRpcNotFound(result.error)) {
-      result = await client.schema("advisory_v2").rpc("get_user_persona");
+    let primary = await client.rpc("get_user_persona");
+    let usedPublic = true;
+    if (primary.error && isRpcNotFound(primary.error)) {
+      primary = await client.schema("advisory_v2").rpc("get_user_persona");
+      usedPublic = false;
     }
-    const { data, error } = result;
+    const { data, error } = primary;
     if (error) {
       console.warn("[platformAccess] get_user_persona failed:", error.message);
       return null;
     }
-    if (!data || typeof data !== "object") return null;
-    const row = data as Record<string, unknown>;
-    return {
-      user_id: String(row.user_id ?? ""),
-      full_name: row.full_name != null ? String(row.full_name) : null,
-      email: row.email != null ? String(row.email) : null,
-      active_plan: normalizePlan(row.active_plan),
-      expires_at: row.expires_at != null ? String(row.expires_at) : null,
-    };
+    let persona = personaFromRpcRow(data);
+
+    if (usedPublic && isWeakPersona(persona)) {
+      const secondary = await client.schema("advisory_v2").rpc("get_user_persona");
+      if (!secondary.error && secondary.data) {
+        const other = personaFromRpcRow(secondary.data);
+        if (other?.user_id && planTier(other.active_plan) > planTier(persona?.active_plan ?? null)) {
+          persona = {
+            ...other,
+            full_name: persona?.full_name ?? other.full_name,
+            email: persona?.email ?? other.email,
+            expires_at: other.expires_at ?? persona?.expires_at ?? null,
+          };
+        } else if (!persona?.user_id && other?.user_id) {
+          persona = other;
+        }
+      }
+    }
+
+    return persona;
   } catch (e) {
     console.warn("[platformAccess] fetchPersona error:", e);
     return null;
@@ -76,7 +121,9 @@ export async function fetchPersona(
 
 function normalizePlan(v: unknown): Plan | null {
   if (v == null) return null;
-  const s = String(v).toLowerCase();
+  const s = String(v).toLowerCase().trim();
+  const squish = s.replace(/[\s_-]+/g, "");
+
   if (
     s === "trial" ||
     s === "monthly" ||
@@ -85,6 +132,12 @@ function normalizePlan(v: unknown): Plan | null {
     s === "strategic"
   )
     return s as Plan;
+
+  if (squish === "yearlyfull" || s === "yearly_full") return "strategic";
+  if (squish === "strategic365" || squish === "strategicyearly") return "strategic";
+
+  if (s.includes("strategic")) return "strategic";
+
   return null;
 }
 
