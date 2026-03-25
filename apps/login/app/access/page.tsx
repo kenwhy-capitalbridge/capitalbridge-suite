@@ -238,6 +238,7 @@ function AccessInner() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   const [busy, setBusy] = useState(false);
+  const [alreadySignOutBusy, setAlreadySignOutBusy] = useState(false);
 
   const [resendCooldownEndsAt, setResendCooldownEndsAt] = useState<number | null>(null);
   const [cooldownTick, setCooldownTick] = useState(0);
@@ -849,6 +850,23 @@ function AccessInner() {
     await sendAccessEmail(errorScreenEmail);
   }
 
+  async function handleAlreadySignedInLogout() {
+    if (alreadySignOutBusy) return;
+    setAlreadySignOutBusy(true);
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST", credentials: "include" }).catch(() => {});
+      await supabase.auth.signOut().catch(() => {});
+      setView("login");
+      setSessionConflictOpen(false);
+      setLoginFieldMessage(null);
+      setLoginLockUntilMs(null);
+      setResendSentEmail(null);
+      setResendError(null);
+    } finally {
+      setAlreadySignOutBusy(false);
+    }
+  }
+
   if (view === "loading") {
     return (
       <div className="cb-auth-shell">
@@ -892,6 +910,14 @@ function AccessInner() {
               }}
             >
               {COPY_CONTINUE}
+            </button>
+            <button
+              type="button"
+              className="cb-btn-secondary mt-3 w-full font-semibold"
+              onClick={() => void handleAlreadySignedInLogout()}
+              disabled={alreadySignOutBusy}
+            >
+              {alreadySignOutBusy ? "Logging out…" : "Logout"}
             </button>
           </div>
         </main>
