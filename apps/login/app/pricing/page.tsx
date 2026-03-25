@@ -184,6 +184,9 @@ const ADVISOR_PLANS = [
   },
 ];
 
+/** Single column on mobile needs one vertical rhythm; two grids + section margin caused uneven gaps */
+const ALL_DISPLAY_PLANS = [...INDIVIDUAL_PLANS, ...ADVISOR_PLANS];
+
 function PlanCard({
   plan,
   onPay,
@@ -350,7 +353,7 @@ function PlanCard({
       </div>
     </div>
   );
-  return useGlow ? (
+  const cardShell = useGlow ? (
     <div
       className="relative z-10 rounded-2xl"
       style={{
@@ -362,6 +365,12 @@ function PlanCard({
   ) : (
     cardInner
   );
+
+  /** Reserve space for absolute -top-3 badges on stacked mobile so they don’t eat the row gap */
+  if (showBadge && badgeText) {
+    return <div className="pt-3 sm:pt-0">{cardShell}</div>;
+  }
+  return cardShell;
 }
 
 function PricingContent() {
@@ -658,22 +667,8 @@ function PricingContent() {
           )}
 
           <div className="mt-6 sm:mt-8">
-            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-              {INDIVIDUAL_PLANS.map((plan) => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  onPay={handlePay}
-                  loadingPlan={loadingPlan}
-                  isLoggedIn={isLoggedIn}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-16 sm:mt-12">
-            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-              {ADVISOR_PLANS.map((plan) => (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-6">
+              {ALL_DISPLAY_PLANS.map((plan) => (
                 <PlanCard
                   key={plan.id}
                   plan={plan}
