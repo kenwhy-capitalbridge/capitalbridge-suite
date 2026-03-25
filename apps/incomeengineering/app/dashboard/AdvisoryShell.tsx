@@ -74,7 +74,7 @@ export function AdvisoryShell({
   return (
     <div style={{ padding: "2rem", maxWidth: 960, margin: "0 auto" }}>
       {children}
-      {supabase && (
+      {supabase && userId && (
         <>
           {canSave && sessionId && (
             <div style={{ marginTop: 16 }}>
