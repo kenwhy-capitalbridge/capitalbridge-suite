@@ -3,13 +3,10 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-const EXIT_LOGIN_URL =
-  process.env.NEXT_PUBLIC_EXIT_LOGIN_URL ?? "https://thecapitalbridge.com/advisory-platform/";
+/** Logo + "Exit Login" — main marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
-/** Marketing homepage (explicit www), used next to Back to Login on selected routes */
-const HOMEPAGE_URL = "https://www.thecapitalbridge.com";
 
-/** Routes that show "← Back to Login | Homepage" (vs "← Exit Login | Homepage" elsewhere) */
+/** Routes that show only "← Back to Login" (link to /access) */
 const BACK_TO_LOGIN_NAV_PATHS = new Set(["/pricing", "/checkout"]);
 
 export default function Header() {
@@ -48,39 +45,17 @@ export default function Header() {
         )}
 
         {showBackToLoginNav ? (
-          <div className="flex max-w-[52%] shrink-0 items-center gap-0.5 text-cb-gold sm:max-w-none sm:gap-1.5">
+          <div className="flex max-w-[52%] shrink-0 items-center text-cb-gold sm:max-w-none">
             <a href="/access" className={navTextLinkClass}>
               <span className="sm:hidden">← Login</span>
               <span className="hidden sm:inline">← Back to Login</span>
             </a>
-            <span className="shrink-0 text-[9px] text-cb-gold/45 sm:text-sm" aria-hidden>
-              |
-            </span>
-            <a
-              href={HOMEPAGE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={navTextLinkClass}
-            >
-              Homepage
-            </a>
           </div>
         ) : (
-          <div className="flex max-w-[52%] shrink-0 items-center gap-0.5 text-cb-gold sm:max-w-none sm:gap-1.5">
-            <a href={EXIT_LOGIN_URL} className={navTextLinkClass}>
+          <div className="flex max-w-[52%] shrink-0 items-center text-cb-gold sm:max-w-none">
+            <a href={MARKETING_URL} className={navTextLinkClass}>
               <span className="sm:hidden">← Exit</span>
               <span className="hidden sm:inline">← Exit Login</span>
-            </a>
-            <span className="shrink-0 text-[9px] text-cb-gold/45 sm:text-sm" aria-hidden>
-              |
-            </span>
-            <a
-              href={HOMEPAGE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={navTextLinkClass}
-            >
-              Homepage
             </a>
           </div>
         )}
