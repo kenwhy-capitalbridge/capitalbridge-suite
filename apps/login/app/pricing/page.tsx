@@ -671,7 +671,7 @@ function PricingContent() {
             </div>
           </div>
 
-          <div className="mt-8 sm:mt-12">
+          <div className="mt-16 sm:mt-12">
             <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
               {ADVISOR_PLANS.map((plan) => (
                 <PlanCard
