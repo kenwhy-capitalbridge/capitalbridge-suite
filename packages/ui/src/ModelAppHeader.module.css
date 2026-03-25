@@ -13,12 +13,14 @@
 .titleBase {
   font-weight: 700;
   letter-spacing: 0.2em;
-  text-transform: uppercase;
   color: rgba(255, 204, 106, 0.95);
   font-family: ui-serif, "Roboto Serif", Georgia, serif;
   text-align: center;
   white-space: nowrap;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .titleSingle {
@@ -27,8 +29,8 @@
 
 @media (max-width: 640px) {
   .titleSingle {
-    font-size: 0.58rem;
-    letter-spacing: 0.14em;
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
   }
 }
 
@@ -49,7 +51,8 @@
 
   .titleCompact {
     display: block;
-    font-size: 0.58rem;
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
   }
 }
 
@@ -71,4 +74,18 @@
 
 .back:hover {
   opacity: 0.92;
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 0.35rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .back {
+    padding: 0.28rem 0.52rem;
+    font-size: 0.54rem;
+    letter-spacing: 0.07em;
+  }
 }

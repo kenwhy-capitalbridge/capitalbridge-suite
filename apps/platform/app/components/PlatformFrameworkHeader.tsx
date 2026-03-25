@@ -43,10 +43,10 @@ export async function PlatformFrameworkHeader({ verifiedUserEmail }: PlatformFra
           gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
           alignItems: "center",
           columnGap: "0.5rem",
-          minHeight: 52,
+          minHeight: 48,
           maxWidth: 1280,
           margin: "0 auto",
-          padding: "0.35rem 1rem",
+          padding: "0.3rem 0.75rem",
           boxSizing: "border-box",
         }}
       >
@@ -66,9 +66,9 @@ export async function PlatformFrameworkHeader({ verifiedUserEmail }: PlatformFra
             height={36}
             priority
             style={{
-              height: 28,
+              height: "clamp(18px, 4.2vw, 28px)",
               width: "auto",
-              maxWidth: "min(42vw, 200px)",
+              maxWidth: "min(34vw, 170px)",
               objectFit: "contain",
               objectPosition: "left center",
               mixBlendMode: "lighten",
@@ -78,9 +78,9 @@ export async function PlatformFrameworkHeader({ verifiedUserEmail }: PlatformFra
 
         <span
           style={{
-            fontSize: "0.72rem",
+            fontSize: "clamp(0.52rem, 1.9vw, 0.72rem)",
             fontWeight: 700,
-            letterSpacing: "0.2em",
+            letterSpacing: "clamp(0.08em, 0.7vw, 0.2em)",
             textTransform: "uppercase",
             color: "rgba(255, 204, 106, 0.95)",
             fontFamily: 'ui-serif, "Roboto Serif", Georgia, serif',

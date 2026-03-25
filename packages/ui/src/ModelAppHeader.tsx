@@ -57,9 +57,9 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref }: ModelApp
             height={36}
             priority
             style={{
-              height: 28,
+              height: "clamp(14px, 3.8vw, 24px)",
               width: "auto",
-              maxWidth: "min(42vw, 200px)",
+              maxWidth: "min(28vw, 128px)",
               objectFit: "contain",
               objectPosition: "left center",
               mixBlendMode: "lighten",
@@ -74,6 +74,8 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref }: ModelApp
             justifyContent: "center",
             alignItems: "center",
             minWidth: 0,
+            width: "100%",
+            paddingInline: "0.15rem",
           }}
         >
           {short && short !== titleDesktop ? (
