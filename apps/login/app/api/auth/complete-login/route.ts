@@ -15,7 +15,11 @@ function normalizeEmail(s: string) {
 const EMAIL_MISMATCH =
   "Please use the same email address you used during checkout.";
 
-async function upsertActiveSession(
+/**
+ * Persist JWT session id for single-session enforcement. Never uses PostgREST upsert / ON CONFLICT
+ * (broken if UNIQUE/PK on user_id is missing). Pattern: UPDATE, then INSERT if no row matched.
+ */
+async function setActiveSessionRow(
   svc: ReturnType<typeof createServiceClient>,
   userId: string,
   token: string
@@ -23,27 +27,45 @@ async function upsertActiveSession(
   const jwtSessionId = getJwtSessionIdFromAccessToken(token);
   const nowIso = new Date().toISOString();
 
-  if (jwtSessionId) {
-    // Delete-then-insert: avoids PostgREST upsert requiring UNIQUE/PK on user_id (schema drift in Supabase breaks ON CONFLICT).
+  if (!jwtSessionId) {
     const { error: delErr } = await svc.schema("public").from("user_active_session").delete().eq("user_id", userId);
-    if (delErr) {
-      return { ok: false, detail: delErr.message };
-    }
-    const { error: insErr } = await svc.schema("public").from("user_active_session").insert({
-      user_id: userId,
+    if (delErr) return { ok: false, detail: delErr.message };
+    return { ok: true };
+  }
+
+  const { data: updatedRows, error: upErr } = await svc
+    .schema("public")
+    .from("user_active_session")
+    .update({
       session_id: jwtSessionId,
       updated_at: nowIso,
-    });
-    if (insErr) {
-      return { ok: false, detail: insErr.message };
-    }
-  } else {
-    const { error: delErr } = await svc.schema("public").from("user_active_session").delete().eq("user_id", userId);
-    if (delErr) {
-      return { ok: false, detail: delErr.message };
-    }
+    })
+    .eq("user_id", userId)
+    .select("user_id");
+
+  if (upErr) return { ok: false, detail: upErr.message };
+
+  if (updatedRows && updatedRows.length > 0) {
+    return { ok: true };
   }
-  return { ok: true };
+
+  const { error: insErr } = await svc.schema("public").from("user_active_session").insert({
+    user_id: userId,
+    session_id: jwtSessionId,
+    updated_at: nowIso,
+  });
+  if (!insErr) return { ok: true };
+
+  // Race: another request inserted between UPDATE and INSERT — try UPDATE again.
+  const { data: late, error: up2 } = await svc
+    .schema("public")
+    .from("user_active_session")
+    .update({ session_id: jwtSessionId, updated_at: nowIso })
+    .eq("user_id", userId)
+    .select("user_id");
+  if (up2) return { ok: false, detail: up2.message };
+  if (late && late.length > 0) return { ok: true };
+  return { ok: false, detail: insErr.message };
 }
 
 /**
@@ -126,13 +148,13 @@ export async function POST(req: Request) {
     authEventLog("membership_self_healed", { user_id_prefix: userId.slice(0, 8), ensured: ensure.ensured });
   }
 
-  let sessionResult = await upsertActiveSession(svc, userId, token);
+  let sessionResult = await setActiveSessionRow(svc, userId, token);
   if (!sessionResult.ok) {
-    sessionResult = await upsertActiveSession(svc, userId, token);
+    sessionResult = await setActiveSessionRow(svc, userId, token);
   }
 
   if (!sessionResult.ok) {
-    console.error("[complete-login] user_active_session upsert failed", sessionResult.detail);
+    console.error("[complete-login] user_active_session write failed", sessionResult.detail);
     return NextResponse.json({ error: "session_record_failed", detail: sessionResult.detail }, { status: 500 });
   }
 

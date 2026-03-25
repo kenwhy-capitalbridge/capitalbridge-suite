@@ -133,7 +133,19 @@ export async function activateMembershipFromPaidBillingSession(params: {
     return { ok: true, membershipId: linkedId, idempotent: true };
   }
 
-  await svc.schema("public").from("profiles").upsert({ id: userId }, { onConflict: "id" });
+  const { data: profRows } = await svc
+    .schema("public")
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .limit(1);
+  if (!profRows?.length) {
+    const { error: profIns } = await svc.schema("public").from("profiles").insert({ id: userId });
+    if (profIns && profIns.code !== "23505") {
+      console.error("[activate-membership] profiles insert failed", profIns.message);
+      return { ok: false, error: profIns.message };
+    }
+  }
 
   return { ok: true, membershipId };
 }
