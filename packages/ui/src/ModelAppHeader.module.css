@@ -82,8 +82,17 @@
   }
 }
 
-.back {
+.actionsCluster {
   justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.back {
   padding: 0.35rem 0.75rem;
   font-size: 0.65rem;
   font-weight: 700;

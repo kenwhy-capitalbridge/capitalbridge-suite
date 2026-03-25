@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { getServerUserAndMembership } from "@/lib/auth";
 import { PaymentGate } from "./components/PaymentGate";
 import { PersonaHeader } from "./dashboard/components/PersonaHeader";
@@ -16,7 +15,7 @@ export default async function Page({
   searchParams?: { plan?: string };
 }) {
   const { user, membership } = await getServerUserAndMembership();
-  if (!user) redirect("/login");
+  if (!user) return <FrameworkStaticLanding />;
 
   const now = new Date();
   const isActive =

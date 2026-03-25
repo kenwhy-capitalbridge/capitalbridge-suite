@@ -19,7 +19,7 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
   );
   return (
     <>
-      <PlatformFrameworkHeader verifiedUserEmail={userEmail} />
+      <PlatformFrameworkHeader verifiedUserEmail={userEmail ?? null} publicBrowse={!userEmail} />
       <main className="cb-framework">
         <header className="cb-hero">
           <div className="cb-hero-inner">

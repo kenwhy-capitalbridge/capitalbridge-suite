@@ -68,6 +68,7 @@ More detail: `VERCEL_MONOREPO.md` (§8 and troubleshooting).
 | Date | Notes |
 |------|--------|
 | 2026-03-25 | Initial `HANDOFF.md` created from advisory platform deploy + auth cookie + access logout work. |
+| 2026-03-25 | Follow-up: confirmed auth cookie + access sign-out code paths; `npm run typecheck` and builds for login, platform, api all pass. No open code task from handoff. |
 
 ---
 

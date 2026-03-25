@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { MARKETING_SITE_URL, PLATFORM_APP_URL } from "@cb/shared/urls";
 import styles from "./ModelAppHeader.module.css";
@@ -19,6 +20,8 @@ export type ModelAppHeaderProps = {
   titleMobile?: string;
   /** Defaults to platform origin + `/`. */
   backHref?: string;
+  /** Optional right-side controls (e.g. Save / load snapshots), shown next to Back. */
+  actions?: ReactNode;
 };
 
 /**
@@ -26,7 +29,7 @@ export type ModelAppHeaderProps = {
  * Uses fixed positioning (not sticky) so it stays visible when legacy calculator CSS sets
  * `overflow-x: hidden` on html/body, which breaks `position: sticky`.
  */
-export function ModelAppHeader({ titleDesktop, titleMobile, backHref }: ModelAppHeaderProps) {
+export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }: ModelAppHeaderProps) {
   const home = marketingHomeUrl();
   const back = backHref ?? platformHomeUrl();
   const short = titleMobile?.trim();
@@ -93,9 +96,12 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref }: ModelApp
             )}
           </div>
 
-          <a className={styles.back} href={back}>
-            Back
-          </a>
+          <div className={styles.actionsCluster}>
+            <a className={styles.back} href={back}>
+              Back
+            </a>
+            {actions}
+          </div>
         </div>
       </header>
       <div className={styles.spacer} aria-hidden />

@@ -30,7 +30,7 @@ export default async function ForeverDashboard() {
 
   return (
     <main>
-      <ForeverDashboardClient userId={user.id} />
+      <ForeverDashboardClient />
     </main>
   );
 }

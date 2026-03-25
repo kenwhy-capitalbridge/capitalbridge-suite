@@ -2,16 +2,11 @@
 
 import { useCallback, useState } from "react";
 import { createAppBrowserClient } from "@cb/supabase/browser";
-import { MARKETING_SITE_URL } from "@cb/shared/urls";
-
-function marketingHomeUrl(): string {
-  const base = MARKETING_SITE_URL.replace(/\/+$/, "");
-  return `${base}/`;
-}
+import { platformPostLogoutUrl } from "@cb/shared/urls";
 
 /**
- * Ends the platform session and sends the user to the main marketing site
- * (same-tab; see NEXT_PUBLIC_MARKETING_SITE_URL).
+ * Clears server session state, signs out of Supabase, then sends the user to the
+ * platform root with the Framework scroll-to-text fragment (see platformPostLogoutUrl).
  */
 export function PlatformLogoutToMarketing() {
   const [pending, setPending] = useState(false);
@@ -25,7 +20,7 @@ export function PlatformLogoutToMarketing() {
       );
       const supabase = createAppBrowserClient();
       await supabase.auth.signOut();
-      window.location.replace(marketingHomeUrl());
+      window.location.replace(platformPostLogoutUrl());
     } catch {
       setPending(false);
     }
