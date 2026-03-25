@@ -102,3 +102,16 @@ You should see JSON like `{ "app": "platform", "monorepo": "capitalbridge-suite"
 
 - **404** → this hostname is **not** the monorepo `apps/platform` app (wrong Vercel project or old deploy).
 - **`commit` matches `main`** but the page still shows the old footer → **browser or CDN cache**; hard-refresh, clear site data for this host, or purge Cloudflare.
+
+### Build fails: “No Output Directory named `public`”
+
+That means the project is **not** using the Next.js output flow Vercel expects (usually **Root Directory** is wrong and/or **Output Directory** was set manually).
+
+1. **Settings → Build and Deployment → Root Directory** — must be **`apps/platform`** (not empty / not repo root).  
+   If the build log shows `capitalbridge-suite@1.0.0 build` and it runs **login + platform + api**, Root Directory is still the **monorepo root** — fix it to `apps/platform`. After that, the log should show only **`@cb/platform`** / `next build` for that app.
+
+2. **Output Directory** — for a Next.js app on Vercel, leave this **empty** (default). Do **not** set it to `public` unless you use a static export that actually emits `public/`. Wrong value causes the error above.
+
+3. **Redeploy** after saving.
+
+The `apps/platform/vercel.json` in this repo sets `installCommand` (monorepo install) and `buildCommand` (`npm run build` = `next build` in that package) when Root Directory is `apps/platform`.
