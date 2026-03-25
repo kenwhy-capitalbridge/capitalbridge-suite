@@ -11,6 +11,9 @@
     "./plans/planMap": "./src/plans/planMap.ts",
     "./plans/expiry": "./src/plans/expiry.ts"
   },
+  "dependencies": {
+    "@cb/supabase": "*"
+  },
   "peerDependencies": {
     "@supabase/supabase-js": "^2",
     "react": "^18"
