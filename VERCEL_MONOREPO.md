@@ -105,13 +105,26 @@ You should see JSON like `{ "app": "platform", "monorepo": "capitalbridge-suite"
 
 ### Build fails: “No Output Directory named `public`”
 
-That means the project is **not** using the Next.js output flow Vercel expects (usually **Root Directory** is wrong and/or **Output Directory** was set manually).
+Vercel is treating this like a **static** site (output folder `public`) instead of a **Next.js** app. Your build log will still show **`capitalbridge-suite@1.0.0 build`** and run **login + platform + api** until **Root Directory** is fixed.
 
-1. **Settings → Build and Deployment → Root Directory** — must be **`apps/platform`** (not empty / not repo root).  
-   If the build log shows `capitalbridge-suite@1.0.0 build` and it runs **login + platform + api**, Root Directory is still the **monorepo root** — fix it to `apps/platform`. After that, the log should show only **`@cb/platform`** / `next build` for that app.
+Do **all** of the following on the **`advisoryplatform`** project (the one for `platform.thecapitalbridge.com`):
 
-2. **Output Directory** — for a Next.js app on Vercel, leave this **empty** (default). Do **not** set it to `public` unless you use a static export that actually emits `public/`. Wrong value causes the error above.
+1. **Settings → General → Framework Preset**  
+   Set to **Next.js** (or **Other** → pick **Next.js** if the detector is wrong).  
+   If the project was created as a static site, this is often still **Other** with output `public` — change it.
 
-3. **Redeploy** after saving.
+2. **Settings → Build and Deployment → Root Directory**  
+   Set to **`apps/platform`** (exactly). Save.  
+   After this, a correct deploy log should **not** start with `capitalbridge-suite@1.0.0 build` for the whole repo; it should run **`@cb/platform`** / `next build` only.
 
-The `apps/platform/vercel.json` in this repo sets `installCommand` (monorepo install) and `buildCommand` (`npm run build` = `next build` in that package) when Root Directory is `apps/platform`.
+3. **Settings → Build and Deployment → Output Directory**  
+   **Clear the field completely** — it must be **blank**, not `public`.  
+   If you see an **Override** toggle next to Build / Output, turn **Override OFF** or delete the custom value so Vercel uses the Next.js default (`.next` handled automatically).
+
+4. **Settings → Build and Deployment → Build Command**  
+   Prefer **default** when Root Directory is `apps/platform` (runs `npm run build` from that package).  
+   Do **not** point the build at the monorepo root `npm run build` unless you intend to build every app.
+
+5. **Redeploy** (Deployments → … → Redeploy).
+
+The `apps/platform/vercel.json` in this repo sets `installCommand` (`cd ../.. && npm install`) and `buildCommand` (`npm run build`) when Root Directory is `apps/platform`.
