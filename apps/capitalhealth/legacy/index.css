@@ -1,0 +1,21 @@
+/* Capital Growth Calculator 2.0 – brand & base */
+:root {
+  --brand-green: #0d3a1d;
+  --brand-green-rgb: 13, 58, 29;
+  --brand-gold: #FFCC6A;
+  --canvas: #F6F5F1;
+  --sustainable: #11B981;
+  --plausible: #FFAB40;
+  --unsustainable: #DD524C;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+input[type="range"] { accent-color: var(--brand-gold); }
+
+/* Pill and number transitions */
+.pill-transition { transition: background-color 0.25s ease, color 0.25s ease; }
+.rollup { transition: opacity 0.2s ease; }
+
+/* Focus for accessibility */
+*:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: 2px; }
