@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getServerUserAndMembership } from "@/lib/auth";
-import { HeaderLogout } from "./components/HeaderLogout";
 import { PaymentGate } from "./components/PaymentGate";
 import { PersonaHeader } from "./dashboard/components/PersonaHeader";
 import { DashboardTiles } from "./dashboard/components/DashboardTiles";
@@ -41,58 +40,37 @@ export default async function Page({
           textAlign: "center",
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            fontSize: "1.1rem",
-            fontWeight: 600,
-            color: "rgba(246,245,241,0.98)",
-            letterSpacing: "0.02em",
-          }}
-        >
-          Welcome, {displayName}.
-        </p>
-      </div>
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          padding: "1rem 1.25rem 0.5rem",
-          borderBottom: "1px solid rgba(255,204,106,0.25)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          maxWidth: 1200,
-          margin: "0 auto",
-          width: "100%",
-          backgroundColor: "#0D3A1D",
-        }}
-      >
-        <div>
+        {useV2 ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "0.35rem",
+              textAlign: "center",
+            }}
+          >
+            <PersonaHeader />
+          </div>
+        ) : (
           <p
             style={{
-              fontSize: "0.7rem",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "rgba(255,204,106,0.85)",
               margin: 0,
-              fontFamily: 'ui-serif, "Roboto Serif", Georgia, serif',
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              color: "rgba(246,245,241,0.98)",
+              letterSpacing: "0.02em",
             }}
-            aria-label="Capital Bridge"
           >
-            CAPITAL BRIDGE
+            Welcome, {displayName}.
           </p>
-          {useV2 ? (
-            <PersonaHeader />
-          ) : (
-            <p style={{ fontSize: "0.8rem", color: "rgba(246,245,241,0.8)", margin: "0.25rem 0 0" }}>
-              Signed in as {user.email ?? "client"}
-            </p>
-          )}
-        </div>
-        <HeaderLogout />
-      </header>
+        )}
+        {!useV2 && (
+          <p style={{ fontSize: "0.8rem", color: "rgba(246,245,241,0.75)", margin: "0.35rem 0 0" }}>
+            Signed in as {user.email ?? "client"}
+          </p>
+        )}
+      </div>
 
       <section style={{ padding: "1rem 0 2rem" }}>
         <div style={{ width: "100%", maxWidth: 1280, margin: "0 auto", padding: "0 1rem" }}>

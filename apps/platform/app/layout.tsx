@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createAppServerClient } from "@cb/supabase/server";
 import "./globals.css";
 import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
+import { PlatformFrameworkHeader } from "./components/PlatformFrameworkHeader";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         <MembershipSessionCheck initialSafeMode={initialSafeMode} />
+        <PlatformFrameworkHeader />
         {children}
       </body>
     </html>
