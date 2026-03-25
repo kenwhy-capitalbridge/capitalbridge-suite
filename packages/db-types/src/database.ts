@@ -181,6 +181,63 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["admin_billing_email_recoveries"]["Row"]>;
         Relationships: [];
       };
+      model_runs: {
+        Row: {
+          id: string;
+          user_id: string;
+          model_key: "forever-income-model" | "income-engineering-model" | "capital-health-model" | "capital-stress-model";
+          source_app: string;
+          status: "draft" | "completed" | "failed";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["model_runs"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["model_runs"]["Row"]>;
+        Relationships: [];
+      };
+      model_inputs: {
+        Row: {
+          id: string;
+          run_id: string;
+          user_id: string;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["model_inputs"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["model_inputs"]["Row"]>;
+        Relationships: [];
+      };
+      model_outputs: {
+        Row: {
+          id: string;
+          run_id: string;
+          user_id: string;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["model_outputs"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["model_outputs"]["Row"]>;
+        Relationships: [];
+      };
+      model_shared_facts: {
+        Row: {
+          id: string;
+          user_id: string;
+          fact_key: string;
+          fact_value: Json;
+          source_model_key:
+            | "forever-income-model"
+            | "income-engineering-model"
+            | "capital-health-model"
+            | "capital-stress-model";
+          run_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["model_shared_facts"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["model_shared_facts"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

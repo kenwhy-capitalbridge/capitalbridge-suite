@@ -31,6 +31,36 @@ const MODEL_URLS: Record<string, string> = {
       : "https://platform.thecapitalbridge.com/solutions",
 };
 
+/** Trial-tier SPAs (Vite); open at site root — no `/dashboard`, no Supabase model hub. */
+const TRIAL_MODEL_URLS: Record<string, string> = {
+  "forever-income":
+    typeof process.env.NEXT_PUBLIC_TRIAL_FOREVER_APP_URL === "string"
+      ? process.env.NEXT_PUBLIC_TRIAL_FOREVER_APP_URL
+      : "https://trialforeverincome.thecapitalbridge.com",
+  "income-engineering":
+    typeof process.env.NEXT_PUBLIC_TRIAL_INCOME_ENGINEERING_APP_URL === "string"
+      ? process.env.NEXT_PUBLIC_TRIAL_INCOME_ENGINEERING_APP_URL
+      : "https://trial-incomeengineringmodel.thecapitalbridge.com",
+  "capital-health":
+    typeof process.env.NEXT_PUBLIC_TRIAL_CAPITAL_HEALTH_APP_URL === "string"
+      ? process.env.NEXT_PUBLIC_TRIAL_CAPITAL_HEALTH_APP_URL
+      : "https://trialcapitalhealth.thecapitalbridge.com",
+};
+
+function trimTrailingSlash(s: string): string {
+  return s.replace(/\/+$/, "");
+}
+
+/** Paid models use Next `/dashboard`; trial Vite apps use `/`. */
+function modelTileHref(tileId: string, plan: Entitlements["plan"]): string {
+  if (plan === "trial") {
+    const base = TRIAL_MODEL_URLS[tileId] ?? MODEL_URLS[tileId];
+    return `${trimTrailingSlash(base)}/`;
+  }
+  const base = MODEL_URLS[tileId];
+  return `${trimTrailingSlash(base)}/dashboard`;
+}
+
 type Tile = {
   id: string;
   label: string;
@@ -39,36 +69,31 @@ type Tile = {
   tooltipDisabled?: string;
 };
 
-const TILES: Tile[] = [
+const TILES: Omit<Tile, "href">[] = [
   {
     id: "forever-income",
     label: "Forever Income",
-    href: `${MODEL_URLS["forever-income"]}/dashboard`,
     enabled: () => true,
   },
   {
     id: "income-engineering",
     label: "Income Engineering",
-    href: `${MODEL_URLS["income-engineering"]}/dashboard`,
     enabled: () => true,
   },
   {
     id: "capital-health",
     label: "Evaluate Income Sustainability (Capital Health)",
-    href: `${MODEL_URLS["capital-health"]}/dashboard`,
     enabled: () => true,
   },
   {
     id: "capital-stress",
     label: "Stress Test Resilience (Capital Stress)",
-    href: `${MODEL_URLS["capital-stress"]}/dashboard`,
     enabled: (e) => e.canUseStressModel,
     tooltipDisabled: "Available on paid plans",
   },
   {
     id: "solutions",
     label: "Solutions & Execution",
-    href: MODEL_URLS.solutions,
     enabled: (e) => e.canSeeSolutions,
     tooltipDisabled: "Yearly plan only",
   },
@@ -96,11 +121,17 @@ export function DashboardTiles() {
     >
       {TILES.map((tile) => {
         const enabled = tile.enabled(e);
+        const href =
+          tile.id === "solutions"
+            ? MODEL_URLS.solutions
+            : modelTileHref(tile.id, e.plan);
         return (
           <div key={tile.id}>
             {enabled ? (
               <a
-                href={tile.href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   display: "block",
                   padding: "1rem 1.25rem",
