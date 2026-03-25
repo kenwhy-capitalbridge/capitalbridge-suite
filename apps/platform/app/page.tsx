@@ -3,6 +3,8 @@ import { getServerUserAndMembership } from "@/lib/auth";
 import { PaymentGate } from "./components/PaymentGate";
 import { PersonaHeader } from "./dashboard/components/PersonaHeader";
 import { DashboardTiles } from "./dashboard/components/DashboardTiles";
+import { FrameworkStaticLanding } from "./components/FrameworkStaticLanding";
+import { PlatformFrameworkHeader } from "./components/PlatformFrameworkHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -23,24 +25,31 @@ export default async function Page({
     (membership.end_date === null || new Date(membership.end_date) > now);
 
   if (!isActive) {
-    return <PaymentGate userId={user.id} plan={searchParams?.plan ?? null} />;
+    return (
+      <>
+        <PlatformFrameworkHeader verifiedUserEmail={user.email} />
+        <PaymentGate userId={user.id} plan={searchParams?.plan ?? null} />
+      </>
+    );
   }
 
-  const displayName = user.name ?? user.email ?? "there";
+  if (!useV2) {
+    return <FrameworkStaticLanding userEmail={user.email} />;
+  }
 
   return (
-    <main>
-      {/* Prominent welcome at the very top */}
-      <div
-        style={{
-          width: "100%",
-          padding: "0.75rem 1.25rem",
-          backgroundColor: "rgba(255,204,106,0.12)",
-          borderBottom: "1px solid rgba(255,204,106,0.3)",
-          textAlign: "center",
-        }}
-      >
-        {useV2 ? (
+    <>
+      <PlatformFrameworkHeader verifiedUserEmail={user.email} />
+      <main>
+        <div
+          style={{
+            width: "100%",
+            padding: "0.75rem 1.25rem",
+            backgroundColor: "rgba(255,204,106,0.12)",
+            borderBottom: "1px solid rgba(255,204,106,0.3)",
+            textAlign: "center",
+          }}
+        >
           <div
             style={{
               display: "flex",
@@ -52,50 +61,14 @@ export default async function Page({
           >
             <PersonaHeader />
           </div>
-        ) : (
-          <p
-            style={{
-              margin: 0,
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "rgba(246,245,241,0.98)",
-              letterSpacing: "0.02em",
-            }}
-          >
-            Welcome, {displayName}.
-          </p>
-        )}
-        {!useV2 && (
-          <p style={{ fontSize: "0.8rem", color: "rgba(246,245,241,0.75)", margin: "0.35rem 0 0" }}>
-            Signed in as {user.email ?? "client"}
-          </p>
-        )}
-      </div>
-
-      <section style={{ padding: "1rem 0 2rem" }}>
-        <div style={{ width: "100%", maxWidth: 1280, margin: "0 auto", padding: "0 1rem" }}>
-          {useV2 ? (
-            <DashboardTiles />
-          ) : (
-            <div
-              style={{
-                width: "100%",
-                minHeight: "80vh",
-                border: "1px solid rgba(255,204,106,0.35)",
-                borderRadius: 12,
-                backgroundColor: "#0D3A1D",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "rgba(246,245,241,0.9)",
-                fontSize: "1rem",
-              }}
-            >
-              Advisory tools content
-            </div>
-          )}
         </div>
-      </section>
-    </main>
+
+        <section style={{ padding: "1rem 0 2rem" }}>
+          <div style={{ width: "100%", maxWidth: 1280, margin: "0 auto", padding: "0 1rem" }}>
+            <DashboardTiles />
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

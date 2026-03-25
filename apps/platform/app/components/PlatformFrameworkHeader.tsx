@@ -8,13 +8,21 @@ function marketingHomeUrl(): string {
   return `${base}/`;
 }
 
+export type PlatformFrameworkHeaderProps = {
+  /**
+   * When the parent route already verified auth (e.g. `getServerUserAndMembership`),
+   * render the bar even if `getUser()` is empty in this nested RSC (defensive).
+   */
+  verifiedUserEmail?: string | null;
+};
+
 /** Sticky bar: logo (marketing) | FRAMEWORK | Logout → marketing after sign-out. */
-export async function PlatformFrameworkHeader() {
+export async function PlatformFrameworkHeader({ verifiedUserEmail }: PlatformFrameworkHeaderProps = {}) {
   const supabase = await createAppServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user && !verifiedUserEmail) return null;
 
   const home = marketingHomeUrl();
 
