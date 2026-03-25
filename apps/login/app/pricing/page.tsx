@@ -387,14 +387,14 @@ function PricingContent() {
 
   return (
     <main className="min-h-0 flex-1 bg-[#0D3A1D]">
-      <div className="mx-auto max-w-5xl px-3 py-6 sm:px-4 sm:py-10 md:py-14">
+      <div className="mx-auto max-w-5xl px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-10 sm:pb-10 md:py-14 md:pb-14">
         {/* Value Anchor Section */}
         <section className="text-center">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h1 className="font-serif text-2xl font-semibold text-cb-gold sm:text-4xl lg:text-5xl">
+            <h1 className="font-serif text-balance text-xl font-semibold leading-tight text-cb-gold min-[400px]:text-2xl sm:text-4xl sm:leading-snug lg:text-5xl">
               The Capital Bridge Advisory Framework
             </h1>
-            <div className="mx-auto mt-3 max-w-3xl text-base text-cb-cream/85 sm:mt-4 sm:text-lg">
+            <div className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-cb-cream/85 sm:mt-4 sm:text-lg sm:leading-normal">
               <p className="font-semibold text-cb-cream">
                 A Clear Path To Growing Capital And Building Income That Lasts A Lifetime
               </p>
@@ -406,8 +406,8 @@ function PricingContent() {
             </div>
           </div>
           <div className="mt-8 grid grid-cols-1 items-stretch gap-4 sm:mt-10 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:gap-4">
-            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-4 py-4 text-center sm:px-6 sm:py-5">
-              <h3 className="font-serif text-base font-semibold text-cb-gold sm:text-lg">
+            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-4 text-center sm:px-6 sm:py-5">
+              <h3 className="font-serif text-[0.9375rem] font-semibold leading-snug text-cb-gold sm:text-lg sm:leading-normal">
                 Income Assessment
               </h3>
               <p className="mt-2 flex-1 text-sm text-cb-cream/80">
@@ -439,8 +439,8 @@ function PricingContent() {
                 <path d="M2 12h20M14 4l8 8-8 8" />
               </svg>
             </div>
-            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-4 py-4 text-center sm:px-6 sm:py-5">
-              <h3 className="font-serif text-base font-semibold text-cb-gold sm:text-lg">
+            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-4 text-center sm:px-6 sm:py-5">
+              <h3 className="font-serif text-[0.9375rem] font-semibold leading-snug text-cb-gold sm:text-lg sm:leading-normal">
                 Capital Engineering
               </h3>
               <p className="mt-2 flex-1 text-sm text-cb-cream/80">
@@ -472,8 +472,8 @@ function PricingContent() {
                 <path d="M2 12h20M14 4l8 8-8 8" />
               </svg>
             </div>
-            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-4 py-4 text-center sm:px-6 sm:py-5">
-              <h3 className="font-serif text-base font-semibold text-cb-gold sm:text-lg">
+            <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-4 text-center sm:px-6 sm:py-5">
+              <h3 className="font-serif text-[0.9375rem] font-semibold leading-snug text-cb-gold sm:text-lg sm:leading-normal">
                 Stress Test Income & Capital Resilience
               </h3>
               <p className="mt-2 flex-1 text-sm text-cb-cream/80">
@@ -488,10 +488,10 @@ function PricingContent() {
         <section className="mt-16 sm:mt-20">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6 flex flex-col items-center gap-3">
             <div className="text-center">
-              <h2 className="font-serif text-xl font-semibold text-cb-gold sm:text-2xl md:text-3xl">
+              <h2 className="font-serif text-balance text-xl font-semibold text-cb-gold sm:text-2xl md:text-3xl">
                 Capital Bridge Outcome Preview
               </h2>
-              <p className="mx-auto mt-2 max-w-3xl text-cb-cream/80">
+              <p className="mx-auto mt-2 max-w-3xl text-sm leading-relaxed text-cb-cream/80 sm:text-base">
                 See how Capital Bridge analyzes income and investment strategies through
                 models carefully designed to be simple and easy to understand — not just
                 for financial planners, but for anyone making long-term decisions.
@@ -500,7 +500,7 @@ function PricingContent() {
             <button
               type="button"
               onClick={() => setIsOutcomeExpanded((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-full border border-cb-gold/70 bg-black/10 px-4 py-1.5 text-sm font-medium text-cb-gold hover:bg-cb-gold/20 hover:text-cb-cream"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cb-gold/70 bg-black/10 px-5 py-2 text-sm font-medium text-cb-gold hover:bg-cb-gold/20 hover:text-cb-cream sm:min-h-0 sm:px-4 sm:py-1.5"
             >
               <span className="text-base leading-none">
                 {isOutcomeExpanded ? "−" : "+"}
@@ -577,10 +577,10 @@ function PricingContent() {
         {/* Trust Layer Section */}
         <section className="mt-16 sm:mt-20">
           <div className="text-center -mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h2 className="font-serif text-2xl font-semibold text-cb-gold sm:text-3xl">
+            <h2 className="font-serif text-balance text-xl font-semibold leading-snug text-cb-gold sm:text-3xl sm:leading-normal">
               A Proprietary Framework to Build Capital and Income for Life
             </h2>
-            <p className="mx-auto mt-3 max-w-3xl text-cb-cream/85">
+            <p className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-cb-cream/85 sm:text-base">
               Capital Bridge helps you grow capital faster, stress‑test every strategy with full transparency, and turn strong results into sustainable income you can rely on for the long term.
             </p>
           </div>
@@ -631,10 +631,10 @@ function PricingContent() {
         {/* Pricing Section */}
         <section className="mt-16 sm:mt-20">
           <div className="text-center -mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h2 className="font-serif text-xl font-semibold text-cb-gold sm:text-2xl md:text-3xl">
+            <h2 className="font-serif text-balance text-xl font-semibold text-cb-gold sm:text-2xl md:text-3xl">
               Available Plans
             </h2>
-            <p className="mx-auto mt-2 max-w-3xl text-cb-cream/80">
+            <p className="mx-auto mt-2 max-w-3xl text-sm leading-relaxed text-cb-cream/80 sm:text-base">
               Choose a plan that fits your advisory needs — start with a low‑cost trial, stay
               flexible with monthly access, or upgrade to quarterly or strategic yearly tiers.
             </p>
@@ -689,10 +689,10 @@ function PricingContent() {
         {/* Trusted Framework Section (below pricing) */}
         <section className="mt-10 sm:mt-12 text-center">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h3 className="font-serif text-lg font-semibold text-cb-cream sm:text-xl">
+            <h3 className="font-serif text-base font-semibold leading-snug text-cb-cream sm:text-xl sm:leading-normal">
               <span className="text-cb-gold">Not in moments of excess</span>, but in <span className="font-bold text-cb-gold">decades of precision</span> Financial Modelling Framework
             </h3>
-            <div className="mx-auto mt-3 max-w-3xl space-y-1.5 text-sm text-cb-cream/80">
+            <div className="mx-auto mt-3 max-w-3xl space-y-1.5 text-sm leading-relaxed text-cb-cream/80">
               <p>
                 Structured advisory models used to evaluate income sustainability and capital
                 durability. Designed for people and families, professionals, and financial
@@ -708,16 +708,16 @@ function PricingContent() {
       </div>
       {activePreviewId && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:px-4 sm:pb-4"
           onClick={() => setActivePreviewId(null)}
         >
           <div
-            className="relative max-h-[80vh] w-full max-w-3xl"
+            className="relative max-h-[min(80vh,100dvh-2rem)] w-full max-w-3xl sm:max-h-[80vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
-              className="absolute -top-10 right-0 rounded-full bg-white/10 px-3 py-1 text-sm text-cb-cream hover:bg-white/20"
+              className="absolute right-0 top-0 z-10 rounded-full bg-white/15 px-3 py-2 text-sm text-cb-cream hover:bg-white/25 sm:-top-10 sm:right-0 sm:bg-white/10 sm:py-1"
               onClick={() => setActivePreviewId(null)}
             >
               Close

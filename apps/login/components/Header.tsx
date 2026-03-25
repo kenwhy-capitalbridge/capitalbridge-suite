@@ -21,19 +21,23 @@ export default function Header() {
     "whitespace-nowrap text-[9px] font-medium text-cb-gold underline-offset-2 transition hover:text-cb-gold hover:underline max-[380px]:text-[8px] sm:text-sm";
 
   const loginButtonClass =
-    "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded border border-cb-gold/85 bg-cb-gold/15 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-cb-gold transition hover:bg-cb-gold/30 hover:text-cb-cream max-[380px]:px-1.5 max-[380px]:text-[7px] sm:rounded-full sm:px-4 sm:py-1.5 sm:text-xs";
+    "inline-flex min-h-[36px] min-w-[3.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-cb-gold/85 bg-cb-gold/15 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-cb-gold transition hover:bg-cb-gold/30 hover:text-cb-cream active:bg-cb-gold/40 sm:min-h-0 sm:min-w-0 sm:rounded-full sm:px-4 sm:py-1.5 sm:text-xs";
 
   const logoClassName = pricingHeaderGrid
-    ? "relative flex min-w-0 shrink items-center justify-self-start sm:h-9"
+    ? "relative flex min-w-0 max-w-[34%] shrink items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none sm:h-9"
     : "relative flex min-w-0 max-w-[42%] shrink items-center sm:max-w-none sm:h-9";
 
+  const logoImageClassName = pricingHeaderGrid
+    ? "h-[15px] w-auto max-w-full object-contain object-left [mix-blend-mode:lighten] min-[400px]:h-4 sm:h-9"
+    : "h-4 w-auto max-w-full object-contain object-left [mix-blend-mode:lighten] sm:h-9";
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-cb-gold/20 bg-[#0D3A1D]">
+    <header className="sticky top-0 z-40 w-full border-b border-cb-gold/20 bg-[#0D3A1D] pt-[env(safe-area-inset-top)]">
       <div
         className={
           pricingHeaderGrid
-            ? "mx-auto grid h-9 max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 px-1.5 sm:h-14 sm:gap-3 sm:px-6"
-            : "mx-auto flex h-9 max-w-6xl items-center justify-between gap-1 px-1.5 sm:h-14 sm:gap-3 sm:px-6"
+            ? "mx-auto grid min-h-11 max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 px-2 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
+            : "mx-auto flex min-h-11 max-w-6xl items-center justify-between gap-1 px-2 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
         }
       >
         <a
@@ -47,15 +51,14 @@ export default function Header() {
             alt="Capital Bridge — Strength Behind Every Structure"
             width={200}
             height={36}
-            className="h-4 w-auto max-w-full object-contain object-left [mix-blend-mode:lighten] sm:h-9"
+            className={logoImageClassName}
             priority
           />
         </a>
 
         {pricingHeaderGrid && (
-          <span className="pointer-events-none text-center font-serif text-[9px] font-semibold uppercase tracking-wide text-cb-gold sm:text-lg sm:tracking-normal">
-            <span className="sm:hidden">Plans</span>
-            <span className="hidden sm:inline">SELECT PLAN</span>
+          <span className="pointer-events-none whitespace-nowrap text-center font-serif text-[7px] font-semibold uppercase leading-none tracking-[0.05em] text-cb-gold min-[360px]:text-[8px] min-[400px]:text-[9px] sm:text-lg sm:leading-normal sm:tracking-normal">
+            SELECT PLAN
           </span>
         )}
 
