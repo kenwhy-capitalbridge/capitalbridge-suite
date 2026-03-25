@@ -23,6 +23,9 @@ export default function Header() {
   const loginButtonClass =
     "inline-flex min-h-[36px] min-w-[3.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-cb-gold/85 bg-cb-gold/15 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-cb-gold transition hover:bg-cb-gold/30 hover:text-cb-cream active:bg-cb-gold/40 sm:min-h-0 sm:min-w-0 sm:rounded-full sm:px-4 sm:py-1.5 sm:text-xs";
 
+  const homepageLinkClass =
+    "shrink-0 whitespace-nowrap text-[7px] font-medium uppercase tracking-wide text-cb-gold underline-offset-2 transition hover:text-cb-gold hover:underline min-[360px]:text-[8px] sm:text-xs";
+
   const logoClassName = pricingHeaderGrid
     ? "relative flex min-w-0 max-w-[34%] shrink items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none sm:h-9"
     : "relative flex min-w-0 max-w-[42%] shrink items-center sm:max-w-none sm:h-9";
@@ -66,12 +69,18 @@ export default function Header() {
           <div
             className={
               pricingHeaderGrid
-                ? "flex justify-self-end"
-                : "flex max-w-[52%] shrink-0 items-center justify-end text-cb-gold sm:max-w-none"
+                ? "flex min-w-0 max-w-full items-center justify-end gap-0.5 justify-self-end sm:gap-1.5"
+                : "flex max-w-[52%] shrink-0 items-center justify-end gap-0.5 text-cb-gold sm:max-w-none sm:gap-1.5"
             }
           >
             <a href="/access" className={loginButtonClass}>
               LOGIN
+            </a>
+            <span className="shrink-0 text-[7px] text-cb-gold/55 min-[360px]:text-[8px] sm:text-xs" aria-hidden>
+              |
+            </span>
+            <a href={MARKETING_URL} className={homepageLinkClass}>
+              HOMEPAGE
             </a>
           </div>
         ) : (
