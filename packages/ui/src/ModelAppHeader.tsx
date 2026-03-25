@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { MARKETING_SITE_URL, PLATFORM_APP_URL } from "@cb/shared/urls";
+import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
 import styles from "./ModelAppHeader.module.css";
 
 function marketingHomeUrl(): string {
@@ -97,9 +98,7 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
           </div>
 
           <div className={styles.actionsCluster}>
-            <a className={styles.back} href={back}>
-              Back
-            </a>
+            <ModelAppHeaderBackButton href={back} />
             {actions}
           </div>
         </div>
