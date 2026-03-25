@@ -82,3 +82,14 @@ For **capital-stress-model**, **incomeengineeringmodel**, **capital-health-calcu
    After changing Root Directory, trigger a new deployment (e.g. **Deployments → … → Redeploy**) so the app builds from the monorepo.
 
 No Cursor-specific Vercel tool is required; the dashboard steps above are enough. If you use **Vercel CLI** (`npm i -g vercel`), run `vercel link` inside each `apps/<name>` folder and choose the matching existing project when prompted.
+
+## 8. Platform (`platform.thecapitalbridge.com`) still shows old UI
+
+If the live site still shows legacy copy (e.g. “To request access…”) or no sticky header, the deployment is **not** running the current `apps/platform` from **this** monorepo.
+
+1. **Settings → Git** — Connected repository must be **`kenwhy-capitalbridge/capitalbridge-suite`** (not the old standalone `advisoryplatform` repo).
+2. **Settings → Build and Deployment → Root Directory** — **`apps/platform`**.
+3. **Redeploy** after fixing either setting.
+4. If you use **Cloudflare** (or another CDN) in front of Vercel, **purge cache** for `platform.thecapitalbridge.com`.
+
+After you are signed in and the home page loads, responses include **`X-CB-Commit`** (Git SHA on Vercel builds). Compare that SHA to the latest commit on `main` in GitHub to confirm the right deploy.

@@ -14,6 +14,17 @@ import {
 
 const CB_MBR_SAFE = "cb_mbr_safe";
 
+/** Avoid stale HTML at CDNs; helps confirm deploys via curl -I (X-CB-Commit). */
+function applyHtmlNoStoreHeaders(res: NextResponse): void {
+  res.headers.set(
+    "Cache-Control",
+    "private, no-cache, no-store, must-revalidate, max-age=0"
+  );
+  res.headers.set("Vary", "Cookie");
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (sha) res.headers.set("X-CB-Commit", sha);
+}
+
 function isProtected(pathname: string): boolean {
   return pathname === "/" || pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 }
@@ -123,6 +134,7 @@ export async function middleware(req: NextRequest) {
   }
 
   let response = NextResponse.next({ request: req });
+  applyHtmlNoStoreHeaders(response);
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
