@@ -40,7 +40,7 @@ const TRIAL_MODEL_URLS: Record<string, string> = {
   "income-engineering":
     typeof process.env.NEXT_PUBLIC_TRIAL_INCOME_ENGINEERING_APP_URL === "string"
       ? process.env.NEXT_PUBLIC_TRIAL_INCOME_ENGINEERING_APP_URL
-      : "https://trial-incomeengineringmodel.thecapitalbridge.com",
+      : "https://trial-incomeengineeringmodel.thecapitalbridge.com",
   "capital-health":
     typeof process.env.NEXT_PUBLIC_TRIAL_CAPITAL_HEALTH_APP_URL === "string"
       ? process.env.NEXT_PUBLIC_TRIAL_CAPITAL_HEALTH_APP_URL

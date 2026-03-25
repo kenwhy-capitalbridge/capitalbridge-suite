@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * Proxy to API billing/confirm-payment. Used when user returns from Billplz with paid=true
