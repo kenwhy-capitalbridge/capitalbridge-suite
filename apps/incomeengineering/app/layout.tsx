@@ -12,8 +12,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <ModelAppHeader
-          titleDesktop="Income Engineering Model"
-          titleMobile="Income Engineering"
+          titleDesktop="INCOME ENGINEERING MODEL"
+          titleMobile="INCOME ENGINEERING"
         />
         {children}
       </body>
