@@ -24,17 +24,18 @@ async function upsertActiveSession(
   const nowIso = new Date().toISOString();
 
   if (jwtSessionId) {
-    const { error: upsertErr } = await svc.schema("public").from("user_active_session").upsert(
-      {
-        user_id: userId,
-        session_id: jwtSessionId,
-        updated_at: nowIso,
-      },
-      { onConflict: "user_id" }
-    );
-
-    if (upsertErr) {
-      return { ok: false, detail: upsertErr.message };
+    // Delete-then-insert: avoids PostgREST upsert requiring UNIQUE/PK on user_id (schema drift in Supabase breaks ON CONFLICT).
+    const { error: delErr } = await svc.schema("public").from("user_active_session").delete().eq("user_id", userId);
+    if (delErr) {
+      return { ok: false, detail: delErr.message };
+    }
+    const { error: insErr } = await svc.schema("public").from("user_active_session").insert({
+      user_id: userId,
+      session_id: jwtSessionId,
+      updated_at: nowIso,
+    });
+    if (insErr) {
+      return { ok: false, detail: insErr.message };
     }
   } else {
     const { error: delErr } = await svc.schema("public").from("user_active_session").delete().eq("user_id", userId);
