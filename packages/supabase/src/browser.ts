@@ -18,7 +18,16 @@ export function createAppBrowserClient() {
   // Avoid build-time crashes when env vars are not present locally.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? PLACEHOLDER_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? PLACEHOLDER_KEY;
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  /**
+   * Important: to share sessions across subdomains (login + platform), the browser
+   * must set cookies on `.thecapitalbridge.com` in production. Otherwise the user
+   * can be “signed in” on login.* but appear signed out on platform.*.
+   */
+  const cookieOptions =
+    process.env.NODE_ENV === "production"
+      ? { domain: ".thecapitalbridge.com", path: "/", sameSite: "lax" as const, secure: true }
+      : undefined;
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, cookieOptions ? { cookieOptions } : undefined);
 }
 
 /**
