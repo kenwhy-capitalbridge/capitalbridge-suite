@@ -1,3 +1,28 @@
+/* Fixed bar + spacer: sticky breaks when html/body use overflow-x: hidden (legacy calculator CSS). */
+.fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 204, 106, 0.22);
+  background-color: #0d3a1d;
+  padding-top: env(safe-area-inset-top);
+}
+
+.spacer {
+  height: calc(52px + 1px + env(safe-area-inset-top));
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .spacer {
+    height: calc(48px + 1px + env(safe-area-inset-top));
+  }
+}
+
 .wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -82,6 +107,7 @@
     grid-template-columns: auto minmax(0, 1fr) auto;
     column-gap: 0.35rem;
     padding: 0.25rem 0.5rem;
+    min-height: 48px;
   }
 
   .back {

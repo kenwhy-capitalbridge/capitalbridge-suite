@@ -16,7 +16,9 @@
 
 html {
   font-size: 14px;
-  overflow-x: hidden;
+  /* Do not set overflow-x on html/body: it breaks viewport `position: fixed` for the
+     shell header (ModelAppHeader). Horizontal clipping is handled by the app root div
+     in App.tsx (`overflow-x-hidden`). */
 }
 
 body {
@@ -26,7 +28,6 @@ body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
-  overflow-x: hidden;
   overflow-wrap: break-word;
 }
 
