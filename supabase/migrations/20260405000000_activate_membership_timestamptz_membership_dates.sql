@@ -1,20 +1,5 @@
--- FIX: drop existing function(s) to avoid return type conflict
-DROP FUNCTION IF EXISTS public.activate_membership(text, text, text);
-DROP FUNCTION IF EXISTS public.activate_membership(text, text);
-
--- Manual / ops: log payment, then activate membership by email + plan slug.
--- payments row is inserted first (membership_id NULL), then linked after membership is created.
-
-DO $$
-BEGIN
-IF EXISTS (
-SELECT 1 FROM information_schema.columns
-WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'membership_id'
-AND is_nullable = 'NO'
-) THEN
-ALTER TABLE public.payments ALTER COLUMN membership_id DROP NOT NULL;
-END IF;
-END $$;
+-- memberships.start_date / end_date are timestamptz; use now()/exp_ts, not to_char() text.
+-- Replaces activate_membership if an older DB already applied 20260404000000 with text dates.
 
 CREATE OR REPLACE FUNCTION public.activate_membership(
 user_email text,
@@ -69,8 +54,6 @@ END IF;
 
 exp_ts := now() + (dur_days::text || ' days')::interval;
 
--- 1) Payment logging (before membership exists)
--- Include user_id + plan_id on the row (not only in raw_webhook) for NOT NULL constraints.
 INSERT INTO public.payments (
 user_id,
 plan_id,
@@ -106,7 +89,6 @@ jsonb_build_object(
 )
 RETURNING id INTO new_payment_id;
 
--- 2) Expire any current active membership for this user
 UPDATE public.memberships m
 SET
 status = 'expired',
@@ -117,7 +99,6 @@ WHERE m.user_id = uid AND m.status = 'active';
 
 GET DIAGNOSTICS n_expired = ROW_COUNT;
 
--- 3) New active membership
 INSERT INTO public.memberships (
 user_id,
 plan_id,
@@ -138,7 +119,6 @@ exp_ts
 )
 RETURNING id INTO new_membership_id;
 
--- 4) Link payment to membership
 UPDATE public.payments
 SET membership_id = new_membership_id
 WHERE id = new_payment_id;
@@ -167,7 +147,6 @@ RETURN jsonb_build_object(
 END;
 $$;
 
--- Two-arg wrapper (optional note)
 CREATE OR REPLACE FUNCTION public.activate_membership(user_email text, plan_slug text)
 RETURNS jsonb
 LANGUAGE sql
@@ -183,4 +162,4 @@ GRANT EXECUTE ON FUNCTION public.activate_membership(text, text, text) TO servic
 GRANT EXECUTE ON FUNCTION public.activate_membership(text, text) TO service_role;
 
 COMMENT ON FUNCTION public.activate_membership(text, text, text) IS
-'Admin: insert paid payment row, then activate plan for user by email. Call with service_role or SQL editor.';
+'Admin: insert paid payment row (user_id + plan_id), then activate plan for user by email.';

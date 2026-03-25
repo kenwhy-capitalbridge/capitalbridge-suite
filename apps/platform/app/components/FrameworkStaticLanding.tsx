@@ -1,5 +1,10 @@
 import { PlatformFrameworkHeader } from "./PlatformFrameworkHeader";
 
+const FOREVER_APP_URL =
+  typeof process.env.NEXT_PUBLIC_FOREVER_APP_URL === "string" && process.env.NEXT_PUBLIC_FOREVER_APP_URL
+    ? process.env.NEXT_PUBLIC_FOREVER_APP_URL.replace(/\/+$/, "")
+    : "https://forever.thecapitalbridge.com";
+
 export type FrameworkStaticLandingProps = {
   /** Passed through so the sticky header always renders when this page already proved auth. */
   userEmail?: string | null;
@@ -86,7 +91,7 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
                   <p className="cb-module-desc">Evaluate whether income structures are sustainably funded indefinitely.</p>
                   <span className="cb-module-label">Launch Models:</span>
                   <div className="cb-module-buttons">
-                    <a className="cb-btn" href="https://thecapitalbridge.com/forever-income-model/">
+                    <a className="cb-btn" href={`${FOREVER_APP_URL}/`}>
                       Forever Income Model
                     </a>
                     <a className="cb-btn" href="https://incomeengineering.thecapitalbridge.com/">

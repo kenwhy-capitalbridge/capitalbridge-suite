@@ -116,7 +116,7 @@ UPDATE public.memberships m
 SET
 status = 'expired',
 expires_at = now(),
-end_date = to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+end_date = now(),
 cancelled_at = COALESCE(m.cancelled_at, now())
 WHERE m.user_id = uid AND m.status = 'active';
 
@@ -138,8 +138,8 @@ uid,
 plan_id_val,
 'active',
 p_billing_session_id,
-to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
-to_char(exp_ts AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+now(),
+exp_ts,
 now(),
 exp_ts
 )
@@ -150,8 +150,8 @@ UPDATE public.payments
 SET membership_id = new_mid
 WHERE id = pay.id;
 
-INSERT INTO public.profiles (id)
-VALUES (uid)
+INSERT INTO public.profiles (id, email)
+VALUES (uid, lower(btrim(p_user_email)))
 ON CONFLICT (id) DO NOTHING;
 
 RETURN jsonb_build_object(
