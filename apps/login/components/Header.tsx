@@ -44,12 +44,7 @@ export default function Header() {
             : "mx-auto flex min-h-11 max-w-6xl items-center justify-between gap-1 px-2 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
         }
       >
-        <a
-          href={MARKETING_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={logoClassName}
-        >
+        <a href={MARKETING_URL} className={logoClassName}>
           <Image
             src="/logo-capital-bridge.png"
             alt="Capital Bridge — Strength Behind Every Structure"

@@ -270,8 +270,8 @@ function PaymentHandoffContent() {
           {loading && <p className="font-medium text-cb-green">Securing your access…</p>}
           {!loading && (
             <p className="text-sm leading-relaxed text-cb-green/90 sm:text-base">
-              Complete the payment in a new tab. We&apos;ll email you a secure link to set your password upon
-              confirmation.
+              Complete the secure payment on the next screen. We&apos;ll email you a secure link to set your
+              password upon confirmation.
             </p>
           )}
           {!loading && billId && (
@@ -287,7 +287,7 @@ function PaymentHandoffContent() {
 
         <div className="mt-4 grid gap-2 sm:mt-6 sm:gap-3">
           {paymentUrl && (
-            <a className={btnPrimary} href={paymentUrl} target="_blank" rel="noreferrer">
+            <a className={btnPrimary} href={paymentUrl}>
               Open secure payment
             </a>
           )}

@@ -130,8 +130,6 @@ export function DashboardTiles() {
             {enabled ? (
               <a
                 href={href}
-                target="_blank"
-                rel="noopener noreferrer"
                 style={{
                   display: "block",
                   padding: "1rem 1.25rem",
