@@ -212,7 +212,7 @@ function PlanCard({
   const useGlow = planExt.glow;
   const cardInner = (
     <div
-      className={`relative flex flex-col rounded-2xl bg-[#e5e4df] p-4 shadow-lg sm:p-6 ${
+      className={`relative flex h-full flex-col rounded-2xl bg-[#e5e4df] p-4 shadow-lg sm:p-6 ${
         plan.recommended || !!planExt.badgeLabel
           ? "ring-2 ring-cb-gold ring-offset-1 ring-offset-[#0D3A1D] sm:ring-offset-2"
           : ""
@@ -355,7 +355,7 @@ function PlanCard({
   );
   const cardShell = useGlow ? (
     <div
-      className="relative z-10 rounded-2xl"
+      className="relative z-10 h-full rounded-2xl"
       style={{
         boxShadow: "0 0 40px rgba(212,175,55,0.55), 0 0 80px rgba(212,175,55,0.3)",
       }}
@@ -368,9 +368,9 @@ function PlanCard({
 
   /** Reserve space for absolute -top-3 badges on stacked mobile so they don’t eat the row gap */
   if (showBadge && badgeText) {
-    return <div className="pt-3 sm:pt-0">{cardShell}</div>;
+    return <div className="h-full pt-3 sm:pt-0">{cardShell}</div>;
   }
-  return cardShell;
+  return <div className="h-full">{cardShell}</div>;
 }
 
 function PricingContent() {
