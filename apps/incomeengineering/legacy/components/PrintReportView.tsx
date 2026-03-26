@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import {
+  buildLionVerdictClientReportFromIncomeEngineering,
+  formatLionPublicStatusLabel,
+} from '@cb/advisory-graph/lionsVerdict';
 import { formatCurrency } from '../utils/format';
 import type { CurrencyCode } from '../config/currency';
 import type { SummaryKPIs } from '../types/calculator';
@@ -162,6 +166,32 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     summary.invalidReason
   );
 
+  const lionReport = useMemo(
+    () =>
+      buildLionVerdictClientReportFromIncomeEngineering(
+        {
+          medianCoveragePct: medianCoverage,
+          worstMonthCoveragePct: worstMonthCoverage,
+          sustainabilityStatus: summary.sustainabilityStatus,
+          totalMonthlyIncome: totalIncome,
+          totalMonthlyExpenses: totalExpenses,
+          monthlyNetCashflow: net,
+          totalCapital,
+        },
+        { formatCurrency: (n) => formatCurrency(n, currency) },
+      ),
+    [
+      medianCoverage,
+      worstMonthCoverage,
+      summary.sustainabilityStatus,
+      totalIncome,
+      totalExpenses,
+      net,
+      totalCapital,
+      currency,
+    ],
+  );
+
   const totalAllocation = investmentBuckets.reduce((s, b) => s + (b.allocation ?? 0), 0);
   const getBucket = (id: string) => {
     const cat = INVESTMENT_CATEGORIES.find((c) => c.id === id);
@@ -322,6 +352,42 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         {optTagline ? (
           <p style={{ marginTop: '14px', fontSize: '13px', fontStyle: 'italic', fontWeight: 300, color: '#0D3A1D' }}>&ldquo;{optTagline}&rdquo;</p>
         ) : null}
+      </section>
+
+      <section style={sectionBlock}>
+        <h2 style={sectionHeading}>The Lion&apos;s Verdict</h2>
+        <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700, color: '#0D3A1D' }}>
+          Lion score: {lionReport.verdict.score} / 100 · {formatLionPublicStatusLabel(lionReport.verdict.status)}
+        </p>
+        <p style={{ margin: '0 0 14px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.verdict.summary}</p>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>Strengths</h3>
+        <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+          {lionReport.strengths.map((s, i) => (
+            <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+          ))}
+        </ul>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>Risks</h3>
+        <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+          {lionReport.risks.map((s, i) => (
+            <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+          ))}
+        </ul>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>Strategic options</h3>
+        <ol style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+          {lionReport.strategic_options.map((o, i) => (
+            <li key={i} style={{ marginBottom: '6px' }}>
+              <strong>{o.type}:</strong> {o.action} — {o.impact}
+            </li>
+          ))}
+        </ol>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>Priority actions</h3>
+        <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+          {lionReport.priority_actions.map((s, i) => (
+            <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+          ))}
+        </ul>
+        <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.do_nothing_outcome}</p>
+        <p style={{ margin: 0, fontSize: '13px', fontStyle: 'italic', fontWeight: 300, color: '#0D3A1D' }}>{lionReport.closing_line}</p>
       </section>
 
       <p style={{ fontSize: '12px', color: '#4a5568', marginTop: '20px' }}>

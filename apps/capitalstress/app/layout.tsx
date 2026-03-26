@@ -8,6 +8,7 @@ import { ModelAppHeader } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
+import "@cb/advisory-graph/reports/print.css";
 
 export const metadata: Metadata = {
   title: "Capital Stress | Capital Bridge",

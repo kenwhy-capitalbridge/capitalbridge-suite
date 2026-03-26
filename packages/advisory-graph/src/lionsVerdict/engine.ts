@@ -17,6 +17,24 @@ import type {
   MicroSignal,
   VerdictNarrative,
 } from './types';
+import {
+  foreverProgressTechnicalToLion0to100,
+  formatLionPublicStatusLabel,
+  healthRiskTierToLion0to100,
+  lionEngineTierFromLionScore0to100,
+  lionPublicStatusFromScore0to100,
+  lionStrongEligibilityFromForeverInput,
+  lionStrongEligibilityFromHealthTier,
+  lionStrongEligibilityFromStressInputs,
+  lionTierFromTechnicalResilience,
+  technicalResilienceToLion0to100,
+} from './lionScoreMapping';
+
+export {
+  lionTierFromTechnicalResilience,
+  stressScoreToDisplay0to100,
+  technicalResilienceToLion0to100,
+} from './lionScoreMapping';
 
 const LION_OPENING: Record<LionScoreTier, string> = {
   Critical: 'The lion roars. The structure cannot bear the load.',
@@ -25,20 +43,6 @@ const LION_OPENING: Record<LionScoreTier, string> = {
   Strong: 'The lion stands firm. The structure holds its ground.',
   'Very Strong': 'The lion reigns. The structure is fortified and resilient.',
 };
-
-const KEYWORDS: Record<LionScoreTier, string[]> = {
-  Critical: ['fragile', 'unsustainable', 'structural failure', 'capital depletion risk', 'high instability'],
-  Weak: ['strain', 'structural pressure', 'vulnerability', 'reinforcement required'],
-  Moderate: ['balanced structure', 'moderate resilience', 'volatility exposure', 'reinforcement opportunity'],
-  Strong: ['stable', 'durable', 'resilient', 'well structured'],
-  'Very Strong': ['robust', 'fortified', 'structurally sound', 'exceptional durability'],
-};
-
-/** Map Monte Carlo resilience score (roughly −100…+100) to display 0–100. */
-export function stressScoreToDisplay0to100(capitalResilienceScore: number): number {
-  const v = 50 + capitalResilienceScore / 2;
-  return Math.round(Math.min(100, Math.max(0, v)));
-}
 
 function tierOrder(t: LionScoreTier): number {
   const o: Record<LionScoreTier, number> = {
@@ -51,16 +55,12 @@ function tierOrder(t: LionScoreTier): number {
   return o[t];
 }
 
-/** Health risk tier 1 (best) … 5 (worst) → Lion tier + base score. */
+/** Health risk tier 1 (best) … 5 (worst) → Lion score, then tier from that score (single pipeline). */
 export function healthTierToLion(tier: 1 | 2 | 3 | 4 | 5): { status: LionScoreTier; score0to100: number } {
-  const map: Record<number, { status: LionScoreTier; score0to100: number }> = {
-    1: { status: 'Very Strong', score0to100: 92 },
-    2: { status: 'Strong', score0to100: 78 },
-    3: { status: 'Moderate', score0to100: 55 },
-    4: { status: 'Weak', score0to100: 34 },
-    5: { status: 'Critical', score0to100: 14 },
-  };
-  return map[tier] ?? map[3];
+  const t = (tier >= 1 && tier <= 5 ? tier : 3) as 1 | 2 | 3 | 4 | 5;
+  const score0to100 = healthRiskTierToLion0to100(t);
+  const status = lionEngineTierFromLionScore0to100(score0to100);
+  return { status, score0to100 };
 }
 
 function defaultFragilityForTier(t: LionScoreTier): LionFragilityLevel {
@@ -178,14 +178,16 @@ function buildCoreNarrativeStress(
     worstCaseOutcome,
   } = inputs;
 
-  const keywords = KEYWORDS[tier] ?? KEYWORDS.Moderate;
   const avgBelowStart = simulatedAverageOutcome < initialCapital;
   const drawdownHigh = maximumDrawdownPct > 40;
   const withdrawalPct = initialCapital > 0 ? (withdrawalAmount / initialCapital) * 100 : 0;
   const withdrawalHigh = withdrawalPct > 6;
   const fragileOrCritical = fragilityIndicator === 'Fragile' || fragilityIndicator === 'Critical';
 
-  const interpretation = `Your Lion Structural Score is ${stressScoreToDisplay0to100(capitalResilienceScore)} / 100 (${tier}). The score reflects ${keywords[0] ?? 'risk'} in the current capital structure over the ${timeHorizonYears}-year horizon.`;
+  const lionScore = technicalResilienceToLion0to100(capitalResilienceScore);
+  const stressStrong = lionStrongEligibilityFromStressInputs(inputs);
+  const publicLabel = formatLionPublicStatusLabel(lionPublicStatusFromScore0to100(lionScore, stressStrong));
+  const interpretation = `Your Lion score is ${lionScore} / 100 (${publicLabel}). It shows how much strain your capital may face over the ${timeHorizonYears}-year horizon you chose.`;
 
   let outcomeSummary: string;
   if (avgBelowStart) {
@@ -197,8 +199,8 @@ function buildCoreNarrativeStress(
   const riskParts: string[] = [];
   if (drawdownHigh) riskParts.push('Volatility risk is elevated: maximum drawdown exceeds safe thresholds in many paths.');
   if (withdrawalHigh) riskParts.push('Withdrawal pressure is high relative to the capital base.');
-  if (fragileOrCritical) riskParts.push('Structural fragility is elevated; the capital structure is close to breaking under stress.');
-  if (tier === 'Strong' || tier === 'Very Strong') riskParts.push('Structural risks remain manageable within the assumed horizon.');
+  if (fragileOrCritical) riskParts.push('Your structure is at risk; heavy stress could break the plan.');
+  if (tier === 'Strong' || tier === 'Very Strong') riskParts.push('Risks look manageable within the horizon you assumed.');
   const riskExplanation =
     riskParts.length > 0 ? riskParts.join(' ') : 'Risks are within typical bounds for the chosen assumptions.';
 
@@ -211,7 +213,7 @@ function buildCoreNarrativeStress(
       'Reinforcement is advised: lowering withdrawal pressure or increasing capital allocation could improve long-term resilience.';
   } else if (tier === 'Moderate') {
     advisoryRecommendation =
-      'Moderate resilience suggests scope to improve: reducing withdrawal pressure or adding capital could strengthen the structure.';
+      'Your structure is stable but has room to improve. Lower withdrawals or add capital to strengthen it.';
   } else {
     advisoryRecommendation =
       'The structure appears well positioned. Maintain a buffer for unexpected stress and revisit assumptions if circumstances change.';
@@ -224,8 +226,10 @@ export function runLionVerdictEngineStress(
   inputs: LionStressAdvisoryInputs,
   formatMoney: (n: number) => string,
 ): LionVerdictOutput {
-  const opening = LION_OPENING[inputs.tier] ?? LION_OPENING.Moderate;
-  const score0to100 = stressScoreToDisplay0to100(inputs.capitalResilienceScore);
+  const score0to100 = technicalResilienceToLion0to100(inputs.capitalResilienceScore);
+  const status = lionTierFromTechnicalResilience(inputs.capitalResilienceScore);
+  const opening = LION_OPENING[status] ?? LION_OPENING.Moderate;
+  const narrativeInputs: LionStressAdvisoryInputs = { ...inputs, tier: status };
   const withdrawalPct = inputs.initialCapital > 0 ? (inputs.withdrawalAmount / inputs.initialCapital) * 100 : 0;
   const withdrawalHigh = withdrawalPct > 6;
   const drawdownHigh = inputs.maximumDrawdownPct > 40;
@@ -233,15 +237,15 @@ export function runLionVerdictEngineStress(
   const fragile =
     inputs.fragilityIndicator === 'Fragile' ||
     inputs.fragilityIndicator === 'Critical' ||
-    inputs.tier === 'Critical' ||
-    inputs.tier === 'Weak';
+    status === 'Critical' ||
+    status === 'Weak';
 
-  const core = buildCoreNarrativeStress(inputs, formatMoney);
-  const strategicOptions = strategicOptionsFor(inputs.tier, fragile, withdrawalHigh);
-  const capitalUnlockGuidance = capitalUnlockGuidanceFor(inputs.tier, withdrawalHigh);
+  const core = buildCoreNarrativeStress(narrativeInputs, formatMoney);
+  const strategicOptions = strategicOptionsFor(status, fragile, withdrawalHigh);
+  const capitalUnlockGuidance = capitalUnlockGuidanceFor(status, withdrawalHigh);
   const scenarioActions = scenarioActionsFor(withdrawalHigh, drawdownHigh, avgBelowStart);
-  const priorityActions = priorityActionsFromStress(inputs.tier, inputs.fragilityIndicator, withdrawalPct);
-  const ifYouDoNothing = ifYouDoNothingStress(inputs.tier, fragile, avgBelowStart);
+  const priorityActions = priorityActionsFromStress(status, inputs.fragilityIndicator, withdrawalPct);
+  const ifYouDoNothing = ifYouDoNothingStress(status, fragile, avgBelowStart);
 
   const fullNarrative = [
     core.interpretation,
@@ -254,7 +258,7 @@ export function runLionVerdictEngineStress(
 
   return {
     score0to100,
-    status: inputs.tier,
+    status,
     fragility: inputs.fragilityIndicator,
     opening,
     ...core,
@@ -370,13 +374,15 @@ export function runLionVerdictEngineCapitalHealth(
   const fragility = defaultFragilityForTier(status);
 
   const w = mode === 'withdrawal';
+  const healthStrong = lionStrongEligibilityFromHealthTier(tier, mode, vars);
+  const publicLabel = formatLionPublicStatusLabel(lionPublicStatusFromScore0to100(score0to100, healthStrong));
   const interpretation = w
     ? replaceVars(
-        `Lion Structural Score ${score0to100} / 100 (${status}). Withdrawal mode: target income ${vars.withdrawal ?? '—'} over ${vars.horizon} years at ${vars.expectedReturn} expected return.`,
+        `Lion score ${score0to100} / 100 (${publicLabel}). Withdrawal mode: target income ${vars.withdrawal ?? '—'} over ${vars.horizon} years at ${vars.expectedReturn} expected return.`,
         vars,
       )
     : replaceVars(
-        `Lion Structural Score ${score0to100} / 100 (${status}). Growth mode: target capital ${vars.desiredCapital ?? '—'} over ${vars.horizon} years at ${vars.expectedReturn} expected return.`,
+        `Lion score ${score0to100} / 100 (${publicLabel}). Growth mode: target capital ${vars.desiredCapital ?? '—'} over ${vars.horizon} years at ${vars.expectedReturn} expected return.`,
         vars,
       );
 
@@ -473,29 +479,29 @@ export function runLionVerdictEngineForever(
   input: ForeverLionInputs,
   formatMoney: (n: number) => string,
 ): LionVerdictOutput {
-  let status: LionScoreTier;
-  let score0to100: number;
+  const technicalProgress = input.isSustainable
+    ? Math.min(100, Math.max(0, input.progressPercent))
+    : 0;
+  const perpetualRunway =
+    input.perpetualRunway === true || /^perpetual$/i.test(input.runwayLabel.trim());
+  const gapRatio =
+    input.isSustainable && Number.isFinite(input.capitalNeeded) && input.capitalNeeded > 0
+      ? input.gap / input.capitalNeeded
+      : 0;
 
-  if (input.isSustainable && input.gap <= 0) {
-    status = 'Very Strong';
-    score0to100 = Math.min(98, 85 + Math.round(input.progressPercent / 20));
-  } else if (input.isSustainable) {
-    status = 'Strong';
-    score0to100 = Math.min(88, 70 + Math.round(input.progressPercent / 25));
-  } else if (input.progressPercent >= 70) {
-    status = 'Moderate';
-    score0to100 = 52;
-  } else if (input.progressPercent >= 40) {
-    status = 'Weak';
-    score0to100 = 32;
-  } else {
-    status = 'Critical';
-    score0to100 = 14;
-  }
+  const score0to100 = foreverProgressTechnicalToLion0to100(technicalProgress, {
+    isSustainable: input.isSustainable,
+    perpetualRunway,
+    runwayYears: input.runwayYears ?? null,
+    gapRatio,
+  });
+  const status = lionEngineTierFromLionScore0to100(score0to100);
 
   const opening = LION_OPENING[status];
   const fragility = defaultFragilityForTier(status);
-  const interpretation = `Lion Structural Score ${score0to100} / 100 (${status}). Forever Income view: ${input.runwayLabel}; lifestyle load ${formatMoney(input.annualExpense)} per year vs capital base ${formatMoney(input.currentAssets)}.`;
+  const foreverStrong = lionStrongEligibilityFromForeverInput(input);
+  const publicLabel = formatLionPublicStatusLabel(lionPublicStatusFromScore0to100(score0to100, foreverStrong));
+  const interpretation = `Lion score ${score0to100} / 100 (${publicLabel}). Forever Income view: ${input.runwayLabel}; lifestyle load ${formatMoney(input.annualExpense)} per year vs capital base ${formatMoney(input.currentAssets)}.`;
 
   const outcomeSummary = input.isSustainable
     ? `Under current assumptions, the structure supports the lifestyle target with ${formatMoney(input.capitalNeeded)} capital needed vs ${formatMoney(input.currentAssets)} available.`

@@ -19,6 +19,13 @@ import { TIER_COLORS, type RiskTierKey } from './src/lib/statusCopy';
 import { getRiskTier } from './src/lib/riskTier';
 import type { ScenarioAdjustments } from './src/lib/capitalHealthTypes';
 import { APP_NAME } from './src/lib/capitalHealthCopy';
+import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
+import {
+  formatLionPublicStatusLabel,
+  healthTierToLion,
+  lionPublicStatusFromScore0to100,
+  lionStrongEligibilityFromHealthTier,
+} from '@cb/advisory-graph/lionsVerdict';
 
 /** CSS break-* for react-pagination; cast to `Style` so arrays like `[sheetStyle, this]` type-check. */
 const PDF_BREAK_INSIDE_AVOID = {
@@ -454,6 +461,19 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
     ? Math.floor(currentAge + depletionMo / 12) : null;
   const healthScore = result.riskMetrics?.healthScore ?? coveragePct(inputs, result);
   const tier = result.riskMetrics?.riskTier ?? getRiskTier(healthScore).tier;
+  const riskTierClamped = Math.min(5, Math.max(1, tier)) as 1 | 2 | 3 | 4 | 5;
+  const lionScorePdf = healthTierToLion(riskTierClamped).score0to100;
+  const healthVarsForStrong: LionHealthVariables = {
+    horizon: horizonYearsFormatted,
+    runway: depletionMo == null ? 'Perpetual income' : runwayYearsText,
+    expectedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
+  };
+  const lionStatusPdf = formatLionPublicStatusLabel(
+    lionPublicStatusFromScore0to100(
+      lionScorePdf,
+      lionStrongEligibilityFromHealthTier(riskTierClamped, inputs.mode, healthVarsForStrong),
+    ),
+  );
   const statusColor = tier >= 1 && tier <= 5 ? TIER_COLORS[tier as RiskTierKey] : STATUS_COLORS[result.status];
   const confidenceColor = tier >= 4 ? '#CD5B52' : tier === 3 ? '#F3AF56' : '#55B685';
   const stressRows = computeStressScenarios(inputs);
@@ -539,7 +559,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
             <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Structure Status</Text><Text style={[styles.assumptionValue, { fontWeight: 'bold' }]}>{riskTierLabel}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Strength Score</Text><Text style={styles.assumptionValue}>{formatNum(healthScore, 1)}%</Text></View>
+              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Lion score (0–100)</Text><Text style={styles.assumptionValue}>{lionScorePdf} · {lionStatusPdf}</Text></View>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Income Gap</Text><Text style={styles.assumptionValue}>{formatCurrency(incomeGap)}</Text></View>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Runway</Text><Text style={styles.assumptionValue}>{runwayYearsText}</Text></View>
             </View>
@@ -548,14 +568,14 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
 
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURAL CONFIDENCE</Text>
-            <Text style={[styles.bodyText, { marginBottom: 6 }]}>Capital Strength Score: {formatNum(healthScore, 1)}%</Text>
+            <Text style={[styles.bodyText, { marginBottom: 6 }]}>Lion score: {lionScorePdf} / 100 · {lionStatusPdf}</Text>
             <View style={styles.confidenceBarWrap}>
               <View style={styles.confidenceBar}>
-                <View style={[styles.confidenceFill, { width: `${Math.min(100, Math.max(0, healthScore))}%`, backgroundColor: confidenceColor }]} />
+                <View style={[styles.confidenceFill, { width: `${Math.min(100, Math.max(0, lionScorePdf))}%`, backgroundColor: confidenceColor }]} />
               </View>
-              <Text style={styles.confidenceLabel}>CRITICAL · WEAK · MODERATE · STRONG · VERY STRONG</Text>
+              <Text style={styles.confidenceLabel}>STRONG · STABLE · FRAGILE · AT RISK · NOT SUSTAINABLE</Text>
             </View>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>This score reflects how resilient the income structure is under current assumptions.</Text>
+            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>Lion score is mapped from the model risk tier; same scale as Lion&apos;s Verdict in the app.</Text>
           </View>
 
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>

@@ -15,7 +15,12 @@
     "./auth/emailCheck": "./src/auth/emailCheck.ts",
     "./plans/planMap": "./src/plans/planMap.ts",
     "./plans/expiry": "./src/plans/expiry.ts",
-    "./lionsVerdict": "./src/lionsVerdict/index.ts"
+    "./lionsVerdict": "./src/lionsVerdict/index.ts",
+    "./lionsVerdict/schema.json": "./src/lionsVerdict/lionVerdict.schema.json",
+    "./lionsVerdict/client.schema.json": "./src/lionsVerdict/lionVerdictClient.schema.json",
+    "./reports": "./src/reports/index.ts",
+    "./reports/print.css": "./src/reports/reportsPrint.css",
+    "./clientScoreDashboard": "./src/clientScoreDashboard/index.ts"
   },
   "dependencies": {
     "@cb/supabase": "*"

@@ -11,5 +11,6 @@ export {
   getKeyTakeaways,
   getRecommendedAdjustments,
   runLionVerdictEngineStress,
+  stressScoreToDisplay0to100,
   toVerdictNarrative,
 } from '@cb/advisory-graph/lionsVerdict';

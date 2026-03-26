@@ -1,3 +1,4 @@
+import { lionTierFromTechnicalResilience } from '@cb/advisory-graph/lionsVerdict';
 import {
   ForecastRow,
   StatsResult,
@@ -243,13 +244,9 @@ function runSingleDailyPath(
   };
 }
 
-/** Tiers: Critical < 30, Weak 30–50, Moderate 50–70, Strong 70–90, Very Strong ≥ 90 */
-function getScoreTier(score: number): ScoreTier {
-  if (score < 30) return 'Critical';
-  if (score < 50) return 'Weak';
-  if (score < 70) return 'Moderate';
-  if (score < 90) return 'Strong';
-  return 'Very Strong';
+/** Same tier bands as Lion score (0–100) mapped from the resilience index — keeps UI, PDF, and Lion aligned. */
+function getScoreTier(resilienceScore: number): ScoreTier {
+  return lionTierFromTechnicalResilience(resilienceScore);
 }
 
 /**

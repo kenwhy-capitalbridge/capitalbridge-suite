@@ -39,6 +39,11 @@ export interface ForeverLionInputs {
   annualExpense: number;
   runwayLabel: string;
   realReturnRate: number;
+  /** Parsed horizon in years (omit when perpetual). Used for client report + score emphasis only. */
+  runwayYears?: number | null;
+  perpetualRunway?: boolean;
+  /** Nominal expected return % (e.g. 7) for client JSON; engine ignores. */
+  nominalExpectedReturnPct?: number;
 }
 
 /** Full engine output — all UI/PDF surfaces should derive from this. */

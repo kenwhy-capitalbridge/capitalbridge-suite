@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://capitalbridge.local/schemas/lion-verdict-client-v4.json",
+  "title": "LionVerdictClientReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "strengths",
+    "risks",
+    "goal_gap",
+    "progress",
+    "strategic_options",
+    "capital_unlock",
+    "scenario_actions",
+    "priority_actions",
+    "do_nothing_outcome",
+    "closing_line"
+  ],
+  "properties": {
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "score", "summary"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["STRONG", "STABLE", "FRAGILE", "AT_RISK", "NOT_SUSTAINABLE"]
+        },
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "summary": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "strengths": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 500 },
+      "minItems": 1,
+      "maxItems": 8
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 500 },
+      "minItems": 1,
+      "maxItems": 8
+    },
+    "goal_gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "desired_monthly_income",
+        "current_sustainable_income",
+        "monthly_gap",
+        "target_capital_required",
+        "summary"
+      ],
+      "properties": {
+        "desired_monthly_income": { "type": "number" },
+        "current_sustainable_income": { "type": "number" },
+        "monthly_gap": { "type": "number" },
+        "target_capital_required": { "type": "number" },
+        "summary": { "type": "string", "maxLength": 800 }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_capital", "target_capital", "progress_percentage", "summary"],
+      "properties": {
+        "current_capital": { "type": "number" },
+        "target_capital": { "type": "number" },
+        "progress_percentage": { "type": "number" },
+        "summary": { "type": "string", "maxLength": 800 }
+      }
+    },
+    "strategic_options": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "action", "impact", "trade_off"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["CONSERVATIVE", "BALANCED", "AGGRESSIVE"]
+          },
+          "action": { "type": "string", "maxLength": 500 },
+          "impact": { "type": "string", "maxLength": 800 },
+          "trade_off": { "type": "string", "maxLength": 500 }
+        }
+      }
+    },
+    "capital_unlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available",
+        "amount_unlockable",
+        "new_monthly_commitment",
+        "expected_return",
+        "net_impact",
+        "decision",
+        "summary"
+      ],
+      "properties": {
+        "available": { "type": "boolean" },
+        "amount_unlockable": { "type": "number" },
+        "new_monthly_commitment": { "type": "number" },
+        "expected_return": { "type": "number" },
+        "net_impact": { "type": "number" },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "IMPROVES",
+            "NEUTRAL",
+            "WORSENS",
+            "AVOID",
+            "CONDITIONAL",
+            "FAVOURABLE"
+          ]
+        },
+        "summary": { "type": "string", "maxLength": 800 }
+      }
+    },
+    "scenario_actions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bull", "base", "bear"],
+      "properties": {
+        "bull": { "type": "string", "maxLength": 500 },
+        "base": { "type": "string", "maxLength": 500 },
+        "bear": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "priority_actions": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 500 },
+      "minItems": 1,
+      "maxItems": 12
+    },
+    "do_nothing_outcome": { "type": "string", "maxLength": 1000 },
+    "closing_line": { "type": "string", "maxLength": 500 }
+  }
+}

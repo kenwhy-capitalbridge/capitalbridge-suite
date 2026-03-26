@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://capitalbridge.local/schemas/lion-verdict-v1.json",
+  "title": "LionVerdict",
+  "description": "Canonical Lion's Verdict payload. No extra properties. score0to100 is a JSON number (never a string). Text fields must not contain currency symbols (RM, MYR, $).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "score0to100",
+    "status",
+    "fragility",
+    "opening",
+    "interpretation",
+    "outcomeSummary",
+    "riskExplanation",
+    "advisoryRecommendation",
+    "strategicOptions",
+    "capitalUnlockGuidance",
+    "scenarioActions",
+    "priorityActions",
+    "ifYouDoNothing",
+    "fullNarrative"
+  ],
+  "properties": {
+    "score0to100": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Critical", "Weak", "Moderate", "Strong", "Very Strong"]
+    },
+    "fragility": {
+      "type": "string",
+      "enum": ["Stable", "Watchful", "Vulnerable", "Fragile", "Critical"]
+    },
+    "opening": { "type": "string", "maxLength": 500 },
+    "interpretation": { "type": "string", "maxLength": 2000 },
+    "outcomeSummary": { "type": "string", "maxLength": 2000 },
+    "riskExplanation": { "type": "string", "maxLength": 2000 },
+    "advisoryRecommendation": { "type": "string", "maxLength": 2000 },
+    "strategicOptions": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 500 },
+      "maxItems": 12
+    },
+    "capitalUnlockGuidance": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 500 },
+      "maxItems": 12
+    },
+    "scenarioActions": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 500 },
+      "maxItems": 12
+    },
+    "priorityActions": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 500 },
+      "maxItems": 12
+    },
+    "ifYouDoNothing": { "type": "string", "maxLength": 2000 },
+    "fullNarrative": { "type": "string", "maxLength": 8000 }
+  }
+}

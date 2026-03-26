@@ -26,7 +26,106 @@ import SliderInput from "./components/SliderInput";
 import { ExpenseType, CalculationResult } from "./types";
 import { formatCurrency, formatPercent } from "./utils/formatters";
 import { jsPDF } from "jspdf";
+import type { ForeverLionInputs, LionVerdictClientReport } from "@cb/advisory-graph/lionsVerdict";
+import {
+  buildLionVerdictClientReportFromForever,
+  formatLionPublicStatusLabel,
+  parseForeverRunway,
+} from "@cb/advisory-graph/lionsVerdict";
 import "./index.css";
+
+function appendLionsVerdictPageToForeverPdf(
+  doc: jsPDF,
+  report: LionVerdictClientReport,
+  opts: {
+    pageWidth: number;
+    margin: number;
+    darkGreen: readonly [number, number, number];
+    bodyGray: readonly [number, number, number];
+    addFooter: (d: jsPDF) => void;
+  },
+) {
+  const { pageWidth, margin, darkGreen, bodyGray, addFooter } = opts;
+  const maxW = pageWidth - 2 * margin;
+  doc.addPage();
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, pageWidth, 297, "F");
+  let y = 22;
+
+  const newPageIfNeeded = () => {
+    if (y > 258) {
+      addFooter(doc);
+      doc.addPage();
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, 0, pageWidth, 297, "F");
+      y = 22;
+    }
+  };
+
+  const sectionTitle = (t: string) => {
+    newPageIfNeeded();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...darkGreen);
+    doc.text(t, margin, y);
+    y += 8;
+  };
+
+  const bodyPara = (text: string, size = 9) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(size);
+    doc.setTextColor(...bodyGray);
+    const lines = doc.splitTextToSize(text, maxW);
+    for (const line of lines) {
+      newPageIfNeeded();
+      doc.text(line, margin, y);
+      y += size * 0.45;
+    }
+    y += 3;
+  };
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(...darkGreen);
+  doc.text("Lion's Verdict", margin, y);
+  y += 10;
+  doc.setFontSize(20);
+  doc.text(String(report.verdict.score), margin, y);
+  doc.setFontSize(10);
+  doc.text(formatLionPublicStatusLabel(report.verdict.status), margin + 28, y);
+  y += 10;
+  bodyPara(report.verdict.summary, 10);
+
+  sectionTitle("Strengths");
+  report.strengths.forEach((s) => bodyPara(`• ${s}`, 9));
+  sectionTitle("Risks");
+  report.risks.forEach((s) => bodyPara(`• ${s}`, 9));
+
+  sectionTitle("Income & capital gap");
+  bodyPara(report.goal_gap.summary, 9);
+  sectionTitle("Progress to forever capital");
+  bodyPara(report.progress.summary, 9);
+
+  sectionTitle("Strategic options");
+  report.strategic_options.forEach((o) =>
+    bodyPara(`${o.type}: ${o.action}. ${o.impact} Trade-off: ${o.trade_off}.`, 9),
+  );
+
+  sectionTitle("Capital unlock");
+  bodyPara(`${report.capital_unlock.decision}. ${report.capital_unlock.summary}`, 9);
+
+  sectionTitle("Scenario actions");
+  bodyPara(`Strong markets: ${report.scenario_actions.bull}`, 9);
+  bodyPara(`Base case: ${report.scenario_actions.base}`, 9);
+  bodyPara(`Weak markets: ${report.scenario_actions.bear}`, 9);
+
+  sectionTitle("Priority actions");
+  report.priority_actions.forEach((p) => bodyPara(`• ${p}`, 9));
+  bodyPara(`If you do nothing: ${report.do_nothing_outcome}`, 9);
+  bodyPara(report.closing_line, 9);
+
+  addFooter(doc);
+}
 
 /** Imperative API for Supabase save/restore (AdvisoryShell). */
 export type ForeverAppHandle = {
@@ -619,6 +718,31 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
       doc.text('This diagnostic is designed to support financial planning discussions with qualified financial professionals.', margin, y, { maxWidth: pageWidth - 2 * margin });
 
       addReportFooter(doc);
+
+      const rr = parseForeverRunway(results.runway);
+      const foreverLionInput: ForeverLionInputs = {
+        isSustainable: results.isSustainable,
+        progressPercent: results.progressPercent,
+        gap: results.gap,
+        currentAssets: results.currentAssets,
+        capitalNeeded: Number.isFinite(results.capitalNeeded) ? results.capitalNeeded : 0,
+        annualExpense: results.annualExpense,
+        runwayLabel: results.runway,
+        realReturnRate: results.realReturnRate,
+        runwayYears: rr.perpetual ? null : rr.years,
+        perpetualRunway: rr.perpetual,
+        nominalExpectedReturnPct: expectedReturn,
+      };
+      const lionClient = buildLionVerdictClientReportFromForever(foreverLionInput, {
+        formatCurrency: (n) => formatCurrency(n, currency),
+      });
+      appendLionsVerdictPageToForeverPdf(doc, lionClient, {
+        pageWidth,
+        margin,
+        darkGreen,
+        bodyGray,
+        addFooter: addReportFooter,
+      });
 
       doc.save(`Capital-Bridge-Strategic-Wealth-Diagnostic-${new Date().getTime()}.pdf`);
     } catch (error) {

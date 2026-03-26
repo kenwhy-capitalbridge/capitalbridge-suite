@@ -6,7 +6,13 @@
 import React from 'react';
 import type { MonteCarloResult, StressScenarioResult } from './types';
 import type { DepletionBarOutput } from './DepletionBarContext';
-import type { LionVerdictOutput } from '@cb/advisory-graph/lionsVerdict';
+import type { LionStressAdvisoryInputs, LionVerdictOutput } from '@cb/advisory-graph/lionsVerdict';
+import {
+  formatLionPublicStatusLabel,
+  lionPublicStatusFromScore0to100,
+  lionStrongEligibilityFromStressInputs,
+  stressScoreToDisplay0to100,
+} from '@cb/advisory-graph/lionsVerdict';
 import type { VerdictNarrative } from './services/advisory_engine';
 import { getDepletionBarOutput } from './services/mathUtils';
 
@@ -39,6 +45,8 @@ export interface PrintReportProps {
   verdict: VerdictNarrative | null;
   /** Full engine output (score, lists, if-you-do-nothing); single source with live UI. */
   lionVerdictOutput: LionVerdictOutput | null;
+  /** Same shape as live Stress advisory inputs — used for public status STRONG gate on PDF. */
+  stressAdvisoryInputs: LionStressAdvisoryInputs | null;
   keyTakeaways: string[];
   recommendedAdjustments: string[];
   microSignals: { type: 'warn' | 'ok'; text: string }[];
@@ -71,6 +79,7 @@ export function PrintReport(props: PrintReportProps) {
     fiTier,
     verdict,
     lionVerdictOutput,
+    stressAdvisoryInputs,
     keyTakeaways,
     recommendedAdjustments,
     microSignals,
@@ -78,6 +87,23 @@ export function PrintReport(props: PrintReportProps) {
   } = props;
 
   const depletionLabel = depletionBarOutput?.pillLabel ?? '—';
+  const lionScorePrint = stressScoreToDisplay0to100(mcResult.capitalResilienceScore);
+  const bandStressInputs: LionStressAdvisoryInputs =
+    stressAdvisoryInputs ??
+    ({
+      capitalResilienceScore: mcResult.capitalResilienceScore,
+      tier: mcResult.tier,
+      fragilityIndicator: 'Watchful',
+      initialCapital: investment,
+      withdrawalAmount: withdrawal,
+      timeHorizonYears: years,
+      simulatedAverageOutcome: mcResult.simulatedAverage,
+      maximumDrawdownPct: mcResult.maxDrawdownPctAvg,
+      worstCaseOutcome: mcResult.percentile5,
+    } satisfies LionStressAdvisoryInputs);
+  const lionPublicLabelPrint = formatLionPublicStatusLabel(
+    lionPublicStatusFromScore0to100(lionScorePrint, lionStrongEligibilityFromStressInputs(bandStressInputs)),
+  );
   const generatedDate = typeof window !== 'undefined'
     ? new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     : '';
@@ -130,14 +156,9 @@ export function PrintReport(props: PrintReportProps) {
             <div style={{ fontSize: '14pt', fontWeight: 700, color: PRINT_TEXT }}>{healthStatus}</div>
           </div>
           <div style={{ border: `1px solid ${PRINT_BORDER}`, borderRadius: 4, padding: '1em', textAlign: 'center' }}>
-            <div style={{ fontSize: '9pt', color: PRINT_ACCENT, fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25em' }}>Resilience Score</div>
-            <div style={{ fontSize: '14pt', fontWeight: 700, color: PRINT_TEXT }}>{mcResult.capitalResilienceScore}</div>
-            <div style={{ fontSize: '9pt', color: PRINT_TEXT }}>{mcResult.tier}</div>
-          </div>
-          <div style={{ border: `1px solid ${PRINT_BORDER}`, borderRadius: 4, padding: '1em', textAlign: 'center' }}>
-            <div style={{ fontSize: '9pt', color: PRINT_ACCENT, fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25em' }}>Fragility Index</div>
-            <div style={{ fontSize: '14pt', fontWeight: 700, color: PRINT_TEXT }}>{fragilityIndex}</div>
-            <div style={{ fontSize: '9pt', color: PRINT_TEXT }}>{fiTier}</div>
+            <div style={{ fontSize: '9pt', color: PRINT_ACCENT, fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25em' }}>Lion Score (0–100)</div>
+            <div style={{ fontSize: '14pt', fontWeight: 700, color: PRINT_TEXT }}>{lionScorePrint}</div>
+            <div style={{ fontSize: '9pt', color: PRINT_TEXT }}>{lionPublicLabelPrint}</div>
           </div>
           <div style={{ border: `1px solid ${PRINT_BORDER}`, borderRadius: 4, padding: '1em', textAlign: 'center' }}>
             <div style={{ fontSize: '9pt', color: PRINT_ACCENT, fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25em' }}>Depletion Pressure</div>
@@ -187,10 +208,10 @@ export function PrintReport(props: PrintReportProps) {
           Capital Diagnosis
         </h2>
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '1em' }}>
-          This system evaluates the strength of your capital structure using three core indicators: Resilience Score (blend of capital survival and structural stability over the horizon), Fragility Index (sensitivity to market shocks), and Depletion Pressure (strain from withdrawals).
+          This system evaluates your capital structure using your Lion score (0–100), depletion pressure from withdrawals, and sensitivity charts below. The Lion score is the single headline measure for this report.
         </p>
         <p style={{ fontSize: '10pt', color: PRINT_TEXT }}>
-          Think of your capital structure like a car: <strong>Resilience Score</strong> is the strength of the engine; <strong>Fragility Index</strong> is how sensitive the engine is to road conditions; <strong>Depletion Pressure</strong> is how quickly the fuel is being consumed.
+          Think of your capital structure like a car: <strong>Lion score</strong> is overall structural strength; <strong>Depletion pressure</strong> is how quickly the fuel is being consumed; the map and radar show where assumptions are most sensitive.
         </p>
       </div>
 
@@ -199,16 +220,10 @@ export function PrintReport(props: PrintReportProps) {
         <h2 style={{ fontFamily: 'Crimson Pro', fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.75em', textTransform: 'uppercase' }}>
           Capital Structure Health
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1em', marginBottom: '1em' }}>
-          <div style={{ border: `1px solid ${PRINT_BORDER}`, padding: '1em', borderRadius: 4 }}>
-            <h3 style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.25em' }}>Resilience Score</h3>
-            <p style={{ fontSize: '10pt', color: PRINT_TEXT }}>{mcResult.capitalResilienceScore} — {mcResult.tier}</p>
-            <p style={{ fontSize: '9pt', color: PRINT_TEXT, marginTop: '0.25em', marginBottom: 0 }}>Reflects both capital survival (probability capital remains above zero) and capital stability (how often capital stays above 50% of initial) over the horizon.</p>
-          </div>
-          <div style={{ border: `1px solid ${PRINT_BORDER}`, padding: '1em', borderRadius: 4 }}>
-            <h3 style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.25em' }}>Fragility Index</h3>
-            <p style={{ fontSize: '10pt', color: PRINT_TEXT }}>{fragilityIndex} — {fiTier}</p>
-          </div>
+        <div style={{ border: `1px solid ${PRINT_BORDER}`, padding: '1em', borderRadius: 4, marginBottom: '1em' }}>
+          <h3 style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.25em' }}>Lion Score (0–100)</h3>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT }}>{lionScorePrint} — {lionPublicLabelPrint}</p>
+          <p style={{ fontSize: '9pt', color: PRINT_TEXT, marginTop: '0.25em', marginBottom: 0 }}>Single headline score for this model, aligned with Lion&apos;s Verdict below.</p>
         </div>
         <div style={{ marginBottom: '1em' }}>
           <h3 style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.25em' }}>Depletion Pressure</h3>
@@ -574,13 +589,13 @@ export function PrintReport(props: PrintReportProps) {
 
       {/* Biggest Impact + Capital Adjustment Simulator */}
       {adjustmentResults != null && (() => {
-        const baseScore = mcResult.capitalResilienceScore;
+        const baseLion = stressScoreToDisplay0to100(mcResult.capitalResilienceScore);
         const scenarios = [
           { key: 'reduceWithdrawal' as const, label: 'Reduce withdrawals by 10%', result: adjustmentResults.reduceWithdrawal, withdrawalUsed: withdrawal * 0.9, yearsUsed: years, lowerUsed: lowerPct, upperUsed: upperPct },
           { key: 'extendHorizon' as const, label: 'Extend investment horizon by 5 years', result: adjustmentResults.extendHorizon, withdrawalUsed: withdrawal, yearsUsed: years + 5, lowerUsed: lowerPct, upperUsed: upperPct },
           { key: 'improveReturns' as const, label: 'Improve portfolio returns by 1%', result: adjustmentResults.improveReturns, withdrawalUsed: withdrawal, yearsUsed: years, lowerUsed: lowerPct + 1, upperUsed: upperPct + 1 },
         ].filter((s): s is typeof s & { result: MonteCarloResult } => s.result != null);
-        const withDelta = scenarios.map(s => ({ ...s, delta: s.result.capitalResilienceScore - baseScore })).sort((a, b) => b.delta - a.delta);
+        const withDelta = scenarios.map(s => ({ ...s, delta: stressScoreToDisplay0to100(s.result.capitalResilienceScore) - baseLion })).sort((a, b) => b.delta - a.delta);
         return (
           <div className="print-section print-page-break-before">
             <h2 style={{ fontFamily: 'Crimson Pro', fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
@@ -599,18 +614,25 @@ export function PrintReport(props: PrintReportProps) {
               {withDelta.map(s => {
                 const r = s.result;
                 const depBar = getDepletionBarOutput(r.depletionPressurePct);
-                const returnRange = s.upperUsed - s.lowerUsed;
-                const returnSens = Math.min(100, Math.max(0, (returnRange - 5) * 10));
-                const withdrawalSens = investment > 0 ? Math.min(100, (s.withdrawalUsed / investment) * 500) : 0;
-                const inflationSens = Math.min(100, effectiveInflation * 25);
-                const volSens = Math.min(100, r.maxDrawdownPctAvg * 2);
-                const drawdownSens = Math.min(100, r.maxDrawdownPctAvg * 2.5);
-                const fi = Math.round((returnSens + withdrawalSens + inflationSens + volSens + drawdownSens) / 5);
-                const fiTierPrint = fi <= 20 ? 'FORTIFIED' : fi <= 40 ? 'Highly Robust' : fi <= 60 ? 'Stable' : fi <= 80 ? 'Fragile' : 'Critical';
+                const adjLion = stressScoreToDisplay0to100(r.capitalResilienceScore);
+                const scenarioStress: LionStressAdvisoryInputs = {
+                  capitalResilienceScore: r.capitalResilienceScore,
+                  tier: r.tier,
+                  fragilityIndicator: depBar.pillLabel as LionStressAdvisoryInputs['fragilityIndicator'],
+                  initialCapital: investment,
+                  withdrawalAmount: s.withdrawalUsed,
+                  timeHorizonYears: s.yearsUsed,
+                  simulatedAverageOutcome: r.simulatedAverage,
+                  maximumDrawdownPct: r.maxDrawdownPctAvg,
+                  worstCaseOutcome: r.percentile5,
+                };
+                const adjPub = formatLionPublicStatusLabel(
+                  lionPublicStatusFromScore0to100(adjLion, lionStrongEligibilityFromStressInputs(scenarioStress)),
+                );
                 return (
                   <div key={s.key} style={{ border: `1px solid ${PRINT_BORDER}`, padding: '0.75em', borderRadius: 4 }}>
                     <p style={{ fontWeight: 700, fontSize: '10pt', color: PRINT_ACCENT }}>{s.label}</p>
-                    <p style={{ fontSize: '10pt', color: PRINT_TEXT }}>Resilience: {r.capitalResilienceScore} ({r.tier}) · Fragility: {fi} ({fiTierPrint}) · Depletion: {depBar.pillLabel}</p>
+                    <p style={{ fontSize: '10pt', color: PRINT_TEXT }}>Lion score: {adjLion} · {adjPub} · Depletion: {depBar.pillLabel}</p>
                   </div>
                 );
               })}
@@ -761,7 +783,13 @@ export function PrintReport(props: PrintReportProps) {
             {lionVerdictOutput ? (
               <div style={{ marginBottom: '0.75em', paddingTop: '0.5em', borderTop: `1px solid ${PRINT_BORDER}` }}>
                 <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em' }}>
-                  Lion structural score: {lionVerdictOutput.score0to100} / 100 · {lionVerdictOutput.status} · {lionVerdictOutput.fragility}
+                  Lion score: {lionVerdictOutput.score0to100} / 100 ·{' '}
+                  {formatLionPublicStatusLabel(
+                    lionPublicStatusFromScore0to100(
+                      lionVerdictOutput.score0to100,
+                      lionStrongEligibilityFromStressInputs(bandStressInputs),
+                    ),
+                  )}
                 </p>
                 <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Strategic options</p>
                 <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>

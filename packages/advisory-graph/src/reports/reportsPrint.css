@@ -1,0 +1,47 @@
+/* Advisory reports — import in each model app layout or global CSS.
+   Screen: hide root by default; apps toggle with #print-report or .cb-report-root rules. */
+
+@media print {
+  .cb-report-root {
+    background: #fff !important;
+    color: #0d3a1d !important;
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+
+  .cb-report-brand-mark img,
+  .cb-report-interior-header img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cb-report-section {
+    page-break-inside: avoid;
+  }
+
+  .cb-report-section--page-break {
+    page-break-before: always;
+  }
+
+  .cb-report-chart-wrap {
+    page-break-inside: avoid;
+  }
+
+  /* Optional: attach to executive summary block so it starts a clean following page */
+  .cb-report-executive-summary--page-break-after {
+    page-break-after: always;
+  }
+
+  .cb-report-keep-with-next {
+    page-break-after: avoid;
+  }
+
+  .cb-report-table-head {
+    display: table-header-group;
+  }
+
+  @page {
+    size: A4;
+    margin: 18mm 20mm 22mm;
+  }
+}
