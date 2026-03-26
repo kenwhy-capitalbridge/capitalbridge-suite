@@ -1,4 +1,5 @@
 import { PlatformFrameworkHeader } from "./PlatformFrameworkHeader";
+import { FrameworkLaunchRow } from "./FrameworkLaunchRow";
 
 const FOREVER_APP_URL =
   typeof process.env.NEXT_PUBLIC_FOREVER_APP_URL === "string" && process.env.NEXT_PUBLIC_FOREVER_APP_URL
@@ -90,14 +91,12 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
                   <hr className="cb-module-divider" />
                   <p className="cb-module-desc">Evaluate whether income structures are sustainably funded indefinitely.</p>
                   <span className="cb-module-label">Launch Models:</span>
-                  <div className="cb-module-buttons">
-                    <a className="cb-btn" href={`${FOREVER_APP_URL}/`}>
-                      Forever Income Model
-                    </a>
-                    <a className="cb-btn" href="https://incomeengineering.thecapitalbridge.com/">
-                      Income Engineering Model
-                    </a>
-                  </div>
+                  <FrameworkLaunchRow
+                    buttons={[
+                      { href: `${FOREVER_APP_URL}/`, label: "Forever Income Model" },
+                      { href: "https://incomeengineering.thecapitalbridge.com/", label: "Income Engineering Model" },
+                    ]}
+                  />
                 </div>
               </article>
               <article className="cb-module">
@@ -141,11 +140,9 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
                     Stress test capital structures under uncertainty and market shocks.
                   </p>
                   <span className="cb-module-label">Launch Models:</span>
-                  <div className="cb-module-buttons">
-                    <a className="cb-btn" href="https://capitalstress.thecapitalbridge.com/">
-                      Capital Stress Model
-                    </a>
-                  </div>
+                  <FrameworkLaunchRow
+                    buttons={[{ href: "https://capitalstress.thecapitalbridge.com/", label: "Capital Stress Model" }]}
+                  />
                 </div>
               </article>
             </div>

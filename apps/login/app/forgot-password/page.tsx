@@ -10,7 +10,9 @@ import {
   ACCESS_EMAIL_SENDING_LABEL,
 } from "@/lib/resendAccessEmail";
 import { persistCheckoutEmail, readPersistedCheckoutEmail } from "@/lib/checkoutEmailPersistence";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { NavAssignButton } from "@/components/NavAssignButton";
 import {
   ACCESS_EMAIL_FIELD_LABEL,
   ACCESS_PRIMARY_CTA,
@@ -177,20 +179,26 @@ function ForgotPasswordInner() {
             />
           </label>
 
-          <button className={btnPrimary} type="submit" disabled={loading || !isSupabaseConfigured}>
-            {forgotPasswordActionLabel(0, loading)}
+          <button
+            className={btnPrimary}
+            type="submit"
+            disabled={loading || !isSupabaseConfigured}
+            aria-busy={loading}
+          >
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                {forgotPasswordActionLabel(0, loading)}
+              </span>
+            ) : (
+              forgotPasswordActionLabel(0, loading)
+            )}
           </button>
         </form>
 
-        <button
-          type="button"
-          className="cb-btn-quiet mt-8"
-          onClick={() => {
-            window.location.href = "/access";
-          }}
-        >
+        <NavAssignButton href="/access" className="cb-btn-quiet mt-8" loadingLabel="Loading…">
           {ACCESS_PRIMARY_CTA}
-        </button>
+        </NavAssignButton>
 
         <div className="mt-8 border-t border-cb-gold/30 pt-6">
           <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm font-normal leading-relaxed text-cb-green/55" />

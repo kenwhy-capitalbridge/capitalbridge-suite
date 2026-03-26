@@ -6,6 +6,7 @@
 import React from 'react';
 import type { MonteCarloResult, StressScenarioResult } from './types';
 import type { DepletionBarOutput } from './DepletionBarContext';
+import type { LionVerdictOutput } from '@cb/advisory-graph/lionsVerdict';
 import type { VerdictNarrative } from './services/advisory_engine';
 import { getDepletionBarOutput } from './services/mathUtils';
 
@@ -36,6 +37,8 @@ export interface PrintReportProps {
   fragilityIndex: number;
   fiTier: FragilityIndexTier;
   verdict: VerdictNarrative | null;
+  /** Full engine output (score, lists, if-you-do-nothing); single source with live UI. */
+  lionVerdictOutput: LionVerdictOutput | null;
   keyTakeaways: string[];
   recommendedAdjustments: string[];
   microSignals: { type: 'warn' | 'ok'; text: string }[];
@@ -67,6 +70,7 @@ export function PrintReport(props: PrintReportProps) {
     fragilityIndex,
     fiTier,
     verdict,
+    lionVerdictOutput,
     keyTakeaways,
     recommendedAdjustments,
     microSignals,
@@ -753,7 +757,41 @@ export function PrintReport(props: PrintReportProps) {
             <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.interpretation}</p>
             <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.outcomeSummary}</p>
             <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.riskExplanation}</p>
-            <p style={{ fontSize: '10pt', fontWeight: 600, color: PRINT_ACCENT, marginBottom: '0.75em', lineHeight: 1.5 }}>{verdict.advisoryRecommendation}</p>
+            <p style={{ fontSize: '10pt', fontWeight: 600, color: PRINT_ACCENT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.advisoryRecommendation}</p>
+            {lionVerdictOutput ? (
+              <div style={{ marginBottom: '0.75em', paddingTop: '0.5em', borderTop: `1px solid ${PRINT_BORDER}` }}>
+                <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em' }}>
+                  Lion structural score: {lionVerdictOutput.score0to100} / 100 · {lionVerdictOutput.status} · {lionVerdictOutput.fragility}
+                </p>
+                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Strategic options</p>
+                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
+                  {lionVerdictOutput.strategicOptions.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Capital unlock</p>
+                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
+                  {lionVerdictOutput.capitalUnlockGuidance.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Scenario actions</p>
+                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
+                  {lionVerdictOutput.scenarioActions.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Priority actions</p>
+                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
+                  {lionVerdictOutput.priorityActions.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+                <p style={{ fontSize: '9pt', fontStyle: 'italic', color: PRINT_ACCENT, lineHeight: 1.45 }}>
+                  If you do nothing: {lionVerdictOutput.ifYouDoNothing}
+                </p>
+              </div>
+            ) : null}
             <div style={{ marginTop: '0.5em' }}>
               {microSignals.map((s, i) => (
                 <p key={i} style={{ fontSize: '10pt', color: PRINT_TEXT }}>{s.type === 'warn' ? '⚠' : '✓'} {s.text}</p>

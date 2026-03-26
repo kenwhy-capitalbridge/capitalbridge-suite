@@ -24,7 +24,10 @@ import { TapToReveal, TapToRevealProvider } from './src/components/TapToReveal';
 import { MID_RETURN_WARN_PCT, EPS_MONEY, EPS_RETURN } from './src/lib/constants';
 import { exportCapitalHealthReport } from './src/lib/exportCapitalHealthReport';
 import { SECTIONS, getHealthScoreCopy } from './src/lib/capitalHealthCopy';
-import { generateLionVerdict } from './src/lib/lionAdvisor';
+import {
+  capitalHealthVerdictExportText,
+  runLionVerdictEngineCapitalHealth,
+} from '@cb/advisory-graph/lionsVerdict';
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
@@ -435,15 +438,15 @@ const CalculatorScreen = forwardRef<
       }));
   }, [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome]);
 
-  const lionVerdictText = useMemo(() => {
-    if (!props.canSeeVerdict) return '';
+  const lionVerdictBundle = useMemo(() => {
+    if (!props.canSeeVerdict) return null;
     const mode = inputs.mode;
     const tier = Math.min(5, Math.max(1, result.riskMetrics.riskTier)) as 1 | 2 | 3 | 4 | 5;
     const runwayYears =
       inputs.mode === 'withdrawal' && result.depletionMonth != null
         ? (result.depletionMonth / 12).toFixed(1)
         : undefined;
-    return generateLionVerdict(mode, tier, {
+    const vars = {
       withdrawal:
         inputs.mode === 'withdrawal'
           ? formatCurrency(inputs.targetMonthlyIncome)
@@ -456,7 +459,11 @@ const CalculatorScreen = forwardRef<
       runway: runwayYears,
       expectedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
       estimatedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
-    });
+    };
+    return {
+      text: capitalHealthVerdictExportText(mode, tier, vars),
+      engine: runLionVerdictEngineCapitalHealth(mode, tier, vars),
+    };
   }, [
     props.canSeeVerdict,
     inputs.mode,
@@ -1577,8 +1584,16 @@ const CalculatorScreen = forwardRef<
                 </span>
               </div>
               <div className="verdict-headline font-premium text-xl sm:text-2xl text-[#FFCC6A] italic text-center">
-                {result.statusCopy.headline}
+                {lionVerdictBundle?.engine.opening ?? result.statusCopy.headline}
               </div>
+              {lionVerdictBundle ? (
+                <div className="text-center text-[#F6F5F1] text-xs sm:text-sm mb-2 space-y-1">
+                  <p className="font-bold text-[#FFCC6A] tabular-nums">
+                    Lion Structural Score: {lionVerdictBundle.engine.score0to100} / 100 · {lionVerdictBundle.engine.status}
+                  </p>
+                  <p className="text-white/80">Fragility view: {lionVerdictBundle.engine.fragility}</p>
+                </div>
+              ) : null}
               <div className="verdict-basis text-center text-[#F6F5F1]">
                 Based on your withdrawal rate, expected returns, and capital runway.
               </div>
@@ -1587,21 +1602,42 @@ const CalculatorScreen = forwardRef<
                   ? `Capital Runway: ${result.depletionMonth != null ? formatRunwayYearsMonths(result.depletionMonth) : 'Forever'}`
                   : `Time Horizon: ${horizonYearsFormatted} years`}
               </div>
-              <div className="verdict-explanation w-full max-w-[720px] mx-auto text-sm sm:text-base text-[#FFCC6A] text-center leading-[1.7]">
-                {(() => {
-                  const tagline = 'Strength Behind Every Structure.';
-                  const parts = lionVerdictText.split('\n\n');
-                  const bodyParts = parts[parts.length - 1] === tagline ? parts.slice(0, -1) : parts;
-                  const opening = bodyParts[0];
-                  const rest = bodyParts.slice(1).join(' ');
-                  return (
-                    <p className="m-0">
-                      {opening ? <em>{opening}</em> : null}
-                      {opening && rest ? ' ' : null}
-                      {rest}
-                    </p>
-                  );
-                })()}
+              <div className="verdict-explanation w-full max-w-[720px] mx-auto text-sm sm:text-base text-[#FFCC6A] text-left sm:text-center leading-[1.7] space-y-3">
+                {lionVerdictBundle ? (
+                  <>
+                    <p className="m-0">{lionVerdictBundle.engine.interpretation}</p>
+                    <p className="m-0 text-[#F6F5F1]/90">{lionVerdictBundle.engine.outcomeSummary}</p>
+                    <p className="m-0 text-[#F6F5F1]/90">{lionVerdictBundle.engine.riskExplanation}</p>
+                    <p className="m-0 font-medium">{lionVerdictBundle.engine.advisoryRecommendation}</p>
+                    <div className="text-left text-[11px] sm:text-xs text-[#F6F5F1]/85 space-y-1 pt-1 border-t border-[#FFCC6A]/25">
+                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide">Strategic options</p>
+                      <ul className="list-disc pl-4 m-0 space-y-0.5">
+                        {lionVerdictBundle.engine.strategicOptions.map((s) => (
+                          <li key={s.slice(0, 40)}>{s}</li>
+                        ))}
+                      </ul>
+                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide pt-2">Capital unlock</p>
+                      <ul className="list-disc pl-4 m-0 space-y-0.5">
+                        {lionVerdictBundle.engine.capitalUnlockGuidance.map((s) => (
+                          <li key={s.slice(0, 40)}>{s}</li>
+                        ))}
+                      </ul>
+                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide pt-2">Scenario actions</p>
+                      <ul className="list-disc pl-4 m-0 space-y-0.5">
+                        {lionVerdictBundle.engine.scenarioActions.map((s) => (
+                          <li key={s.slice(0, 40)}>{s}</li>
+                        ))}
+                      </ul>
+                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide pt-2">Priority actions</p>
+                      <ul className="list-disc pl-4 m-0 space-y-0.5">
+                        {lionVerdictBundle.engine.priorityActions.map((s) => (
+                          <li key={s.slice(0, 40)}>{s}</li>
+                        ))}
+                      </ul>
+                      <p className="pt-2 text-[#FFCC6A]/95 italic">{lionVerdictBundle.engine.ifYouDoNothing}</p>
+                    </div>
+                  </>
+                ) : null}
               </div>
               <p className="text-[10px] sm:text-xs text-white uppercase text-center mt-10 sm:mt-12 opacity-80">
                 Strength Behind Every Structure.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
@@ -101,6 +101,13 @@ const TILES: Omit<Tile, "href">[] = [
 
 export function DashboardTiles() {
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  const navigateTo = useCallback((href: string) => {
+    if (pendingHref) return;
+    setPendingHref(href);
+    window.location.assign(href);
+  }, [pendingHref]);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -125,13 +132,21 @@ export function DashboardTiles() {
           tile.id === "solutions"
             ? MODEL_URLS.solutions
             : modelTileHref(tile.id, e.plan);
+        const tileBusy = pendingHref === href;
+        const tilesLocked = pendingHref !== null;
+
         return (
           <div key={tile.id}>
             {enabled ? (
-              <a
-                href={href}
+              <button
+                type="button"
+                disabled={tilesLocked}
+                aria-busy={tileBusy}
+                onClick={() => navigateTo(href)}
                 style={{
                   display: "block",
+                  width: "100%",
+                  textAlign: "left",
                   padding: "1rem 1.25rem",
                   border: "1px solid rgba(255,204,106,0.35)",
                   borderRadius: 8,
@@ -139,10 +154,31 @@ export function DashboardTiles() {
                   color: "rgba(246,245,241,0.95)",
                   fontSize: "0.95rem",
                   textDecoration: "none",
+                  cursor: tilesLocked ? "wait" : "pointer",
+                  fontFamily: "inherit",
+                  opacity: tilesLocked && !tileBusy ? 0.55 : 1,
                 }}
               >
-                {tile.label}
-              </a>
+                {tileBusy ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        display: "inline-block",
+                        width: 18,
+                        height: 18,
+                        border: "2px solid rgba(255,204,106,0.25)",
+                        borderTopColor: "rgba(255,204,106,0.95)",
+                        borderRadius: "50%",
+                        animation: "cb-platform-spin 0.75s linear infinite",
+                      }}
+                    />
+                    Loading…
+                  </span>
+                ) : (
+                  tile.label
+                )}
+              </button>
             ) : (
               <div
                 title={tile.tooltipDisabled}

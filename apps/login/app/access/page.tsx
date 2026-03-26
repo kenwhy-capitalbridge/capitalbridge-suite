@@ -21,6 +21,8 @@ import { suppressTabSignOutForAuthNavigation } from "@/lib/suppressTabSignOutNav
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { RegisteredEmailChangeForm } from "@/components/RegisteredEmailChangeForm";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
+import { NavAssignButton } from "@/components/NavAssignButton";
 import { RecoveryActions } from "@/components/RecoveryActions";
 import { SMART_LOCK_MESSAGES } from "@/lib/smartLock";
 import {
@@ -244,7 +246,6 @@ function AccessInner() {
   const [cooldownTick, setCooldownTick] = useState(0);
   const [resendBusy, setResendBusy] = useState(false);
   const [visibilityStamp, setVisibilityStamp] = useState(0);
-  const [longActionFeedback, setLongActionFeedback] = useState(false);
   const [loadingSlow, setLoadingSlow] = useState(false);
   const [resendSentEmail, setResendSentEmail] = useState<string | null>(null);
   const [loginLockUntilMs, setLoginLockUntilMs] = useState<number | null>(null);
@@ -317,18 +318,6 @@ function AccessInner() {
       window.removeEventListener("focus", sync);
     };
   }, []);
-
-  useEffect(() => {
-    if (!busy && !resendBusy) {
-      setLongActionFeedback(false);
-      return;
-    }
-    const t = window.setTimeout(() => setLongActionFeedback(true), 1000);
-    return () => {
-      window.clearTimeout(t);
-      setLongActionFeedback(false);
-    };
-  }, [busy, resendBusy]);
 
   useEffect(() => {
     if (!loginLockUntilMs || loginLockUntilMs <= Date.now()) return;
@@ -901,23 +890,29 @@ function AccessInner() {
         <main className="cb-auth-main bg-cb-green">
           <div className="cb-card max-w-md w-full text-center">
             <p className="text-sm text-cb-green sm:text-base">{COPY_ALREADY_SIGNED_IN}</p>
-            <button
-              type="button"
+            <NavAssignButton
+              href={appendAllSetParam(destination)}
               className="cb-btn-primary mt-6 w-full font-semibold"
-              onClick={() => {
-                suppressTabSignOutForAuthNavigation();
-                window.location.href = appendAllSetParam(destination);
-              }}
+              onBeforeNavigate={suppressTabSignOutForAuthNavigation}
+              loadingLabel={COPY_CONTINUE}
             >
               {COPY_CONTINUE}
-            </button>
+            </NavAssignButton>
             <button
               type="button"
               className="cb-btn-secondary mt-3 w-full font-semibold"
               onClick={() => void handleAlreadySignedInLogout()}
               disabled={alreadySignOutBusy}
+              aria-busy={alreadySignOutBusy}
             >
-              {alreadySignOutBusy ? "Logging out…" : "Logout"}
+              {alreadySignOutBusy ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner className="border-cb-green/25 border-t-cb-green" />
+                  Logging out…
+                </span>
+              ) : (
+                "Logout"
+              )}
             </button>
           </div>
         </main>
@@ -1044,10 +1039,18 @@ function AccessInner() {
                       resendBusy || resendCooldownSec > 0 || !setPwRecoveryEmail.trim() || !isSupabaseConfigured
                     }
                     onClick={() => void handleResendFromSetPasswordExpired()}
+                    aria-busy={resendBusy}
                   >
-                    {resendBusy || resendCooldownSec > 0
-                      ? accessEmailResendButtonLabel(resendCooldownSec, resendBusy)
-                      : COPY_RESEND_ACCESS_LINK}
+                    {resendBusy ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                        {accessEmailResendButtonLabel(resendCooldownSec, resendBusy)}
+                      </span>
+                    ) : resendCooldownSec > 0 ? (
+                      accessEmailResendButtonLabel(resendCooldownSec, resendBusy)
+                    ) : (
+                      COPY_RESEND_ACCESS_LINK
+                    )}
                   </button>
                 </div>
               </>
@@ -1120,17 +1123,17 @@ function AccessInner() {
                     className="cb-btn-primary mt-2 w-full font-semibold"
                     type="submit"
                     disabled={passwordSubmitDisabled}
+                    aria-busy={busy}
                   >
-                    {busy ? PASSWORD_BUTTON_LOADING : PASSWORD_BUTTON}
+                    {busy ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                        {PASSWORD_BUTTON_LOADING}
+                      </span>
+                    ) : (
+                      PASSWORD_BUTTON
+                    )}
                   </button>
-                  {busy && longActionFeedback ? (
-                    <div className="mt-2 flex justify-center" role="status" aria-busy="true">
-                      <span
-                        className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
-                        aria-hidden
-                      />
-                    </div>
-                  ) : null}
                   {showDisabledHelper && (
                     <p className="text-center text-sm text-cb-green/75">{FORM_COMPLETE_TO_CONTINUE}</p>
                   )}
@@ -1214,9 +1217,18 @@ function AccessInner() {
                     <button
                       type="button"
                       className="cb-btn-primary w-full sm:w-auto"
+                      disabled={busy}
                       onClick={() => void runLoginFlow(true)}
+                      aria-busy={busy}
                     >
-                      Log out other session and continue
+                      {busy ? (
+                        <span className="inline-flex items-center justify-center gap-2">
+                          <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                          Continuing…
+                        </span>
+                      ) : (
+                        "Log out other session and continue"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1259,7 +1271,10 @@ function AccessInner() {
                   />
                   <p className="text-sm leading-relaxed text-cb-green/85">
                     {resendBusy ? (
-                      <span>{ACCESS_EMAIL_SENDING_LABEL}</span>
+                      <span className="inline-flex items-center gap-2">
+                        <ButtonSpinner className="h-3.5 w-3.5 border-cb-green/25 border-t-cb-green" />
+                        {ACCESS_EMAIL_SENDING_LABEL}
+                      </span>
                     ) : resendCooldownSec > 0 ? (
                       <span className="text-cb-green/70">{accessEmailResendCooldownLabel(resendCooldownSec)}</span>
                     ) : (
@@ -1280,17 +1295,17 @@ function AccessInner() {
                 className="cb-btn-primary mt-5 w-full font-semibold sm:mt-8"
                 type="submit"
                 disabled={loginDisabled}
+                aria-busy={busy}
               >
-                {busy ? "Signing in…" : "Login"}
+                {busy ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                    Signing in…
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </button>
-              {(busy || resendBusy) && longActionFeedback ? (
-                <div className="mt-3 flex justify-center" role="status" aria-busy="true">
-                  <span
-                    className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
-                    aria-hidden
-                  />
-                </div>
-              ) : null}
             </form>
 
             <div className="mt-6 border-t border-cb-gold/30 pt-5 sm:mt-10 sm:pt-8">
@@ -1298,15 +1313,13 @@ function AccessInner() {
                 Don&apos;t have access yet?
               </p>
               <div className="mt-2 flex w-full justify-center sm:mt-3">
-                <button
-                  type="button"
+                <NavAssignButton
+                  href="/pricing"
                   className="cb-btn-auth-view-plans !w-auto max-w-[min(100%,14rem)] px-3 sm:max-w-[14rem] sm:px-5"
-                  onClick={() => {
-                    window.location.href = "/pricing";
-                  }}
+                  loadingLabel="Loading…"
                 >
                   View Available Plans
-                </button>
+                </NavAssignButton>
               </div>
             </div>
 
@@ -1386,6 +1399,7 @@ function AccessInner() {
               onSendNewLink={() => void handleResendFromErrorScreen()}
               sendLinkLabel={accessEmailResendButtonLabel(resendCooldownSec, resendBusy)}
               disabled={resendBusy || resendCooldownSec > 0 || !errorScreenEmail.trim() || !isSupabaseConfigured}
+              loading={resendBusy}
             />
 
             <div className="mt-5 border-t border-cb-gold/30 pt-4 sm:mt-8 sm:pt-6">

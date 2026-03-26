@@ -14,7 +14,8 @@
     "./supabaseClient": "./src/supabaseClient.ts",
     "./auth/emailCheck": "./src/auth/emailCheck.ts",
     "./plans/planMap": "./src/plans/planMap.ts",
-    "./plans/expiry": "./src/plans/expiry.ts"
+    "./plans/expiry": "./src/plans/expiry.ts",
+    "./lionsVerdict": "./src/lionsVerdict/index.ts"
   },
   "dependencies": {
     "@cb/supabase": "*"

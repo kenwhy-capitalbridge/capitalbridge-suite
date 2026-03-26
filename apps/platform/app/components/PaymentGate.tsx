@@ -69,7 +69,28 @@ export function PaymentGate({ userId, plan }: { userId: string; plan?: string | 
       </p>
 
       {state.status === "redirecting" && (
-        <p style={{ fontSize: "0.85rem", color: "rgba(246,245,241,0.8)", marginBottom: "1rem" }}>
+        <p
+          style={{
+            fontSize: "0.85rem",
+            color: "rgba(246,245,241,0.8)",
+            marginBottom: "1rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.65rem",
+          }}
+        >
+          <span
+            aria-hidden
+            style={{
+              display: "inline-block",
+              width: 18,
+              height: 18,
+              border: "2px solid rgba(255,204,106,0.25)",
+              borderTopColor: "rgba(255,204,106,0.95)",
+              borderRadius: "50%",
+              animation: "cb-platform-spin 0.75s linear infinite",
+            }}
+          />
           Redirecting to secure payment…
         </p>
       )}

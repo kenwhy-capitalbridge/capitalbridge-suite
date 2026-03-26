@@ -42,12 +42,46 @@ a {
   min-height: 100vh;
 }
 
-.cb-framework a.cb-btn {
+.cb-framework a.cb-btn,
+.cb-framework button.cb-btn {
   color: var(--green);
+  font: inherit;
 }
 
-.cb-framework a.cb-btn:hover {
+.cb-framework a.cb-btn:hover,
+.cb-framework button.cb-btn:hover:not(:disabled) {
   color: var(--gold);
+}
+
+.cb-framework button.cb-btn:disabled {
+  cursor: wait;
+  opacity: 0.88;
+  transform: none;
+  pointer-events: none;
+}
+
+@keyframes cb-platform-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cb-loading-ring {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(13, 58, 29, 0.2);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: cb-platform-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+.cb-launch-btn-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .cb-hero {

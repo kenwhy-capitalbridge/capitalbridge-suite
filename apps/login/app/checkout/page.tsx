@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
 import { persistCheckoutEmail, buildAccessUrl } from "@/lib/checkoutEmailPersistence";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import {
   CHECKOUT_ACCOUNT_EXISTS,
@@ -58,6 +59,7 @@ function CheckoutContent() {
   const [loading, setLoading] = useState(false);
   const [securing, setSecuring] = useState(false);
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
+  const [loginExistingPending, setLoginExistingPending] = useState(false);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
   const submittingRef = useRef(false);
@@ -268,20 +270,39 @@ function CheckoutContent() {
             className="cb-btn-primary w-full rounded-xl font-semibold transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             type="submit"
             disabled={loading || emailAlreadyExists}
+            aria-busy={loading}
           >
-            {loading ? "Securing your access…" : "Continue to Payment"}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                Securing your access…
+              </span>
+            ) : (
+              "Continue to Payment"
+            )}
           </button>
         </form>
 
         <button
           type="button"
           className="cb-btn-secondary mt-4 w-full rounded-xl font-medium transition hover:scale-[1.02] sm:mt-5"
+          disabled={loginExistingPending || loading}
+          aria-busy={loginExistingPending}
           onClick={() => {
+            if (loginExistingPending) return;
+            setLoginExistingPending(true);
             const t = email.trim().toLowerCase();
             window.location.href = t.includes("@") ? buildAccessUrl({ email: t }) : "/access";
           }}
         >
-          Log into An Existing Account
+          {loginExistingPending ? (
+            <span className="inline-flex items-center justify-center gap-2">
+              <ButtonSpinner className="border-cb-green/25 border-t-cb-green" />
+              Loading…
+            </span>
+          ) : (
+            "Log into An Existing Account"
+          )}
         </button>
 
         <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
