@@ -14,7 +14,7 @@ export type {
   LionVerdictOutput,
   MicroSignal,
   VerdictNarrative,
-} from './types.js';
+} from './types';
 
 export {
   capitalHealthVerdictExportText,
@@ -29,4 +29,4 @@ export {
   runLionVerdictEngineStress,
   stressScoreToDisplay0to100,
   toVerdictNarrative,
-} from './engine.js';
+} from './engine';

@@ -16,7 +16,7 @@ import type {
   LionVerdictOutput,
   MicroSignal,
   VerdictNarrative,
-} from './types.js';
+} from './types';
 
 const LION_OPENING: Record<LionScoreTier, string> = {
   Critical: 'The lion roars. The structure cannot bear the load.',
