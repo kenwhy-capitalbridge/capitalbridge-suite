@@ -4,7 +4,11 @@ import { useEffect, useRef } from "react";
 import LegacyApp, { type CapitalHealthAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
 
-export function CapitalHealthDashboardClient() {
+type Props = {
+  canSeeVerdict: boolean;
+};
+
+export function CapitalHealthDashboardClient({ canSeeVerdict }: Props) {
   const appRef = useRef<CapitalHealthAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
@@ -20,7 +24,7 @@ export function CapitalHealthDashboardClient() {
 
   return (
     <main>
-      <LegacyApp ref={appRef} />
+      <LegacyApp ref={appRef} canSeeVerdict={canSeeVerdict} />
     </main>
   );
 }

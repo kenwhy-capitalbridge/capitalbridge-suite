@@ -6,8 +6,8 @@ import { IncomeEngineeringDashboardClient } from "./IncomeEngineeringDashboardCl
 
 export const dynamic = "force-dynamic";
 
-function dashboardRedirectTo(): string {
-  const h = headers();
+async function dashboardRedirectTo(): Promise<string> {
+  const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
   const proto = h.get("x-forwarded-proto") ?? "https";
   if (!host) return "/dashboard";
@@ -20,7 +20,7 @@ export default async function IncomeEngineeringDashboard() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    const target = encodeURIComponent(dashboardRedirectTo());
+    const target = encodeURIComponent(await dashboardRedirectTo());
     redirect(`${LOGIN_APP_URL}/access?redirectTo=${target}`);
   }
 

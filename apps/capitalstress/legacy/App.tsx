@@ -102,7 +102,14 @@ export type CapitalStressAppHandle = {
   applyInputs: (inputs: Record<string, unknown>) => void;
 };
 
-const App = forwardRef<CapitalStressAppHandle, object>(function App(_props, ref) {
+type CapitalStressAppProps = {
+  canUseStressModel?: boolean;
+  canSeeVerdict?: boolean;
+};
+
+const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function App(props, ref) {
+  const canUseStressModel = props.canUseStressModel ?? true;
+  const canSeeVerdict = props.canSeeVerdict ?? true;
   const [investment, setInvestment] = useState<number>(1000000);
   const [withdrawal, setWithdrawal] = useState<number>(0);
   const [lowerPct, setLowerPct] = useState<number>(-2.0);
@@ -431,11 +438,15 @@ const App = forwardRef<CapitalStressAppHandle, object>(function App(_props, ref)
                   worstCaseOutcome: mcResult.percentile5,
                 }
               : null;
-            const verdict = advisoryInputs ? generateLionsVerdict(advisoryInputs, formatCurrency) : null;
+            const verdict =
+              canSeeVerdict && advisoryInputs ? generateLionsVerdict(advisoryInputs, formatCurrency) : null;
             const microSignals = advisoryInputs ? getMicroDiagnosticSignals(advisoryInputs) : [];
             return (
               <>
-      <div id="screen-content">
+      <div
+        id="screen-content"
+        style={{ opacity: canUseStressModel ? 1 : 0.55, pointerEvents: canUseStressModel ? "auto" : "none" }}
+      >
       {/* Metrics bar — below ModelAppHeader from layout.tsx (brand row removed) */}
       <header
         className="app-header no-print fixed left-0 right-0 z-40 w-full box-border block max-[640px]:top-[calc(48px+1px+env(safe-area-inset-top))] min-[641px]:top-[calc(52px+1px+env(safe-area-inset-top))]"
@@ -1644,23 +1655,32 @@ const App = forwardRef<CapitalStressAppHandle, object>(function App(_props, ref)
           )}
 
           {/* 15. The Lion's Verdict — final card */}
-          {verdict && (
-            <div className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl">
-              <h2 className="text-sm md:text-lg font-bold mb-4 text-[#C6A24D] uppercase tracking-wide serif-font">The Lion&apos;s Verdict</h2>
-              <p className="text-sm md:text-lg font-bold text-white serif-font italic mb-4">&ldquo;{verdict.opening}&rdquo;</p>
-              <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.interpretation}</p>
-              <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.outcomeSummary}</p>
-              <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.riskExplanation}</p>
-              <p className="text-xs md:text-sm font-medium text-[#C6A24D]/90 leading-relaxed mb-6">{verdict.advisoryRecommendation}</p>
-              <div className="space-y-2">
-                {microSignals.map((s, i) => (
-                  <p key={i} className={`text-[11px] flex items-center gap-2 ${s.type === 'warn' ? 'text-amber-400/90' : 'text-emerald-400/90'}`}>
-                    {s.type === 'warn' ? '⚠' : '✓'} {s.text}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
+          <div
+            className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl"
+            style={{ opacity: canSeeVerdict ? 1 : 0.55 }}
+          >
+            <h2 className="text-sm md:text-lg font-bold mb-4 text-[#C6A24D] uppercase tracking-wide serif-font">The Lion&apos;s Verdict</h2>
+            {verdict ? (
+              <>
+                <p className="text-sm md:text-lg font-bold text-white serif-font italic mb-4">&ldquo;{verdict.opening}&rdquo;</p>
+                <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.interpretation}</p>
+                <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.outcomeSummary}</p>
+                <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.riskExplanation}</p>
+                <p className="text-xs md:text-sm font-medium text-[#C6A24D]/90 leading-relaxed mb-6">{verdict.advisoryRecommendation}</p>
+                <div className="space-y-2">
+                  {microSignals.map((s, i) => (
+                    <p key={i} className={`text-[11px] flex items-center gap-2 ${s.type === 'warn' ? 'text-amber-400/90' : 'text-emerald-400/90'}`}>
+                      {s.type === 'warn' ? '⚠' : '✓'} {s.text}
+                    </p>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
+                Trial plan: Lion&apos;s Verdict advisory is disabled. Upgrade to Monthly or above to unlock this section.
+              </p>
+            )}
+          </div>
 
           {/* EXPAND ALL / COLLAPSE ALL — below The Lion's Verdict */}
           {mcResult && (
@@ -1681,6 +1701,11 @@ const App = forwardRef<CapitalStressAppHandle, object>(function App(_props, ref)
               >
                 {Object.values(collapsedSections).some(Boolean) ? 'EXPAND ALL' : 'COLLAPSE ALL'}
               </button>
+            </div>
+          )}
+          {!canUseStressModel && (
+            <div className="mt-4 rounded-sm border border-[#C6A24D]/40 bg-[#0D3A1D]/70 p-3 text-xs text-[#FFCC6A]">
+              Trial plan: Capital Stress model is view-only. Upgrade to Monthly or above to run stress scenarios.
             </div>
           )}
 
@@ -1738,7 +1763,7 @@ const App = forwardRef<CapitalStressAppHandle, object>(function App(_props, ref)
           maximumDrawdownPct: mcResult.maxDrawdownPctAvg,
           worstCaseOutcome: mcResult.percentile5,
         };
-        const verdict = generateLionsVerdict(advisoryInputs, formatCurrency);
+        const verdict = canSeeVerdict ? generateLionsVerdict(advisoryInputs, formatCurrency) : null;
         return (
           <PrintReport
             mcResult={mcResult}
@@ -1760,9 +1785,9 @@ const App = forwardRef<CapitalStressAppHandle, object>(function App(_props, ref)
             fragilityIndex={fragilityIndex}
             fiTier={fiTier}
             verdict={verdict}
-            keyTakeaways={getKeyTakeaways(advisoryInputs)}
-            recommendedAdjustments={getRecommendedAdjustments(advisoryInputs)}
-            microSignals={getMicroDiagnosticSignals(advisoryInputs)}
+            keyTakeaways={canSeeVerdict ? getKeyTakeaways(advisoryInputs) : []}
+            recommendedAdjustments={canSeeVerdict ? getRecommendedAdjustments(advisoryInputs) : []}
+            microSignals={canSeeVerdict ? getMicroDiagnosticSignals(advisoryInputs) : []}
             medianPathYearly={mcResult.medianPathYearly}
           />
         );

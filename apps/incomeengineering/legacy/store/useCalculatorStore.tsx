@@ -53,7 +53,11 @@ type Action =
   | { type: 'SET_ASSET_UNLOCKS'; assets: AssetUnlock[] }
   | { type: 'ADD_ASSET_UNLOCK'; mechanism: import('../types/calculator').UnlockMechanismType; label?: string }
   | { type: 'REMOVE_ASSET_UNLOCK'; id: string }
-  | { type: 'UPDATE_ASSET_UNLOCK'; id: string; updates: Partial<Pick<AssetUnlock, 'label' | 'enabled' | 'mechanism'>> }
+  | {
+      type: 'UPDATE_ASSET_UNLOCK';
+      id: string;
+      updates: Partial<Pick<AssetUnlock, 'label' | 'enabled' | 'mechanism' | 'estimatedInvestmentReturnPercent'>>;
+    }
   | { type: 'UPDATE_ASSET_UNLOCK_PARAMS'; id: string; params: Partial<AssetUnlock['params']> }
   | { type: 'SET_LOANS'; loans: LoanRow[] }
   | { type: 'ADD_LOAN'; loan: Omit<LoanRow, 'id'> }
@@ -210,7 +214,10 @@ export interface CalculatorStore extends CalculatorState {
   setAssetUnlocks: (assets: AssetUnlock[]) => void;
   addAssetUnlock: (mechanism: UnlockMechanismType, label?: string) => void;
   removeAssetUnlock: (id: string) => void;
-  updateAssetUnlock: (id: string, updates: Partial<Pick<AssetUnlock, 'label' | 'enabled' | 'mechanism'>>) => void;
+    updateAssetUnlock: (
+      id: string,
+      updates: Partial<Pick<AssetUnlock, 'label' | 'enabled' | 'mechanism' | 'estimatedInvestmentReturnPercent'>>,
+    ) => void;
   updateAssetUnlockParams: (id: string, params: Partial<AssetUnlock['params']>) => void;
   setLoans: (loans: LoanRow[]) => void;
   addLoan: (loan: Omit<LoanRow, 'id'>) => void;
@@ -258,7 +265,10 @@ export function useCalculatorStore<T>(selector: (store: CalculatorStore) => T): 
     setAssetUnlocks: (assets: AssetUnlock[]) => dispatch({ type: 'SET_ASSET_UNLOCKS', assets }),
     addAssetUnlock: (mechanism: UnlockMechanismType, label?: string) => dispatch({ type: 'ADD_ASSET_UNLOCK', mechanism, label }),
     removeAssetUnlock: (id: string) => dispatch({ type: 'REMOVE_ASSET_UNLOCK', id }),
-    updateAssetUnlock: (id: string, updates: Partial<Pick<AssetUnlock, 'label' | 'enabled' | 'mechanism'>>) => dispatch({ type: 'UPDATE_ASSET_UNLOCK', id, updates }),
+    updateAssetUnlock: (
+      id: string,
+      updates: Partial<Pick<AssetUnlock, 'label' | 'enabled' | 'mechanism' | 'estimatedInvestmentReturnPercent'>>,
+    ) => dispatch({ type: 'UPDATE_ASSET_UNLOCK', id, updates }),
     updateAssetUnlockParams: (id: string, params: Partial<AssetUnlock['params']>) => dispatch({ type: 'UPDATE_ASSET_UNLOCK_PARAMS', id, params }),
     setLoans: (loans: LoanRow[]) => dispatch({ type: 'SET_LOANS', loans }),
     addLoan: (loan: Omit<LoanRow, 'id'>) => dispatch({ type: 'ADD_LOAN', loan }),

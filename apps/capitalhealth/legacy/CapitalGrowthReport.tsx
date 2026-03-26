@@ -9,6 +9,7 @@ import {
   pdf,
   Font,
 } from '@react-pdf/renderer';
+import type { Style } from '@react-pdf/types';
 
 // Enforce UTF-8-friendly rendering: prevent mid-word breaks and malformed characters
 Font.registerHyphenationCallback((word) => [word]);
@@ -18,6 +19,12 @@ import { TIER_COLORS, type RiskTierKey } from './src/lib/statusCopy';
 import { getRiskTier } from './src/lib/riskTier';
 import type { ScenarioAdjustments } from './src/lib/capitalHealthTypes';
 import { APP_NAME } from './src/lib/capitalHealthCopy';
+
+/** CSS break-* for react-pagination; cast to `Style` so arrays like `[sheetStyle, this]` type-check. */
+const PDF_BREAK_INSIDE_AVOID = {
+  breakInside: 'avoid' as const,
+  pageBreakInside: 'avoid' as const,
+} as Style;
 
 /** Extended result when report is generated from the app (useCalculatorResults); uses app status messaging. */
 export type ReportResult = SimulationResult & {
@@ -139,7 +146,6 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'rgba(205,91,82,0.08)',
     marginBottom: SECTION_SPACING,
-    breakInside: 'avoid' as const,
   },
   pageContent: {
     padding: CONTENT_PADDING,
@@ -326,26 +332,26 @@ const styles = StyleSheet.create({
   generatedDate: { fontSize: 9, color: MUTED, marginBottom: 6, textAlign: 'left' },
   titleDescription: { fontSize: 11, color: MUTED, fontStyle: 'italic', textAlign: 'left' },
   verdictDivider: { borderBottomWidth: 1, borderBottomColor: GOLD, marginVertical: 10 },
-  /** Keeps entire Lion's Verdict block on one page; do not allow page break inside. */
-  verdictSectionWrap: { marginBottom: SECTION_SPACING, breakInside: 'avoid' as const, pageBreakInside: 'avoid' as const },
-  sectionWrap: { marginBottom: SECTION_SPACING, breakInside: 'avoid' as const },
+  /** Keeps entire Lion's Verdict block on one page; pair with PDF_BREAK_INSIDE_AVOID on the View. */
+  verdictSectionWrap: { marginBottom: SECTION_SPACING },
+  sectionWrap: { marginBottom: SECTION_SPACING },
   sectionTitleLarge: { fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5, color: GREEN, marginBottom: 6, textTransform: 'uppercase', textAlign: 'left', paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: GOLD },
   subsectionTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: SUBSECTION_SPACING, textAlign: 'left' },
   confidenceBarWrap: { marginBottom: 8 },
   confidenceBar: { height: 12, backgroundColor: '#e5e7eb', borderRadius: 6, overflow: 'hidden', flexDirection: 'row' },
   confidenceFill: { height: '100%', borderRadius: 6 },
   confidenceLabel: { fontSize: 8, color: MUTED, marginTop: 4 },
-  summaryRow: { flexDirection: 'row', gap: 12, marginBottom: CARD_SPACING, breakInside: 'avoid' as const },
+  summaryRow: { flexDirection: 'row', gap: 12, marginBottom: CARD_SPACING },
   summaryCard: { flex: 1, padding: 10, borderWidth: 1, borderColor: GOLD, borderRadius: 6, backgroundColor: '#fafaf9' },
   summaryCardLabel: { fontSize: 8, color: MUTED, marginBottom: 4, textTransform: 'uppercase' },
   summaryCardValue: { fontSize: 11, fontWeight: 'bold', color: DARK },
-  stressTable: { width: '100%', borderWidth: 1, borderColor: GOLD, borderRadius: 6, breakInside: 'avoid' as const },
-  stressTableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', paddingVertical: 6, paddingHorizontal: 8, breakInside: 'avoid' as const },
+  stressTable: { width: '100%', borderWidth: 1, borderColor: GOLD, borderRadius: 6 },
+  stressTableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', paddingVertical: 6, paddingHorizontal: 8 },
   stressTableHeader: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: GREEN, paddingVertical: 6, paddingHorizontal: 8, backgroundColor: '#f5f5f4' },
   stressTableCol1: { width: '40%', fontSize: 9, color: DARK },
   stressTableCol2: { width: '30%', fontSize: 9, color: DARK },
   stressTableCol3: { width: '30%', fontSize: 9, color: DARK, textAlign: 'right' },
-  highlightBox: { borderWidth: 2, borderColor: GOLD, borderRadius: 8, padding: 20, backgroundColor: 'rgba(255,204,106,0.12)', marginTop: 12, breakInside: 'avoid' as const },
+  highlightBox: { borderWidth: 2, borderColor: GOLD, borderRadius: 8, padding: 20, backgroundColor: 'rgba(255,204,106,0.12)', marginTop: 12 },
   highlightTitle: { fontSize: 9, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 },
   actionList: { marginLeft: 8, marginBottom: 6 },
   actionItem: { fontSize: 9, color: DARK, marginBottom: 4, lineHeight: 1.4 },
@@ -483,7 +489,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={[styles.headerRow, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.headerRow, PDF_BREAK_INSIDE_AVOID]}>
             <View style={styles.headerLeft}>
               {baseUrl ? (
                 <Image
@@ -514,7 +520,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             </View>
           </View>
 
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>EXECUTIVE SUMMARY</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6 }]}>Overall Structural Status: {riskTierLabel}</Text>
             <Text style={[styles.bodyText, { lineHeight: 1.5 }]}>{executiveSummary}</Text>
@@ -529,7 +535,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
             <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Structure Status</Text><Text style={[styles.assumptionValue, { fontWeight: 'bold' }]}>{riskTierLabel}</Text></View>
@@ -540,7 +546,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>This diagnostic assessment evaluates whether the withdrawal structure is sustainable under the portfolio's expected return assumptions.</Text>
           </View>
 
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURAL CONFIDENCE</Text>
             <Text style={[styles.bodyText, { marginBottom: 6 }]}>Capital Strength Score: {formatNum(healthScore, 1)}%</Text>
             <View style={styles.confidenceBarWrap}>
@@ -552,9 +558,9 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>This score reflects how resilient the income structure is under current assumptions.</Text>
           </View>
 
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL HEALTH SUMMARY</Text>
-            <View style={styles.summaryRow}>
+            <View style={[styles.summaryRow, PDF_BREAK_INSIDE_AVOID]}>
               <View style={[styles.summaryCard]}>
                 <Text style={styles.summaryCardLabel}>Capital Runway</Text>
                 <Text style={styles.summaryCardValue}>{runwayYearsText}</Text>
@@ -580,7 +586,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={styles.sectionWrap}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURE OVERVIEW</Text>
             <Text style={styles.bodyText}>Desired Monthly Income {formatCurrency(inputs.targetMonthlyIncome)}</Text>
             <Text style={styles.bodyText}>Sustainable Monthly Return {formatCurrency(sustainableMonthly)}</Text>
@@ -590,7 +596,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
           </View>
 
           {chartPoints.length > 0 ? (
-            <View style={[styles.chartSection, { marginBottom: CHART_SPACING, breakInside: 'avoid' as const }]}>
+            <View style={[styles.chartSection, { marginBottom: CHART_SPACING }, PDF_BREAK_INSIDE_AVOID]}>
               <Text style={styles.chartTitle}>CAPITAL PROJECTION OVER TIME</Text>
               <Text style={{ fontSize: 9, color: MUTED, marginBottom: 4 }}>Green bars = capital balance. Gold line = depletion trajectory.</Text>
               <SampleChart chartData={chartPoints} />
@@ -607,7 +613,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTIONS</Text>
             <View style={styles.row}>
               <View style={styles.col}>
@@ -637,7 +643,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>KEY OUTCOMES</Text>
             <View style={[styles.row, { marginBottom: 4 }]}>
               <View style={[styles.card, styles.col]}>
@@ -661,7 +667,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             </View>
           </View>
 
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>OUTCOME OPTIMISER</Text>
             <View style={styles.section}>
               <Text style={[styles.bodyText, { marginBottom: 10 }]}>Reduce Income: Suggested: {formatCurrency(recommendedIncome)}</Text>
@@ -681,16 +687,16 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRESS TEST</Text>
-            <View style={styles.stressTable}>
+            <View style={[styles.stressTable, PDF_BREAK_INSIDE_AVOID]}>
               <View style={styles.stressTableHeader}>
                 <Text style={[styles.stressTableCol1, { fontWeight: 'bold' }]}>Scenario</Text>
                 <Text style={[styles.stressTableCol2, { fontWeight: 'bold' }]}>Annual Return</Text>
                 <Text style={[styles.stressTableCol3, { fontWeight: 'bold' }]}>Capital Survival Age</Text>
               </View>
               {stressRows.map((row, i) => (
-                <View key={i} style={styles.stressTableRow}>
+                <View key={i} style={[styles.stressTableRow, PDF_BREAK_INSIDE_AVOID]}>
                   <Text style={styles.stressTableCol1}>{row.scenario}</Text>
                   <Text style={styles.stressTableCol2}>{formatNum(row.returnPct, 1)}%</Text>
                   <Text style={styles.stressTableCol3}>{row.runwayText}</Text>
@@ -701,7 +707,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
           </View>
 
           {incomeGap > 0 && depletionMo != null ? (
-            <View style={styles.warningPanel}>
+            <View style={[styles.warningPanel, PDF_BREAK_INSIDE_AVOID]}>
               <Text style={[styles.sectionTitleLarge, { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 8 }]}>CAPITAL PROTECTION WARNING</Text>
               <Text style={styles.bodyText}>Current withdrawal levels exceed sustainable portfolio returns.</Text>
               <Text style={styles.bodyText}>Without structural adjustments, capital depletion is projected within {runwayYearsText}.</Text>
@@ -709,7 +715,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             </View>
           ) : null}
 
-          <View style={[styles.verdictSectionWrap]} wrap={false}>
+          <View style={[styles.verdictSectionWrap, PDF_BREAK_INSIDE_AVOID]} wrap={false}>
             <Text style={[styles.subsectionTitle, { marginBottom: 4 }]}>STRUCTURAL STATUS: {riskTierLabel}</Text>
             <View style={styles.verdictDivider} />
             <Text style={styles.sectionTitleLarge}>THE LION&apos;S VERDICT</Text>
@@ -738,7 +744,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>ADVISORY ACTION PLAN</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Recommended Next Steps</Text>
             <Text style={styles.actionItem}>1. Review withdrawal strategy — Reducing withdrawals to {formatCurrency(recommendedIncome)} may improve sustainability.</Text>
@@ -747,7 +753,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <Text style={styles.actionItem}>4. Conduct periodic review — Reassess assumptions annually or when circumstances change.</Text>
 
             {inputs.mode === 'withdrawal' && recommendedIncome > 0 ? (
-              <View style={styles.highlightBox}>
+              <View style={[styles.highlightBox, PDF_BREAK_INSIDE_AVOID]}>
                 <Text style={styles.highlightTitle}>PRIMARY STRUCTURAL ADJUSTMENT</Text>
                 <Text style={[styles.subsectionTitle, { marginBottom: 2 }]}>Recommended Adjustment</Text>
                 <Text style={styles.bodyText}>Reduce Monthly Withdrawal to {formatCurrency(recommendedIncome)}</Text>
@@ -757,7 +763,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             ) : null}
           </View>
 
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTION TRANSPARENCY</Text>
             <View style={[styles.section, { marginBottom: 8 }]}>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Expected Portfolio Return</Text><Text style={styles.assumptionValue}>{formatNum(inputs.expectedAnnualReturnPct, 1)}%</Text></View>
@@ -769,7 +775,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>Model outputs depend heavily on the assumptions provided.</Text>
           </View>
 
-          <View style={styles.sectionWrap}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>ADVISOR INTERPRETATION NOTES</Text>
             <Text style={styles.bodyText}>Recommendations should be evaluated within the client's broader financial plan:</Text>
             <Text style={styles.actionItem}>• Reducing withdrawals to align with sustainable portfolio returns</Text>
@@ -787,13 +793,13 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
         <View fixed style={styles.identityBar} />
         <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
         <View style={styles.pageContent}>
-          <View style={styles.sectionWrap}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL BRIDGE SYSTEM OVERVIEW</Text>
             <Text style={styles.bodyText}>Capital Bridge functions as a financial modelling and diagnostic platform designed to evaluate capital sustainability and income resilience.</Text>
             <Text style={[styles.bodyText, { marginTop: 4 }]}>The system integrates capital projections, withdrawal modelling, and structural diagnostics to support advisory decision-making.</Text>
           </View>
 
-          <View style={[styles.sectionWrap, { breakInside: 'avoid' as const }]}>
+          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CLIENT MEETING SUMMARY</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6 }]}>Key Discussion Points</Text>
             <View style={[styles.section, { marginBottom: 8 }]}>

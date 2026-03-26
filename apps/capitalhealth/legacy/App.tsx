@@ -2,13 +2,14 @@
 "use client";
 import React, { useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import './index.css';
-import { 
+import {
   AreaChart,
   Area,
   XAxis,
   YAxis,
-  Tooltip,
   ResponsiveContainer,
+  Tooltip,
+  type TooltipContentProps,
 } from 'recharts';
 import { Printer } from 'lucide-react';
 import {
@@ -213,12 +214,19 @@ export type CapitalHealthAppHandle = {
   applyInputs: (inputs: Record<string, unknown>) => void;
 };
 
-export default forwardRef<CapitalHealthAppHandle, object>(function App(_props, ref) {
-  return <CalculatorScreen ref={ref} />;
+type CapitalHealthAppProps = {
+  canSeeVerdict?: boolean;
+};
+
+export default forwardRef<CapitalHealthAppHandle, CapitalHealthAppProps>(function App(props, ref) {
+  return <CalculatorScreen ref={ref} canSeeVerdict={props.canSeeVerdict ?? true} />;
 });
 
-const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function CalculatorScreen(
-  _props,
+const CalculatorScreen = forwardRef<
+  CapitalHealthAppHandle,
+  { canSeeVerdict: boolean }
+>(function CalculatorScreen(
+  props,
   ref
 ) {
   const [inputs, setInputsRaw] = useState<CalculatorInputs>(defaultInputs);
@@ -318,6 +326,26 @@ const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function Cal
     [formatCurrency, formatCurrencyCompactDisplay]
   );
 
+  const resultsChartTooltip = useCallback(
+    (tp: TooltipContentProps) => {
+      const { active, payload } = tp;
+      if (!active || !payload?.length) return null;
+      const row = payload[0]?.payload as { month?: number; nominal?: number } | undefined;
+      if (row == null || typeof row.month !== 'number' || typeof row.nominal !== 'number') return null;
+      const mo = row.month;
+      const years = (mo / 12).toFixed(1);
+      return (
+        <div className="rounded border border-[#FFCC6A] bg-[#0D3A1D] px-2.5 py-2 text-[10px] sm:text-xs text-[#FFCC6A] shadow-lg">
+          <div className="text-[#F6F5F1]">
+            Time: {years} yr ({mo} mo)
+          </div>
+          <div className="mt-0.5">Capital : {formatCurrency(row.nominal)}</div>
+        </div>
+      );
+    },
+    [formatCurrency]
+  );
+
   const update = useCallback((patch: Partial<CalculatorInputs>) => {
     setInputsRaw((prev) => {
       const next = { ...prev, ...patch };
@@ -408,6 +436,7 @@ const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function Cal
   }, [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome]);
 
   const lionVerdictText = useMemo(() => {
+    if (!props.canSeeVerdict) return '';
     const mode = inputs.mode;
     const tier = Math.min(5, Math.max(1, result.riskMetrics.riskTier)) as 1 | 2 | 3 | 4 | 5;
     const runwayYears =
@@ -429,6 +458,7 @@ const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function Cal
       estimatedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
     });
   }, [
+    props.canSeeVerdict,
     inputs.mode,
     inputs.targetMonthlyIncome,
     inputs.targetFutureCapital,
@@ -1181,23 +1211,7 @@ const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function Cal
                           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                           label={{ value: 'Capital', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: 'rgba(246,245,241,0.85)', fontSize: 9 } }}
                         />
-                        <Tooltip
-                          labelFormatter={(monthIndex: number) =>
-                            `Time: ${(Number(monthIndex) / 12).toFixed(1)} yr (${monthIndex} mo)`
-                          }
-                          formatter={(v: number) => [formatCurrency(v), 'Capital']}
-                          contentStyle={{
-                            padding: '6px 10px',
-                            borderRadius: '8px',
-                            border: '1px solid #FFCC6A',
-                            fontSize: '11px',
-                            minWidth: 'auto',
-                            background: '#0D3A1D',
-                            color: '#F6F5F1',
-                          }}
-                          itemStyle={{ fontSize: '11px' }}
-                          labelStyle={{ fontSize: '10px' }}
-                        />
+                        <Tooltip content={resultsChartTooltip} cursor={{ stroke: 'rgba(246,245,241,0.55)' }} />
                         <Area
                           type="monotone"
                           dataKey="nominal"
@@ -1370,23 +1384,7 @@ const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function Cal
                       tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                       label={{ value: 'Capital', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: 'rgba(246,245,241,0.85)', fontSize: 9 } }}
                     />
-                    <Tooltip
-                      labelFormatter={(monthIndex: number) =>
-                        `Time: ${(Number(monthIndex) / 12).toFixed(1)} yr (${monthIndex} mo)`
-                      }
-                      formatter={(v: number) => [formatCurrency(v), 'Capital']}
-                      contentStyle={{
-                        padding: '6px 10px',
-                        borderRadius: '8px',
-                        border: '1px solid #FFCC6A',
-                        fontSize: '11px',
-                        minWidth: 'auto',
-                        background: '#0D3A1D',
-                        color: '#F6F5F1',
-                      }}
-                      itemStyle={{ fontSize: '11px' }}
-                      labelStyle={{ fontSize: '10px' }}
-                    />
+                    <Tooltip content={resultsChartTooltip} cursor={{ stroke: 'rgba(246,245,241,0.55)' }} />
                     <Area
                       type="monotone"
                       dataKey="nominal"
@@ -1450,8 +1448,8 @@ const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function Cal
               {inputs.mode === 'withdrawal' && (result.monthlyReturnOnCapital ?? 0) > 0 && (
                 <p className="text-[10px] sm:text-xs text-[#0D3A1D]/70 mt-0.5 sm:mt-1 leading-snug">
                   {inputs.monthlyTopUp > 0
-                    ? `~${formatCurrency(result.monthlyReturnOnCapital)}/mo is the return on your capital alone. Withdrawing more than this uses principal; your monthly top-up helps extend how long your money lasts.`
-                    : `Withdrawals above ~${formatCurrency(result.monthlyReturnOnCapital)}/mo spend principal. At or below this, you have forever income.`}
+                    ? `~${formatCurrency(result.monthlyReturnOnCapital ?? 0)}/mo is the return on your capital alone. Withdrawing more than this uses principal; your monthly top-up helps extend how long your money lasts.`
+                    : `Withdrawals above ~${formatCurrency(result.monthlyReturnOnCapital ?? 0)}/mo spend principal. At or below this, you have forever income.`}
                 </p>
               )}
            </div>
@@ -1555,51 +1553,62 @@ const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function Cal
               Buffer breached for {formatRunwayYearsMonths(result.bufferBreachMonths)}.
             </div>
           )}
-
-          <div
-            className="lions-verdict-card rounded-[14px] border border-[#FFCC6A] relative overflow-visible"
-            style={{
-              background: 'linear-gradient(180deg, #0D3A1D 0%, #0a2d18 100%)',
-            }}
-          >
-            <div className="verdict-header flex items-center gap-2 sm:gap-3 text-left">
-              <img src="/lion.png" alt="" className="h-5 w-5 sm:h-7 sm:w-7 flex-shrink-0 mt-0.5" aria-hidden />
-              <span className="verdict-title font-premium text-sm sm:text-xl font-semibold text-[#FFCC6A] uppercase tracking-wide">
-                THE LION&apos;S VERDICT
-              </span>
-            </div>
-            <div className="verdict-headline font-premium text-xl sm:text-2xl text-[#FFCC6A] italic text-center">
-              {result.statusCopy.headline}
-            </div>
-            <div className="verdict-basis text-center text-[#F6F5F1]">
-              Based on your withdrawal rate, expected returns, and capital runway.
-            </div>
-            <div className="verdict-metric text-center">
-              {inputs.mode === 'withdrawal'
-                ? `Capital Runway: ${result.depletionMonth != null ? formatRunwayYearsMonths(result.depletionMonth) : 'Forever'}`
-                : `Time Horizon: ${horizonYearsFormatted} years`}
-            </div>
-            <div className="verdict-explanation w-full max-w-[720px] mx-auto text-sm sm:text-base text-[#FFCC6A] text-center leading-[1.7]">
-              {(() => {
-                const tagline = 'Strength Behind Every Structure.';
-                const parts = lionVerdictText.split('\n\n');
-                const bodyParts = parts[parts.length - 1] === tagline ? parts.slice(0, -1) : parts;
-                const opening = bodyParts[0];
-                const rest = bodyParts.slice(1).join(' ');
-                return (
-                  <p className="m-0">
-                    {opening ? <em>{opening}</em> : null}
-                    {opening && rest ? ' ' : null}
-                    {rest}
-                  </p>
-                );
-              })()}
-            </div>
-            <p className="text-[10px] sm:text-xs text-white uppercase text-center mt-10 sm:mt-12 opacity-80">
-              Strength Behind Every Structure.
-            </p>
-          </div>
         </section>
+
+        {props.canSeeVerdict ? (
+          <section
+            id="lions-verdict"
+            className="mt-4 sm:mt-6"
+            aria-labelledby="lions-verdict-heading"
+          >
+            <div
+              className="lions-verdict-card rounded-[14px] border border-[#FFCC6A] relative overflow-visible p-3 sm:p-4 text-white"
+              style={{
+                background: 'linear-gradient(180deg, #0D3A1D 0%, #0a2d18 100%)',
+              }}
+            >
+              <div className="verdict-header flex items-center gap-2 sm:gap-3 text-left">
+                <img src="/lion.png" alt="" className="h-5 w-5 sm:h-7 sm:w-7 flex-shrink-0 mt-0.5" aria-hidden />
+                <span
+                  id="lions-verdict-heading"
+                  className="verdict-title font-premium text-sm sm:text-xl font-semibold text-[#FFCC6A] uppercase tracking-wide"
+                >
+                  THE LION&apos;S VERDICT
+                </span>
+              </div>
+              <div className="verdict-headline font-premium text-xl sm:text-2xl text-[#FFCC6A] italic text-center">
+                {result.statusCopy.headline}
+              </div>
+              <div className="verdict-basis text-center text-[#F6F5F1]">
+                Based on your withdrawal rate, expected returns, and capital runway.
+              </div>
+              <div className="verdict-metric text-center">
+                {inputs.mode === 'withdrawal'
+                  ? `Capital Runway: ${result.depletionMonth != null ? formatRunwayYearsMonths(result.depletionMonth) : 'Forever'}`
+                  : `Time Horizon: ${horizonYearsFormatted} years`}
+              </div>
+              <div className="verdict-explanation w-full max-w-[720px] mx-auto text-sm sm:text-base text-[#FFCC6A] text-center leading-[1.7]">
+                {(() => {
+                  const tagline = 'Strength Behind Every Structure.';
+                  const parts = lionVerdictText.split('\n\n');
+                  const bodyParts = parts[parts.length - 1] === tagline ? parts.slice(0, -1) : parts;
+                  const opening = bodyParts[0];
+                  const rest = bodyParts.slice(1).join(' ');
+                  return (
+                    <p className="m-0">
+                      {opening ? <em>{opening}</em> : null}
+                      {opening && rest ? ' ' : null}
+                      {rest}
+                    </p>
+                  );
+                })()}
+              </div>
+              <p className="text-[10px] sm:text-xs text-white uppercase text-center mt-10 sm:mt-12 opacity-80">
+                Strength Behind Every Structure.
+              </p>
+            </div>
+          </section>
+        ) : null}
 
         <footer className="py-8 border-t border-[#0D3A1D] text-center text-xs text-[#F6F5F1]/80">
           <p className="mb-2">

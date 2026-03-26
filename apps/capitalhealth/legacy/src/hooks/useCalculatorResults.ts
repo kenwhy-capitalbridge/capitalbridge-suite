@@ -401,7 +401,7 @@ export function useCalculatorResults(inputs: CalculatorInputs): CalculatorResult
       reduceIncome: { targetMonthly: sustainable, feasible: reduceIncomeFeasible },
       addCapital: cov ? { requiredStart: cov.byStartCapital.requiredStart, feasible: cov.byStartCapital.feasible } : { requiredStart: 0, feasible: false },
       increaseReturn: cov ? { requiredAnnualPct: cov.byExpectedReturn.requiredInvestedAnnualPct, feasible: cov.byExpectedReturn.feasible } : { requiredAnnualPct: 0, feasible: false },
-      balancedAdjustment: { incomeReductionPct, capitalIncreasePct, returnIncreasePct, feasible: balancedFeasible },
+      balancedAdjustment: { incomeReductionPct, capitalIncreasePct, returnIncreasePct, feasible: !!balancedFeasible },
     };
   }, [
     inputs.mode,

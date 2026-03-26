@@ -62,7 +62,12 @@ export function ReportPrint({
   const coveragePct =
     inputs.mode === 'withdrawal' ? result.coveragePct : result.compoundingProgressPct;
 
-  const structureKpis = useMemo(() => {
+  const structureKpis = useMemo((): {
+    label: string;
+    value: string;
+    sub: string;
+    tone?: 'positive' | 'negative';
+  }[] => {
     if (inputs.mode === 'withdrawal') {
       const target = inputs.targetMonthlyIncome;
       const projected = result.sustainableIncomeMonthly;
@@ -72,7 +77,7 @@ export function ReportPrint({
         { label: 'Expected return', value: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`, sub: 'Annual, nominal' },
         { label: 'Projected', value: formatCurrency(symbol, projected), sub: 'Sustainable monthly income (plan)' },
         { label: 'Surplus', value: formatCurrency(symbol, surplus), sub: 'Projected − target', tone: surplus >= 0 ? 'positive' : 'negative' },
-      ] as const;
+      ];
     }
 
     const target = inputs.targetFutureCapital;
@@ -83,7 +88,7 @@ export function ReportPrint({
       { label: 'Expected return', value: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`, sub: 'Annual, nominal' },
       { label: 'Projected', value: formatCurrency(symbol, projected), sub: `Capital at ${formatNum(inputs.timeHorizonYears, 1)} years` },
       { label: 'Surplus', value: formatCurrency(symbol, surplus), sub: 'Projected − target', tone: surplus >= 0 ? 'positive' : 'negative' },
-    ] as const;
+    ];
   }, [inputs, result, symbol]);
 
   const assumptions = useMemo(() => {

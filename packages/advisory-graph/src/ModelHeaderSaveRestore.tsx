@@ -186,7 +186,8 @@ export function ModelHeaderSaveRestore({
     [getHandlers]
   );
 
-  const saveBlocked = saveStatus === "saving";
+  const trialLocked = !canSave;
+  const saveBlocked = saveStatus === "saving" || trialLocked;
   const saveMutedStyle: CSSProperties = {
     background: "rgba(48, 56, 48, 0.98)",
     color: "rgba(170, 176, 170, 0.95)",
@@ -218,23 +219,6 @@ export function ModelHeaderSaveRestore({
     );
   }
 
-  if (!canSave) {
-    return (
-      <span
-        style={{
-          fontSize: "0.55rem",
-          color: "rgba(255,204,106,0.55)",
-          maxWidth: 100,
-          textAlign: "right",
-          lineHeight: 1.2,
-        }}
-        title="Paid membership required for server save."
-      >
-        Trial
-      </span>
-    );
-  }
-
   return (
     <div
       style={{
@@ -253,18 +237,24 @@ export function ModelHeaderSaveRestore({
         style={{
           ...headerActionButtonStyle,
           ...(saveBlocked ? saveMutedStyle : saveActiveStyle),
-          cursor: saveBlocked ? "wait" : "pointer",
+          cursor: saveBlocked ? (trialLocked ? "not-allowed" : "wait") : "pointer",
+          opacity: trialLocked ? 0.6 : 1,
         }}
-        title="Save a snapshot to your account (up to 20 kept; oldest removed when you add a new one). Empty inputs are allowed."
+        title={
+          trialLocked
+            ? "Trial plan: Save Report is available on paid plans."
+            : "Save a snapshot to your account (up to 20 kept; oldest removed when you add a new one). Empty inputs are allowed."
+        }
       >
-        {saveStatus === "saving" ? "…" : saveStatus === "ok" ? "Saved" : "Save"}
+        {trialLocked ? "Save" : saveStatus === "saving" ? "…" : saveStatus === "ok" ? "Saved" : "Save"}
       </button>
 
       <select
         aria-label="Load saved snapshot (up to 20 newest)"
         value={selectValue}
-        disabled={loadingList}
+        disabled={loadingList || trialLocked}
         onChange={async (e) => {
+          if (trialLocked) return;
           const id = e.target.value;
           setSelectValue(id);
           if (!id) return;
@@ -279,10 +269,11 @@ export function ModelHeaderSaveRestore({
           border: "1px solid rgba(255,204,106,0.35)",
           backgroundColor: "rgba(0,0,0,0.2)",
           color: "rgba(246,245,241,0.95)",
-          cursor: loadingList ? "wait" : "pointer",
+          cursor: loadingList ? "wait" : trialLocked ? "not-allowed" : "pointer",
           fontFamily: "inherit",
-          opacity: 1,
+          opacity: trialLocked ? 0.6 : 1,
         }}
+        title={trialLocked ? "Trial plan: loading server saves is disabled." : undefined}
       >
         <option value="">{loadingList ? "…" : items.length === 0 ? "No saves" : "Load…"}</option>
         {items.map((item) => (
@@ -295,6 +286,11 @@ export function ModelHeaderSaveRestore({
       {saveStatus === "error" && (
         <span style={{ fontSize: "0.5rem", color: "#ffb3b3" }} title="See console">
           !
+        </span>
+      )}
+      {trialLocked && (
+        <span style={{ fontSize: "0.5rem", color: "rgba(255,204,106,0.7)" }} title="Upgrade required">
+          Trial
         </span>
       )}
     </div>

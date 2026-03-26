@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react";
 import LegacyApp, { type CapitalStressAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
 
-export function CapitalStressDashboardClient() {
+type Props = {
+  canUseStressModel: boolean;
+  canSeeVerdict: boolean;
+};
+
+export function CapitalStressDashboardClient({ canUseStressModel, canSeeVerdict }: Props) {
   const appRef = useRef<CapitalStressAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
@@ -20,7 +25,7 @@ export function CapitalStressDashboardClient() {
 
   return (
     <main>
-      <LegacyApp ref={appRef} />
+      <LegacyApp ref={appRef} canUseStressModel={canUseStressModel} canSeeVerdict={canSeeVerdict} />
     </main>
   );
 }

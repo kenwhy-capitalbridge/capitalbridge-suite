@@ -47,7 +47,7 @@ function MechanismForm({
   currency: string;
   onParams: (params: Partial<AssetUnlock['params']>) => void;
 }) {
-  const params = asset.params as Record<string, number | string>;
+  const params = asset.params as unknown as Record<string, number | string>;
   const set = (key: string, value: number | string) => onParams({ [key]: value } as Partial<AssetUnlock['params']>);
 
   switch (asset.mechanism) {

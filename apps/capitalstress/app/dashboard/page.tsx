@@ -2,12 +2,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
 import { CapitalStressDashboardClient } from "./CapitalStressDashboardClient";
 
 export const dynamic = "force-dynamic";
 
-function dashboardRedirectTo(): string {
-  const h = headers();
+async function dashboardRedirectTo(): Promise<string> {
+  const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
   const proto = h.get("x-forwarded-proto") ?? "https";
   if (!host) return "/dashboard";
@@ -20,7 +21,7 @@ export default async function CapitalStressDashboard() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    const target = encodeURIComponent(dashboardRedirectTo());
+    const target = encodeURIComponent(await dashboardRedirectTo());
     redirect(`${LOGIN_APP_URL}/access?redirectTo=${target}`);
   }
 
@@ -28,7 +29,7 @@ export default async function CapitalStressDashboard() {
   const { data: membership } = await supabase
     .schema("public")
     .from("memberships")
-    .select("id")
+    .select("id, plan_id")
     .eq("user_id", user.id)
     .eq("status", "active")
     .or(`end_date.is.null,end_date.gte.${now}`)
@@ -37,5 +38,18 @@ export default async function CapitalStressDashboard() {
 
   if (!membership) redirect(`${LOGIN_APP_URL}/pricing?message=membership_required`);
 
-  return <CapitalStressDashboardClient />;
+  const { data: plan } = await supabase
+    .schema("public")
+    .from("plans")
+    .select("slug")
+    .eq("id", membership.plan_id)
+    .maybeSingle();
+  const ent = deriveEntitlementsFromRawPlan(plan?.slug ?? null);
+
+  return (
+    <CapitalStressDashboardClient
+      canUseStressModel={ent.canUseStressModel}
+      canSeeVerdict={ent.canSeeVerdict}
+    />
+  );
 }

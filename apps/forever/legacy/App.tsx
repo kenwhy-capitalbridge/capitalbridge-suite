@@ -38,7 +38,7 @@ export type ForeverAppHandle = {
 // Updated currencies as per the latest request
 const currencies = ["RM", "SGD", "USD", "THB", "AUD", "PHP", "RMB", "HKD"];
 
-const ForeverApp = forwardRef<ForeverAppHandle, Record<string, never>>(function ForeverApp(_props, ref) {
+const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, ref) {
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
 
   const isAllowed =
@@ -286,9 +286,9 @@ const ForeverApp = forwardRef<ForeverAppHandle, Record<string, never>>(function 
 
     try {
       const doc = new jsPDF("p", "mm", "a4");
-      const darkGreen = [13, 58, 29] as [number, number, number];
-      const lightGreen = [134, 239, 172] as [number, number, number]; // section accents
-      const bodyGray = [60, 60, 60];
+      const darkGreen = [13, 58, 29] as const;
+      const lightGreen = [134, 239, 172] as const; // section accents
+      const bodyGray = [60, 60, 60] as const;
 
       // Load logo: try SVG first (if renderer supports it), fall back to transparent PNG
       let logoBase64: string | null = null;

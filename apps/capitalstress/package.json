@@ -14,7 +14,7 @@
     "@cb/db-types": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
-    "next": "^14.2.35",
+    "next": "^15.5.14",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
