@@ -35,6 +35,24 @@ async function serverCanSaveFromMembership(
   return deriveEntitlementsFromRawPlan(plan?.slug ?? null).canSaveToServer;
 }
 
+/** Server-side session row so the header has a session id even if /api/advisory-session fails in the browser. */
+async function createAdvisorySessionOnServer(
+  supabase: Awaited<ReturnType<typeof createAppServerClient>>,
+  userId: string
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .schema("advisory_v2")
+    .from("advisory_sessions")
+    .insert({ user_id: userId })
+    .select("id")
+    .single();
+  if (error) {
+    console.error("[forever layout] advisory_sessions:", error.message);
+    return null;
+  }
+  return data?.id ? String(data.id) : null;
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createAppServerClient();
   const {
@@ -42,6 +60,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   } = await supabase.auth.getUser();
 
   const canSave = user ? await serverCanSaveFromMembership(supabase, user.id) : false;
+  const initialSessionId =
+    user && canSave ? await createAdvisorySessionOnServer(supabase, user.id) : null;
 
   return (
     <html lang="en">
@@ -52,7 +72,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             titleMobile="FOREVER INCOME"
             actions={
               user ? (
-                <ForeverHeaderSaveRestore userId={user.id} serverCanSave={canSave} />
+                <ForeverHeaderSaveRestore
+                  userId={user.id}
+                  serverCanSave={canSave}
+                  initialSessionId={initialSessionId}
+                />
               ) : null
             }
           />
