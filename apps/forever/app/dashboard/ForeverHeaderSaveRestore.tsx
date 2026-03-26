@@ -128,12 +128,28 @@ export function ForeverHeaderSaveRestore({
     loadList();
   }, [loadList, refreshToken]);
 
+  const resolveSessionId = useCallback(async (): Promise<string | null> => {
+    if (sessionId) return sessionId;
+    const res = await fetch("/api/advisory-session", { method: "POST", credentials: "include" });
+    if (!res.ok) return null;
+    const j = (await res.json()) as { id?: string };
+    const id = j?.id ?? null;
+    if (id) setSessionId(id);
+    return id;
+  }, [sessionId]);
+
   const handleSave = useCallback(async () => {
-    if (!useV2 || !sessionId || !userId || !canSave) return;
-    const h = getHandlers();
+    if (!useV2 || !userId || !canSave) return;
     setSaveStatus("saving");
+    const sid = await resolveSessionId();
+    if (!sid) {
+      console.warn("[forever] save: no advisory session");
+      setSaveStatus("error");
+      return;
+    }
+    const h = getHandlers();
     const out = await saveReport(supabase, {
-      sessionId,
+      sessionId: sid,
       userId,
       modelType: MODEL_TYPE,
       inputs: h?.getInputs?.() ?? {},
@@ -147,7 +163,7 @@ export function ForeverHeaderSaveRestore({
     setSaveStatus("ok");
     setRefreshToken((n) => n + 1);
     setTimeout(() => setSaveStatus("idle"), 2000);
-  }, [supabase, sessionId, userId, canSave, getHandlers]);
+  }, [supabase, userId, canSave, getHandlers, resolveSessionId]);
 
   const handleLoad = useCallback(
     async (id: string) => {
@@ -159,7 +175,8 @@ export function ForeverHeaderSaveRestore({
     [getHandlers, supabase]
   );
 
-  const saveBlocked = saveStatus === "saving" || !sessionId;
+  /** Paid users: only block double-submit while saving (no input/session gating). */
+  const saveBlocked = saveStatus === "saving";
   const saveMutedStyle: CSSProperties = {
     background: "rgba(48, 56, 48, 0.98)",
     color: "rgba(170, 176, 170, 0.95)",
@@ -226,21 +243,17 @@ export function ForeverHeaderSaveRestore({
         style={{
           ...headerActionButtonStyle,
           ...(saveBlocked ? saveMutedStyle : saveActiveStyle),
-          cursor: saveBlocked ? "not-allowed" : "pointer",
+          cursor: saveBlocked ? "wait" : "pointer",
         }}
-        title={
-          !sessionId
-            ? "Could not start a save session. Refresh the page or try again in a moment."
-            : "Save current inputs to your account"
-        }
+        title="Save a snapshot to your account (up to 20 kept; oldest removed when you add a new one). Empty inputs are allowed."
       >
         {saveStatus === "saving" ? "…" : saveStatus === "ok" ? "Saved" : "Save"}
       </button>
 
       <select
-        aria-label="Load saved snapshot"
+        aria-label="Load saved snapshot (up to 20 newest)"
         value={selectValue}
-        disabled={loadingList || !sessionId}
+        disabled={loadingList}
         onChange={async (e) => {
           const id = e.target.value;
           setSelectValue(id);
@@ -253,12 +266,10 @@ export function ForeverHeaderSaveRestore({
           padding: "clamp(0.26rem, 0.55vw, 0.32rem) clamp(0.35rem, 0.9vw, 0.5rem)",
           fontSize: "clamp(0.54rem, 2.1vw, 0.65rem)",
           borderRadius: 4,
-          border: !sessionId
-            ? "1px solid rgba(255, 255, 255, 0.14)"
-            : "1px solid rgba(255,204,106,0.35)",
-          backgroundColor: !sessionId ? "rgba(48, 56, 48, 0.85)" : "rgba(0,0,0,0.2)",
-          color: !sessionId ? "rgba(170, 176, 170, 0.95)" : "rgba(246,245,241,0.95)",
-          cursor: loadingList || !sessionId ? "not-allowed" : "pointer",
+          border: "1px solid rgba(255,204,106,0.35)",
+          backgroundColor: "rgba(0,0,0,0.2)",
+          color: "rgba(246,245,241,0.95)",
+          cursor: loadingList ? "wait" : "pointer",
           fontFamily: "inherit",
           opacity: 1,
         }}

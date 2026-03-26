@@ -191,7 +191,10 @@ export async function startSession(
   }
 }
 
-/** After each save, keep at most `max` newest rows per user + model (deletes older). */
+/**
+ * After each save, keep the `max` newest reports per user + model (by created_at desc).
+ * Deletes older rows so a new save effectively pushes out the oldest when over the limit.
+ */
 export async function trimReportsToLimit(
   supabase: SupabaseClient,
   userId: string,
