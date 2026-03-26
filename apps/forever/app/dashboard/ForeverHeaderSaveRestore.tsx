@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
   deriveEntitlements,
-  startSession,
   saveReport,
   listReports,
   getReport,
@@ -16,6 +15,19 @@ import { useForeverCalculatorContext } from "../ForeverCalculatorProvider";
 const MODEL_TYPE: ModelType = "forever-income";
 const LIMIT = 20;
 const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
+
+/** Match packages/ui ModelAppHeader `.back` (font size + letter-spacing). */
+const headerActionButtonStyle: CSSProperties = {
+  padding: "clamp(0.28rem, 0.6vw, 0.35rem) clamp(0.52rem, 1.2vw, 0.75rem)",
+  fontSize: "clamp(0.54rem, 2.1vw, 0.65rem)",
+  fontWeight: 700,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  fontFamily: "inherit",
+  lineHeight: 1.2,
+  borderRadius: 4,
+  whiteSpace: "nowrap",
+};
 
 function formatTimestamp(iso: string): string {
   try {
@@ -75,10 +87,21 @@ export function ForeverHeaderSaveRestore({ userId, serverCanSave = false }: Prop
 
   useEffect(() => {
     if (!userId || !useV2) return;
-    startSession(supabase, userId).then((out) => {
-      if ("id" in out) setSessionId(out.id);
-    });
-  }, [supabase, userId]);
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/advisory-session", { method: "POST", credentials: "include" });
+      if (cancelled) return;
+      if (!res.ok) {
+        console.warn("[forever] advisory-session HTTP", res.status);
+        return;
+      }
+      const j = (await res.json()) as { id?: string };
+      if (j?.id) setSessionId(j.id);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const loadList = useCallback(async () => {
     if (!userId || !useV2) return;
@@ -176,22 +199,20 @@ export function ForeverHeaderSaveRestore({ userId, serverCanSave = false }: Prop
         onClick={handleSave}
         disabled={saveStatus === "saving" || !sessionId || !registered}
         style={{
-          padding: "0.28rem 0.5rem",
-          fontSize: "0.54rem",
-          fontWeight: 700,
-          letterSpacing: "0.07em",
-          textTransform: "uppercase",
-          cursor: saveStatus === "saving" ? "not-allowed" : "pointer",
+          ...headerActionButtonStyle,
+          cursor:
+            saveStatus === "saving" || !sessionId || !registered ? "not-allowed" : "pointer",
+          opacity: !sessionId || !registered ? 0.72 : 1,
           background: "rgba(255,204,106,0.92)",
           border: "1px solid rgba(255,204,106,0.55)",
-          borderRadius: 4,
           color: "rgba(13, 58, 29, 0.95)",
-          whiteSpace: "nowrap",
         }}
         title={
-          !registered
-            ? "Open the calculator on this page first"
-            : "Save current inputs to your account"
+          !sessionId
+            ? "Preparing save session…"
+            : !registered
+              ? "Calculator is still loading"
+              : "Save current inputs to your account"
         }
       >
         {saveStatus === "saving" ? "…" : saveStatus === "ok" ? "Saved" : "Save"}
@@ -200,7 +221,7 @@ export function ForeverHeaderSaveRestore({ userId, serverCanSave = false }: Prop
       <select
         aria-label="Load saved snapshot"
         value={selectValue}
-        disabled={loadingList || items.length === 0}
+        disabled={loadingList}
         onChange={async (e) => {
           const id = e.target.value;
           setSelectValue(id);
@@ -210,13 +231,14 @@ export function ForeverHeaderSaveRestore({ userId, serverCanSave = false }: Prop
         style={{
           minWidth: 0,
           maxWidth: "min(42vw, 200px)",
-          padding: "0.26rem 0.35rem",
-          fontSize: "0.52rem",
+          padding: "clamp(0.26rem, 0.55vw, 0.32rem) clamp(0.35rem, 0.9vw, 0.5rem)",
+          fontSize: "clamp(0.54rem, 2.1vw, 0.65rem)",
           borderRadius: 4,
           border: "1px solid rgba(255,204,106,0.35)",
           backgroundColor: "rgba(0,0,0,0.2)",
           color: "rgba(246,245,241,0.95)",
-          cursor: items.length === 0 ? "not-allowed" : "pointer",
+          cursor: loadingList ? "wait" : "pointer",
+          fontFamily: "inherit",
         }}
       >
         <option value="">{loadingList ? "…" : items.length === 0 ? "No saves" : "Load…"}</option>

@@ -45,7 +45,7 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 50,
+          zIndex: 200,
           width: "100%",
         }}
       >
