@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import "./index.css";
 import { MonteCarloResult, StressSeverity, StressScenarioResult } from './types';
 import { runMonteCarlo, getSimulationCount, runStressScenarios, getDepletionBarOutput } from './services/mathUtils';
@@ -96,7 +96,13 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
-const App: React.FC = () => {
+export type CapitalStressAppHandle = {
+  getInputs: () => Record<string, unknown>;
+  getResults: () => Record<string, unknown>;
+  applyInputs: (inputs: Record<string, unknown>) => void;
+};
+
+const App = forwardRef<CapitalStressAppHandle, object>(function App(_props, ref) {
   const [investment, setInvestment] = useState<number>(1000000);
   const [withdrawal, setWithdrawal] = useState<number>(0);
   const [lowerPct, setLowerPct] = useState<number>(-2.0);
@@ -321,6 +327,68 @@ const App: React.FC = () => {
   const handlePrint = () => {
     window.print();
   };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getInputs: () =>
+        ({
+          investment,
+          withdrawal,
+          lowerPct,
+          upperPct,
+          years,
+          confidence,
+          currencyIndex,
+          inflationAdjustmentOn,
+          inflationPct,
+          stressSeverity,
+          pathView,
+        }) as Record<string, unknown>,
+      getResults: () => {
+        try {
+          return JSON.parse(
+            JSON.stringify({ mcResult, stressScenarioResults, adjustmentResults })
+          ) as Record<string, unknown>;
+        } catch {
+          return {};
+        }
+      },
+      applyInputs: (raw) => {
+        const p = raw as Record<string, unknown>;
+        if (typeof p.investment === "number") setInvestment(p.investment);
+        if (typeof p.withdrawal === "number") setWithdrawal(p.withdrawal);
+        if (typeof p.lowerPct === "number") setLowerPct(p.lowerPct);
+        if (typeof p.upperPct === "number") setUpperPct(p.upperPct);
+        if (typeof p.years === "number") setYears(p.years);
+        if (typeof p.confidence === "number") setConfidence(p.confidence);
+        if (typeof p.currencyIndex === "number") setCurrencyIndex(p.currencyIndex);
+        if (typeof p.inflationAdjustmentOn === "boolean") setInflationAdjustmentOn(p.inflationAdjustmentOn);
+        if (typeof p.inflationPct === "number") setInflationPct(p.inflationPct);
+        if (typeof p.stressSeverity === "string") setStressSeverity(p.stressSeverity as StressSeverity);
+        if (p.pathView === "worst" || p.pathView === "median" || p.pathView === "best")
+          setPathView(p.pathView);
+        setTimeout(() => runCalculation(), 0);
+      },
+    }),
+    [
+      investment,
+      withdrawal,
+      lowerPct,
+      upperPct,
+      years,
+      confidence,
+      currencyIndex,
+      inflationAdjustmentOn,
+      inflationPct,
+      stressSeverity,
+      pathView,
+      mcResult,
+      stressScenarioResults,
+      adjustmentResults,
+      runCalculation,
+    ]
+  );
 
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
   const isAllowed =
@@ -1706,6 +1774,6 @@ const App: React.FC = () => {
       </DepletionBarProvider>
     </>
   );
-};
+});
 
 export default App;

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import './index.css';
-import { useCalculatorStore } from './store/useCalculatorStore';
-import { CalculatorStoreProvider } from './store/useCalculatorStore';
+import { CalculatorStoreProvider, useCalculatorStoreInternals } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
 import { PersistentSummaryHeader } from './components/PersistentSummaryHeader';
 import { CurrencySelectorEmbedded } from './components/CurrencySelector';
@@ -19,12 +18,15 @@ import { Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-const AppInner: React.FC = () => {
-  const currency = useCalculatorStore((s) => s.currency);
-  const monthlyExpenses = useCalculatorStore((s) => s.monthlyExpenses);
-  const incomeRows = useCalculatorStore((s) => s.incomeRows);
-  const assetUnlocks = useCalculatorStore((s) => s.assetUnlocks);
-  const investmentBuckets = useCalculatorStore((s) => s.investmentBuckets);
+export type IncomeEngineeringAppHandle = {
+  getInputs: () => Record<string, unknown>;
+  getResults: () => Record<string, unknown>;
+  applyInputs: (inputs: Record<string, unknown>) => void;
+};
+
+const AppInner = forwardRef<IncomeEngineeringAppHandle, object>(function AppInner(_props, ref) {
+  const { state, dispatch } = useCalculatorStoreInternals();
+  const { currency, monthlyExpenses, incomeRows, assetUnlocks, investmentBuckets } = state;
 
   const loansFromAssets = useMemo(() => assetUnlocksToLoans(assetUnlocks), [assetUnlocks]);
 
@@ -39,6 +41,21 @@ const AppInner: React.FC = () => {
         assetUnlocks,
       }),
     [currency, monthlyExpenses, incomeRows, loansFromAssets, investmentBuckets, assetUnlocks]
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getInputs: () => JSON.parse(JSON.stringify(state)) as Record<string, unknown>,
+      getResults: () =>
+        ({
+          summary: result.summary,
+          medianCoverage: result.medianCoverage,
+          worstMonthCoverage: result.worstMonthCoverage,
+        }) as Record<string, unknown>,
+      applyInputs: (raw) => dispatch({ type: 'HYDRATE', payload: raw }),
+    }),
+    [state, result, dispatch]
   );
 
   const totalCapital =
@@ -179,12 +196,14 @@ const AppInner: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
-const App: React.FC = () => (
-  <CalculatorStoreProvider>
-    <AppInner />
-  </CalculatorStoreProvider>
-);
+const App = forwardRef<IncomeEngineeringAppHandle, object>(function App(_props, ref) {
+  return (
+    <CalculatorStoreProvider>
+      <AppInner ref={ref} />
+    </CalculatorStoreProvider>
+  );
+});
 
 export default App;

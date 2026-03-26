@@ -64,7 +64,22 @@ type Action =
   | { type: 'SET_AUTO_REINVEST'; v: boolean }
   | { type: 'SET_FLAT_TAX'; v: boolean }
   | { type: 'SET_FLAT_TAX_RATE'; v: number }
-  | { type: 'SET_LIQUIDATE'; v: boolean };
+  | { type: 'SET_LIQUIDATE'; v: boolean }
+  /** Replace calculator state from a saved snapshot (server restore). */
+  | { type: 'HYDRATE'; payload: unknown };
+
+function mergeHydratedState(base: CalculatorState, raw: unknown): CalculatorState {
+  if (!raw || typeof raw !== 'object') return base;
+  const p = raw as Partial<CalculatorState>;
+  return {
+    ...base,
+    ...p,
+    incomeRows: Array.isArray(p.incomeRows) ? p.incomeRows : base.incomeRows,
+    assetUnlocks: Array.isArray(p.assetUnlocks) ? p.assetUnlocks : base.assetUnlocks,
+    loans: Array.isArray(p.loans) ? p.loans : base.loans,
+    investmentBuckets: Array.isArray(p.investmentBuckets) ? p.investmentBuckets : base.investmentBuckets,
+  };
+}
 
 const initialState: CalculatorState = {
   currency: DEFAULT_CURRENCY,
@@ -176,6 +191,8 @@ function reducer(state: CalculatorState, action: Action): CalculatorState {
       return { ...state, flatTaxRate: action.v };
     case 'SET_LIQUIDATE':
       return { ...state, liquidateToCoverShortfall: action.v };
+    case 'HYDRATE':
+      return mergeHydratedState(initialState, action.payload);
     default:
       return state;
   }
@@ -220,6 +237,11 @@ function useStoreContext() {
   const ctx = useContext(StoreContext);
   if (!ctx) throw new Error('useCalculatorStore must be used within CalculatorStoreProvider');
   return ctx;
+}
+
+/** Imperative access for save/restore (header); use only inside `CalculatorStoreProvider`. */
+export function useCalculatorStoreInternals() {
+  return useStoreContext();
 }
 
 export function useCalculatorStore<T>(selector: (store: CalculatorStore) => T): T {

@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
-import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
-import { fetchPersona, deriveEntitlements } from "@cb/advisory-graph";
-import { useForeverCalculatorContext } from "../ForeverCalculatorProvider";
+import { createSupabaseBrowserClient } from "./supabaseClient";
+import { fetchPersona, deriveEntitlements } from "./platformAccess";
+import { useModelSaveHandlers } from "./ModelSaveHandlersContext";
 
 const LIMIT = 20;
 const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
 
-/** Match packages/ui ModelAppHeader `.back` (font size + letter-spacing). */
 const headerActionButtonStyle: CSSProperties = {
   padding: "clamp(0.28rem, 0.6vw, 0.35rem) clamp(0.52rem, 1.2vw, 0.75rem)",
   fontSize: "clamp(0.54rem, 2.1vw, 0.65rem)",
@@ -49,23 +48,24 @@ function relativeTime(iso: string): string {
   }
 }
 
-type Props = {
+export type ModelHeaderSaveRestoreProps = {
   userId: string;
-  /** From server: active membership + plans.slug (avoids trial when persona RPC/client session is wrong). */
   serverCanSave?: boolean;
-  /** Created in root layout so Save works without relying on client-only session creation. */
   initialSessionId?: string | null;
+  /** Console / ops prefix, e.g. `[forever]` */
+  logTag: string;
 };
 
 /**
- * Compact Save + load snapshot dropdown for the fixed model header (next to Back).
+ * Save + load snapshot controls for `ModelAppHeader` `actions` slot (same-origin `/api/advisory-*`).
  */
-export function ForeverHeaderSaveRestore({
+export function ModelHeaderSaveRestore({
   userId,
   serverCanSave = false,
   initialSessionId = null,
-}: Props) {
-  const { getHandlers } = useForeverCalculatorContext();
+  logTag,
+}: ModelHeaderSaveRestoreProps) {
+  const { getHandlers } = useModelSaveHandlers();
   const [supabase] = useState(() => createSupabaseBrowserClient());
   const [sessionId, setSessionId] = useState<string | null>(() => initialSessionId ?? null);
   const [canSave, setCanSave] = useState(serverCanSave);
@@ -96,7 +96,7 @@ export function ForeverHeaderSaveRestore({
       const res = await fetch("/api/advisory-session", { method: "POST", credentials: "include" });
       if (cancelled) return;
       if (!res.ok) {
-        console.warn("[forever] advisory-session HTTP", res.status);
+        console.warn(`${logTag} advisory-session HTTP`, res.status);
         return;
       }
       const j = (await res.json()) as { id?: string };
@@ -105,7 +105,7 @@ export function ForeverHeaderSaveRestore({
     return () => {
       cancelled = true;
     };
-  }, [userId, sessionId]);
+  }, [userId, sessionId, logTag]);
 
   const loadList = useCallback(async () => {
     if (!userId || !useV2) return;
@@ -145,7 +145,7 @@ export function ForeverHeaderSaveRestore({
     setSaveStatus("saving");
     const sid = await resolveSessionId();
     if (!sid) {
-      console.warn("[forever] save: no advisory session");
+      console.warn(`${logTag} save: no advisory session`);
       setSaveStatus("error");
       window.setTimeout(() => setSaveStatus("idle"), 5000);
       return;
@@ -163,7 +163,7 @@ export function ForeverHeaderSaveRestore({
     });
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      console.warn("[forever] advisory-report POST", res.status, errBody);
+      console.warn(`${logTag} advisory-report POST`, res.status, errBody);
       setSaveStatus("error");
       window.setTimeout(() => setSaveStatus("idle"), 5000);
       return;
@@ -171,7 +171,7 @@ export function ForeverHeaderSaveRestore({
     setSaveStatus("ok");
     setRefreshToken((n) => n + 1);
     setTimeout(() => setSaveStatus("idle"), 2000);
-  }, [userId, canSave, getHandlers, resolveSessionId]);
+  }, [userId, canSave, getHandlers, resolveSessionId, logTag]);
 
   const handleLoad = useCallback(
     async (id: string) => {
@@ -186,7 +186,6 @@ export function ForeverHeaderSaveRestore({
     [getHandlers]
   );
 
-  /** Paid users: only block double-submit while saving (no input/session gating). */
   const saveBlocked = saveStatus === "saving";
   const saveMutedStyle: CSSProperties = {
     background: "rgba(48, 56, 48, 0.98)",

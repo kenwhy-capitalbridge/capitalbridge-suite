@@ -6,6 +6,11 @@
   "exports": {
     ".": "./src/platformAccess.ts",
     "./SavedReportsPanel": "./src/SavedReportsPanel.tsx",
+    "./ModelSaveHandlersContext": "./src/ModelSaveHandlersContext.tsx",
+    "./ModelHeaderSaveRestore": "./src/ModelHeaderSaveRestore.tsx",
+    "./server/requestContext": "./src/server/requestContext.ts",
+    "./server/membershipLayout": "./src/server/membershipLayout.ts",
+    "./server/advisoryRoutes": "./src/server/advisoryRoutes.ts",
     "./supabaseClient": "./src/supabaseClient.ts",
     "./auth/emailCheck": "./src/auth/emailCheck.ts",
     "./plans/planMap": "./src/plans/planMap.ts",

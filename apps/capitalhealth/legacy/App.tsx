@@ -1,6 +1,6 @@
 //Capital Health Model
 "use client";
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import './index.css';
 import { 
   AreaChart,
@@ -207,11 +207,20 @@ const EXPECTED_RETURN_MAX = 40;
 
 const HISTORY_SIZE = 10;
 
-export default function App() {
-  return <CalculatorScreen />;
-}
+export type CapitalHealthAppHandle = {
+  getInputs: () => Record<string, unknown>;
+  getResults: () => Record<string, unknown>;
+  applyInputs: (inputs: Record<string, unknown>) => void;
+};
 
-function CalculatorScreen() {
+export default forwardRef<CapitalHealthAppHandle, object>(function App(_props, ref) {
+  return <CalculatorScreen ref={ref} />;
+});
+
+const CalculatorScreen = forwardRef<CapitalHealthAppHandle, object>(function CalculatorScreen(
+  _props,
+  ref
+) {
   const [inputs, setInputsRaw] = useState<CalculatorInputs>(defaultInputs);
   const [history, setHistory] = useState<CalculatorInputs[]>([]);
   const [toast, setToast] = useState<string | null>(null);
@@ -253,6 +262,37 @@ function CalculatorScreen() {
   }, []);
 
   const result = useCalculatorResults(inputs);
+
+  const applySavedInputs = useCallback((raw: Record<string, unknown>) => {
+    if (!raw || typeof raw !== "object") return;
+    const p = raw as Partial<CalculatorInputs>;
+    setInputsRaw((prev) => {
+      const next = { ...prev, ...p } as CalculatorInputs;
+      const cur = p.currency;
+      if (cur && typeof cur === "object" && cur !== null && "code" in cur) {
+        const code = String((cur as { code: string }).code);
+        const match = CURRENCIES.find((c) => c.code === code);
+        if (match) next.currency = match;
+      }
+      return next;
+    });
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getInputs: () => JSON.parse(JSON.stringify(inputs)) as Record<string, unknown>,
+      getResults: () => {
+        try {
+          return JSON.parse(JSON.stringify(result)) as Record<string, unknown>;
+        } catch {
+          return {};
+        }
+      },
+      applyInputs: (raw) => applySavedInputs(raw),
+    }),
+    [inputs, result, applySavedInputs]
+  );
 
   const formatCurrency = useCallback(
     (val: number) => `${inputs.currency.symbol} ${formatNum(val)}`,
@@ -1594,4 +1634,4 @@ function CalculatorScreen() {
          </div>
     </TapToRevealProvider>
   );
-}
+});

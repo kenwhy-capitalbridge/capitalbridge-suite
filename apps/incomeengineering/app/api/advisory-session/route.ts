@@ -4,6 +4,6 @@ import { handleAdvisorySessionPOST } from "@cb/advisory-graph/server/advisoryRou
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  const out = await handleAdvisorySessionPOST("[forever/api/advisory-session]");
+  const out = await handleAdvisorySessionPOST("[income-engineering/api/advisory-session]");
   return NextResponse.json(out.body, { status: out.status });
 }

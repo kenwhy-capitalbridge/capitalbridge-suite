@@ -162,8 +162,10 @@ export interface CalculatorState {
   assetUnlocks: AssetUnlock[];
   loans: LoanRow[];
   investmentBuckets: InvestmentBucket[];
+  autoReinvestSurplus: boolean;
   flatTaxOnReturns: boolean;
   flatTaxRate: number;
+  liquidateToCoverShortfall: boolean;
 }
 
 /** KPI summary */
