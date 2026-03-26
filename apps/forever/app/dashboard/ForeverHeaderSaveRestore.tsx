@@ -47,16 +47,18 @@ function relativeTime(iso: string): string {
 
 type Props = {
   userId: string;
+  /** From server: active membership + plans.slug (avoids trial when persona RPC/client session is wrong). */
+  serverCanSave?: boolean;
 };
 
 /**
  * Compact Save + load snapshot dropdown for the fixed model header (next to Back).
  */
-export function ForeverHeaderSaveRestore({ userId }: Props) {
+export function ForeverHeaderSaveRestore({ userId, serverCanSave = false }: Props) {
   const { getHandlers, registered } = useForeverCalculatorContext();
   const [supabase] = useState(() => createSupabaseBrowserClient());
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [canSave, setCanSave] = useState(false);
+  const [canSave, setCanSave] = useState(serverCanSave);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "ok" | "error">("idle");
   const [items, setItems] = useState<{ id: string; created_at: string }[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -66,9 +68,10 @@ export function ForeverHeaderSaveRestore({ userId }: Props) {
   useEffect(() => {
     if (!userId || !useV2) return;
     fetchPersona(supabase).then((p) => {
-      setCanSave(deriveEntitlements(p?.active_plan ?? null).canSaveToServer);
+      const fromClient = deriveEntitlements(p?.active_plan ?? null).canSaveToServer;
+      setCanSave(serverCanSave || fromClient);
     });
-  }, [supabase, userId]);
+  }, [supabase, userId, serverCanSave]);
 
   useEffect(() => {
     if (!userId || !useV2) return;

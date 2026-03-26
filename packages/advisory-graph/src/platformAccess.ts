@@ -142,6 +142,14 @@ function normalizePlan(v: unknown): Plan | null {
 }
 
 /**
+ * Map a raw plan field from DB/RPC (slug, label, etc.) to entitlements.
+ * Use from server layouts when you have `public.plans.slug` but not persona RPC.
+ */
+export function deriveEntitlementsFromRawPlan(v: unknown): Entitlements {
+  return deriveEntitlements(normalizePlan(v));
+}
+
+/**
  * Derives entitlements from plan.
  * Default plan is 'trial' when null/unknown.
  */
