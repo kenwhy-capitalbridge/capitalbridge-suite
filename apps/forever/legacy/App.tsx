@@ -26,7 +26,7 @@ import SliderInput from "./components/SliderInput";
 import { ExpenseType, CalculationResult } from "./types";
 import { formatCurrency, formatPercent } from "./utils/formatters";
 import { jsPDF } from "jspdf";
-import type { ForeverLionInputs, LionVerdictClientReport } from "@cb/advisory-graph/lionsVerdict";
+import type { LionVerdictClientReport } from "@cb/advisory-graph/lionsVerdict";
 import {
   buildLionVerdictClientReportFromForever,
   formatLionPublicStatusLabel,
@@ -279,6 +279,32 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
       runway
     };
   }, [expense, expenseType, familyContribution, expectedReturn, inflationRate, cash, investments, realEstate, propertyLoanCost, propertyTimeHorizon]);
+
+  const foreverLionInput = useMemo(() => {
+    const runwayInfo = parseForeverRunway(results.runway);
+    return {
+      isSustainable: results.isSustainable,
+      progressPercent: results.progressPercent,
+      gap: results.gap,
+      currentAssets: results.currentAssets,
+      capitalNeeded: Number.isFinite(results.capitalNeeded) ? results.capitalNeeded : 0,
+      annualExpense: results.annualExpense,
+      runwayLabel: results.runway,
+      realReturnRate: results.realReturnRate,
+      runwayYears: runwayInfo.perpetual ? null : runwayInfo.years,
+      perpetualRunway: runwayInfo.perpetual,
+      nominalExpectedReturnPct: expectedReturn,
+    };
+  }, [results, expectedReturn]);
+
+  const foreverLionReport = useMemo(
+    () =>
+      buildLionVerdictClientReportFromForever(foreverLionInput, {
+        formatCurrency: (n) => formatCurrency(n, currency),
+      }),
+    [foreverLionInput, currency],
+  );
+  const foreverLionStatusLabel = formatLionPublicStatusLabel(foreverLionReport.verdict.status);
 
   useImperativeHandle(ref, () => ({
     getInputs: () => ({
@@ -719,24 +745,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
 
       addReportFooter(doc);
 
-      const rr = parseForeverRunway(results.runway);
-      const foreverLionInput: ForeverLionInputs = {
-        isSustainable: results.isSustainable,
-        progressPercent: results.progressPercent,
-        gap: results.gap,
-        currentAssets: results.currentAssets,
-        capitalNeeded: Number.isFinite(results.capitalNeeded) ? results.capitalNeeded : 0,
-        annualExpense: results.annualExpense,
-        runwayLabel: results.runway,
-        realReturnRate: results.realReturnRate,
-        runwayYears: rr.perpetual ? null : rr.years,
-        perpetualRunway: rr.perpetual,
-        nominalExpectedReturnPct: expectedReturn,
-      };
-      const lionClient = buildLionVerdictClientReportFromForever(foreverLionInput, {
-        formatCurrency: (n) => formatCurrency(n, currency),
-      });
-      appendLionsVerdictPageToForeverPdf(doc, lionClient, {
+      appendLionsVerdictPageToForeverPdf(doc, foreverLionReport, {
         pageWidth,
         margin,
         darkGreen,
@@ -918,6 +927,70 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
                     <span className="text-gray-400 leading-tight break-words">{d.name}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="mt-10">
+              <div className="bg-[#00160f] border border-[#FFCC6A]/20 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 text-sm text-gray-200">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A]">The Lion's Verdict</p>
+                    <p className="mt-1 text-[11px] text-gray-400 max-w-2xl leading-relaxed">{foreverLionReport.closing_line}</p>
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-5xl font-black text-[#FFCC6A] leading-none">{foreverLionReport.verdict.score}</span>
+                    <div className="space-y-1 text-right">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400">status</p>
+                      <p className="text-xl font-semibold text-white">{foreverLionStatusLabel}</p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-[12px] text-gray-300 leading-relaxed">{foreverLionReport.verdict.summary}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[12px] text-gray-300">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">Goal gap</p>
+                    <p className="leading-snug">{foreverLionReport.goal_gap.summary}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">Progress</p>
+                    <p className="leading-snug">{foreverLionReport.progress.summary}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-2">Structural narrative</p>
+                    <div className="grid grid-cols-2 gap-4 text-[11px] text-gray-200">
+                      <div>
+                        <p className="text-[10px] font-semibold text-emerald-300 uppercase tracking-[0.3em] mb-1">Strengths</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {foreverLionReport.strengths.slice(0, 2).map((line, idx) => (
+                            <li key={`${line}-${idx}`}>{line}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-amber-300 uppercase tracking-[0.3em] mb-1">Risks</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {foreverLionReport.risks.slice(0, 2).map((line, idx) => (
+                            <li key={`${line}-${idx}`}>{line}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3 text-[11px] text-gray-200">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A]">Strategic options</p>
+                    <ul className="space-y-1">
+                      {foreverLionReport.strategic_options.slice(0, 2).map((option, idx) => (
+                        <li key={`${option.type}-${idx}`}>
+                          <span className="font-semibold text-white">{option.type}</span>: {option.action}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-[11px] text-gray-400 italic">Capital unlock: {foreverLionReport.capital_unlock.summary}</p>
+                    <p className="text-[11px] text-gray-400 italic">If you do nothing: {foreverLionReport.do_nothing_outcome}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
