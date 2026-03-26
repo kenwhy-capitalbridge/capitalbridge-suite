@@ -2,17 +2,9 @@
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
-import {
-  fetchPersona,
-  deriveEntitlements,
-  saveReport,
-  listReports,
-  getReport,
-  type ModelType,
-} from "@cb/advisory-graph";
+import { fetchPersona, deriveEntitlements } from "@cb/advisory-graph";
 import { useForeverCalculatorContext } from "../ForeverCalculatorProvider";
 
-const MODEL_TYPE: ModelType = "forever-income";
 const LIMIT = 20;
 const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
 
@@ -118,11 +110,21 @@ export function ForeverHeaderSaveRestore({
   const loadList = useCallback(async () => {
     if (!userId || !useV2) return;
     setLoadingList(true);
-    const list = await listReports(supabase, userId, MODEL_TYPE, LIMIT);
-    setItems(list);
-    setSelectValue("");
-    setLoadingList(false);
-  }, [supabase, userId]);
+    try {
+      const res = await fetch(`/api/advisory-report?list=1&limit=${LIMIT}`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setItems([]);
+        return;
+      }
+      const j = (await res.json()) as { items?: { id: string; created_at: string }[] };
+      setItems(j.items ?? []);
+    } finally {
+      setSelectValue("");
+      setLoadingList(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
     loadList();
@@ -145,34 +147,43 @@ export function ForeverHeaderSaveRestore({
     if (!sid) {
       console.warn("[forever] save: no advisory session");
       setSaveStatus("error");
+      window.setTimeout(() => setSaveStatus("idle"), 5000);
       return;
     }
     const h = getHandlers();
-    const out = await saveReport(supabase, {
-      sessionId: sid,
-      userId,
-      modelType: MODEL_TYPE,
-      inputs: h?.getInputs?.() ?? {},
-      results: h?.getResults?.() ?? {},
+    const res = await fetch("/api/advisory-report", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: sid,
+        inputs: h?.getInputs?.() ?? {},
+        results: h?.getResults?.() ?? {},
+      }),
     });
-    if ("error" in out) {
-      console.warn("[forever] saveReport error:", out.error);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      console.warn("[forever] advisory-report POST", res.status, errBody);
       setSaveStatus("error");
+      window.setTimeout(() => setSaveStatus("idle"), 5000);
       return;
     }
     setSaveStatus("ok");
     setRefreshToken((n) => n + 1);
     setTimeout(() => setSaveStatus("idle"), 2000);
-  }, [supabase, userId, canSave, getHandlers, resolveSessionId]);
+  }, [userId, canSave, getHandlers, resolveSessionId]);
 
   const handleLoad = useCallback(
     async (id: string) => {
       if (!id) return;
-      const report = await getReport(supabase, id);
-      if (!report) return;
-      getHandlers()?.applyInputs?.(report.inputs);
+      const res = await fetch(`/api/advisory-report?id=${encodeURIComponent(id)}`, {
+        credentials: "include",
+      });
+      if (!res.ok) return;
+      const report = (await res.json()) as { inputs?: Record<string, unknown> };
+      getHandlers()?.applyInputs?.(report.inputs ?? {});
     },
-    [getHandlers, supabase]
+    [getHandlers]
   );
 
   /** Paid users: only block double-submit while saving (no input/session gating). */
