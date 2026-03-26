@@ -10,6 +10,10 @@ import {
 import type { CalculatorInputs } from './calculator-types';
 import type { CalculatorResults } from './src/hooks/useCalculatorResults';
 import { APP_NAME } from './src/lib/capitalHealthCopy';
+import {
+  buildLionVerdictClientReportFromCapitalHealth,
+  formatLionPublicStatusLabel,
+} from '@cb/advisory-graph/lionsVerdict';
 
 export type ReportChartPoint = { month: number; nominal: number };
 
@@ -89,6 +93,43 @@ export function ReportPrint({
       { label: 'Projected', value: formatCurrency(symbol, projected), sub: `Capital at ${formatNum(inputs.timeHorizonYears, 1)} years` },
       { label: 'Surplus', value: formatCurrency(symbol, surplus), sub: 'Projected − target', tone: surplus >= 0 ? 'positive' : 'negative' },
     ];
+  }, [inputs, result, symbol]);
+
+  const lionClient = useMemo(() => {
+    const mode = inputs.mode;
+    const tier = Math.min(5, Math.max(1, result.riskMetrics.riskTier)) as 1 | 2 | 3 | 4 | 5;
+    const runwayYears =
+      inputs.mode === 'withdrawal' && result.depletionMonth != null
+        ? (result.depletionMonth / 12).toFixed(1)
+        : undefined;
+    const vars = {
+      withdrawal:
+        inputs.mode === 'withdrawal'
+          ? formatCurrency(symbol, inputs.targetMonthlyIncome)
+          : undefined,
+      desiredCapital:
+        inputs.mode === 'growth'
+          ? formatCurrency(symbol, inputs.targetFutureCapital)
+          : undefined,
+      horizon: `${Number(inputs.timeHorizonYears).toFixed(1)}`,
+      runway: runwayYears,
+      expectedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
+      estimatedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
+    };
+    return buildLionVerdictClientReportFromCapitalHealth(
+      {
+        mode,
+        tier,
+        vars,
+        startingCapital: inputs.startingCapital,
+        targetMonthlyIncome: inputs.targetMonthlyIncome,
+        targetFutureCapital: inputs.targetFutureCapital,
+        passiveIncomeMonthly: result.passiveIncomeMonthly,
+        nominalCapitalAtHorizon: result.nominalCapitalAtHorizon,
+        coveragePct: result.coveragePct,
+      },
+      { formatCurrency: (n) => formatCurrency(symbol, n) },
+    );
   }, [inputs, result, symbol]);
 
   const assumptions = useMemo(() => {
@@ -241,9 +282,12 @@ export function ReportPrint({
 
         <div className="callout">
           <h4>The Lion&apos;s Verdict</h4>
-          <p className="headline">{result.statusCopy.headline}</p>
-          <p className="body">{result.statusCopy.long}</p>
-          <p className="sig">Strength Behind Every Structure.</p>
+          <p className="sub" style={{ marginBottom: 8, fontWeight: 600 }}>
+            Lion score: {lionClient.verdict.score} / 100 · {formatLionPublicStatusLabel(lionClient.verdict.status)}
+          </p>
+          <p className="headline">{lionClient.verdict.summary}</p>
+          <p className="body">{lionClient.risks.join(' ')}</p>
+          <p className="sig">{lionClient.closing_line}</p>
         </div>
 
         <div className="disclaimer">

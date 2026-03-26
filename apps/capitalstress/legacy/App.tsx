@@ -1,17 +1,25 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import "./index.css";
 import { MonteCarloResult, StressSeverity, StressScenarioResult } from './types';
 import { runMonteCarlo, getSimulationCount, runStressScenarios, getDepletionBarOutput } from './services/mathUtils';
-import { DepletionBarProvider, DepletionBarConsumers } from './DepletionBarContext';
+import { DepletionBarProvider, DepletionBarConsumers, type DepletionBarOutput } from './DepletionBarContext';
 import {
   getMicroDiagnosticSignals,
   getKeyTakeaways,
   getRecommendedAdjustments,
   runLionVerdictEngineStress,
+  stressScoreToDisplay0to100,
   toVerdictNarrative,
 } from './services/advisory_engine';
+import {
+  type LionStressAdvisoryInputs,
+  buildLionVerdictClientReportFromStress,
+  formatLionPublicStatusLabel,
+  lionPublicStatusFromScore0to100,
+  lionStrongEligibilityFromStressInputs,
+} from '@cb/advisory-graph/lionsVerdict';
 import { PrintReport } from './PrintReport';
 
 const CURRENCIES = [
@@ -341,6 +349,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     window.print();
   };
 
+  const depletionBarRef = useRef<DepletionBarOutput | null>(null);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -360,9 +370,28 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         }) as Record<string, unknown>,
       getResults: () => {
         try {
-          return JSON.parse(
-            JSON.stringify({ mcResult, stressScenarioResults, adjustmentResults })
-          ) as Record<string, unknown>;
+          const base = { mcResult, stressScenarioResults, adjustmentResults };
+          const dep = depletionBarRef.current;
+          if (canSeeVerdict && mcResult) {
+            const advisoryInputs: LionStressAdvisoryInputs = {
+              capitalResilienceScore: mcResult.capitalResilienceScore,
+              tier: mcResult.tier,
+              fragilityIndicator: dep ? dep.pillLabel : mcResult.fragilityIndicator,
+              initialCapital: investment,
+              withdrawalAmount: withdrawal,
+              timeHorizonYears: years,
+              simulatedAverageOutcome: mcResult.simulatedAverage,
+              maximumDrawdownPct: mcResult.maxDrawdownPctAvg,
+              worstCaseOutcome: mcResult.percentile5,
+            };
+            const lionVerdictClient = buildLionVerdictClientReportFromStress(advisoryInputs, {
+              formatCurrency,
+            });
+            return JSON.parse(
+              JSON.stringify({ ...base, lionVerdictClient }),
+            ) as Record<string, unknown>;
+          }
+          return JSON.parse(JSON.stringify(base)) as Record<string, unknown>;
         } catch {
           return {};
         }
@@ -400,6 +429,11 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       stressScenarioResults,
       adjustmentResults,
       runCalculation,
+      canSeeVerdict,
+      investment,
+      withdrawal,
+      years,
+      formatCurrency,
     ]
   );
 
@@ -431,6 +465,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       <DepletionBarProvider mcResult={mcResult}>
         <DepletionBarConsumers>
           {(depletionBarOutput) => {
+            depletionBarRef.current = depletionBarOutput;
             const advisoryInputs = mcResult
               ? {
                   capitalResilienceScore: mcResult.capitalResilienceScore,
@@ -840,10 +875,10 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
               {/* 1. Resilience Score */}
               <div className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl h-full flex flex-col min-h-0">
-                <h3 className="text-sm md:text-lg font-bold mb-1 text-[#C6A24D] uppercase tracking-wide serif-font">Resilience Score</h3>
-                <p className="text-[9px] md:text-[10px] text-[#C6A24D]/60 mb-4">Step 1: Can your capital survive?</p>
+                <h3 className="text-sm md:text-lg font-bold mb-1 text-[#C6A24D] uppercase tracking-wide serif-font">Lion score (0–100)</h3>
+                <p className="text-[9px] md:text-[10px] text-[#C6A24D]/60 mb-4">Step 1: Can your capital survive? Derived from the model resilience index.</p>
                 <div className="flex flex-wrap items-center gap-4 gap-y-2">
-                  <p className="text-sm md:text-xl font-bold tracking-tight text-white">{mcResult.capitalResilienceScore}</p>
+                  <p className="text-sm md:text-xl font-bold tracking-tight text-white">{stressScoreToDisplay0to100(mcResult.capitalResilienceScore)}</p>
                   <span
                     className="inline-flex items-center px-4 py-1 rounded-md text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-md"
                     style={{ backgroundColor: TIER_PILL_COLORS[mcResult.tier] || '#C6A24D', color: mcResult.tier === 'Moderate' ? '#0D3A1D' : getPillTextColor(mcResult.tier) }}
@@ -851,7 +886,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                     {mcResult.tier.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[9px] md:text-[10px] text-[#C6A24D]/60 mt-2">This score estimates whether your capital is likely to remain intact over the selected time horizon.</p>
+                <p className="text-[9px] md:text-[10px] text-[#C6A24D]/60 mt-2">Higher means stronger survival odds over the horizon under your assumptions. Same scale as Lion&apos;s Verdict below.</p>
                 <div className="mt-3 space-y-2 text-[10px] md:text-[11px]">
                   <div>
                     <p className="font-bold mb-0.5" style={{ color: '#C6A24D' }}>Probability of Success Over {years}-Year:</p>
@@ -1394,7 +1429,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
           {/* CAPITAL ADJUSTMENT SIMULATOR + BIGGEST IMPACT */}
           {adjustmentResults != null && mcResult != null && (() => {
-            const baseScore = mcResult.capitalResilienceScore;
+            const baseLion = stressScoreToDisplay0to100(mcResult.capitalResilienceScore);
             const scenarios = [
               { key: 'reduceWithdrawal' as const, label: 'Reduce withdrawals by 10%', result: adjustmentResults.reduceWithdrawal, withdrawalUsed: withdrawal * 0.9, yearsUsed: years, lowerUsed: lowerPct, upperUsed: upperPct },
               { key: 'extendHorizon' as const, label: 'Extend investment horizon by 5 years', result: adjustmentResults.extendHorizon, withdrawalUsed: withdrawal, yearsUsed: years + 5, lowerUsed: lowerPct, upperUsed: upperPct },
@@ -1402,7 +1437,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             ].filter((s): s is typeof s & { result: MonteCarloResult } => s.result != null);
             const withDelta = scenarios.map(s => ({
               ...s,
-              delta: s.result.capitalResilienceScore - baseScore,
+              delta: stressScoreToDisplay0to100(s.result.capitalResilienceScore) - baseLion,
             })).sort((a, b) => b.delta - a.delta);
             const renderScenario = (s: typeof withDelta[0]) => {
               const r = s.result;
@@ -1413,17 +1448,29 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               const inflationSens = Math.min(100, effectiveInflation * 25);
               const volSens = Math.min(100, r.maxDrawdownPctAvg * 2);
               const drawdownSens = Math.min(100, r.maxDrawdownPctAvg * 2.5);
-              const fi = Math.round((returnSens + withdrawalSens + inflationSens + volSens + drawdownSens) / 5);
-              const fiTier = getFragilityIndexTier(fi);
+              const lionAdj = stressScoreToDisplay0to100(r.capitalResilienceScore);
+              const scenarioStress: LionStressAdvisoryInputs = {
+                capitalResilienceScore: r.capitalResilienceScore,
+                tier: r.tier,
+                fragilityIndicator: depBar.pillLabel as LionStressAdvisoryInputs['fragilityIndicator'],
+                initialCapital: investment,
+                withdrawalAmount: s.withdrawalUsed,
+                timeHorizonYears: s.yearsUsed,
+                simulatedAverageOutcome: r.simulatedAverage,
+                maximumDrawdownPct: r.maxDrawdownPctAvg,
+                worstCaseOutcome: r.percentile5,
+              };
+              const statusAdj = formatLionPublicStatusLabel(
+                lionPublicStatusFromScore0to100(lionAdj, lionStrongEligibilityFromStressInputs(scenarioStress)),
+              );
               return (
                 <div key={s.key} className="p-4 rounded border border-[#C6A24D]/20 bg-[#001a11]/30 space-y-2">
                   <p className="font-bold text-[#C6A24D] text-[10px] md:text-xs uppercase">{s.label}</p>
-                  <div className="grid grid-cols-3 gap-2 text-[9px] md:text-[10px]">
-                    <span className="text-[#C6A24D]/80">Resilience: <span className="text-white font-bold">{r.capitalResilienceScore}</span> ({r.tier})</span>
-                    <span className="text-[#C6A24D]/80">Fragility: <span className="text-white font-bold">{fi}</span> ({fiTier})</span>
+                  <div className="grid grid-cols-2 gap-2 text-[9px] md:text-[10px]">
+                    <span className="text-[#C6A24D]/80">Lion score: <span className="text-white font-bold">{lionAdj}</span> · {statusAdj}</span>
                     <span className="text-[#C6A24D]/80">Depletion: <span className="text-white font-bold">{depBar.pillLabel}</span></span>
                   </div>
-                  <p className="text-[9px] text-[#C6A24D]/60 italic">Under this adjustment, capital structure would show {r.tier} resilience with {depBar.pillLabel.toLowerCase()} depletion pressure.</p>
+                  <p className="text-[9px] text-[#C6A24D]/60 italic">Under this adjustment, Lion score is {lionAdj} ({statusAdj}) with {depBar.pillLabel.toLowerCase()} depletion pressure.</p>
                 </div>
               );
             };
@@ -1431,7 +1478,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               <>
                 <div className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl">
                   <h2 className="text-sm md:text-lg font-bold mb-2 text-[#C6A24D] uppercase tracking-wide serif-font">BIGGEST IMPACT IMPROVEMENTS</h2>
-                  <p className="text-[9px] text-[#C6A24D]/60 mb-4">Ranked by impact on Resilience Score.</p>
+                  <p className="text-[9px] text-[#C6A24D]/60 mb-4">Ranked by impact on Lion score (0–100).</p>
                   <ol className="list-decimal list-inside space-y-1 text-[10px] md:text-xs text-[#F6F5F1] font-medium">
                     {withDelta.slice(0, 3).map((s, i) => (
                       <li key={s.key}>{s.label}</li>
@@ -1674,10 +1721,16 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.outcomeSummary}</p>
                 <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.riskExplanation}</p>
                 <p className="text-xs md:text-sm font-medium text-[#C6A24D]/90 leading-relaxed mb-2">{verdict.advisoryRecommendation}</p>
-                {lionEngine ? (
+                {lionEngine && advisoryInputs ? (
                   <div className="mb-6 text-[11px] md:text-xs text-gray-300 space-y-3 border-t border-[#C6A24D]/20 pt-4">
                     <p className="font-bold text-[#C6A24D]">
-                      Lion Structural Score: {lionEngine.score0to100} / 100 · {lionEngine.status} · {lionEngine.fragility}
+                      Lion score: {lionEngine.score0to100} / 100 ·{' '}
+                      {formatLionPublicStatusLabel(
+                        lionPublicStatusFromScore0to100(
+                          lionEngine.score0to100,
+                          lionStrongEligibilityFromStressInputs(advisoryInputs),
+                        ),
+                      )}
                     </p>
                     <div>
                       <p className="font-semibold text-[#C6A24D]/90 uppercase tracking-wide mb-1">Strategic options</p>
@@ -1834,6 +1887,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             fiTier={fiTier}
             verdict={verdict}
             lionVerdictOutput={lionEnginePrint}
+            stressAdvisoryInputs={canSeeVerdict && advisoryInputs ? advisoryInputs : null}
             keyTakeaways={canSeeVerdict ? getKeyTakeaways(advisoryInputs) : []}
             recommendedAdjustments={canSeeVerdict ? getRecommendedAdjustments(advisoryInputs) : []}
             microSignals={canSeeVerdict ? getMicroDiagnosticSignals(advisoryInputs) : []}

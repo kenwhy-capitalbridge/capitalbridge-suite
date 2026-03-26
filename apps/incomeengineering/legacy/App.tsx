@@ -17,6 +17,8 @@ import { PrintReportView } from './components/PrintReportView';
 import { Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-graph/lionsVerdict';
+import { formatCurrency } from './utils/format';
 
 export type IncomeEngineeringAppHandle = {
   getInputs: () => Record<string, unknown>;
@@ -47,15 +49,37 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, object>(function AppInne
     ref,
     () => ({
       getInputs: () => JSON.parse(JSON.stringify(state)) as Record<string, unknown>,
-      getResults: () =>
-        ({
-          summary: result.summary,
-          medianCoverage: result.medianCoverage,
-          worstMonthCoverage: result.worstMonthCoverage,
-        }) as Record<string, unknown>,
+      getResults: () => {
+        const totalCapital =
+          (result.summary.totalUnlockedLiquidity ?? 0) +
+          investmentBuckets.reduce((s, b) => s + (b.allocation ?? 0), 0);
+        const totalIncome = result.summary.monthlyIncome + result.summary.estimatedMonthlyInvestmentIncome;
+        const totalExpenses = result.summary.monthlyExpenses + result.summary.monthlyLoanRepayments;
+        const net = totalIncome - totalExpenses;
+        const lionVerdictClient = buildLionVerdictClientReportFromIncomeEngineering(
+          {
+            medianCoveragePct: result.medianCoverage,
+            worstMonthCoveragePct: result.worstMonthCoverage,
+            sustainabilityStatus: result.summary.sustainabilityStatus,
+            totalMonthlyIncome: totalIncome,
+            totalMonthlyExpenses: totalExpenses,
+            monthlyNetCashflow: net,
+            totalCapital,
+          },
+          { formatCurrency: (n) => formatCurrency(n, currency) },
+        );
+        return JSON.parse(
+          JSON.stringify({
+            summary: result.summary,
+            medianCoverage: result.medianCoverage,
+            worstMonthCoverage: result.worstMonthCoverage,
+            lionVerdictClient,
+          }),
+        ) as Record<string, unknown>;
+      },
       applyInputs: (raw) => dispatch({ type: 'HYDRATE', payload: raw }),
     }),
-    [state, result, dispatch]
+    [state, result, dispatch, currency, investmentBuckets]
   );
 
   const totalCapital =
