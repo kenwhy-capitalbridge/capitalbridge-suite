@@ -318,6 +318,12 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
       }),
     [foreverLionInput, currency],
   );
+  const foreverLionScore = foreverLionReport.verdict.score;
+  const foreverLionTargetCapital = foreverLionInput.capitalNeeded;
+  const foreverLionGap = foreverLionInput.gap;
+  const foreverLionProgressPercent = results.progressPercent;
+  const foreverLionHorizonYears = foreverLionInput.runwayYears ?? undefined;
+  const foreverLionHorizonLabel = foreverLionInput.runwayLabel;
   const surplusRatio = useMemo(() => {
     if (Number.isFinite(results.capitalNeeded) && results.capitalNeeded > 0) {
       return Math.max(0, results.currentAssets / results.capitalNeeded);
@@ -997,7 +1003,19 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
               </div>
             </div>
 
-            <div className="mt-10">
+            <div className="mt-10 relative z-10">
+              <div className="flex justify-center">
+                <button onClick={handleDownloadPDF} disabled={!results.isSustainable || isGenerating} className={`py-3 px-6 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all ${results.isSustainable && !isGenerating ? 'bg-[#FFCC6A] text-[#0D3A1D] hover:bg-white hover:scale-105 hover:-translate-y-0.5 shadow-lg shadow-[#FFCC6A]/30 animate-download-cta' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}>
+                  {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Download className="w-4 h-4" /> Download Report</>}
+                </button>
+              </div>
+              <p className="mt-3 text-center text-[10px] text-white font-medium italic px-4 leading-normal">
+                *Please save or print a copy for your records. Capital Bridge does not save or store your personal information.
+              </p>
+            </div>
+          </div>
+          <div className="mt-10">
+            <div className="mx-auto max-w-3xl">
               <div className="bg-[#00160f] border border-[#FFCC6A]/20 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 text-sm text-gray-200">
                 {lionAccessEnabled ? (
                   <LionVerdictActive
@@ -1008,23 +1026,18 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
                     confidenceScore={foreverLionConfidenceScore}
                     surplusRatio={surplusRatio}
                     riskTolerance={foreverLionRiskTolerance}
+                    score={foreverLionScore}
+                    horizon={foreverLionHorizonYears}
+                    horizonLabel={foreverLionHorizonLabel}
+                    gap={foreverLionGap}
+                    target={foreverLionTargetCapital}
+                    progress={foreverLionProgressPercent}
                     onCopyComputed={setLionCopyPayload}
                   />
                 ) : (
-                  <LionVerdictLocked />
+                  <LionVerdictLocked tierLabel={foreverLionTier} />
                 )}
               </div>
-            </div>
-
-            <div className="mt-10 relative z-10">
-              <div className="flex justify-center">
-                <button onClick={handleDownloadPDF} disabled={!results.isSustainable || isGenerating} className={`py-3 px-6 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all ${results.isSustainable && !isGenerating ? 'bg-[#FFCC6A] text-[#0D3A1D] hover:bg-white hover:scale-105 hover:-translate-y-0.5 shadow-lg shadow-[#FFCC6A]/30 animate-download-cta' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}>
-                  {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Download className="w-4 h-4" /> Download Report</>}
-                </button>
-              </div>
-              <p className="mt-3 text-center text-[10px] text-white font-medium italic px-4 leading-normal">
-                *Please save or print a copy for your records. Capital Bridge does not save or store your personal information.
-              </p>
             </div>
           </div>
         </div>
