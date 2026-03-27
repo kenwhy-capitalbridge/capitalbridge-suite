@@ -122,6 +122,16 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
   const totalCapital =
     (result.summary.totalUnlockedLiquidity ?? 0) +
     investmentBuckets.reduce((s, b) => s + (b.allocation ?? 0), 0);
+  const totalExpenses = result.summary.monthlyExpenses + result.summary.monthlyLoanRepayments;
+  const totalIncome = result.summary.monthlyIncome + result.summary.estimatedMonthlyInvestmentIncome;
+  const monthlyShortfall = Math.max(0, totalExpenses - totalIncome);
+  const horizonYears =
+    monthlyShortfall > 0 ? totalCapital / (monthlyShortfall * 12) : undefined;
+  const horizonLabel = horizonYears ? horizonYears.toFixed(1) : 'Perpetual';
+  const targetCapital = totalExpenses * 12;
+  const gapAmount = Math.max(0, targetCapital - totalCapital);
+  const progressPercent = targetCapital > 0 ? Math.min(100, (totalCapital / targetCapital) * 100) : 0;
+  const lionScore = lionConfidenceScore * 100;
 
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -221,16 +231,22 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
           <section aria-label="The Lion's Verdict" className="mt-10">
             <div className="mx-auto max-w-3xl">
               {!lionAccessEnabled ? (
-                <LionVerdictLocked />
+                <LionVerdictLocked tierLabel={lionTier} />
               ) : (
                 <LionVerdictActive
                   user={props.lionAccessUser}
                   userId={lionSeedUserId}
                   reportType="income_engineering"
                   tier={lionTier}
+                  score={lionScore}
                   confidenceScore={lionConfidenceScore}
                   surplusRatio={lionSurplusRatio}
                   riskTolerance={lionRiskTolerance}
+                  horizon={horizonYears}
+                  horizonLabel={horizonLabel}
+                  target={targetCapital}
+                  gap={gapAmount}
+                  progress={progressPercent}
                 />
               )}
             </div>

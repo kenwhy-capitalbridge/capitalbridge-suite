@@ -21,8 +21,11 @@ import {
   lionStrongEligibilityFromStressInputs,
 } from '@cb/advisory-graph/lionsVerdict';
 import { PrintReport } from './PrintReport';
+import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
+import type { Tier } from "../../../packages/lion-verdict/copy";
+import type { Tier } from "../../../packages/lion-verdict/copy";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -98,6 +101,21 @@ function getFragilityIndexTier(score: number): FragilityIndexTier {
 
 function getFragilityIndexPillTextColor(tier: FragilityIndexTier): string {
   return tier === 'Stable' || tier === 'Highly Robust' ? '#0D3A1D' : '#FFFFFF';
+}
+
+function mapStressStatusToTier(status?: string): Tier {
+  switch (status) {
+    case 'Very Strong':
+      return 'STRONG';
+    case 'Strong':
+      return 'STABLE';
+    case 'Moderate':
+      return 'FRAGILE';
+    case 'Weak':
+      return 'AT_RISK';
+    default:
+      return 'NOT_SUSTAINABLE';
+  }
 }
 
 const PrinterIcon = () => (
@@ -491,6 +509,19 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               canSeeVerdict && advisoryInputs ? runLionVerdictEngineStress(advisoryInputs, formatCurrency) : null;
             const verdict = lionEngine ? toVerdictNarrative(lionEngine) : null;
             const microSignals = advisoryInputs ? getMicroDiagnosticSignals(advisoryInputs) : [];
+            const lionScore = lionEngine?.score0to100 ?? 0;
+            const lionTierLabel = mapStressStatusToTier(lionEngine?.status ?? 'Critical');
+            const lionConfidenceScore = Math.min(1, Math.max(0, lionScore / 100));
+            const lionSurplusRatio = lionConfidenceScore;
+            const lionRiskTolerance = lionConfidenceScore;
+            const targetCapital = investment;
+            const projectedCapital = mcResult?.simulatedAverage ?? investment;
+            const gapAmount = Math.max(0, targetCapital - projectedCapital);
+            const progressPercent = targetCapital > 0 ? Math.min(100, (projectedCapital / targetCapital) * 100) : 0;
+            const horizonYears = years;
+            const horizonLabel = `${years.toFixed(1)} years`;
+            const lionSeedUserId = typeof window !== 'undefined' ? window.location.hostname : 'capital-stress';
+            const showLionActive = lionEngine && advisoryInputs;
             return (
               <>
       <div
@@ -1723,71 +1754,28 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               style={{ opacity: canSeeVerdict ? 1 : 0.55 }}
             >
               <h2 className="text-sm md:text-lg font-bold mb-4 text-[#C6A24D] uppercase tracking-wide serif-font">The Lion&apos;s Verdict</h2>
-              {verdict ? (
-                <>
-                  <p className="text-sm md:text-lg font-bold text-white serif-font italic mb-4">&ldquo;{verdict.opening}&rdquo;</p>
-                  <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.interpretation}</p>
-                  <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.outcomeSummary}</p>
-                  <p className="text-xs md:text-sm text-gray-300 leading-relaxed mb-2">{verdict.riskExplanation}</p>
-                  <p className="text-xs md:text-sm font-medium text-[#C6A24D]/90 leading-relaxed mb-2">{verdict.advisoryRecommendation}</p>
-                  {lionEngine && advisoryInputs ? (
-                    <div className="mb-6 text-[11px] md:text-xs text-gray-300 space-y-3 border-t border-[#C6A24D]/20 pt-4">
-                      <p className="font-bold text-[#C6A24D]">
-                        Lion score: {lionEngine.score0to100} / 100 ·{' '}
-                        {formatLionPublicStatusLabel(
-                          lionPublicStatusFromScore0to100(
-                            lionEngine.score0to100,
-                            lionStrongEligibilityFromStressInputs(advisoryInputs),
-                          ),
-                        )}
-                      </p>
-                      <div>
-                        <p className="font-semibold text-[#C6A24D]/90 uppercase tracking-wide mb-1">Strategic options</p>
-                        <ul className="list-disc list-inside space-y-0.5">
-                          {lionEngine.strategicOptions.map((s) => (
-                            <li key={s.slice(0, 48)}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[#C6A24D]/90 uppercase tracking-wide mb-1">Capital unlock</p>
-                        <ul className="list-disc list-inside space-y-0.5">
-                          {lionEngine.capitalUnlockGuidance.map((s) => (
-                            <li key={s.slice(0, 48)}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[#C6A24D]/90 uppercase tracking-wide mb-1">Scenario actions</p>
-                        <ul className="list-disc list-inside space-y-0.5">
-                          {lionEngine.scenarioActions.map((s) => (
-                            <li key={s.slice(0, 48)}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[#C6A24D]/90 uppercase tracking-wide mb-1">Priority actions</p>
-                        <ul className="list-disc list-inside space-y-0.5">
-                          {lionEngine.priorityActions.map((s) => (
-                            <li key={s.slice(0, 48)}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <p className="text-[#C6A24D]/85 italic leading-relaxed">If you do nothing: {lionEngine.ifYouDoNothing}</p>
-                    </div>
-                  ) : null}
-                  <div className="space-y-2">
-                    {microSignals.map((s, i) => (
-                      <p key={i} className={`text-[11px] flex items-center gap-2 ${s.type === 'warn' ? 'text-amber-400/90' : 'text-emerald-400/90'}`}>
-                        {s.type === 'warn' ? '⚠' : '✓'} {s.text}
-                      </p>
-                    ))}
-                  </div>
-                </>
-              ) : null}
+              {showLionActive ? (
+                <LionVerdictActive
+                  user={lionAccessUser}
+                  userId={lionSeedUserId}
+                  reportType="capital_stress"
+                  tier={lionTierLabel}
+                  score={lionScore}
+                  confidenceScore={lionConfidenceScore}
+                  surplusRatio={lionSurplusRatio}
+                  riskTolerance={lionRiskTolerance}
+                  horizon={horizonYears}
+                  horizonLabel={horizonLabel}
+                  target={targetCapital}
+                  gap={gapAmount}
+                  progress={progressPercent}
+                />
+              ) : (
+                <LionVerdictLocked tierLabel={lionTierLabel} />
+              )}
             </div>
           ) : (
-            <LionVerdictLocked />
+            <LionVerdictLocked tierLabel={lionTierLabel} />
           )}
 
           {/* EXPAND ALL / COLLAPSE ALL — below The Lion's Verdict */}

@@ -32,8 +32,11 @@ import {
   lionStrongEligibilityFromHealthTier,
   runLionVerdictEngineCapitalHealth,
 } from '@cb/advisory-graph/lionsVerdict';
+import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
+import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
+import type { Tier } from "../../../packages/lion-verdict/copy";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
@@ -72,6 +75,21 @@ function scrollToInput(id: string) {
 function calculateSurvivalAge(currentAge: number | null, runwayYears: number | null): number | null {
   if (currentAge == null || runwayYears == null) return null;
   return currentAge + runwayYears;
+}
+
+function mapCapitalHealthStatusToTier(status?: string): Tier {
+  switch (status) {
+    case 'Very Strong':
+      return 'STRONG';
+    case 'Strong':
+      return 'STABLE';
+    case 'Moderate':
+      return 'FRAGILE';
+    case 'Weak':
+      return 'AT_RISK';
+    default:
+      return 'NOT_SUSTAINABLE';
+  }
 }
 
 /** Format depletion months as "X years Y months" (no decimal years). */
@@ -296,6 +314,10 @@ const CalculatorScreen = forwardRef<
 
   const result = useCalculatorResults(inputs);
   const lionAccessEnabled = canAccessLion(props.lionAccessUser);
+  const lionSeedUserId = useMemo(
+    () => (typeof window !== 'undefined' ? window.location.hostname : 'capital-health'),
+    [],
+  );
 
   const applySavedInputs = useCallback((raw: Record<string, unknown>) => {
     if (!raw || typeof raw !== "object") return;
@@ -544,6 +566,26 @@ const CalculatorScreen = forwardRef<
     result.depletionMonth,
     formatCurrency,
   ]);
+  const lionScore = lionVerdictBundle?.engine.score0to100 ?? 0;
+  const lionTierLabel = mapCapitalHealthStatusToTier(lionVerdictBundle?.engine.status);
+  const lionConfidenceScore = Math.min(1, Math.max(0, lionScore / 100));
+  const lionSurplusRatio = Math.min(1, Math.max(0, result.coveragePct / 100));
+  const lionRiskTolerance = lionSurplusRatio;
+  const targetCapital = inputs.mode === 'growth' ? inputs.targetFutureCapital : inputs.targetMonthlyIncome * 12;
+  const projectedCapital =
+    inputs.mode === 'growth' ? result.nominalCapitalAtHorizon : inputs.startingCapital;
+  const gapAmount = Math.max(0, targetCapital - projectedCapital);
+  const progressPercent = targetCapital > 0 ? Math.min(100, (projectedCapital / targetCapital) * 100) : 0;
+  const depletionYears =
+    inputs.mode === 'withdrawal' && result.depletionMonth != null
+      ? result.depletionMonth / 12
+      : undefined;
+  const horizonLabel =
+    inputs.mode === 'withdrawal'
+      ? depletionYears != null
+        ? formatRunwayFromDecimalYears(depletionYears)
+        : 'Perpetual'
+      : `${Number(inputs.timeHorizonYears).toFixed(1)} years`;
   const stressTestScenarios = useMemo(() => {
     const baseReturn = inputs.expectedAnnualReturnPct;
     const bearReturn = Math.max(baseReturn - 4, 0);
@@ -1651,16 +1693,25 @@ const CalculatorScreen = forwardRef<
           aria-labelledby="lions-verdict-heading"
         >
           {lionAccessEnabled ? (
-            <LionVerdictActiveCapitalHealth
-              lionVerdictBundle={lionVerdictBundle}
-              inputs={inputs}
-              result={result}
-              horizonYearsFormatted={horizonYearsFormatted}
-              formatCurrencyCompactDisplay={formatCurrencyCompactDisplay}
-              formatRunwayYearsMonths={formatRunwayYearsMonths}
-            />
+            <div className="mx-auto max-w-3xl">
+              <LionVerdictActive
+                user={props.lionAccessUser}
+                userId={lionSeedUserId}
+                reportType="capital_health"
+                tier={lionTierLabel}
+                score={lionScore}
+                confidenceScore={lionConfidenceScore}
+                surplusRatio={lionSurplusRatio}
+                riskTolerance={lionRiskTolerance}
+                horizon={depletionYears}
+                horizonLabel={horizonLabel}
+                target={targetCapital}
+                gap={gapAmount}
+                progress={progressPercent}
+              />
+            </div>
           ) : (
-            <LionVerdictLocked />
+            <LionVerdictLocked tierLabel={lionTierLabel} />
           )}
         </section>
 
