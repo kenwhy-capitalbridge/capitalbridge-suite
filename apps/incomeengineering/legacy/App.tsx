@@ -18,7 +18,11 @@ import { Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-graph/lionsVerdict';
+import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
+import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
+import type { Tier } from "../../../packages/lion-verdict/copy";
+import type { SustainabilityStatus } from './types/calculator';
 import { formatCurrency } from './utils/format';
 
 export type IncomeEngineeringAppHandle = {
@@ -28,6 +32,19 @@ export type IncomeEngineeringAppHandle = {
 };
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
+
+const deriveTierFromStatus = (status: SustainabilityStatus | undefined): Tier => {
+  switch (status) {
+    case 'green':
+      return 'STABLE';
+    case 'amber':
+      return 'AT_RISK';
+    case 'red':
+      return 'NOT_SUSTAINABLE';
+    default:
+      return 'FRAGILE';
+  }
+};
 
 const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAccessUser }>(
   function AppInner(props, ref) {
@@ -49,6 +66,12 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
     [currency, monthlyExpenses, incomeRows, loansFromAssets, investmentBuckets, assetUnlocks]
   );
   const lionAccessEnabled = canAccessLion(props.lionAccessUser);
+  const lionTier = deriveTierFromStatus(result.summary.sustainabilityStatus);
+  const lionConfidenceScore = 0.5;
+  const lionSurplusRatio = 1;
+  const lionRiskTolerance = 0.5;
+  const lionSeedUserId =
+    typeof window !== 'undefined' ? window.location.hostname : 'income-engineering';
 
   useImperativeHandle(
     ref,
@@ -193,6 +216,24 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
               worstMonthCoverage={result.worstMonthCoverage}
               invalidReason={result.summary.invalidReason}
             />
+          </section>
+
+          <section aria-label="The Lion's Verdict" className="mt-10">
+            <div className="mx-auto max-w-3xl">
+              {!lionAccessEnabled ? (
+                <LionVerdictLocked />
+              ) : (
+                <LionVerdictActive
+                  user={props.lionAccessUser}
+                  userId={lionSeedUserId}
+                  reportType="income_engineering"
+                  tier={lionTier}
+                  confidenceScore={lionConfidenceScore}
+                  surplusRatio={lionSurplusRatio}
+                  riskTolerance={lionRiskTolerance}
+                />
+              )}
+            </div>
           </section>
 
           <FooterDisclaimer />
