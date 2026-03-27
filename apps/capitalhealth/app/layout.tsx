@@ -4,6 +4,7 @@ import {
   createAdvisorySessionOnServer,
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
+import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
 import { ModelAppHeader } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
@@ -26,6 +27,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       } = await supabase.auth.getUser();
       user = u;
       if (u) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        await syncUserActiveSessionFromAccessToken(u.id, session?.access_token, "[capital-health layout]");
         canSave = await serverCanSaveFromMembership(supabase, u.id);
         if (canSave) {
           initialSessionId = await createAdvisorySessionOnServer(supabase, u.id, "[capital-health layout]");

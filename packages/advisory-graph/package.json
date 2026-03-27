@@ -10,6 +10,7 @@
     "./ModelHeaderSaveRestore": "./src/ModelHeaderSaveRestore.tsx",
     "./server/requestContext": "./src/server/requestContext.ts",
     "./server/membershipLayout": "./src/server/membershipLayout.ts",
+    "./server/userActiveSessionSync": "./src/server/userActiveSessionSync.ts",
     "./server/advisoryRoutes": "./src/server/advisoryRoutes.ts",
     "./supabaseClient": "./src/supabaseClient.ts",
     "./auth/emailCheck": "./src/auth/emailCheck.ts",
@@ -23,6 +24,7 @@
     "./clientScoreDashboard": "./src/clientScoreDashboard/index.ts"
   },
   "dependencies": {
+    "@cb/shared": "*",
     "@cb/supabase": "*"
   },
   "peerDependencies": {
