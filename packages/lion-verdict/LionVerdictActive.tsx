@@ -110,5 +110,5 @@ export function LionVerdictActive({
 
   if (!hasAccess || !copy) return null;
 
-  return <LionCopyPanel copy={copy} canSeeVerdict className={className} />;
+  return <LionCopyPanel copy={copy} canSeeVerdict className={className} tierLabel={tier} />;
 }
