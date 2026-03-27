@@ -110,7 +110,10 @@ export function getLionVerdict(input: GetLionVerdictInput): GetLionVerdictOutput
     input.globalHistory?.guidance,
     reportType,
   );
-  const confidenceScore = Number.isFinite(input.confidenceScore) ? input.confidenceScore : 0.5;
+  const confidenceScore =
+    typeof input.confidenceScore === 'number' && Number.isFinite(input.confidenceScore)
+      ? input.confidenceScore
+      : 0.5;
   const confidenceBand = determineConfidenceBand(confidenceScore);
   const prefixList = CONFIDENCE_PREFIXES[confidenceBand];
   const prefixSeed = hashString(`${seed}:confidence`);

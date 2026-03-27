@@ -25,7 +25,6 @@ import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictAct
 import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
-import type { Tier } from "../../../packages/lion-verdict/copy";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },

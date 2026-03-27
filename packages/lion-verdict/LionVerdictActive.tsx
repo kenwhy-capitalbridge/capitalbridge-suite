@@ -9,8 +9,8 @@ import {
   type GetLionVerdictOutput,
   type GlobalHistory,
   type HistoryEntry,
-  type Tier,
 } from "./getLionVerdict";
+import type { Tier } from "./copy";
 
 export type LionVerdictActiveProps = {
   user: LionAccessUser | null | undefined;
@@ -45,6 +45,7 @@ export function LionVerdictActive({
   gap,
   target,
   horizonLabel,
+  progress,
   riskTolerance,
   globalHistory,
   className,
