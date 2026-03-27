@@ -1,7 +1,7 @@
 //Forever Income Model
 "use client";
 
-import React, { useState, useMemo, forwardRef, useImperativeHandle } from "react";
+import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import {
   Download,
@@ -32,6 +32,11 @@ import {
   formatLionPublicStatusLabel,
   parseForeverRunway,
 } from "@cb/advisory-graph/lionsVerdict";
+import { LionVerdictActive } from "@/packages/lion-verdict/LionVerdictActive";
+import { LionVerdictLocked } from "@/packages/lion-verdict/LionVerdictLocked";
+import { canAccessLion, type LionAccessUser } from "@/packages/lion-verdict/access";
+import type { Tier } from "@/packages/lion-verdict/copy";
+import type { GetLionVerdictOutput } from "@/packages/lion-verdict/getLionVerdict";
 import "./index.css";
 
 function appendLionsVerdictPageToForeverPdf(
@@ -127,6 +132,12 @@ function appendLionsVerdictPageToForeverPdf(
   addFooter(doc);
 }
 
+const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
+
+type ForeverAppProps = {
+  lionAccessUser?: LionAccessUser;
+};
+
 /** Imperative API for Supabase save/restore (AdvisoryShell). */
 export type ForeverAppHandle = {
   getInputs: () => Record<string, unknown>;
@@ -137,8 +148,11 @@ export type ForeverAppHandle = {
 // Updated currencies as per the latest request
 const currencies = ["RM", "SGD", "USD", "THB", "AUD", "PHP", "RMB", "HKD"];
 
-const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, ref) {
+const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function ForeverApp(props, ref) {
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+
+  const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
+  const lionAccessEnabled = canAccessLion(lionAccessUser);
 
   const isAllowed =
     hostname === "" ||
@@ -305,6 +319,28 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
     [foreverLionInput, currency],
   );
   const foreverLionStatusLabel = formatLionPublicStatusLabel(foreverLionReport.verdict.status);
+  const surplusRatio = useMemo(() => {
+    if (Number.isFinite(results.capitalNeeded) && results.capitalNeeded > 0) {
+      return Math.max(0, results.currentAssets / results.capitalNeeded);
+    }
+    return results.isSustainable ? 1.05 : 0.85;
+  }, [results.capitalNeeded, results.currentAssets, results.isSustainable]);
+  const foreverLionConfidenceScore = useMemo(
+    () => Math.min(1, Math.max(0, results.progressPercent / 100)),
+    [results.progressPercent],
+  );
+  const lionSeedUserId = useMemo(
+    () => (typeof window !== "undefined" ? window.location.hostname : "forever-server"),
+    [],
+  );
+  const foreverLionTier = foreverLionReport.verdict.status as Tier;
+  const foreverLionRiskTolerance = useMemo(() => results.progressPercent / 100, [results.progressPercent]);
+  const [lionCopyPayload, setLionCopyPayload] = useState<GetLionVerdictOutput | null>(null);
+  useEffect(() => {
+    if (!lionAccessEnabled) {
+      setLionCopyPayload(null);
+    }
+  }, [lionAccessEnabled]);
 
   useImperativeHandle(ref, () => ({
     getInputs: () => ({
@@ -337,6 +373,21 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
         progressPercent: r.progressPercent,
         isSustainable: r.isSustainable,
         runway: r.runway,
+        ...(lionAccessEnabled && lionCopyPayload
+          ? {
+              lionCopy: {
+                tier: foreverLionTier,
+                headline: lionCopyPayload.headline,
+                guidance: lionCopyPayload.guidance,
+                headlineIndex: lionCopyPayload.headlineIndex,
+                guidanceIndex: lionCopyPayload.guidanceIndex,
+                confidenceBand: lionCopyPayload.confidenceBand,
+                emphasis: lionCopyPayload.emphasis,
+                persona: lionCopyPayload.persona,
+                history: lionCopyPayload.history,
+              },
+            }
+          : {}),
       };
     },
     applyInputs: (raw: Record<string, unknown>) => {
@@ -365,7 +416,24 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
       const pth = num("propertyTimeHorizon");
       if (pth !== undefined) setPropertyTimeHorizon(pth);
     },
-  }));
+  }), [
+    currency,
+    expense,
+    expenseType,
+    familyContribution,
+    expectedReturn,
+    inflationRate,
+    cash,
+    investments,
+    realEstate,
+    propertyLoanCost,
+    propertyTimeHorizon,
+    results,
+    foreverLionTier,
+    lionCopyPayload,
+    foreverLionConfidenceScore,
+    lionAccessEnabled,
+  ]);
 
   const handleExpenseTypeChange = (newType: ExpenseType) => {
     if (newType === expenseType) return;
@@ -931,21 +999,31 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
             </div>
 
             <div className="mt-10">
+              {lionAccessEnabled ? (
               <div className="bg-[#00160f] border border-[#FFCC6A]/20 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 text-sm text-gray-200">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A]">The Lion's Verdict</p>
-                    <p className="mt-1 text-[11px] text-gray-400 max-w-2xl leading-relaxed">{foreverLionReport.closing_line}</p>
-                  </div>
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-5xl font-black text-[#FFCC6A] leading-none">{foreverLionReport.verdict.score}</span>
-                    <div className="space-y-1 text-right">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400">status</p>
-                      <p className="text-xl font-semibold text-white">{foreverLionStatusLabel}</p>
-                    </div>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A]">The Lion's Verdict</p>
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-5xl font-black text-[#FFCC6A] leading-none">{foreverLionReport.verdict.score}</span>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400">status</p>
+                    <p className="text-xl font-semibold text-white">{foreverLionStatusLabel}</p>
                   </div>
                 </div>
-                <p className="text-[12px] text-gray-300 leading-relaxed">{foreverLionReport.verdict.summary}</p>
+              </div>
+              <LionVerdictActive
+                user={lionAccessUser}
+                userId={lionSeedUserId}
+                reportType="forever_income"
+                tier={foreverLionTier}
+                confidenceScore={foreverLionConfidenceScore}
+                surplusRatio={surplusRatio}
+                riskTolerance={foreverLionRiskTolerance}
+                onCopyComputed={setLionCopyPayload}
+              />
+              <p className="text-[12px] text-gray-300 leading-relaxed">{foreverLionReport.verdict.summary}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[12px] text-gray-300">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">Goal gap</p>
@@ -980,7 +1058,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
                   </div>
                   <div className="space-y-3 text-[11px] text-gray-200">
                     <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A]">Strategic options</p>
-                    <ul className="space-y-1">
+                <ul className="space-y-1">
                       {foreverLionReport.strategic_options.slice(0, 2).map((option, idx) => (
                         <li key={`${option.type}-${idx}`}>
                           <span className="font-semibold text-white">{option.type}</span>: {option.action}
@@ -992,6 +1070,9 @@ const ForeverApp = forwardRef<ForeverAppHandle, {}>(function ForeverApp(_props, 
                   </div>
                 </div>
               </div>
+              ) : (
+                <LionVerdictLocked />
+              )}
             </div>
 
             <div className="mt-10 relative z-10">
