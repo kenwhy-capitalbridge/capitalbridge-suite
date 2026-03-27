@@ -48,6 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ModelAppHeader
             titleDesktop="FOREVER INCOME MODEL"
             titleMobile="FOREVER INCOME"
+            backHref="https://platform.thecapitalbridge.com/"
             actions={
               user ? (
                 <ModelHeaderSaveRestore
