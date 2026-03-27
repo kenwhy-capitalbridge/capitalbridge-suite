@@ -271,6 +271,7 @@ const CalculatorScreen = forwardRef<
   props,
   ref
 ) {
+  const { lionAccessUser, canSeeVerdict } = props;
   const [inputs, setInputsRaw] = useState<CalculatorInputs>(defaultInputs);
   const [history, setHistory] = useState<CalculatorInputs[]>([]);
   const [toast, setToast] = useState<string | null>(null);
@@ -312,7 +313,7 @@ const CalculatorScreen = forwardRef<
   }, []);
 
   const result = useCalculatorResults(inputs);
-  const lionAccessEnabled = canAccessLion(props.lionAccessUser);
+  const lionAccessEnabled = canAccessLion(lionAccessUser);
   const lionSeedUserId = useMemo(
     () => (typeof window !== 'undefined' ? window.location.hostname : 'capital-health'),
     [],
@@ -1694,7 +1695,7 @@ const CalculatorScreen = forwardRef<
           {lionAccessEnabled ? (
             <div className="mx-auto max-w-3xl">
               <LionVerdictActive
-                user={props.lionAccessUser}
+                user={lionAccessUser}
                 userId={lionSeedUserId}
                 reportType="capital_health"
                 tier={lionTierLabel}
