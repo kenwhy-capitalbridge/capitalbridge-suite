@@ -3,6 +3,8 @@ import {
   buildLionVerdictClientReportFromIncomeEngineering,
   formatLionPublicStatusLabel,
 } from '@cb/advisory-graph/lionsVerdict';
+import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
+import { CB_FONT_SERIF } from '@cb/shared/typography';
 import { LionVerdictLocked } from "../../../../packages/lion-verdict/LionVerdictLocked";
 import { formatCurrency } from '../utils/format';
 import type { CurrencyCode } from '../config/currency';
@@ -124,7 +126,7 @@ const sectionBlock: React.CSSProperties = {
 };
 
 const reportBoxStyle: React.CSSProperties = {
-  fontFamily: 'Georgia, serif',
+  fontFamily: CB_FONT_SERIF,
   padding: '32px',
   color: '#1a1a1a',
   fontSize: '14px',
@@ -195,6 +197,11 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     currency,
   ]);
 
+  const incomeFrameworkIntro = useMemo(
+    () => advisoryFrameworkPdfIntro('sustainability_income'),
+    [],
+  );
+
   const totalAllocation = investmentBuckets.reduce((s, b) => s + (b.allocation ?? 0), 0);
   const getBucket = (id: string) => {
     const cat = INVESTMENT_CATEGORIES.find((c) => c.id === id);
@@ -228,6 +235,36 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           <p style={{ fontSize: '12px', color: '#0D3A1D', opacity: 0.85, marginTop: '10px', marginBottom: 0 }}>
             Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
+        </div>
+
+        <div
+          style={{
+            marginBottom: '24px',
+            padding: '14px 16px',
+            borderLeft: '4px solid #FFCC6A',
+            background: 'rgba(255, 252, 245, 0.98)',
+            textAlign: 'left',
+          }}
+        >
+          <p
+            style={{
+              fontSize: '9px',
+              fontWeight: 700,
+              color: '#8B6914',
+              letterSpacing: '0.12em',
+              margin: '0 0 6px',
+              textTransform: 'uppercase',
+            }}
+          >
+            {incomeFrameworkIntro.eyebrow}
+          </p>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: '#0D3A1D', margin: '0 0 4px' }}>
+            {incomeFrameworkIntro.title}
+          </p>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', margin: '0 0 8px' }}>
+            {incomeFrameworkIntro.youAreHere}
+          </p>
+          <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: 0 }}>{incomeFrameworkIntro.body}</p>
         </div>
 
         {lionAccessEnabled && lionReport ? (

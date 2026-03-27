@@ -6,7 +6,7 @@
  * Health: risk tier 1…5 linear on [1,5] → [100,0] (tier 1 = best).
  *
  * Public bands (classification only — score numbers unchanged):
- * NOT_SUSTAINABLE 0–34, AT_RISK 35–54, FRAGILE 55–69, STABLE 70–84, STRONG 85–100.
+ * NOT_SUSTAINABLE 0–38, AT_RISK 39–56, FRAGILE 57–76, STABLE 77–89, STRONG 90–100.
  * STRONG requires explicit eligibility; otherwise downgraded to STABLE.
  */
 
@@ -74,7 +74,7 @@ export type LionStressGoalStrongSnapshot = {
 /**
  * Map 0–100 score → public band (non-linear interpretation: wider FRAGILE mid-band).
  * If the band is STRONG, requires `strongEligibility` with all checks true; otherwise returns STABLE.
- * Omit `strongEligibility` when score ≥ 85 → STRONG is not allowed (trust-first).
+ * Omit `strongEligibility` when score ≥ 90 → STRONG is not allowed (trust-first).
  */
 export function lionPublicStatusFromScore0to100(
   score: number,
@@ -82,10 +82,10 @@ export function lionPublicStatusFromScore0to100(
 ): LionPublicVerdictStatus {
   const s = Math.round(Math.min(100, Math.max(0, score)));
   let band: LionPublicVerdictStatus;
-  if (s >= 85) band = 'STRONG';
-  else if (s >= 70) band = 'STABLE';
-  else if (s >= 55) band = 'FRAGILE';
-  else if (s >= 35) band = 'AT_RISK';
+  if (s >= 90) band = 'STRONG';
+  else if (s >= 77) band = 'STABLE';
+  else if (s >= 57) band = 'FRAGILE';
+  else if (s >= 39) band = 'AT_RISK';
   else band = 'NOT_SUSTAINABLE';
 
   if (band === 'STRONG') {
@@ -223,10 +223,10 @@ export function formatLionPublicStatusLabel(s: LionPublicVerdictStatus): string 
  */
 export function lionEngineTierFromLionScore0to100(score: number): LionScoreTier {
   const s = Math.min(100, Math.max(0, score));
-  if (s >= 85) return 'Very Strong';
-  if (s >= 70) return 'Strong';
-  if (s >= 55) return 'Moderate';
-  if (s >= 35) return 'Weak';
+  if (s >= 90) return 'Very Strong';
+  if (s >= 77) return 'Strong';
+  if (s >= 57) return 'Moderate';
+  if (s >= 39) return 'Weak';
   return 'Critical';
 }
 

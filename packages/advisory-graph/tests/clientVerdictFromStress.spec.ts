@@ -69,7 +69,7 @@ describe('buildLionVerdictClientReportFromStress', () => {
       goalContext: { desiredMonthlyIncome: 5_000, expectedAnnualReturnPct: 5 },
     });
 
-    expect(r.verdict.status).toBe('STABLE');
+    expect(r.verdict.status).toBe('FRAGILE');
     expect(r.goal_gap.desired_monthly_income).toBe(5_000);
     expect(r.goal_gap.current_sustainable_income).toBeCloseTo((1_000_000 * 0.05) / 12, 5);
     expect(r.goal_gap.target_capital_required).toBeCloseTo((5_000 * 12) / 0.05, 5);

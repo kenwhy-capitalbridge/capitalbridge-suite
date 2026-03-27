@@ -19,7 +19,6 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-graph/lionsVerdict';
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
-import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { SustainabilityStatus } from './types/calculator';
@@ -230,25 +229,21 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
 
           <section aria-label="The Lion's Verdict" className="mt-10">
             <div className="mx-auto max-w-3xl">
-              {!lionAccessEnabled ? (
-                <LionVerdictLocked tierLabel={lionTier} />
-              ) : (
-                <LionVerdictActive
-                  user={props.lionAccessUser}
-                  userId={lionSeedUserId}
-                  reportType="income_engineering"
-                  tier={lionTier}
-                  score={lionScore}
-                  confidenceScore={lionConfidenceScore}
-                  surplusRatio={lionSurplusRatio}
-                  riskTolerance={lionRiskTolerance}
-                  horizon={horizonYears}
-                  horizonLabel={horizonLabel}
-                  target={targetCapital}
-                  gap={gapAmount}
-                  progress={progressPercent}
-                />
-              )}
+              <LionVerdictActive
+                user={props.lionAccessUser}
+                userId={lionSeedUserId}
+                reportType="income_engineering"
+                tier={lionTier}
+                score={lionScore}
+                confidenceScore={lionConfidenceScore}
+                surplusRatio={lionSurplusRatio}
+                riskTolerance={lionRiskTolerance}
+                horizon={horizonYears}
+                horizonLabel={horizonLabel}
+                target={targetCapital}
+                gap={gapAmount}
+                progress={progressPercent}
+              />
             </div>
           </section>
 

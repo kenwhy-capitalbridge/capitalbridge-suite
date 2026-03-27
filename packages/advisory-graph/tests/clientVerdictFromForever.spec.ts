@@ -32,7 +32,7 @@ describe('buildLionVerdictClientReportFromForever', () => {
     const r = buildLionVerdictClientReportFromForever(input, { formatCurrency: fmt });
 
     expect(r.verdict.score).toBe(35);
-    expect(r.verdict.status).toBe('AT_RISK');
+    expect(r.verdict.status).toBe('NOT_SUSTAINABLE');
     expect(r.verdict.summary).toContain('about 12.5 years');
     expect(r.verdict.summary).toContain('more in capital');
     expect(r.verdict.summary.toLowerCase()).toContain('urgent');

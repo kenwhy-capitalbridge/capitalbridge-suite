@@ -1,5 +1,6 @@
 "use client";
 
+import type { Ref } from "react";
 import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase, recoverySupabase, isSupabaseConfigured } from "@/lib/supabaseClient";
@@ -52,8 +53,10 @@ import {
   FORM_PASSWORD_MISMATCH,
   FORM_PASSWORD_TOO_SHORT,
   LOGIN_PROMPT_THEN_NEW_LINK,
+  resolveAccessInitErrorMessage,
   resolveCalmAuthMessage,
   resolveLoginCalmAuthMessage,
+  LOGIN_DIFFERENT_ACCOUNT_ACTIVE_IN_BROWSER,
   SESSION_SIGNED_OUT_LINE,
   SET_PASSWORD_EXPIRED_SUB,
   SET_PASSWORD_EXPIRED_TITLE,
@@ -123,6 +126,7 @@ function PasswordInputWithToggle({
   autoFocus,
   ariaInvalid,
   ariaDescribedBy,
+  inputRef,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -134,10 +138,12 @@ function PasswordInputWithToggle({
   autoFocus?: boolean;
   ariaInvalid?: boolean;
   ariaDescribedBy?: string;
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   return (
     <div className="relative">
       <input
+        ref={inputRef}
         className={`cb-input pr-11 ${hasError ? "cb-input-error" : ""}`}
         type={visible ? "text" : "password"}
         placeholder={placeholder}
@@ -234,6 +240,8 @@ function AccessInner() {
   const [sessionConflictOpen, setSessionConflictOpen] = useState(false);
   const [emailMismatchShowTryOther, setEmailMismatchShowTryOther] = useState(false);
   const loginEmailInputRef = useRef<HTMLInputElement | null>(null);
+  const loginPasswordInputRef = useRef<HTMLInputElement | null>(null);
+  const [switchAccountSignOutBusy, setSwitchAccountSignOutBusy] = useState(false);
 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -503,8 +511,8 @@ function AccessInner() {
         console.error(err);
         linkFailRef.current += 1;
         const raw = err instanceof Error ? err.message : "";
-        const { message, level } = resolveCalmAuthMessage("link", linkFailRef.current, raw);
-        setLinkDetailMessage(level >= 2 ? message : null);
+        const { message, level } = resolveAccessInitErrorMessage(linkFailRef.current, raw);
+        setLinkDetailMessage(message);
         setLinkTier(level);
         setView("error");
       }
@@ -732,6 +740,20 @@ function AccessInner() {
         }
       }
 
+      const { data: preLoginUser } = await supabase.auth.getUser();
+      const sessionEmailNorm = formatDisplayEmail(preLoginUser.user?.email);
+      const formEmailNormPre = formatDisplayEmail(trimmed);
+      if (
+        preLoginUser.user &&
+        sessionEmailNorm &&
+        formEmailNormPre &&
+        sessionEmailNorm !== formEmailNormPre
+      ) {
+        setLoginLockUntilMs(null);
+        setLoginFieldMessage(LOGIN_DIFFERENT_ACCOUNT_ACTIVE_IN_BROWSER);
+        return;
+      }
+
       const { error: signErr } = await supabase.auth.signInWithPassword({
         email: trimmed,
         password: loginPw,
@@ -748,6 +770,14 @@ function AccessInner() {
         if (fl.locked) {
           setLoginLockUntilMs(fl.lockUntilMs ?? null);
           setLoginFieldMessage(fl.message || SMART_LOCK_MESSAGES.wait);
+          return;
+        }
+        const { data: existingAuth } = await supabase.auth.getUser();
+        const activeEmail = formatDisplayEmail(existingAuth.user?.email);
+        const formEmailNorm = formatDisplayEmail(trimmed);
+        if (activeEmail && formEmailNorm && activeEmail !== formEmailNorm) {
+          setLoginLockUntilMs(null);
+          setLoginFieldMessage(LOGIN_DIFFERENT_ACCOUNT_ACTIVE_IN_BROWSER);
           return;
         }
         setLoginLockUntilMs(null);
@@ -812,6 +842,27 @@ function AccessInner() {
       window.location.href = appendAllSetParam(destination);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleSignOutToSwitchAccount() {
+    if (switchAccountSignOutBusy || busy) return;
+    setSwitchAccountSignOutBusy(true);
+    try {
+      const { data: sessWrap } = await supabase.auth.getSession();
+      const tok = sessWrap.session?.access_token;
+      if (tok) {
+        await fetch("/api/auth/clear-active-session", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${tok}` },
+        }).catch(() => {});
+      }
+      await supabase.auth.signOut();
+      setLoginFieldMessage(null);
+      loginFailRef.current = 0;
+      requestAnimationFrame(() => loginPasswordInputRef.current?.focus());
+    } finally {
+      setSwitchAccountSignOutBusy(false);
     }
   }
 
@@ -1169,6 +1220,24 @@ function AccessInner() {
             {loginFieldMessage && (
               <div className={`${calmNoticeClass} mt-4`}>
                 <CalmAuthMessage text={loginFieldMessage} className="text-sm leading-relaxed text-cb-green" />
+                {loginFieldMessage === LOGIN_DIFFERENT_ACCOUNT_ACTIVE_IN_BROWSER ? (
+                  <button
+                    type="button"
+                    className="cb-btn-primary mt-3 w-full font-semibold"
+                    disabled={busy || switchAccountSignOutBusy}
+                    aria-busy={switchAccountSignOutBusy}
+                    onClick={() => void handleSignOutToSwitchAccount()}
+                  >
+                    {switchAccountSignOutBusy ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                        Signing out…
+                      </span>
+                    ) : (
+                      "Sign out of the other account and continue"
+                    )}
+                  </button>
+                ) : null}
               </div>
             )}
             {emailMismatchShowTryOther && (
@@ -1266,6 +1335,7 @@ function AccessInner() {
                     onChange={setLoginPw}
                     placeholder={PASSWORD_PLACEHOLDER}
                     autoComplete="current-password"
+                    inputRef={loginPasswordInputRef}
                     visible={showLoginPassword}
                     onToggleVisible={() => setShowLoginPassword((s) => !s)}
                   />
@@ -1353,14 +1423,11 @@ function AccessInner() {
             ) : null}
 
             {looksLikeEmail(errorScreenEmail) && (
-              <>
-                <PaymentTargetEmailLine
-                  email={formatDisplayEmail(errorScreenEmail)}
-                  variant={resendSentEmail ? "sent" : "pending"}
-                  className="mt-3 text-center"
-                />
-                <RegisteredEmailChangeForm billId={null} showSupportHint={false} />
-              </>
+              <PaymentTargetEmailLine
+                email={formatDisplayEmail(errorScreenEmail)}
+                variant={resendSentEmail ? "sent" : "pending"}
+                className="mt-3 text-center"
+              />
             )}
 
             <div className="mt-5 flex flex-col gap-3 text-left sm:mt-8 sm:gap-4">

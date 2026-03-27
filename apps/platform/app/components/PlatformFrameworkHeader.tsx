@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
-import { PlatformLogoutToMarketing } from "./PlatformLogoutToMarketing";
 import { PlatformLoginButton } from "./PlatformLoginButton";
+import { PlatformHeaderAuthCluster } from "./PlatformHeaderAuthCluster";
+import { initialsFromDisplayName } from "../../lib/profileInitials";
 
 function marketingHomeUrl(): string {
   const base = MARKETING_SITE_URL.replace(/\/+$/, "");
@@ -104,6 +105,16 @@ export async function PlatformFrameworkHeader({
 
   if (!user && !verifiedUserEmail) return null;
 
+  const displayName = user
+    ? (
+        (user.user_metadata?.name as string | undefined)?.trim() ||
+        (user.user_metadata?.full_name as string | undefined)?.trim() ||
+        null
+      )
+    : null;
+  const emailForInitials = user?.email ?? verifiedUserEmail ?? null;
+  const initials = initialsFromDisplayName(displayName, emailForInitials);
+
   const home = marketingHomeUrl();
 
   return (
@@ -171,7 +182,7 @@ export async function PlatformFrameworkHeader({
           Framework
         </span>
 
-        <PlatformLogoutToMarketing />
+        <PlatformHeaderAuthCluster initials={initials} />
       </div>
     </header>
   );

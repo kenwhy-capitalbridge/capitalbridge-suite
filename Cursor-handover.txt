@@ -1,0 +1,21 @@
+*CURSOR HANDOVER - CAPITAL BRIDGE SYSTEM
+
+
+PASTE CONTEXT AND SUMMARY (handoff)
+Timestamp: 2026-03-28 (session handoff; continue in new chat)
+
+Repo / branch: capitalbridge-suite, main — clean working tree, git push = everything up-to-date. Latest tip on record: 9bc6023 (fix: trial Income Eng crash, Back URL fallback, LionVerdict progress…). Vercel should deploy from this unless redeploy is needed.
+
+Where we left off: User confirmed they’re happy with trial vs paid Lion’s Verdict behavior: trial sees LionVerdictLocked (teaser: headers, tier label, generic “hidden analysis” bullets, CTA); paid (or hasActiveTrialUpgrade) sees LionVerdictActive + full copy. Gate: canAccessLion in packages/lion-verdict/access.ts. Capital Health/Stress also use entitlements (canSeeVerdict, etc.) for some score labeling vs the bottom verdict block.
+
+Committed fixes (context): Trial Income Engineering PDF path no longer crashes when lionReport is null; Back URL treats empty NEXT_PUBLIC_PLATFORM_APP_URL as unset; LionVerdictActive destructuring / types; dashboard clients pass lionAccessUser into legacy apps (Health/Stress). Supabase/Vercel: browser must use publishable/anon key, not sb_secret_….
+
+Next phase (user’s plan — not started in this thread):
+
+UI/UX fixes (primary).
+Then PDF: align output with Capital Bridge Framework flow/template (three pillars: Income Sustainability → Capital Structure → Risk & Resilience; Forever + Income Eng under pillar 1, Health pillar 2, Stress pillar 3). Reference asset: assets/Capital_Bridge_Framework-725bc425-8030-4e01-8f8a-1c34e767cf0e.png (or equivalent in project).
+Optional follow-up: LionVerdictLocked unlock button may still be non-functional (no href/onClick) unless wired elsewhere.
+
+Local files (untracked in earlier snapshot): gpthandover.md, lapsap.txt, s.env — treat as sensitive; don’t commit secrets.
+
+Assistant role in new chat: Pick up at UI/UX work; ask targeted questions if scope (which app/screen first) is unclear. Assume above is accurate unless the user corrects it.

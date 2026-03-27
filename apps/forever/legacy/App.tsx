@@ -25,6 +25,7 @@ import {
 import SliderInput from "./components/SliderInput";
 import { ExpenseType, CalculationResult } from "./types";
 import { formatCurrency, formatPercent } from "./utils/formatters";
+import { advisoryFrameworkPdfIntro } from "@cb/shared/advisoryFramework";
 import { jsPDF } from "jspdf";
 import type { LionVerdictClientReport } from "@cb/advisory-graph/lionsVerdict";
 import {
@@ -33,7 +34,6 @@ import {
   parseForeverRunway,
 } from "@cb/advisory-graph/lionsVerdict";
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
-import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
@@ -89,6 +89,11 @@ function appendLionsVerdictPageToForeverPdf(
     y += 3;
   };
 
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(8);
+  doc.setTextColor(...bodyGray);
+  doc.text("Advisory closing for Step 1 — Can your money last?", margin, y);
+  y += 6;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(...darkGreen);
@@ -473,9 +478,9 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
   const addReportFooter = (doc: any) => {
     doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Capital Bridge Strategic Wealth Diagnostic', 105, 290, { align: 'center' });
-    doc.text('Confidential | Non-PII Report | For Personal Financial Planning Reference Only', 105, 295, { align: 'center' });
+    doc.setFont("helvetica", "normal");
+    doc.text("Capital Bridge · Personal planning report — not investment advice", 105, 288, { align: "center" });
+    doc.text("Confidential · For discussion with your financial adviser", 105, 293, { align: "center" });
   };
 
   const handleDownloadPDF = async () => {
@@ -556,6 +561,29 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
       doc.setTextColor(...bodyGray);
       doc.text(`Report Generated: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth - margin, y - 4, { align: 'right' });
       y += 10;
+      drawSectionDivider();
+
+      const pdfIntro = advisoryFrameworkPdfIntro("sustainability_forever");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(160, 120, 30);
+      doc.text(pdfIntro.eyebrow.toUpperCase(), margin, y);
+      y += 4;
+      doc.setFontSize(10);
+      doc.setTextColor(...darkGreen);
+      doc.text(pdfIntro.title, margin, y);
+      y += 5;
+      doc.setFontSize(9);
+      doc.text(pdfIntro.youAreHere, margin, y);
+      y += 5;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(...bodyGray);
+      for (const line of doc.splitTextToSize(pdfIntro.body, pageWidth - 2 * margin)) {
+        doc.text(line, margin, y);
+        y += 4.1;
+      }
+      y += sectionGap;
       drawSectionDivider();
 
       // --- 3. Client Financial Snapshot ---
@@ -1017,26 +1045,22 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
           <div className="mt-10">
             <div className="mx-auto max-w-3xl">
               <div className="bg-[#00160f] border border-[#FFCC6A]/20 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 text-sm text-gray-200">
-                {lionAccessEnabled ? (
-                  <LionVerdictActive
-                    user={lionAccessUser}
-                    userId={lionSeedUserId}
-                    reportType="forever_income"
-                    tier={foreverLionTier}
-                    confidenceScore={foreverLionConfidenceScore}
-                    surplusRatio={surplusRatio}
-                    riskTolerance={foreverLionRiskTolerance}
-                    score={foreverLionScore}
-                    horizon={foreverLionHorizonYears}
-                    horizonLabel={foreverLionHorizonLabel}
-                    gap={foreverLionGap}
-                    target={foreverLionTargetCapital}
-                    progress={foreverLionProgressPercent}
-                    onCopyComputed={setLionCopyPayload}
-                  />
-                ) : (
-                  <LionVerdictLocked tierLabel={foreverLionTier} />
-                )}
+                <LionVerdictActive
+                  user={lionAccessUser}
+                  userId={lionSeedUserId}
+                  reportType="forever_income"
+                  tier={foreverLionTier}
+                  confidenceScore={foreverLionConfidenceScore}
+                  surplusRatio={surplusRatio}
+                  riskTolerance={foreverLionRiskTolerance}
+                  score={foreverLionScore}
+                  horizon={foreverLionHorizonYears}
+                  horizonLabel={foreverLionHorizonLabel}
+                  gap={foreverLionGap}
+                  target={foreverLionTargetCapital}
+                  progress={foreverLionProgressPercent}
+                  onCopyComputed={setLionCopyPayload}
+                />
               </div>
             </div>
           </div>

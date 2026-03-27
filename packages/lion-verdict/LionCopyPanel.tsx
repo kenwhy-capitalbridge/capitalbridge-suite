@@ -67,13 +67,13 @@ export function LionCopyPanel({
         </div>
       )}
       <div className="space-y-4 text-sm text-white/80">
-        <Section label="Reality" content={fullVerdict.reality} />
-        <Section label="Horizon" content={fullVerdict.horizon} />
-        <Section label="Gap" content={fullVerdict.gap} />
-        <Section label="Progress" content={fullVerdict.progress} />
-        <Section label="Capital reality" content={fullVerdict.capitalReality} />
+        <Section label="Where things stand" content={fullVerdict.reality} />
+        <Section label="How long the money may last" content={fullVerdict.horizon} />
+        <Section label="The gap to close" content={fullVerdict.gap} />
+        <Section label="Progress so far" content={fullVerdict.progress} />
+        <Section label="What your money can realistically do" content={fullVerdict.capitalReality} />
         <div>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-2">Strategic options</p>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-2">Options to discuss</p>
           <ul className="space-y-1 pl-4 text-xs text-white/80">
             {fullVerdict.strategicOptions.map((option) => (
               <li key={option} className="leading-snug">
@@ -82,10 +82,10 @@ export function LionCopyPanel({
             ))}
           </ul>
         </div>
-        <Section label="Capital decision" content={fullVerdict.capitalDecision} bordered />
-        <Section label="Scenario guidance" content={fullVerdict.scenarioGuidance} bordered />
+        <Section label="Decision on your money" content={fullVerdict.capitalDecision} bordered />
+        <Section label="If things change" content={fullVerdict.scenarioGuidance} bordered />
         <div>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-2">Action plan</p>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-2">Practical next steps</p>
           <ul className="space-y-1 pl-4 text-xs text-white/80">
             {fullVerdict.actionPlan.map((item) => (
               <li key={item} className="leading-snug">
@@ -95,11 +95,11 @@ export function LionCopyPanel({
           </ul>
         </div>
         <div className="rounded-lg bg-[#122419]/90 px-4 py-3">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">If you do nothing</p>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">If no changes are made</p>
           <p>{fullVerdict.doNothingOutcome}</p>
         </div>
         <div className="text-sm text-white/80">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">Closing line</p>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">Closing thought</p>
           <p>{fullVerdict.closingLine}</p>
         </div>
       </div>

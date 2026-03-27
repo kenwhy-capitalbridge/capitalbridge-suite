@@ -1747,35 +1747,31 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           )}
 
           {/* 15. The Lion's Verdict — final card */}
-          {lionAccessEnabled ? (
-            <div
-              className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl"
-              style={{ opacity: canSeeVerdict ? 1 : 0.55 }}
-            >
-              <h2 className="text-sm md:text-lg font-bold mb-4 text-[#C6A24D] uppercase tracking-wide serif-font">The Lion&apos;s Verdict</h2>
-              {showLionActive ? (
-                <LionVerdictActive
-                  user={lionAccessUser}
-                  userId={lionSeedUserId}
-                  reportType="capital_stress"
-                  tier={lionTierLabel}
-                  score={lionScore}
-                  confidenceScore={lionConfidenceScore}
-                  surplusRatio={lionSurplusRatio}
-                  riskTolerance={lionRiskTolerance}
-                  horizon={horizonYears}
-                  horizonLabel={horizonLabel}
-                  target={targetCapital}
-                  gap={gapAmount}
-                  progress={progressPercent}
-                />
-              ) : (
-                <LionVerdictLocked tierLabel={lionTierLabel} />
-              )}
-            </div>
-          ) : (
-            <LionVerdictLocked tierLabel={lionTierLabel} />
-          )}
+          <div
+            className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl"
+            style={{ opacity: canSeeVerdict ? 1 : 0.55 }}
+          >
+            <h2 className="text-sm md:text-lg font-bold mb-4 text-[#C6A24D] uppercase tracking-wide serif-font">The Lion&apos;s Verdict</h2>
+            {showLionActive ? (
+              <LionVerdictActive
+                user={lionAccessUser}
+                userId={lionSeedUserId}
+                reportType="capital_stress"
+                tier={lionTierLabel}
+                score={lionScore}
+                confidenceScore={lionConfidenceScore}
+                surplusRatio={lionSurplusRatio}
+                riskTolerance={lionRiskTolerance}
+                horizon={horizonYears}
+                horizonLabel={horizonLabel}
+                target={targetCapital}
+                gap={gapAmount}
+                progress={progressPercent}
+              />
+            ) : (
+              <LionVerdictLocked tierLabel={lionTierLabel} />
+            )}
+          </div>
 
           {/* EXPAND ALL / COLLAPSE ALL — below The Lion's Verdict */}
           {mcResult && (

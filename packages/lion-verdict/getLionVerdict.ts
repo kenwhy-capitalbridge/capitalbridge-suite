@@ -17,6 +17,11 @@ export type GlobalHistory = {
 
 export type Persona = 'conservative' | 'balanced' | 'aggressive';
 
+export type LionVerdictMemory = {
+  usedHeadlines: string[];
+  usedGuidance: string[];
+};
+
 export type GetLionVerdictInput = {
   userId: string;
   reportType: string;
@@ -28,6 +33,7 @@ export type GetLionVerdictInput = {
   headlineHistory?: HistoryEntry[];
   guidanceHistory?: HistoryEntry[];
   globalHistory?: GlobalHistory;
+  memory?: LionVerdictMemory;
 };
 
 export type ConfidenceBand = 'high' | 'medium' | 'low';
@@ -35,11 +41,13 @@ export type ConfidenceBand = 'high' | 'medium' | 'low';
 export type GetLionVerdictOutput = {
   headline: string;
   guidance: string;
+  guidanceBullets: string[];
   headlineIndex: number;
   guidanceIndex: number;
   confidenceBand: ConfidenceBand;
   emphasis?: string;
   persona: Persona;
+  memory: LionVerdictMemory;
   history: {
     headline: HistoryEntry[];
     guidance: HistoryEntry[];
@@ -86,57 +94,72 @@ export function getLionVerdict(input: GetLionVerdictInput): GetLionVerdictOutput
   const h = hashString(seed);
   const personaHeadlines = boostWeights(headlines, input.persona);
   const personaGuidance = boostWeights(guidance, input.persona);
-  const computedHeadlineIndex = pickWeightedIndex(personaHeadlines, h);
-  const computedGuidanceIndex = pickWeightedIndex(personaGuidance, h >> 3);
-  const resolvedHeadlineIndex =
-    typeof input.previousHeadlineIndex === 'number' && headlines.length > 0
-      ? (input.previousHeadlineIndex + 1) % headlines.length
-      : computedHeadlineIndex;
-  const resolvedGuidanceIndex =
-    typeof input.previousGuidanceIndex === 'number' && guidance.length > 0
-      ? (input.previousGuidanceIndex + 1) % guidance.length
-      : computedGuidanceIndex;
-  const headlineIndex = avoidRecent(
-    resolvedHeadlineIndex,
-    input.headlineHistory,
-    headlines.length,
-    input.globalHistory?.headline,
+  const memory = input.memory ?? { usedHeadlines: [], usedGuidance: [] };
+  const headlineIndex = selectBestIndex({
+    lines: personaHeadlines,
+    tier,
+    seed: `${seed}:headline:${h}`,
+    usedTextHistory: memory.usedHeadlines,
+    localHistory: input.headlineHistory,
+    globalHistory: input.globalHistory?.headline,
     reportType,
-  );
-  const guidanceIndex = avoidRecent(
-    resolvedGuidanceIndex,
-    input.guidanceHistory,
-    guidance.length,
-    input.globalHistory?.guidance,
-    reportType,
-  );
+    preferredIndex:
+      typeof input.previousHeadlineIndex === 'number' && headlines.length > 0
+        ? (input.previousHeadlineIndex + 1) % headlines.length
+        : pickWeightedIndex(personaHeadlines, h),
+    excluded: new Set<number>(),
+  });
+  const guidanceCount = tier === 'AT_RISK' || tier === 'NOT_SUSTAINABLE' ? 4 : 3;
+  const selectedGuidanceIndices: number[] = [];
+  let syntheticUsedGuidance = [...memory.usedGuidance];
+  for (let i = 0; i < guidanceCount; i += 1) {
+    const guidanceIndex = selectBestIndex({
+      lines: personaGuidance,
+      tier,
+      seed: `${seed}:guidance:${h >> 3}:${i}`,
+      usedTextHistory: syntheticUsedGuidance,
+      localHistory: input.guidanceHistory,
+      globalHistory: input.globalHistory?.guidance,
+      reportType,
+      preferredIndex:
+        typeof input.previousGuidanceIndex === 'number' && guidance.length > 0
+          ? (input.previousGuidanceIndex + 1 + i) % guidance.length
+          : pickWeightedIndex(personaGuidance, (h >> 3) + i),
+      excluded: new Set(selectedGuidanceIndices),
+    });
+    selectedGuidanceIndices.push(guidanceIndex);
+    const selectedText = normalizeLineText(personaGuidance[guidanceIndex]?.text ?? '');
+    if (selectedText) syntheticUsedGuidance.push(selectedText);
+  }
+  const guidanceIndex = selectedGuidanceIndices[0] ?? 0;
   const confidenceScore =
     typeof input.confidenceScore === 'number' && Number.isFinite(input.confidenceScore)
       ? input.confidenceScore
       : 0.5;
   const confidenceBand = determineConfidenceBand(confidenceScore);
-  const prefixList = CONFIDENCE_PREFIXES[confidenceBand];
-  const prefixSeed = hashString(`${seed}:confidence`);
-  const prefix = prefixList[prefixSeed % prefixList.length];
-  const baseHeadline = personaHeadlines[headlineIndex]?.text ?? '';
-  const finalHeadline = prefix ? `${prefix} ${baseHeadline}` : baseHeadline;
-  let guidanceText = personaGuidance[guidanceIndex]?.text ?? '';
-  if (confidenceBand === 'low' && guidanceText) {
-    guidanceText = `Conditions are less certain. ${guidanceText}`;
-  }
-  const emphasis = selectEmphasis(tier, h >> 7);
+  const finalHeadline = normalizeLineText(personaHeadlines[headlineIndex]?.text ?? '');
+  const guidanceBullets = selectedGuidanceIndices
+    .map((idx) => normalizeLineText(personaGuidance[idx]?.text ?? ''))
+    .filter(Boolean);
+  const guidanceText = guidanceBullets.map((line) => `• ${line}`).join('\n');
   const now = Date.now();
   const headlineHistory = appendHistory(input.headlineHistory, { index: headlineIndex, timestamp: now });
   const guidanceHistory = appendHistory(input.guidanceHistory, { index: guidanceIndex, timestamp: now });
+  const updatedMemory: LionVerdictMemory = {
+    usedHeadlines: appendTextHistory(memory.usedHeadlines, finalHeadline),
+    usedGuidance: appendTextHistory(memory.usedGuidance, ...guidanceBullets),
+  };
 
   return {
     headline: finalHeadline,
     guidance: guidanceText,
+    guidanceBullets,
     headlineIndex,
     guidanceIndex,
     confidenceBand,
-    emphasis,
+    emphasis: undefined,
     persona: input.persona,
+    memory: updatedMemory,
     history: {
       headline: headlineHistory,
       guidance: guidanceHistory,
@@ -144,40 +167,10 @@ export function getLionVerdict(input: GetLionVerdictInput): GetLionVerdictOutput
   };
 }
 
-const CONFIDENCE_PREFIXES: Record<ConfidenceBand, readonly string[]> = {
-  high: ['Clearly,', 'Strongly,', 'Evidently,'],
-  medium: ['Steadily,', 'In balance,', 'On course,'],
-  low: ['Cautiously,', 'Tentatively,', 'With care,'],
-};
-
 function determineConfidenceBand(score: number): ConfidenceBand {
   if (score >= 0.75) return 'high';
   if (score >= 0.4) return 'medium';
   return 'low';
-}
-
-type EmphasisTier = 'AT_RISK' | 'NOT_SUSTAINABLE';
-
-const EMPHASIS_LINES: Record<EmphasisTier, readonly string[]> = {
-  AT_RISK: [
-    'Action now keeps critical gaps from widening any further.',
-    'Lock in one defensive adjustment before pressure overruns the structure.',
-    'Prioritise a concrete leverage or withdrawal reset this review cycle.',
-  ],
-  NOT_SUSTAINABLE: [
-    'Immediate preservation is the only path to avoid total depletion.',
-    'Reset expectations: income must pause until capital is stabilised.',
-    'Shift focus entirely to survival before considering growth levers again.',
-  ],
-};
-
-function selectEmphasis(tier: Tier, hash: number): string | undefined {
-  if (tier !== 'AT_RISK' && tier !== 'NOT_SUSTAINABLE') return undefined;
-  const lines = EMPHASIS_LINES[tier];
-  if (!lines.length) return undefined;
-  const lineModels = lines.map((text) => ({ text, weight: 1 } as Line));
-  const idx = pickWeightedIndex(lineModels, hash);
-  return lines[idx];
 }
 
 const HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -221,7 +214,102 @@ function avoidRecent(
 function appendHistory(history: HistoryEntry[] | undefined, entry: HistoryEntry): HistoryEntry[] {
   const cutoff = Date.now() - HISTORY_TTL_MS;
   const pruned = (history ?? []).filter((item) => item.timestamp >= cutoff);
-  return [...pruned, entry].slice(-3);
+  return [...pruned, entry].slice(-20);
+}
+
+function normalizeLineText(raw: string): string {
+  return raw.replace(/^•\s*/u, '').replace(/\s+/g, ' ').trim();
+}
+
+function appendTextHistory(existing: string[], ...items: string[]): string[] {
+  const out = [...existing];
+  for (const item of items) {
+    const clean = normalizeLineText(item);
+    if (clean) out.push(clean);
+  }
+  return out.slice(-20);
+}
+
+function selectBestIndex(args: {
+  lines: Line[];
+  tier: Tier;
+  seed: string;
+  usedTextHistory: string[];
+  localHistory?: HistoryEntry[];
+  globalHistory?: CrossReportHistoryEntry[];
+  reportType: string;
+  preferredIndex: number;
+  excluded: Set<number>;
+}): number {
+  const {
+    lines,
+    tier,
+    seed,
+    usedTextHistory,
+    localHistory,
+    globalHistory,
+    reportType,
+    preferredIndex,
+    excluded,
+  } = args;
+  if (!lines.length) return 0;
+  const recentUsed = new Set(usedTextHistory.slice(-10));
+  const localRecent = new Set((localHistory ?? []).slice(-10).map((x) => x.index % lines.length));
+  const globalRecent = new Set(
+    (globalHistory ?? [])
+      .slice(-10)
+      .filter((x) => x.reportType !== reportType)
+      .map((x) => x.index % lines.length),
+  );
+  let best = preferredIndex % lines.length;
+  let bestScore = Number.NEGATIVE_INFINITY;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (excluded.has(i)) continue;
+    const text = normalizeLineText(lines[i].text);
+    if (!lineSatisfiesTierTone(text, tier)) continue;
+    const usedCount = usedTextHistory.filter((x) => x === text).length;
+    const neverUsed = usedCount === 0;
+    const inRecent = recentUsed.has(text);
+    const score =
+      lines[i].weight * 10 +
+      (neverUsed ? 120 : 0) +
+      (inRecent ? -90 : 0) +
+      usedCount * -14 +
+      (localRecent.has(i) ? -55 : 0) +
+      (globalRecent.has(i) ? -35 : 0) +
+      (i === preferredIndex ? 4 : 0) +
+      ((hashString(`${seed}:${i}`) % 100) / 100);
+    if (score > bestScore) {
+      best = i;
+      bestScore = score;
+    }
+  }
+  if (excluded.has(best)) {
+    for (let i = 0; i < lines.length; i += 1) {
+      if (!excluded.has(i)) return i;
+    }
+  }
+  return best;
+}
+
+function lineSatisfiesTierTone(text: string, tier: Tier): boolean {
+  const lower = text.toLowerCase();
+  if (tier === 'STRONG') {
+    return !/\b(but|must|depends?|limited)\b/.test(lower);
+  }
+  if (tier === 'STABLE') {
+    return /\b(but|must|depends?|limited)\b/.test(lower);
+  }
+  if (tier === 'FRAGILE') {
+    return /\b(uncertain|conditional|sensitive|may|risk|fragile|not assured)\b/.test(lower);
+  }
+  if (tier === 'AT_RISK') {
+    return /\b(weaken|declin|slip|erod|strain|falter|failing)\b/.test(lower);
+  }
+  if (tier === 'NOT_SUSTAINABLE') {
+    return /\b(fail|collapse|gone|cannot hold|break|imminent|non-optional|not viable)\b/.test(lower);
+  }
+  return true;
 }
 
 export function mapPersona({

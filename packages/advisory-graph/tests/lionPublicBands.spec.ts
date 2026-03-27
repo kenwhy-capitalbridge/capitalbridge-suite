@@ -14,16 +14,16 @@ const allStrong: LionStrongEligibility = {
 };
 
 describe('lionPublicStatusFromScore0to100 bands (no score math change)', () => {
-  it('maps thresholds: 0–34, 35–54, 55–69, 70–84, 85–100', () => {
+  it('maps thresholds: 0–38, 39–56, 57–76, 77–89, 90–100', () => {
     expect(lionPublicStatusFromScore0to100(0, allStrong)).toBe('NOT_SUSTAINABLE');
-    expect(lionPublicStatusFromScore0to100(34, allStrong)).toBe('NOT_SUSTAINABLE');
-    expect(lionPublicStatusFromScore0to100(35, allStrong)).toBe('AT_RISK');
-    expect(lionPublicStatusFromScore0to100(54, allStrong)).toBe('AT_RISK');
-    expect(lionPublicStatusFromScore0to100(55, allStrong)).toBe('FRAGILE');
-    expect(lionPublicStatusFromScore0to100(69, allStrong)).toBe('FRAGILE');
-    expect(lionPublicStatusFromScore0to100(70, allStrong)).toBe('STABLE');
-    expect(lionPublicStatusFromScore0to100(84, allStrong)).toBe('STABLE');
-    expect(lionPublicStatusFromScore0to100(85, allStrong)).toBe('STRONG');
+    expect(lionPublicStatusFromScore0to100(38, allStrong)).toBe('NOT_SUSTAINABLE');
+    expect(lionPublicStatusFromScore0to100(39, allStrong)).toBe('AT_RISK');
+    expect(lionPublicStatusFromScore0to100(56, allStrong)).toBe('AT_RISK');
+    expect(lionPublicStatusFromScore0to100(57, allStrong)).toBe('FRAGILE');
+    expect(lionPublicStatusFromScore0to100(76, allStrong)).toBe('FRAGILE');
+    expect(lionPublicStatusFromScore0to100(77, allStrong)).toBe('STABLE');
+    expect(lionPublicStatusFromScore0to100(89, allStrong)).toBe('STABLE');
+    expect(lionPublicStatusFromScore0to100(90, allStrong)).toBe('STRONG');
     expect(lionPublicStatusFromScore0to100(100, allStrong)).toBe('STRONG');
   });
 
@@ -54,7 +54,7 @@ describe('lionPublicStatusFromScore0to100 bands (no score math change)', () => {
     expect(lionPublicStatusFromScore0to100(90, e)).toBe('STABLE');
   });
 
-  it('strong capital + no gap + long horizon + clean risk: STRONG allowed at 85+', () => {
+  it('strong capital + no gap + long horizon + clean risk: STRONG allowed at 90+', () => {
     const inputs = {
       capitalResilienceScore: 80,
       tier: 'Very Strong' as const,
@@ -73,6 +73,6 @@ describe('lionPublicStatusFromScore0to100 bands (no score math change)', () => {
     };
     const e = lionStrongEligibilityFromStressInputs(inputs, goal);
     expect(lionStrongEligible(e)).toBe(true);
-    expect(lionPublicStatusFromScore0to100(88, e)).toBe('STRONG');
+    expect(lionPublicStatusFromScore0to100(90, e)).toBe('STRONG');
   });
 });

@@ -33,7 +33,6 @@ import {
   runLionVerdictEngineCapitalHealth,
 } from '@cb/advisory-graph/lionsVerdict';
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
-import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
@@ -1692,27 +1691,23 @@ const CalculatorScreen = forwardRef<
           className="mt-4 sm:mt-6"
           aria-labelledby="lions-verdict-heading"
         >
-          {lionAccessEnabled ? (
-            <div className="mx-auto max-w-3xl">
-              <LionVerdictActive
-                user={lionAccessUser}
-                userId={lionSeedUserId}
-                reportType="capital_health"
-                tier={lionTierLabel}
-                score={lionScore}
-                confidenceScore={lionConfidenceScore}
-                surplusRatio={lionSurplusRatio}
-                riskTolerance={lionRiskTolerance}
-                horizon={depletionYears}
-                horizonLabel={horizonLabel}
-                target={targetCapital}
-                gap={gapAmount}
-                progress={progressPercent}
-              />
-            </div>
-          ) : (
-            <LionVerdictLocked tierLabel={lionTierLabel} />
-          )}
+          <div className="mx-auto max-w-3xl">
+            <LionVerdictActive
+              user={lionAccessUser}
+              userId={lionSeedUserId}
+              reportType="capital_health"
+              tier={lionTierLabel}
+              score={lionScore}
+              confidenceScore={lionConfidenceScore}
+              surplusRatio={lionSurplusRatio}
+              riskTolerance={lionRiskTolerance}
+              horizon={depletionYears}
+              horizonLabel={horizonLabel}
+              target={targetCapital}
+              gap={gapAmount}
+              progress={progressPercent}
+            />
+          </div>
         </section>
 
         <footer className="py-8 border-t border-[#0D3A1D] text-center text-xs text-[#F6F5F1]/80">

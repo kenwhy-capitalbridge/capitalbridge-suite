@@ -133,12 +133,39 @@ export function resolveCalmAuthMessage(
   return { kind, message, level: tierLevel(Math.max(1, attempt)) };
 }
 
+/**
+ * `/access` first load: magic link hash, or `?code=` PKCE exchange. Explains common “works in one browser only” cases.
+ */
+export const ACCESS_INIT_PKCE_WRONG_BROWSER =
+  "This sign-in link must finish opening in the same browser window where you requested it — including the same Incognito or private window. Email apps often open links in your normal browser instead: copy the link and paste it into the window where you started sign-in. If you already used this link, request a new one.";
+
+export function resolveAccessInitErrorMessage(
+  attempt: number,
+  raw?: string | null,
+): { message: string; level: 1 | 2 | 3 } {
+  const m = (raw ?? "").toLowerCase();
+  if (
+    m.includes("code verifier") ||
+    m.includes("code_verifier") ||
+    m.includes("pkce") ||
+    (m.includes("invalid request") && (m.includes("auth code") || m.includes("verifier")))
+  ) {
+    return { message: ACCESS_INIT_PKCE_WRONG_BROWSER, level: tierLevel(Math.max(1, attempt)) };
+  }
+  const { message, level } = resolveCalmAuthMessage("link", attempt, raw);
+  return { message, level };
+}
+
 /** First sign-in failure when provider looks like rate-limit (often wrong password or throttle). */
 export const LOGIN_SIGNIN_FIRST_TRY_AMBIGUOUS =
   "We couldn’t sign you in. Please try again, or use “Send A New Link” to reset your password.";
 
 export const LOGIN_SIGNIN_RATE_LIMIT_RETRY =
   "Still not working. Please try again or use “Send A New Link” to reset your password.";
+
+/** Shown when sign-in fails but this browser still has an active session for a different email. */
+export const LOGIN_DIFFERENT_ACCOUNT_ACTIVE_IN_BROWSER =
+  "Only one account can be used in this browser window. This can happen in Incognito if this window is already signed in as a different email — try signing out, or close Incognito and open a new private window. You can also use a separate Chrome profile for another account.";
 
 export const LOGIN_SIGNIN_RATE_LIMIT_FINAL = "Please wait a few minutes, then try again.";
 

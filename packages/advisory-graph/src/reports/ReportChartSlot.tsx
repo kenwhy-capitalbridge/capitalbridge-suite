@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { CB_REPORT_CHART_WRAP } from './classes';
-import { REPORT_MUTED, REPORT_TEXT } from './tokens';
+import { REPORT_FONT_DISPLAY, REPORT_MUTED, REPORT_TEXT } from './tokens';
 
 export type ReportChartSlotProps = {
   /** Chart title shown above the figure */
@@ -52,7 +52,7 @@ export function ReportChartSlot({
             fontWeight: 700,
             color: REPORT_TEXT,
             marginBottom: '0.35em',
-            fontFamily: 'Crimson Pro, ui-serif, Georgia, serif',
+            fontFamily: REPORT_FONT_DISPLAY,
           }}
         >
           {title}

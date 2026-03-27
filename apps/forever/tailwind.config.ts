@@ -6,7 +6,18 @@ const config: Config = {
     "./legacy/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        "cb-green": "#0D3A1D",
+        "cb-gold": "#FFCC6A",
+        "cb-gold-dark": "#8B6914",
+        "cb-cream": "#F6F5F1",
+      },
+      fontFamily: {
+        sans: ["var(--cb-font-sans)", "system-ui", "sans-serif"],
+        serif: ["var(--cb-font-serif)", "Georgia", "serif"],
+      },
+    },
   },
   plugins: [],
 };

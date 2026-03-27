@@ -1,0 +1,43 @@
+/* Capital Bridge — shared base for model apps (Forever, Income Engineering, Capital Health, Stress).
+   Aligns with login tailwind tokens: Inter body, Roboto Serif headings, cb-green / cb-gold / cb-cream. */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Serif:wght@400;600;700&display=swap");
+
+:root {
+  --cb-green: #0d3a1d;
+  --cb-gold: #ffcc6a;
+  --cb-gold-dark: #8b6914;
+  --cb-cream: #f6f5f1;
+  --cb-font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --cb-font-serif: "Roboto Serif", Georgia, "Noto Serif", "Times New Roman", serif;
+  /* Legacy variable names used in some legacy CSS */
+  --green: var(--cb-green);
+  --gold: var(--cb-gold);
+  --offwhite: var(--cb-cream);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--cb-font-sans);
+  font-size: 16px;
+  background-color: var(--cb-green);
+  color: var(--cb-cream);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--cb-font-serif);
+  font-weight: 600;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

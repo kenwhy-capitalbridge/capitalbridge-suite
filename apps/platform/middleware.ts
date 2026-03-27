@@ -26,7 +26,12 @@ function applyHtmlNoStoreHeaders(res: NextResponse): void {
 }
 
 function isProtected(pathname: string): boolean {
-  return pathname === "/" || pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  return (
+    pathname === "/" ||
+    pathname === "/dashboard" ||
+    pathname === "/profile" ||
+    pathname.startsWith("/dashboard/")
+  );
 }
 
 async function clearUserActiveSessionRow(userId: string): Promise<void> {

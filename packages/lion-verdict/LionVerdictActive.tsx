@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { LionCopyPanel } from "./LionCopyPanel";
+import { LionVerdictLocked } from "./LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "./access";
 import {
   getLionVerdict,
@@ -9,6 +10,7 @@ import {
   type GetLionVerdictOutput,
   type GlobalHistory,
   type HistoryEntry,
+  type LionVerdictMemory,
 } from "./getLionVerdict";
 import type { Tier } from "./copy";
 
@@ -56,23 +58,20 @@ export function LionVerdictActive({
     headline: [],
     guidance: [],
   });
+  const memoryRef = useRef<LionVerdictMemory>({
+    usedHeadlines: [],
+    usedGuidance: [],
+  });
   const prevIndexRef = useRef<{ headline?: number; guidance?: number }>({});
 
   const hasEmittedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasAccess) {
-      historyRef.current = { headline: [], guidance: [] };
-      prevIndexRef.current = {};
-    }
-  }, [hasAccess]);
-
-  useEffect(() => {
-    if (!hasAccess) return;
     historyRef.current = { headline: [], guidance: [] };
+    memoryRef.current = { usedHeadlines: [], usedGuidance: [] };
     prevIndexRef.current = {};
     hasEmittedRef.current = false;
-  }, [reportType, tier, hasAccess]);
+  }, [reportType, tier]);
 
   useEffect(() => {
     hasEmittedRef.current = false;
@@ -81,7 +80,6 @@ export function LionVerdictActive({
   const persona = useMemo(() => mapPersona({ riskTolerance, surplusRatio }), [riskTolerance, surplusRatio]);
 
   const copy = useMemo(() => {
-    if (!hasAccess) return null;
     const result = getLionVerdict({
       userId,
       reportType,
@@ -93,15 +91,16 @@ export function LionVerdictActive({
       globalHistory,
       previousHeadlineIndex: prevIndexRef.current.headline,
       previousGuidanceIndex: prevIndexRef.current.guidance,
+      memory: memoryRef.current,
     });
     historyRef.current = result.history;
+    memoryRef.current = result.memory;
     prevIndexRef.current = {
       headline: result.headlineIndex,
       guidance: result.guidanceIndex,
     };
     return result;
   }, [
-    hasAccess,
     userId,
     reportType,
     tier,
@@ -122,7 +121,18 @@ export function LionVerdictActive({
     onCopyComputed(hasAccess ? copy : null);
   }, [copy, hasAccess, onCopyComputed]);
 
-  if (!hasAccess || !copy) return null;
+  if (!copy) return null;
+
+  if (!hasAccess) {
+    return (
+      <LionVerdictLocked
+        tierLabel={tier}
+        headline={copy.headline}
+        teaserGuidance={copy.guidanceBullets.slice(0, 2)}
+        hiddenGuidanceCount={Math.max(copy.guidanceBullets.length - 2, 0)}
+      />
+    );
+  }
 
   const formatRmValue = (value?: number) =>
     typeof value === 'number' && Number.isFinite(value)
@@ -147,7 +157,7 @@ export function LionVerdictActive({
 
   const fullVerdict = {
     openingLine: copy.headline,
-    closingLine: copy.guidance,
+    closingLine: copy.guidanceBullets.join(" "),
     reality: realityLine,
     horizon: horizonLine,
     gap: gapLine,

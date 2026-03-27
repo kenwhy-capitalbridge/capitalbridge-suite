@@ -53,6 +53,7 @@ export async function getServerUserAndMembership(): Promise<{
 
     const name =
       (user.user_metadata?.name as string | undefined)?.trim() ||
+      (user.user_metadata?.full_name as string | undefined)?.trim() ||
       null;
 
     return {

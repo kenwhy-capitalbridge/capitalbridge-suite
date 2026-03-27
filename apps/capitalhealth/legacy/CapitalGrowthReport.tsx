@@ -20,6 +20,7 @@ import { getRiskTier } from './src/lib/riskTier';
 import type { ScenarioAdjustments } from './src/lib/capitalHealthTypes';
 import { APP_NAME } from './src/lib/capitalHealthCopy';
 import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
+import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import {
   formatLionPublicStatusLabel,
   healthTierToLion,
@@ -45,11 +46,11 @@ export type ReportResult = SimulationResult & {
 
 const ADVISORY_LONG: Record<StatusKind, string> = {
   sustainable:
-    'The lion rests because the structure holds. Your current settings generate enough income to meet your goal while protecting your base. Consider modestly increasing reinvestment or trimming risk to deepen resilience.',
+    'On the numbers you entered, your withdrawals look supportable by portfolio income. Your base is not under obvious strain. You can still trim risk or add a buffer for extra peace of mind — this is about resilience, not chasing returns.',
   plausible:
-    'The pride advances with caution. You are within striking distance of your goal. Tighten the structure: raise reinvestment slightly, extend the horizon, or switch to a %‑of‑capital withdrawal. Small changes compound into strength.',
+    'You are close to a workable setup, but there is little spare room. Small changes help: slightly lower withdrawals, a little more capital, a longer time horizon, or more cautious return assumptions. Little adjustments now often matter more than big bets later.',
   unsustainable:
-    'A structure without pillars will fail. At these settings, your income target risks eroding the base. Lower withdrawals, top up capital, lengthen the horizon, or increase the cash buffer to prevent forced selling. Rebuild the footing first.',
+    'On these settings, spending is likely to outpace what the portfolio can replace. That can wear down savings faster than people expect — it is maths, not a judgement. Before chasing higher returns, consider lowering withdrawals, adding capital, or extending your horizon. Sort stability first.',
 };
 
 const GOLD = '#FFCC6A';
@@ -485,6 +486,8 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
   const chartPoints = chartData.filter((_, i) => i % step === 0).slice(0, BAR_COUNT);
   const reviewDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 1); return d.toLocaleDateString(undefined, { dateStyle: 'long' }); })();
 
+  const healthFrameworkIntro = advisoryFrameworkPdfIntro('capital_structure_health');
+
   const executiveSummary =
     inputs.mode === 'withdrawal'
       ? `Based on the assumptions provided, the current withdrawal structure ${incomeGap > 0 ? 'places meaningful pressure on the portfolio.' : 'is within sustainable limits.'} A withdrawal of ${formatCurrency(inputs.targetMonthlyIncome)} per month with expected returns of ${formatNum(inputs.expectedAnnualReturnPct, 1)}% produces a projected capital runway of ${depletionMo == null ? 'perpetual income' : runwayYearsText}. ${incomeGap > 0 ? 'The model identifies a structural income gap where withdrawals exceed sustainable portfolio returns, resulting in progressive capital depletion. Adjustments to income, capital base, or portfolio returns would materially improve the resilience of the structure.' : 'The structure is supported by sustainable returns under current assumptions.'}`
@@ -538,6 +541,31 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
                 <Text>contact@capitalbridge.my</Text>
               </View>
             </View>
+          </View>
+
+          <View
+            style={[
+              styles.sectionWrap,
+              PDF_BREAK_INSIDE_AVOID,
+              {
+                marginBottom: 12,
+                padding: 10,
+                borderLeftWidth: 3,
+                borderLeftColor: GOLD,
+                backgroundColor: 'rgba(255, 252, 245, 0.95)',
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 8, color: MUTED, marginBottom: 4, textTransform: 'uppercase' }}>
+              {healthFrameworkIntro.eyebrow}
+            </Text>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 4 }}>
+              {healthFrameworkIntro.title}
+            </Text>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 6 }}>
+              {healthFrameworkIntro.youAreHere}
+            </Text>
+            <Text style={{ fontSize: 9, color: MUTED, lineHeight: 1.45 }}>{healthFrameworkIntro.body}</Text>
           </View>
 
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>

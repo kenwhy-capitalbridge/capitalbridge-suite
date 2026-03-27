@@ -9,7 +9,12 @@ import { platformPostLogoutUrl } from "@cb/shared/urls";
  * Clears server session state, signs out of Supabase, then sends the user to the
  * platform root with the Framework scroll-to-text fragment (see platformPostLogoutUrl).
  */
-export function PlatformLogoutToMarketing() {
+export function PlatformLogoutToMarketing({
+  inline = false,
+}: {
+  /** When nested in a flex row (e.g. next to profile avatar), omit grid justifySelf. */
+  inline?: boolean;
+} = {}) {
   const [pending, setPending] = useState(false);
 
   const onLogout = useCallback(async () => {
@@ -53,7 +58,7 @@ export function PlatformLogoutToMarketing() {
       aria-busy={pending}
       aria-disabled={pending}
       style={{
-        justifySelf: "end",
+        ...(inline ? {} : { justifySelf: "end" }),
         padding: "0.35rem 0.75rem",
         fontSize: "0.65rem",
         fontWeight: 700,

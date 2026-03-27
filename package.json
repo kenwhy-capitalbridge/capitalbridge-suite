@@ -24,7 +24,9 @@
     "build": "npm run build -w @cb/login && npm run build -w @cb/platform && npm run build -w @cb/api",
     "build:all": "npm run build -w @cb/login && npm run build -w @cb/platform && npm run build -w @cb/api && npm run build -w @cb/capitalstress && npm run build -w @cb/capitalhealth && npm run build -w @cb/incomeengineering && npm run build -w @cb/forever",
     "typecheck": "npm run typecheck -w @cb/login && npm run typecheck -w @cb/platform && npm run typecheck -w @cb/api",
-    "typecheck:all": "npm run typecheck --workspaces --if-present"
+    "typecheck:all": "npm run typecheck --workspaces --if-present",
+    "lion:sync-copy": "node ./scripts/sync-lion-copy.mjs",
+    "lion:check-copy": "node ./scripts/sync-lion-copy.mjs --check"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
