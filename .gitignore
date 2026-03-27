@@ -7,5 +7,6 @@ dist
 .env
 .env.*
 !.env.example
+s.env
 npm-debug.log*
 
