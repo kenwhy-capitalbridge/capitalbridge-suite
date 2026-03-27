@@ -318,7 +318,6 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
       }),
     [foreverLionInput, currency],
   );
-  const foreverLionStatusLabel = formatLionPublicStatusLabel(foreverLionReport.verdict.status);
   const surplusRatio = useMemo(() => {
     if (Number.isFinite(results.capitalNeeded) && results.capitalNeeded > 0) {
       return Math.max(0, results.currentAssets / results.capitalNeeded);
@@ -999,80 +998,22 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
             </div>
 
             <div className="mt-10">
-              {lionAccessEnabled ? (
               <div className="bg-[#00160f] border border-[#FFCC6A]/20 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 text-sm text-gray-200">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A]">The Lion's Verdict</p>
-                </div>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-5xl font-black text-[#FFCC6A] leading-none">{foreverLionReport.verdict.score}</span>
-                  <div className="space-y-1 text-right">
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400">status</p>
-                    <p className="text-xl font-semibold text-white">{foreverLionStatusLabel}</p>
-                  </div>
-                </div>
+                {lionAccessEnabled ? (
+                  <LionVerdictActive
+                    user={lionAccessUser}
+                    userId={lionSeedUserId}
+                    reportType="forever_income"
+                    tier={foreverLionTier}
+                    confidenceScore={foreverLionConfidenceScore}
+                    surplusRatio={surplusRatio}
+                    riskTolerance={foreverLionRiskTolerance}
+                    onCopyComputed={setLionCopyPayload}
+                  />
+                ) : (
+                  <LionVerdictLocked />
+                )}
               </div>
-              <LionVerdictActive
-                user={lionAccessUser}
-                userId={lionSeedUserId}
-                reportType="forever_income"
-                tier={foreverLionTier}
-                confidenceScore={foreverLionConfidenceScore}
-                surplusRatio={surplusRatio}
-                riskTolerance={foreverLionRiskTolerance}
-                onCopyComputed={setLionCopyPayload}
-              />
-              <p className="text-[12px] text-gray-300 leading-relaxed">{foreverLionReport.verdict.summary}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[12px] text-gray-300">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">Goal gap</p>
-                    <p className="leading-snug">{foreverLionReport.goal_gap.summary}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-1">Progress</p>
-                    <p className="leading-snug">{foreverLionReport.progress.summary}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A] mb-2">Structural narrative</p>
-                    <div className="grid grid-cols-2 gap-4 text-[11px] text-gray-200">
-                      <div>
-                        <p className="text-[10px] font-semibold text-emerald-300 uppercase tracking-[0.3em] mb-1">Strengths</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          {foreverLionReport.strengths.slice(0, 2).map((line, idx) => (
-                            <li key={`${line}-${idx}`}>{line}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-amber-300 uppercase tracking-[0.3em] mb-1">Risks</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          {foreverLionReport.risks.slice(0, 2).map((line, idx) => (
-                            <li key={`${line}-${idx}`}>{line}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3 text-[11px] text-gray-200">
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#FFCC6A]">Strategic options</p>
-                <ul className="space-y-1">
-                      {foreverLionReport.strategic_options.slice(0, 2).map((option, idx) => (
-                        <li key={`${option.type}-${idx}`}>
-                          <span className="font-semibold text-white">{option.type}</span>: {option.action}
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="text-[11px] text-gray-400 italic">Capital unlock: {foreverLionReport.capital_unlock.summary}</p>
-                    <p className="text-[11px] text-gray-400 italic">If you do nothing: {foreverLionReport.do_nothing_outcome}</p>
-                  </div>
-                </div>
-              </div>
-              ) : (
-                <LionVerdictLocked />
-              )}
             </div>
 
             <div className="mt-10 relative z-10">
