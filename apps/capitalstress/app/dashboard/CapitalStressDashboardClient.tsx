@@ -11,7 +11,11 @@ type Props = {
   lionAccessUser: LionAccessUser;
 };
 
-export function CapitalStressDashboardClient({ canUseStressModel, canSeeVerdict }: Props) {
+export function CapitalStressDashboardClient({
+  canUseStressModel,
+  canSeeVerdict,
+  lionAccessUser,
+}: Props) {
   const appRef = useRef<CapitalStressAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 

@@ -10,7 +10,7 @@ type Props = {
   lionAccessUser: LionAccessUser;
 };
 
-export function CapitalHealthDashboardClient({ canSeeVerdict }: Props) {
+export function CapitalHealthDashboardClient({ canSeeVerdict, lionAccessUser }: Props) {
   const appRef = useRef<CapitalHealthAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
