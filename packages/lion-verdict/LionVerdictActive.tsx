@@ -156,7 +156,6 @@ export function LionVerdictActive({
   const doNothingLine = `If no changes are made, your capital will be depleted in approximately ${horizonDescriptor} years.`;
 
   const fullVerdict = {
-    openingLine: copy.headline,
     closingLine: copy.guidanceBullets.join(" "),
     reality: realityLine,
     horizon: horizonLine,

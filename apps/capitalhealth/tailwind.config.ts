@@ -4,6 +4,7 @@ const config: Config = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./legacy/**/*.{js,ts,jsx,tsx,mdx}",
+    "../../packages/lion-verdict/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
