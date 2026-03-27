@@ -32,11 +32,11 @@ import {
   formatLionPublicStatusLabel,
   parseForeverRunway,
 } from "@cb/advisory-graph/lionsVerdict";
-import { LionVerdictActive } from "@/packages/lion-verdict/LionVerdictActive";
-import { LionVerdictLocked } from "@/packages/lion-verdict/LionVerdictLocked";
-import { canAccessLion, type LionAccessUser } from "@/packages/lion-verdict/access";
-import type { Tier } from "@/packages/lion-verdict/copy";
-import type { GetLionVerdictOutput } from "@/packages/lion-verdict/getLionVerdict";
+import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
+import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
+import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
+import type { Tier } from "../../../packages/lion-verdict/copy";
+import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import "./index.css";
 
 function appendLionsVerdictPageToForeverPdf(

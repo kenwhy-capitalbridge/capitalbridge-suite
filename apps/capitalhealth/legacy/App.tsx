@@ -32,6 +32,8 @@ import {
   lionStrongEligibilityFromHealthTier,
   runLionVerdictEngineCapitalHealth,
 } from '@cb/advisory-graph/lionsVerdict';
+import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
+import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
@@ -221,17 +223,33 @@ export type CapitalHealthAppHandle = {
   applyInputs: (inputs: Record<string, unknown>) => void;
 };
 
+const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
+
 type CapitalHealthAppProps = {
   canSeeVerdict?: boolean;
+  lionAccessUser?: LionAccessUser;
+};
+
+type CapitalHealthVerdictBundle = {
+  engine: ReturnType<typeof runLionVerdictEngineCapitalHealth>;
+  publicLabel: string;
+  text: string;
 };
 
 export default forwardRef<CapitalHealthAppHandle, CapitalHealthAppProps>(function App(props, ref) {
-  return <CalculatorScreen ref={ref} canSeeVerdict={props.canSeeVerdict ?? true} />;
+  const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
+  return (
+    <CalculatorScreen
+      ref={ref}
+      canSeeVerdict={props.canSeeVerdict ?? true}
+      lionAccessUser={lionAccessUser}
+    />
+  );
 });
 
 const CalculatorScreen = forwardRef<
   CapitalHealthAppHandle,
-  { canSeeVerdict: boolean }
+  { canSeeVerdict: boolean; lionAccessUser: LionAccessUser }
 >(function CalculatorScreen(
   props,
   ref
@@ -277,6 +295,7 @@ const CalculatorScreen = forwardRef<
   }, []);
 
   const result = useCalculatorResults(inputs);
+  const lionAccessEnabled = canAccessLion(props.lionAccessUser);
 
   const applySavedInputs = useCallback((raw: Record<string, unknown>) => {
     if (!raw || typeof raw !== "object") return;
@@ -300,7 +319,7 @@ const CalculatorScreen = forwardRef<
       getResults: () => {
         try {
           const base = JSON.parse(JSON.stringify(result)) as Record<string, unknown>;
-          if (props.canSeeVerdict) {
+          if (props.canSeeVerdict && lionAccessEnabled) {
             const mode = inputs.mode;
             const tier = Math.min(5, Math.max(1, result.riskMetrics.riskTier)) as 1 | 2 | 3 | 4 | 5;
             const runwayYears =
@@ -344,7 +363,7 @@ const CalculatorScreen = forwardRef<
       },
       applyInputs: (raw) => applySavedInputs(raw),
     }),
-    [inputs, result, applySavedInputs, props.canSeeVerdict]
+    [inputs, result, applySavedInputs, props.canSeeVerdict, lionAccessEnabled]
   );
 
   const formatCurrency = useCallback(
@@ -481,7 +500,7 @@ const CalculatorScreen = forwardRef<
   }, [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome]);
 
   const lionVerdictBundle = useMemo(() => {
-    if (!props.canSeeVerdict) return null;
+    if (!lionAccessEnabled) return null;
     const mode = inputs.mode;
     const tier = Math.min(5, Math.max(1, result.riskMetrics.riskTier)) as 1 | 2 | 3 | 4 | 5;
     const runwayYears =
@@ -515,7 +534,7 @@ const CalculatorScreen = forwardRef<
       publicLabel,
     };
   }, [
-    props.canSeeVerdict,
+    lionAccessEnabled,
     inputs.mode,
     inputs.targetMonthlyIncome,
     inputs.targetFutureCapital,
@@ -525,7 +544,6 @@ const CalculatorScreen = forwardRef<
     result.depletionMonth,
     formatCurrency,
   ]);
-
   const stressTestScenarios = useMemo(() => {
     const baseReturn = inputs.expectedAnnualReturnPct;
     const bearReturn = Math.max(baseReturn - 4, 0);
@@ -638,15 +656,15 @@ const CalculatorScreen = forwardRef<
                   className="text-[#F6F5F1] whitespace-nowrap"
                   style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
                 >
-                  {props.canSeeVerdict && lionVerdictBundle ? 'Lion score (0–100)' : SECTIONS.healthScore}
+                {props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle ? 'Lion score (0–100)' : SECTIONS.healthScore}
                 </span>
                 <TapToReveal
                   explanation={
-                    props.canSeeVerdict && lionVerdictBundle
+                    props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle
                       ? 'Lion score is the headline 0–100 measure from Lion’s Verdict, mapped from your modelled risk tier.'
                       : getHealthScoreCopy()
                   }
-                  ariaLabel={props.canSeeVerdict && lionVerdictBundle ? 'Lion score' : 'Capital Strength Score'}
+                  ariaLabel={props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle ? 'Lion score' : 'Capital Strength Score'}
                   className="shrink-0"
                   compact
                 />
@@ -655,14 +673,14 @@ const CalculatorScreen = forwardRef<
                 className="text-right text-[#F6F5F1] tabular-nums font-bold shrink-0"
                 style={{ fontSize: 'clamp(10px, 1.2vw, 13px)' }}
               >
-                {props.canSeeVerdict && lionVerdictBundle
+                {props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle
                   ? lionVerdictBundle.engine.score0to100
                   : `${formatNum(result.riskMetrics.healthScore, 1)}%`}
               </div>
               <div className="col-span-2 w-full min-w-0">
                 <CapitalStrengthBar
                   score={
-                    props.canSeeVerdict && lionVerdictBundle
+                    props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle
                       ? lionVerdictBundle.engine.score0to100
                       : result.riskMetrics.healthScore
                   }
@@ -1627,88 +1645,24 @@ const CalculatorScreen = forwardRef<
           )}
         </section>
 
-        {props.canSeeVerdict ? (
-          <section
-            id="lions-verdict"
-            className="mt-4 sm:mt-6"
-            aria-labelledby="lions-verdict-heading"
-          >
-            <div
-              className="lions-verdict-card rounded-[14px] border border-[#FFCC6A] relative overflow-visible p-3 sm:p-4 text-white"
-              style={{
-                background: 'linear-gradient(180deg, #0D3A1D 0%, #0a2d18 100%)',
-              }}
-            >
-              <div className="verdict-header flex items-center gap-2 sm:gap-3 text-left">
-                <img src="/lion.png" alt="" className="h-5 w-5 sm:h-7 sm:w-7 flex-shrink-0 mt-0.5" aria-hidden />
-                <span
-                  id="lions-verdict-heading"
-                  className="verdict-title font-premium text-sm sm:text-xl font-semibold text-[#FFCC6A] uppercase tracking-wide"
-                >
-                  THE LION&apos;S VERDICT
-                </span>
-              </div>
-              <div className="verdict-headline font-premium text-xl sm:text-2xl text-[#FFCC6A] italic text-center">
-                {lionVerdictBundle?.engine.opening ?? result.statusCopy.headline}
-              </div>
-              {lionVerdictBundle ? (
-                <div className="text-center text-[#F6F5F1] text-xs sm:text-sm mb-2 space-y-1">
-                  <p className="font-bold text-[#FFCC6A] tabular-nums">
-                    Lion score: {lionVerdictBundle.engine.score0to100} / 100 · {lionVerdictBundle.publicLabel}
-                  </p>
-                </div>
-              ) : null}
-              <div className="verdict-basis text-center text-[#F6F5F1]">
-                Based on your withdrawal rate, expected returns, and capital runway.
-              </div>
-              <div className="verdict-metric text-center">
-                {inputs.mode === 'withdrawal'
-                  ? `Capital Runway: ${result.depletionMonth != null ? formatRunwayYearsMonths(result.depletionMonth) : 'Forever'}`
-                  : `Time Horizon: ${horizonYearsFormatted} years`}
-              </div>
-              <div className="verdict-explanation w-full max-w-[720px] mx-auto text-sm sm:text-base text-[#FFCC6A] text-left sm:text-center leading-[1.7] space-y-3">
-                {lionVerdictBundle ? (
-                  <>
-                    <p className="m-0">{lionVerdictBundle.engine.interpretation}</p>
-                    <p className="m-0 text-[#F6F5F1]/90">{lionVerdictBundle.engine.outcomeSummary}</p>
-                    <p className="m-0 text-[#F6F5F1]/90">{lionVerdictBundle.engine.riskExplanation}</p>
-                    <p className="m-0 font-medium">{lionVerdictBundle.engine.advisoryRecommendation}</p>
-                    <div className="text-left text-[11px] sm:text-xs text-[#F6F5F1]/85 space-y-1 pt-1 border-t border-[#FFCC6A]/25">
-                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide">Strategic options</p>
-                      <ul className="list-disc pl-4 m-0 space-y-0.5">
-                        {lionVerdictBundle.engine.strategicOptions.map((s) => (
-                          <li key={s.slice(0, 40)}>{s}</li>
-                        ))}
-                      </ul>
-                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide pt-2">Capital unlock</p>
-                      <ul className="list-disc pl-4 m-0 space-y-0.5">
-                        {lionVerdictBundle.engine.capitalUnlockGuidance.map((s) => (
-                          <li key={s.slice(0, 40)}>{s}</li>
-                        ))}
-                      </ul>
-                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide pt-2">Scenario actions</p>
-                      <ul className="list-disc pl-4 m-0 space-y-0.5">
-                        {lionVerdictBundle.engine.scenarioActions.map((s) => (
-                          <li key={s.slice(0, 40)}>{s}</li>
-                        ))}
-                      </ul>
-                      <p className="font-semibold text-[#FFCC6A] uppercase tracking-wide pt-2">Priority actions</p>
-                      <ul className="list-disc pl-4 m-0 space-y-0.5">
-                        {lionVerdictBundle.engine.priorityActions.map((s) => (
-                          <li key={s.slice(0, 40)}>{s}</li>
-                        ))}
-                      </ul>
-                      <p className="pt-2 text-[#FFCC6A]/95 italic">{lionVerdictBundle.engine.ifYouDoNothing}</p>
-                    </div>
-                  </>
-                ) : null}
-              </div>
-              <p className="text-[10px] sm:text-xs text-white uppercase text-center mt-10 sm:mt-12 opacity-80">
-                Strength Behind Every Structure.
-              </p>
-            </div>
-          </section>
-        ) : null}
+        <section
+          id="lions-verdict"
+          className="mt-4 sm:mt-6"
+          aria-labelledby="lions-verdict-heading"
+        >
+          {lionAccessEnabled ? (
+            <LionVerdictActiveCapitalHealth
+              lionVerdictBundle={lionVerdictBundle}
+              inputs={inputs}
+              result={result}
+              horizonYearsFormatted={horizonYearsFormatted}
+              formatCurrencyCompactDisplay={formatCurrencyCompactDisplay}
+              formatRunwayYearsMonths={formatRunwayYearsMonths}
+            />
+          ) : (
+            <LionVerdictLocked />
+          )}
+        </section>
 
         <footer className="py-8 border-t border-[#0D3A1D] text-center text-xs text-[#F6F5F1]/80">
           <p className="mb-2">

@@ -3,6 +3,7 @@ import {
   buildLionVerdictClientReportFromIncomeEngineering,
   formatLionPublicStatusLabel,
 } from '@cb/advisory-graph/lionsVerdict';
+import { LionVerdictLocked } from "../../../../packages/lion-verdict/LionVerdictLocked";
 import { formatCurrency } from '../utils/format';
 import type { CurrencyCode } from '../config/currency';
 import type { SummaryKPIs } from '../types/calculator';
@@ -100,6 +101,7 @@ interface PrintReportViewProps {
   investmentBuckets: InvestmentBucket[];
   medianCoverage: number;
   worstMonthCoverage: number;
+  lionAccessEnabled: boolean;
 }
 
 const sectionHeading: React.CSSProperties = {
@@ -143,6 +145,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   investmentBuckets,
   medianCoverage,
   worstMonthCoverage,
+  lionAccessEnabled,
 }) => {
   const totalIncome = summary.monthlyIncome + summary.estimatedMonthlyInvestmentIncome;
   const totalExpenses = summary.monthlyExpenses + summary.monthlyLoanRepayments;
@@ -166,31 +169,31 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     summary.invalidReason
   );
 
-  const lionReport = useMemo(
-    () =>
-      buildLionVerdictClientReportFromIncomeEngineering(
-        {
-          medianCoveragePct: medianCoverage,
-          worstMonthCoveragePct: worstMonthCoverage,
-          sustainabilityStatus: summary.sustainabilityStatus,
-          totalMonthlyIncome: totalIncome,
-          totalMonthlyExpenses: totalExpenses,
-          monthlyNetCashflow: net,
-          totalCapital,
-        },
-        { formatCurrency: (n) => formatCurrency(n, currency) },
-      ),
-    [
-      medianCoverage,
-      worstMonthCoverage,
-      summary.sustainabilityStatus,
-      totalIncome,
-      totalExpenses,
-      net,
-      totalCapital,
-      currency,
-    ],
-  );
+  const lionReport = useMemo(() => {
+    if (!lionAccessEnabled) return null;
+    return buildLionVerdictClientReportFromIncomeEngineering(
+      {
+        medianCoveragePct: medianCoverage,
+        worstMonthCoveragePct: worstMonthCoverage,
+        sustainabilityStatus: summary.sustainabilityStatus,
+        totalMonthlyIncome: totalIncome,
+        totalMonthlyExpenses: totalExpenses,
+        monthlyNetCashflow: net,
+        totalCapital,
+      },
+      { formatCurrency: (n) => formatCurrency(n, currency) },
+    );
+  }, [
+    lionAccessEnabled,
+    medianCoverage,
+    worstMonthCoverage,
+    summary.sustainabilityStatus,
+    totalIncome,
+    totalExpenses,
+    net,
+    totalCapital,
+    currency,
+  ]);
 
   const totalAllocation = investmentBuckets.reduce((s, b) => s + (b.allocation ?? 0), 0);
   const getBucket = (id: string) => {
@@ -227,16 +230,45 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           </p>
         </div>
 
+        {lionAccessEnabled && lionReport ? (
         <section style={sectionBlock}>
-          <h2 style={sectionHeading}>Structure overview</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <tbody>
-              <tr><td style={{ padding: '6px 0', color: '#2d3748' }}>Monthly Income</td><td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(totalIncome, currency)}</td></tr>
-              <tr><td style={{ padding: '6px 0', color: '#2d3748' }}>Monthly Expenses</td><td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(totalExpenses, currency)}</td></tr>
-              <tr><td style={{ padding: '8px 0 0', borderTop: '1px solid rgba(255,204,106,0.5)', color: '#2d3748' }}>Net Total</td><td style={{ textAlign: 'right', fontWeight: 600, borderTop: '1px solid rgba(255,204,106,0.5)', color: net >= 0 ? '#11B981' : '#DD524C' }}>{formatCurrency(net, currency)}</td></tr>
-            </tbody>
-          </table>
+          <h2 style={sectionHeading}>The Lion's Verdict</h2>
+          <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700, color: '#0D3A1D' }}>
+            Lion score: {lionReport.verdict.score} / 100 · {formatLionPublicStatusLabel(lionReport.verdict.status)}
+          </p>
+          <p style={{ margin: '0 0 14px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.verdict.summary}</p>
+          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>Strengths</h3>
+          <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+            {lionReport.strengths.map((s, i) => (
+              <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+            ))}
+          </ul>
+          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>Risks</h3>
+          <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+            {lionReport.risks.map((s, i) => (
+              <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+            ))}
+          </ul>
+          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>Strategic options</h3>
+          <ol style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+            {lionReport.strategic_options.map((o, i) => (
+              <li key={i} style={{ marginBottom: '6px' }}>
+                <strong>{o.type}:</strong> {o.action} — {o.impact}
+              </li>
+            ))}
+          </ol>
+          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>Priority actions</h3>
+          <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
+            {lionReport.priority_actions.map((s, i) => (
+              <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+            ))}
+          </ul>
+          <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.do_nothing_outcome}</p>
+          <p style={{ margin: 0, fontSize: '13px', fontStyle: 'italic', fontWeight: 300, color: '#0D3A1D' }}>{lionReport.closing_line}</p>
         </section>
+      ) : (
+        <LionVerdictLocked />
+      )}
 
         <section style={sectionBlock}>
           <h2 style={sectionHeading}>Status</h2>

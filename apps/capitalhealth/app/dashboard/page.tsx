@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
 import { CapitalHealthDashboardClient } from "./CapitalHealthDashboardClient";
 
@@ -45,6 +46,16 @@ export default async function CapitalHealthDashboard() {
     .eq("id", membership.plan_id)
     .maybeSingle();
   const ent = deriveEntitlementsFromRawPlan(plan?.slug ?? null);
+  const normalizedSlug = String(plan?.slug ?? "").toLowerCase().trim();
+  const lionAccessUser: LionAccessUser = {
+    isPaid: normalizedSlug !== "trial",
+    hasActiveTrialUpgrade: false,
+  };
 
-  return <CapitalHealthDashboardClient canSeeVerdict={ent.canSeeVerdict} />;
+  return (
+    <CapitalHealthDashboardClient
+      canSeeVerdict={ent.canSeeVerdict}
+      lionAccessUser={lionAccessUser}
+    />
+  );
 }

@@ -18,6 +18,7 @@ import { Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-graph/lionsVerdict';
+import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import { formatCurrency } from './utils/format';
 
 export type IncomeEngineeringAppHandle = {
@@ -26,7 +27,10 @@ export type IncomeEngineeringAppHandle = {
   applyInputs: (inputs: Record<string, unknown>) => void;
 };
 
-const AppInner = forwardRef<IncomeEngineeringAppHandle, object>(function AppInner(_props, ref) {
+const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
+
+const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAccessUser }>(
+  function AppInner(props, ref) {
   const { state, dispatch } = useCalculatorStoreInternals();
   const { currency, monthlyExpenses, incomeRows, assetUnlocks, investmentBuckets } = state;
 
@@ -44,6 +48,7 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, object>(function AppInne
       }),
     [currency, monthlyExpenses, incomeRows, loansFromAssets, investmentBuckets, assetUnlocks]
   );
+  const lionAccessEnabled = canAccessLion(props.lionAccessUser);
 
   useImperativeHandle(
     ref,
@@ -56,6 +61,15 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, object>(function AppInne
         const totalIncome = result.summary.monthlyIncome + result.summary.estimatedMonthlyInvestmentIncome;
         const totalExpenses = result.summary.monthlyExpenses + result.summary.monthlyLoanRepayments;
         const net = totalIncome - totalExpenses;
+        if (!lionAccessEnabled) {
+          return JSON.parse(
+            JSON.stringify({
+              summary: result.summary,
+              medianCoverage: result.medianCoverage,
+              worstMonthCoverage: result.worstMonthCoverage,
+            }),
+          ) as Record<string, unknown>;
+        }
         const lionVerdictClient = buildLionVerdictClientReportFromIncomeEngineering(
           {
             medianCoveragePct: result.medianCoverage,
@@ -79,7 +93,7 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, object>(function AppInne
       },
       applyInputs: (raw) => dispatch({ type: 'HYDRATE', payload: raw }),
     }),
-    [state, result, dispatch, currency, investmentBuckets]
+    [state, result, dispatch, currency, investmentBuckets, lionAccessEnabled]
   );
 
   const totalCapital =
@@ -216,16 +230,18 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, object>(function AppInne
           investmentBuckets={investmentBuckets}
           medianCoverage={result.medianCoverage}
           worstMonthCoverage={result.worstMonthCoverage}
+          lionAccessEnabled={lionAccessEnabled}
         />
       </div>
     </div>
   );
 });
 
-const App = forwardRef<IncomeEngineeringAppHandle, object>(function App(_props, ref) {
+const App = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser?: LionAccessUser }>(function App(props, ref) {
+  const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
   return (
     <CalculatorStoreProvider>
-      <AppInner ref={ref} />
+      <AppInner ref={ref} lionAccessUser={lionAccessUser} />
     </CalculatorStoreProvider>
   );
 });

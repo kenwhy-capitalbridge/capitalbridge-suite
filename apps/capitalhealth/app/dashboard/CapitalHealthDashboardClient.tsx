@@ -3,9 +3,11 @@
 import { useEffect, useRef } from "react";
 import LegacyApp, { type CapitalHealthAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
+import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
 type Props = {
   canSeeVerdict: boolean;
+  lionAccessUser: LionAccessUser;
 };
 
 export function CapitalHealthDashboardClient({ canSeeVerdict }: Props) {
@@ -24,7 +26,7 @@ export function CapitalHealthDashboardClient({ canSeeVerdict }: Props) {
 
   return (
     <main>
-      <LegacyApp ref={appRef} canSeeVerdict={canSeeVerdict} />
+      <LegacyApp ref={appRef} canSeeVerdict={canSeeVerdict} lionAccessUser={lionAccessUser} />
     </main>
   );
 }

@@ -4,8 +4,13 @@ import { useEffect, useRef } from "react";
 import ForeverApp, { type ForeverAppHandle } from "@/legacy/App";
 import { AdvisoryShell } from "./AdvisoryShell";
 import { useForeverCalculatorContext } from "../ForeverCalculatorProvider";
+import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
-export function ForeverDashboardClient() {
+type Props = {
+  lionAccessUser: LionAccessUser;
+};
+
+export function ForeverDashboardClient({ lionAccessUser }: Props) {
   const appRef = useRef<ForeverAppHandle>(null);
   const { setHandlers } = useForeverCalculatorContext();
 
@@ -21,7 +26,7 @@ export function ForeverDashboardClient() {
 
   return (
     <AdvisoryShell>
-      <ForeverApp ref={appRef} />
+      <ForeverApp ref={appRef} lionAccessUser={lionAccessUser} />
     </AdvisoryShell>
   );
 }

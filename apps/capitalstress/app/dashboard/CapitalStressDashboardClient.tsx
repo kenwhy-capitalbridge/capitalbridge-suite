@@ -3,10 +3,12 @@
 import { useEffect, useRef } from "react";
 import LegacyApp, { type CapitalStressAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
+import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
 type Props = {
   canUseStressModel: boolean;
   canSeeVerdict: boolean;
+  lionAccessUser: LionAccessUser;
 };
 
 export function CapitalStressDashboardClient({ canUseStressModel, canSeeVerdict }: Props) {
@@ -25,7 +27,12 @@ export function CapitalStressDashboardClient({ canUseStressModel, canSeeVerdict 
 
   return (
     <main>
-      <LegacyApp ref={appRef} canUseStressModel={canUseStressModel} canSeeVerdict={canSeeVerdict} />
+      <LegacyApp
+        ref={appRef}
+        canUseStressModel={canUseStressModel}
+        canSeeVerdict={canSeeVerdict}
+        lionAccessUser={lionAccessUser}
+      />
     </main>
   );
 }

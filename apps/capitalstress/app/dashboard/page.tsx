@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
 import { CapitalStressDashboardClient } from "./CapitalStressDashboardClient";
 
@@ -45,11 +46,17 @@ export default async function CapitalStressDashboard() {
     .eq("id", membership.plan_id)
     .maybeSingle();
   const ent = deriveEntitlementsFromRawPlan(plan?.slug ?? null);
+  const normalizedSlug = String(plan?.slug ?? "").toLowerCase().trim();
+  const lionAccessUser: LionAccessUser = {
+    isPaid: normalizedSlug !== "trial",
+    hasActiveTrialUpgrade: false,
+  };
 
   return (
     <CapitalStressDashboardClient
       canUseStressModel={ent.canUseStressModel}
       canSeeVerdict={ent.canSeeVerdict}
+      lionAccessUser={lionAccessUser}
     />
   );
 }

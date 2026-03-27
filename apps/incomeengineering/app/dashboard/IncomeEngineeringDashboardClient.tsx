@@ -3,8 +3,13 @@
 import { useEffect, useRef } from "react";
 import LegacyApp, { type IncomeEngineeringAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
+import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
-export function IncomeEngineeringDashboardClient() {
+type Props = {
+  lionAccessUser: LionAccessUser;
+};
+
+export function IncomeEngineeringDashboardClient({ lionAccessUser }: Props) {
   const appRef = useRef<IncomeEngineeringAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
@@ -20,7 +25,7 @@ export function IncomeEngineeringDashboardClient() {
 
   return (
     <main>
-      <LegacyApp ref={appRef} />
+      <LegacyApp ref={appRef} lionAccessUser={lionAccessUser} />
     </main>
   );
 }
