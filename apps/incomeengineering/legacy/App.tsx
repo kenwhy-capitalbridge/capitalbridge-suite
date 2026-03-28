@@ -200,8 +200,8 @@ const AppInner = forwardRef<
       <div className="no-print">
         <div className="pt-14">
           <PersistentSummaryHeader summary={result.summary} currency={currency} totalCapital={totalCapital} />
-        <div className="mx-auto w-full max-w-[100%] pt-52 pb-6 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-56 min-[641px]:pb-8 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-60 min-[1025px]:pb-10 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-64 min-[1441px]:pb-12">
-          <section aria-label="Expectations setting" className="space-y-6">
+        <div className="mx-auto w-full max-w-[100%] pt-52 pb-7 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-56 min-[641px]:pb-9 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-60 min-[1025px]:pb-11 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-64 min-[1441px]:pb-14">
+          <section aria-label="Expectations setting" className="space-y-5 min-[641px]:space-y-7 min-[1025px]:space-y-9 min-[1441px]:space-y-10">
             <div className="rounded-xl border border-[#1A4D2E]/60 bg-[#163d28] p-4 sm:p-6">
               <h2 className="font-serif-section mb-1 text-base font-bold uppercase sm:text-lg">Expectations Setting</h2>
               <p className="mb-4 text-xs text-[#B8B5AE] opacity-90">Define your lifestyle goal and planning assumptions</p>
@@ -221,7 +221,7 @@ const AppInner = forwardRef<
             <InvestmentBucketsPanel />
           </section>
 
-          <section aria-label="Details" className="mt-10 space-y-5 min-[641px]:mt-12 min-[641px]:space-y-6 min-[1025px]:mt-14 min-[1025px]:space-y-6">
+          <section aria-label="Details" className="mt-8 space-y-5 min-[641px]:mt-12 min-[641px]:space-y-6 min-[1025px]:mt-16 min-[1025px]:space-y-7 min-[1441px]:mt-20 min-[1441px]:space-y-8">
             <WhatThisMeansBox
               status={result.summary.sustainabilityStatus}
               medianCoverage={result.medianCoverage}
@@ -230,7 +230,7 @@ const AppInner = forwardRef<
             />
           </section>
 
-          <section aria-label="The Lion's Verdict" className="mt-10">
+          <section aria-label="The Lion's Verdict" className="mt-8 min-[641px]:mt-12 min-[1025px]:mt-16 min-[1441px]:mt-20">
             <div className="mx-auto max-w-3xl">
               <LionVerdictActive
                 user={props.lionAccessUser}

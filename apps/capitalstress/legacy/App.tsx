@@ -638,7 +638,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
       <div className="min-h-screen bg-transparent text-gray-100 font-sans selection:bg-[#C6A24D] selection:text-black pt-0 pb-4 md:pb-16">
         <div className="h-36 sm:h-40 md:h-44 shrink-0 no-print" aria-hidden="true" role="presentation" />
-        <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 space-y-4 sm:space-y-8 md:space-y-12">
+        <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 lg:pt-14 space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
         {/* Module 3 note — standalone mode */}
         <div className="pt-6 pb-2 sm:pt-2 no-print">
           <p className="text-[10px] text-[#C6A24D]/90 leading-relaxed text-center">This model represents <strong className="text-[#C6A24D]">Module 3 of the Capital Bridge Advisory Framework</strong>, focusing on capital resilience under market volatility and withdrawal pressure over the selected time horizon.</p>
@@ -650,7 +650,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             <h2 className="text-sm md:text-lg font-bold mb-1 md:mb-2 text-[#C6A24D] uppercase tracking-wide border-b border-[#C6A24D]/10 pb-3 sanserif-font text-center md:text-left">Scenario Builder &amp; Settings</h2>
             <p className="text-[10px] md:text-[11px] text-[#C6A24D]/80 mt-2 mb-10 md:mb-16 text-center">Adjust sliders and inputs below; run simulation to update Resilience Score, Depletion Pressure, Durability Curve, Depletion Risk, and Stress Radar.</p>
             
-            <div className="max-w-2xl mx-auto space-y-12 md:space-y-16">
+            <div className="max-w-2xl mx-auto space-y-10 sm:space-y-12 md:space-y-16 lg:space-y-20">
               
               {/* CURRENCY */}
               <div className="w-full overflow-x-hidden pb-2 no-print">
@@ -734,7 +734,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                   <span className="text-[11px] md:text-[14px] font-bold text-[#C6A24D] tracking-tight">{formatPercent(lowerPct)} | {formatPercent(upperPct)}</span>
                 </div>
                 
-                <div className="space-y-10 md:space-y-12">
+                <div className="space-y-8 md:space-y-12 lg:space-y-16">
                   <div>
                     <div className="flex justify-between text-[10px] md:text-[11px] font-bold text-[#C6A24D] uppercase tracking-tight mb-2">
                       <span>Low Point (Worst Year)</span>
@@ -855,13 +855,13 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         </section>
 
         {/* RESULTS — Single stacked analytical report */}
-        <section className="w-full max-w-5xl mx-auto space-y-4 sm:space-y-8 md:space-y-10">
+        <section className="w-full max-w-5xl mx-auto space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
           {!mcResult && (
             <p className="text-[#C6A24D]/60 text-center py-8 uppercase">Run Simulation to see results.</p>
           )}
 
           {mcResult && (
-            <div className="space-y-4 sm:space-y-8 md:space-y-10">
+            <div className="space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
           {/* CAPITAL DIAGNOSIS — introduction (horizontal flow on desktop, stacked on mobile) */}
           <div>
             <h2 className="text-sm md:text-lg font-bold uppercase tracking-wide mb-2 md:mb-4 serif-font text-[#C6A24D]">CAPITAL DIAGNOSIS</h2>
@@ -899,7 +899,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           </div>
 
           {/* CAPITAL STRUCTURE HEALTH: Resilience Score + Fragility Index + Health Status pill */}
-          <div className="space-y-6">
+          <div className="space-y-6 md:space-y-9 lg:space-y-12">
             <div className="pb-2 flex flex-row flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="text-sm md:text-lg font-bold text-[#C6A24D] uppercase tracking-wide serif-font leading-tight mt-0">CAPITAL STRUCTURE HEALTH</h2>
@@ -935,7 +935,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 );
               })()}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-stretch">
               {/* 1. Resilience Score */}
               <div className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl h-full flex flex-col min-h-0">
                 <h3 className="text-sm md:text-lg font-bold mb-1 text-[#C6A24D] uppercase tracking-wide serif-font">Lion score (0–100)</h3>
@@ -1148,7 +1148,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           {/* 3. Possible Capital Outcomes */}
           <div className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl">
             <h2 className="text-sm md:text-lg font-bold mb-6 text-[#C6A24D] uppercase tracking-wide serif-font">POSSIBLE CAPITAL OUTCOMES</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
               <div className="space-y-2 p-4 rounded border border-[#C6A24D]/10 bg-[#001a11]/30 min-w-0">
                 <p className="text-[11px] font-bold text-[#C6A24D] uppercase tracking-tight">Typical Outcome</p>
                 <p className="text-sm md:text-lg font-bold text-white break-words">{formatCurrency(mcResult.percentile50)}</p>
@@ -1384,7 +1384,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               const withinRange = mcResult.paths.filter(p => p.finalCapital >= mcResult.percentile25 && p.finalCapital <= mcResult.percentile75).length / mcResult.paths.length;
               const aboveStartPct = investment > 0 ? (mcResult.simulatedAverage / investment) * 100 : 0;
               return (
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                   <div className="text-center p-3 md:p-6 rounded border border-[#C6A24D]/20 bg-[#001a11]/30 min-w-0">
                     <p className="text-[11px] font-bold text-[#C6A24D] uppercase tracking-tight mb-2">VS. STARTING CAPITAL</p>
                     <p className={`text-sm md:text-lg font-bold ${aboveStartPct >= 0 ? 'text-white' : 'text-red-400'}`}>{aboveStartPct.toFixed(1)}%</p>
@@ -1747,6 +1747,28 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             )}
           </div>
 
+          {/* EXPAND ALL / COLLAPSE ALL — directly under Further Structural Stress Test */}
+          {mcResult && (
+            <div className="flex justify-end no-print">
+              <button
+                type="button"
+                onClick={() => {
+                  const allExpanded = !Object.values(collapsedSections).some(Boolean);
+                  setCollapsedSections({
+                    structuralStabilityMap: allExpanded,
+                    capitalOutcomeDist: allExpanded,
+                    capitalStressRadar: allExpanded,
+                    furtherStressTest: allExpanded,
+                    capitalAdjustmentSimulator: allExpanded,
+                  });
+                }}
+                className="rounded border border-[#C6A24D]/60 text-[#C6A24D]/90 py-1.5 px-3 text-[10px] md:text-xs font-bold uppercase tracking-wide hover:bg-[#C6A24D]/10 transition-colors"
+              >
+                {Object.values(collapsedSections).some(Boolean) ? 'EXPAND ALL' : 'COLLAPSE ALL'}
+              </button>
+            </div>
+          )}
+
           {/* Key Takeaways */}
           {advisoryInputs && (
             <div className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl">
@@ -1799,33 +1821,11 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               <LionVerdictLocked tierLabel={lionTierLabel} score={lionScore} />
             )}
           </div>
-
-          {/* EXPAND ALL / COLLAPSE ALL — below The Lion's Verdict */}
-          {mcResult && (
-            <div className="flex justify-end mt-4 no-print">
-              <button
-                type="button"
-                onClick={() => {
-                  const allExpanded = !Object.values(collapsedSections).some(Boolean);
-                  setCollapsedSections({
-                    structuralStabilityMap: allExpanded,
-                    capitalOutcomeDist: allExpanded,
-                    capitalStressRadar: allExpanded,
-                    furtherStressTest: allExpanded,
-                    capitalAdjustmentSimulator: allExpanded,
-                  });
-                }}
-                className="rounded border border-[#C6A24D]/60 text-[#C6A24D]/90 py-1.5 px-3 text-[10px] md:text-xs font-bold uppercase tracking-wide hover:bg-[#C6A24D]/10 transition-colors"
-              >
-                {Object.values(collapsedSections).some(Boolean) ? 'EXPAND ALL' : 'COLLAPSE ALL'}
-              </button>
-            </div>
-          )}
-            </div>
+          </div>
           )}
 
           {/* FOOTER */}
-          <div className="flex flex-col items-center py-16 text-center">
+          <div className="flex flex-col items-center py-14 sm:py-16 lg:py-24 text-center">
             <div className="mb-8 space-y-2">
               <p className="text-[10px] md:text-[11px] font-bold text-[#C6A24D] uppercase tracking-widest">Please save or print a copy for your records.</p>
             </div>

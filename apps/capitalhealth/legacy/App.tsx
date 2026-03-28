@@ -908,7 +908,7 @@ const CalculatorScreen = forwardRef<
               </div>
       </header>
 
-      <main id="calculator-panel" className="max-w-4xl mx-auto px-3 sm:px-4 pt-[200px] sm:pt-[240px] md:pt-[260px] pb-4 sm:pb-6 space-y-6 sm:space-y-8" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
+      <main id="calculator-panel" className="max-w-4xl mx-auto px-3 sm:px-4 pt-[200px] sm:pt-[240px] md:pt-[260px] pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
         {/* Mode selector */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-2 sm:p-4 text-white text-center sm:text-left mt-4 sm:mt-6">
           <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2 sm:mb-3">
@@ -945,7 +945,7 @@ const CalculatorScreen = forwardRef<
         </section>
 
         {/* Currency strip */}
-        <section className="mt-12 bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-4 text-center sm:text-left">
+        <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-4 text-center sm:text-left">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2">
             Currency
           </h2>
@@ -1623,7 +1623,7 @@ const CalculatorScreen = forwardRef<
           </div>
 
           {/* Capital Stress Test */}
-          <div className="capital-stress-section mt-8 sm:mt-12 pt-8 sm:pt-12 mb-4 sm:mb-6 text-center sm:text-left">
+          <div className="capital-stress-section mt-10 sm:mt-14 md:mt-16 pt-8 sm:pt-10 md:pt-14 mb-5 sm:mb-8 text-center sm:text-left">
             <div className="stress-section-header">
               <div className="stress-title-row">
                 <img src="/brand/lionhead_Gold.svg" alt="" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
