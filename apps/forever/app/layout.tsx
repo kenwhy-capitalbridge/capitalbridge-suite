@@ -53,26 +53,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <LionWatermarkBackdrop />
         <div className="relative min-h-screen">
-          <ForeverCalculatorProvider>
-            <ModelAppHeader
-              titleDesktop="FOREVER INCOME MODEL"
-              titleMobile="FOREVER INCOME"
-              backHref={foreverBackToPlatformHref}
-              actions={
-                user ? (
-                  <ModelHeaderSaveRestore
-                    userId={user.id}
-                    serverCanSave={canSave}
-                    initialSessionId={initialSessionId}
-                    logTag="[forever]"
-                  />
-                ) : null
-              }
-            />
-            {children}
-          </ForeverCalculatorProvider>
+          <LionWatermarkBackdrop />
+          <div className="relative z-10">
+            <ForeverCalculatorProvider>
+              <ModelAppHeader
+                titleDesktop="FOREVER INCOME MODEL"
+                titleMobile="FOREVER INCOME"
+                backHref={foreverBackToPlatformHref}
+                actions={
+                  user ? (
+                    <ModelHeaderSaveRestore
+                      userId={user.id}
+                      serverCanSave={canSave}
+                      initialSessionId={initialSessionId}
+                      logTag="[forever]"
+                    />
+                  ) : null
+                }
+              />
+              {children}
+            </ForeverCalculatorProvider>
+          </div>
         </div>
       </body>
     </html>

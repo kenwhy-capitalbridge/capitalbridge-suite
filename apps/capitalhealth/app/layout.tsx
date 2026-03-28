@@ -44,25 +44,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <LionWatermarkBackdrop />
         <div className="relative min-h-screen">
-          <ModelSaveHandlersProvider>
-            <ModelAppHeader
-              titleDesktop="CAPITAL HEALTH MODEL"
-              titleMobile="CAPITAL HEALTH"
-              actions={
-                user ? (
-                  <ModelHeaderSaveRestore
-                    userId={user.id}
-                    serverCanSave={canSave}
-                    initialSessionId={initialSessionId}
-                    logTag="[capital-health]"
-                  />
-                ) : null
-              }
-            />
-            {children}
-          </ModelSaveHandlersProvider>
+          <LionWatermarkBackdrop />
+          <div className="relative z-10">
+            <ModelSaveHandlersProvider>
+              <ModelAppHeader
+                titleDesktop="CAPITAL HEALTH MODEL"
+                titleMobile="CAPITAL HEALTH"
+                actions={
+                  user ? (
+                    <ModelHeaderSaveRestore
+                      userId={user.id}
+                      serverCanSave={canSave}
+                      initialSessionId={initialSessionId}
+                      logTag="[capital-health]"
+                    />
+                  ) : null
+                }
+              />
+              {children}
+            </ModelSaveHandlersProvider>
+          </div>
         </div>
       </body>
     </html>

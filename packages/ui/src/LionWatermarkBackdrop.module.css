@@ -1,0 +1,26 @@
+/* Fixed band below ModelAppHeader (48px mobile / 52px desktop + border + safe area). */
+.root {
+  pointer-events: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  top: calc(48px + 1px + env(safe-area-inset-top, 0px));
+}
+
+@media (min-width: 641px) {
+  .root {
+    top: calc(52px + 1px + env(safe-area-inset-top, 0px));
+  }
+}
+
+.mark {
+  position: absolute;
+  height: auto;
+  max-width: none;
+  user-select: none;
+  /* Gold on #0d3a1d: low alpha alone is invisible; soft-light reads as a hint without blowing out cards */
+  mix-blend-mode: soft-light;
+}

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { BRAND_LIONHEAD_GOLD } from "./brandPaths";
+import styles from "./LionWatermarkBackdrop.module.css";
 
 type MarkSpec = {
   widthPx: number;
@@ -15,21 +16,18 @@ type MarkSpec = {
 );
 
 /**
- * Edge- and corner-anchored scatter: faint, non-overlapping “zones” (corners + mid-edges),
- * varied size/rotation so it reads random without SSR/client randomness.
- * Used on Forever, Income Engineering, Capital Health, and Capital Stress model layouts only.
- * Not used on login (incl. access/pricing) or platform (dashboard, etc.).
- * Opacity ~0.01–0.018 — larger marks, slightly softer than small-tile era.
+ * Edge- and corner-anchored scatter. Opacity tuned for dark green + soft-light blend
+ * (plain 1–2% alpha on #0d3a1d is effectively invisible).
  */
 const LION_WATERMARK_MARKS: readonly MarkSpec[] = [
-  { top: "5%", left: "-8%", widthPx: 248, rotateDeg: -13, opacity: 0.016 },
-  { top: "7%", right: "-7%", widthPx: 228, rotateDeg: 21, opacity: 0.014 },
-  { top: "46%", left: "-12%", widthPx: 212, rotateDeg: 6, opacity: 0.011, translate: "0, -50%" },
-  { top: "50%", right: "-11%", widthPx: 232, rotateDeg: -19, opacity: 0.012, translate: "0, -50%" },
-  { bottom: "14%", left: "-6%", widthPx: 262, rotateDeg: 11, opacity: 0.018 },
-  { bottom: "10%", right: "-8%", widthPx: 242, rotateDeg: -27, opacity: 0.015 },
-  { top: "24%", left: "2%", widthPx: 188, rotateDeg: 38, opacity: 0.01 },
-  { top: "32%", right: "3%", widthPx: 176, rotateDeg: -8, opacity: 0.01 },
+  { top: "5%", left: "-8%", widthPx: 248, rotateDeg: -13, opacity: 0.09 },
+  { top: "7%", right: "-7%", widthPx: 228, rotateDeg: 21, opacity: 0.08 },
+  { top: "46%", left: "-12%", widthPx: 212, rotateDeg: 6, opacity: 0.065, translate: "0, -50%" },
+  { top: "50%", right: "-11%", widthPx: 232, rotateDeg: -19, opacity: 0.07, translate: "0, -50%" },
+  { bottom: "14%", left: "-6%", widthPx: 262, rotateDeg: 11, opacity: 0.1 },
+  { bottom: "10%", right: "-8%", widthPx: 242, rotateDeg: -27, opacity: 0.085 },
+  { top: "24%", left: "2%", widthPx: 188, rotateDeg: 38, opacity: 0.055 },
+  { top: "32%", right: "3%", widthPx: 176, rotateDeg: -8, opacity: 0.055 },
 ];
 
 function positionStyle(m: MarkSpec): CSSProperties {
@@ -42,22 +40,14 @@ function positionStyle(m: MarkSpec): CSSProperties {
 }
 
 /**
- * Subtle full-viewport lion marks behind the app. Uses `/brand/lionhead_Gold.svg`
- * (synced from `packages/ui/src/assets/lionhead_Gold.svg`).
- *
- * Intended for the four calculator apps’ root layouts (Forever, Income Engineering,
- * Capital Health, Capital Stress). Omit on login and platform apps.
- *
- * Stack **above** opaque legacy app roots (`z-[100]`) but **below** `ModelAppHeader`
- * (`z-index: 200`). Starts below the fixed header bar so lions sit in the content band.
- * Pair with a sibling `className="relative min-h-screen"` (no z-index on the shell).
+ * Gold lion watermarks for Forever / Income Engineering / Capital Health / Capital Stress.
+ * Renders **inside** the app `relative min-h-screen` shell (first child) so stacking matches
+ * the calculator. `z-index: 0` sits under the UI shell (`relative z-10`). Uses CSS module positioning
+ * so production builds don’t drop arbitrary Tailwind classes.
  */
 export function LionWatermarkBackdrop() {
   return (
-    <div
-      className="pointer-events-none fixed left-0 right-0 bottom-0 z-[100] overflow-hidden print:hidden top-[calc(48px+1px+env(safe-area-inset-top))] sm:top-[calc(52px+1px+env(safe-area-inset-top))]"
-      aria-hidden
-    >
+    <div className={`${styles.root} print:hidden`} aria-hidden>
       {LION_WATERMARK_MARKS.map((m, i) => (
         <img
           key={i}
@@ -66,7 +56,7 @@ export function LionWatermarkBackdrop() {
           width={m.widthPx}
           height={m.widthPx}
           decoding="async"
-          className="absolute h-auto max-w-none select-none"
+          className={styles.mark}
           style={{
             ...positionStyle(m),
             opacity: m.opacity,
