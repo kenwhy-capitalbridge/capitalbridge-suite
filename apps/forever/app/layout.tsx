@@ -5,7 +5,6 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
-import { PLATFORM_APP_URL } from "@cb/shared/urls";
 import { LionWatermarkBackdrop, ModelAppHeader } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ForeverCalculatorProvider } from "./ForeverCalculatorProvider";
@@ -42,7 +41,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   }
 
-  const platformHome = `${PLATFORM_APP_URL.replace(/\/+$/, "")}/`;
+  /**
+   * Always link to production platform hub (not PLATFORM_APP_URL) so a mis-set Forever env
+   * cannot point Back at login or another host. Local dev: set NEXT_PUBLIC_FOREVER_BACK_TO_PLATFORM_URL.
+   */
+  const foreverBackRaw = process.env.NEXT_PUBLIC_FOREVER_BACK_TO_PLATFORM_URL?.trim();
+  const foreverBackToPlatformHref = foreverBackRaw
+    ? `${foreverBackRaw.replace(/\/+$/, "")}/`
+    : "https://platform.thecapitalbridge.com/";
 
   return (
     <html lang="en">
@@ -53,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ModelAppHeader
               titleDesktop="FOREVER INCOME MODEL"
               titleMobile="FOREVER INCOME"
-              backHref={platformHome}
+              backHref={foreverBackToPlatformHref}
               actions={
                 user ? (
                   <ModelHeaderSaveRestore

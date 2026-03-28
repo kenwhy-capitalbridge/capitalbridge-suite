@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { withSuiteAuthCookieOptions } from "@cb/supabase/authCookieOptions";
 
 const PROTECTED_PATHS = ["/dashboard"];
 
@@ -21,7 +22,9 @@ export async function middleware(req: NextRequest) {
     cookies: {
       getAll: () => req.cookies.getAll(),
       setAll: (cookiesToSet) => {
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, withSuiteAuthCookieOptions(options)),
+        );
       },
     },
   });

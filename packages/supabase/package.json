@@ -6,7 +6,8 @@
   "exports": {
     "./server": "./src/server.ts",
     "./browser": "./src/browser.ts",
-    "./service": "./src/service.ts"
+    "./service": "./src/service.ts",
+    "./authCookieOptions": "./src/authCookieOptions.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

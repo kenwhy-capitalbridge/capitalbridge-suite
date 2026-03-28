@@ -41,7 +41,7 @@ True random placement needs client-only layout and can flash on load. Fixed posi
 
 ## Tuning
 
-- **Stronger hint:** raise `opacity` on each mark (cap ~0.1 so it stays a watermark).
+- **Stronger hint:** raise `opacity` on each mark (cap ~0.05 so it stays a watermark; defaults are ~0.012–0.026).
 - **Softer:** lower opacity or remove a mark.
 - **Less busy:** delete entries from `LION_WATERMARK_MARKS`.
 - **Print:** the root uses `print:hidden` so PDFs/print routes are not tiled with lions unless you remove that class.

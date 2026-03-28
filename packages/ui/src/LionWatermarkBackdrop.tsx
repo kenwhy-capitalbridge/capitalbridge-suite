@@ -1,26 +1,43 @@
+import type { CSSProperties } from "react";
 import { BRAND_LIONHEAD_GOLD } from "./brandPaths";
 
 type MarkSpec = {
-  top: string;
-  left: string;
   widthPx: number;
   rotateDeg: number;
   opacity: number;
-};
+  /** Fine-tune after position (keeps rotation centered on the mark). */
+  translate?: string;
+} & (
+  | { top: string; left: string; right?: never; bottom?: never }
+  | { top: string; right: string; left?: never; bottom?: never }
+  | { bottom: string; left: string; right?: never; top?: never }
+  | { bottom: string; right: string; left?: never; top?: never }
+);
 
 /**
- * Hand-placed “scatter” so it feels random without SSR/hydration mismatch.
- * Tune opacity (≈0.03–0.08) and positions here only.
+ * Edge- and corner-anchored scatter: faint, non-overlapping “zones” (corners + mid-edges),
+ * varied size/rotation so it reads random without SSR/client randomness.
+ * Opacity ~0.012–0.026 — keep below ~0.03 for a light hint.
  */
 const LION_WATERMARK_MARKS: readonly MarkSpec[] = [
-  { top: "-7%", left: "-11%", widthPx: 400, rotateDeg: -20, opacity: 0.068 },
-  { top: "6%", left: "62%", widthPx: 340, rotateDeg: 16, opacity: 0.055 },
-  { top: "32%", left: "-8%", widthPx: 380, rotateDeg: -10, opacity: 0.048 },
-  { top: "48%", left: "70%", widthPx: 360, rotateDeg: 22, opacity: 0.058 },
-  { top: "68%", left: "8%", widthPx: 300, rotateDeg: -14, opacity: 0.042 },
-  { top: "82%", left: "72%", widthPx: 320, rotateDeg: 9, opacity: 0.05 },
-  { top: "18%", left: "26%", widthPx: 200, rotateDeg: 31, opacity: 0.032 },
+  { top: "5%", left: "-7%", widthPx: 168, rotateDeg: -13, opacity: 0.02 },
+  { top: "8%", right: "-6%", widthPx: 152, rotateDeg: 21, opacity: 0.017 },
+  { top: "46%", left: "-11%", widthPx: 142, rotateDeg: 6, opacity: 0.014, translate: "0, -50%" },
+  { top: "50%", right: "-10%", widthPx: 158, rotateDeg: -19, opacity: 0.016, translate: "0, -50%" },
+  { bottom: "16%", left: "-5%", widthPx: 178, rotateDeg: 11, opacity: 0.022 },
+  { bottom: "12%", right: "-7%", widthPx: 165, rotateDeg: -27, opacity: 0.018 },
+  { top: "26%", left: "3%", widthPx: 128, rotateDeg: 38, opacity: 0.012 },
+  { top: "34%", right: "4%", widthPx: 118, rotateDeg: -8, opacity: 0.013 },
 ];
+
+function positionStyle(m: MarkSpec): CSSProperties {
+  const base: CSSProperties = { width: m.widthPx };
+  if ("top" in m && m.top !== undefined) base.top = m.top;
+  if ("left" in m && m.left !== undefined) base.left = m.left;
+  if ("right" in m && m.right !== undefined) base.right = m.right;
+  if ("bottom" in m && m.bottom !== undefined) base.bottom = m.bottom;
+  return base;
+}
 
 /**
  * Subtle full-viewport lion marks behind the app. Uses `/brand/lionhead_Gold.svg`
@@ -45,11 +62,10 @@ export function LionWatermarkBackdrop() {
           decoding="async"
           className="absolute h-auto max-w-none select-none"
           style={{
-            top: m.top,
-            left: m.left,
-            width: m.widthPx,
+            ...positionStyle(m),
             opacity: m.opacity,
-            transform: `rotate(${m.rotateDeg}deg)`,
+            transform: `translate(${m.translate ?? "0, 0"}) rotate(${m.rotateDeg}deg)`,
+            transformOrigin: "center center",
           }}
         />
       ))}

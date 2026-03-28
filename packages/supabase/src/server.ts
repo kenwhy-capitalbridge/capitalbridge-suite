@@ -1,23 +1,7 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-
-type CookieOptions = Record<string, unknown>;
-
-function isProd() {
-  return process.env.NODE_ENV === "production";
-}
-
-function withSuiteCookieOptions(options?: CookieOptions) {
-  if (!isProd()) return options ?? {};
-  return {
-    ...(options ?? {}),
-    domain: ".thecapitalbridge.com",
-    path: "/",
-    sameSite: "lax",
-    secure: true,
-  };
-}
+import { withSuiteAuthCookieOptions, type AuthCookieOptions } from "./authCookieOptions";
 
 /**
  * Server Supabase client for Server Components / Route Handlers.
@@ -40,7 +24,7 @@ export async function createAppServerClient() {
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, withSuiteCookieOptions(options as CookieOptions));
+            cookieStore.set(name, value, withSuiteAuthCookieOptions(options as AuthCookieOptions));
           });
         } catch {
           // read-only in some server component contexts

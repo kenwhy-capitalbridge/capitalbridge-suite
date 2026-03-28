@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { withSuiteAuthCookieOptions } from "@cb/supabase/authCookieOptions";
 import {
   getJwtSessionIdFromAccessToken,
   isUserActiveSessionStale,
@@ -77,7 +78,7 @@ async function redirectWithSignOut(
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
+          response.cookies.set(name, value, withSuiteAuthCookieOptions(options));
         });
       },
     },
@@ -148,7 +149,7 @@ export async function middleware(req: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
+          response.cookies.set(name, value, withSuiteAuthCookieOptions(options));
         });
       },
     },
