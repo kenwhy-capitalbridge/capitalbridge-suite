@@ -8,6 +8,11 @@ type MarkSpec = {
   opacity: number;
   /** Fine-tune after position (keeps rotation centered on the mark). */
   translate?: string;
+  /**
+   * Lion asset faces left; left-anchored marks flip so they look toward the page center.
+   * Right-anchored marks stay unflipped (already facing inward).
+   */
+  flipX?: boolean;
 } & (
   | { top: string; left: string; right?: never; bottom?: never }
   | { top: string; right: string; left?: never; bottom?: never }
@@ -15,19 +20,26 @@ type MarkSpec = {
   | { bottom: string; right: string; left?: never; top?: never }
 );
 
+function facesTowardCenter(m: MarkSpec): boolean {
+  if ("left" in m && m.left !== undefined) return true;
+  return false;
+}
+
 /**
- * Edge- and corner-anchored scatter. Opacity tuned for dark green + soft-light blend
- * (plain 1–2% alpha on #0d3a1d is effectively invisible).
+ * Wide scatter: gutters + mid-field, uneven vertical rhythm, varied rotation.
+ * (Plain 1–2% alpha on #0d3a1d is effectively invisible — see opacity + soft-light in CSS.)
  */
 const LION_WATERMARK_MARKS: readonly MarkSpec[] = [
-  { top: "5%", left: "-8%", widthPx: 248, rotateDeg: -13, opacity: 0.09 },
-  { top: "7%", right: "-7%", widthPx: 228, rotateDeg: 21, opacity: 0.08 },
-  { top: "46%", left: "-12%", widthPx: 212, rotateDeg: 6, opacity: 0.065, translate: "0, -50%" },
-  { top: "50%", right: "-11%", widthPx: 232, rotateDeg: -19, opacity: 0.07, translate: "0, -50%" },
-  { bottom: "14%", left: "-6%", widthPx: 262, rotateDeg: 11, opacity: 0.1 },
-  { bottom: "10%", right: "-8%", widthPx: 242, rotateDeg: -27, opacity: 0.085 },
-  { top: "24%", left: "2%", widthPx: 188, rotateDeg: 38, opacity: 0.055 },
-  { top: "32%", right: "3%", widthPx: 176, rotateDeg: -8, opacity: 0.055 },
+  { top: "9%", left: "-5%", widthPx: 232, rotateDeg: -21, opacity: 0.078 },
+  { top: "31%", left: "3%", widthPx: 198, rotateDeg: 34, opacity: 0.062 },
+  { top: "58%", left: "-7%", widthPx: 218, rotateDeg: 7, opacity: 0.07, translate: "0, -50%" },
+  { bottom: "22%", left: "1%", widthPx: 244, rotateDeg: -14, opacity: 0.082 },
+  { top: "44%", left: "11%", widthPx: 176, rotateDeg: 41, opacity: 0.055 },
+
+  { top: "14%", right: "-4%", widthPx: 226, rotateDeg: 18, opacity: 0.075 },
+  { top: "67%", right: "-6%", widthPx: 208, rotateDeg: -24, opacity: 0.068, translate: "0, -50%" },
+  { bottom: "16%", right: "2%", widthPx: 236, rotateDeg: 12, opacity: 0.08 },
+  { top: "52%", right: "9%", widthPx: 184, rotateDeg: -9, opacity: 0.056 },
 ];
 
 function positionStyle(m: MarkSpec): CSSProperties {
@@ -37,6 +49,13 @@ function positionStyle(m: MarkSpec): CSSProperties {
   if ("right" in m && m.right !== undefined) base.right = m.right;
   if ("bottom" in m && m.bottom !== undefined) base.bottom = m.bottom;
   return base;
+}
+
+function buildTransform(m: MarkSpec): string {
+  const t = m.translate ?? "0, 0";
+  const flip = m.flipX ?? facesTowardCenter(m);
+  const sx = flip ? -1 : 1;
+  return `translate(${t}) rotate(${m.rotateDeg}deg) scaleX(${sx})`;
 }
 
 /**
@@ -60,7 +79,7 @@ export function LionWatermarkBackdrop() {
           style={{
             ...positionStyle(m),
             opacity: m.opacity,
-            transform: `translate(${m.translate ?? "0, 0"}) rotate(${m.rotateDeg}deg)`,
+            transform: buildTransform(m),
             transformOrigin: "center center",
           }}
         />
