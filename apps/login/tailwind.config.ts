@@ -17,6 +17,14 @@ const config: Config = {
         "cb-gold": "#FFCC6A",
         "cb-gold-dark": "#8B6914",
         "cb-cream": "#F6F5F1",
+        "cb-black": "#2B2B2B",
+      },
+      fontSize: {
+        /** Aligned with `packages/ui/src/cb-model-base.css` body tokens */
+        "cb-body": [
+          "var(--cb-body-font-size)",
+          { lineHeight: "var(--cb-body-line-height)" },
+        ],
       },
       fontFamily: {
         serif: ["var(--font-roboto-serif)", "Georgia", "serif"],

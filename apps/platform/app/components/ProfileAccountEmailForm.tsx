@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { createAppBrowserClient, isSupabaseConfigured } from "@cb/supabase/browser";
 
 const FORM_EMAIL_INVALID = "Enter a valid email address.";
@@ -142,6 +143,7 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
           type="button"
           onClick={() => void submit()}
           disabled={busy}
+          aria-busy={busy}
           className="profile-page-email-submit"
           style={{
             flexShrink: 0,
@@ -160,10 +162,18 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
+            gap: 6,
             boxSizing: "border-box",
           }}
         >
-          {busy ? "Sending…" : "Request email change"}
+          {busy ? (
+            <>
+              <Loader2 size={14} className="pf-header-avatar-spin" aria-hidden />
+              Sending…
+            </>
+          ) : (
+            "Request email change"
+          )}
         </button>
       </div>
 

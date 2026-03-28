@@ -195,14 +195,14 @@ const AppInner = forwardRef<
   };
 
   return (
-    <div className="min-h-screen min-w-0 overflow-x-hidden bg-transparent text-[#F6F5F1] [font-size:14px]">
+    <div className="cb-body min-h-screen min-w-0 overflow-x-hidden bg-transparent text-[#F6F5F1]">
       {/* On-screen app (hidden when printing) */}
       <div className="no-print">
         <div className="pt-14">
           <PersistentSummaryHeader summary={result.summary} currency={currency} totalCapital={totalCapital} />
         <div className="mx-auto w-full max-w-[100%] pt-52 pb-7 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-56 min-[641px]:pb-9 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-60 min-[1025px]:pb-11 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-64 min-[1441px]:pb-14">
           <section aria-label="Expectations setting" className="space-y-5 min-[641px]:space-y-7 min-[1025px]:space-y-9 min-[1441px]:space-y-10">
-            <div className="rounded-xl border border-[#1A4D2E]/60 bg-[#163d28] p-4 sm:p-6">
+            <div className="rounded-xl border border-[#FFCC6A]/25 bg-[#163d28] p-4 sm:p-6">
               <h2 className="font-serif-section mb-1 text-base font-bold uppercase sm:text-lg">Expectations Setting</h2>
               <p className="mb-4 text-xs text-[#B8B5AE] opacity-90">Define your lifestyle goal and planning assumptions</p>
               <div className="space-y-5">
@@ -259,7 +259,7 @@ const AppInner = forwardRef<
             <button
               type="button"
               onClick={handlePrintReport}
-              className="w-full min-h-[48px] flex items-center justify-center gap-2 rounded-xl border-2 border-[#FFCC6A] bg-[#FFCC6A]/10 px-4 py-3 text-sm font-bold text-[#FFCC6A] hover:bg-[#FFCC6A]/20 focus:outline-none focus:ring-2 focus:ring-[#FFCC6A]/50 touch-manipulation"
+              className="cb-gold-outline-cta w-full min-h-[48px] !rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC6A]/50 touch-manipulation"
             >
               <Printer className="h-5 w-5 shrink-0" aria-hidden />
               Print or Save Report

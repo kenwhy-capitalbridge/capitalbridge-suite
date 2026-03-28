@@ -7,6 +7,7 @@ import { formatPlanLabel, initialsFromFirstLastOrFallback } from "../../lib/prof
 import { PlatformFrameworkHeader } from "../components/PlatformFrameworkHeader";
 import { ProfileAccountEmailForm } from "../components/ProfileAccountEmailForm";
 import { ProfileHistoryBackButton } from "../components/ProfileHistoryBackButton";
+import { ProfilePlansLink } from "../components/ProfilePlansLink";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ export default async function ProfilePage() {
         ? `Access is set to run through ${endLabel}.`
         : "See your membership dates below.";
 
-  const pricingHref = `${LOGIN_APP_URL.replace(/\/+$/, "")}/pricing`;
+  const plansHref = `${LOGIN_APP_URL.replace(/\/+$/, "")}/plans`;
 
   const dtStyle: CSSProperties = {
     margin: 0,
@@ -76,7 +77,7 @@ export default async function ProfilePage() {
   const avatarSize = "clamp(40px, 10.5vw, 48px)";
 
   return (
-    <div className="profile-page" style={{ minHeight: "100vh", backgroundColor: "#0b2e18" }}>
+    <div className="profile-page" style={{ minHeight: "100vh", backgroundColor: "#0D3A1D" }}>
       <PlatformFrameworkHeader
         verifiedUserEmail={user.email}
         centerTitle="USER PROFILE"
@@ -131,7 +132,7 @@ export default async function ProfilePage() {
                 lineHeight: 1.2,
               }}
             >
-              Your profile
+              Your Profile
             </h1>
             {displayName ? (
               <p
@@ -217,7 +218,7 @@ export default async function ProfilePage() {
                 color: "rgba(255, 204, 106, 0.78)",
               }}
             >
-              Plans & pricing
+              Plans & Pricing
             </p>
             <p
               style={{
@@ -229,24 +230,9 @@ export default async function ProfilePage() {
             >
               Review packages or upgrade on the Capital Bridge login site.
             </p>
-            <a
-              href={pricingHref}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                marginTop: "clamp(0.5rem, 1.5vw, 0.65rem)",
-                minHeight: 44,
-                fontSize: "clamp(0.76rem, 2vw, 0.82rem)",
-                fontWeight: 600,
-                color: "rgba(255, 214, 150, 0.98)",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-                padding: "0.15rem 0",
-                boxSizing: "border-box",
-              }}
-            >
-              Open pricing & packages
-            </a>
+            <div style={{ marginTop: "clamp(0.5rem, 1.5vw, 0.65rem)" }}>
+              <ProfilePlansLink href={plansHref} />
+            </div>
           </div>
 
           <ProfileAccountEmailForm currentEmail={user.email ?? null} />

@@ -2,7 +2,7 @@ import type { LionScoreTier } from '../lionsVerdict/types';
 import { REPORT_BRAND_GREEN } from '../reports/tokens';
 
 const GREEN = REPORT_BRAND_GREEN;
-const GOLD = '#C6A24D';
+const GOLD = '#FFCC6A';
 const AMBER = '#b8860b';
 const RED = '#b91c1c';
 

@@ -22,7 +22,7 @@ const MECHANISM_OPTIONS: UnlockMechanismType[] = [
 ];
 
 const inputWrapperClass =
-  'min-h-[44px] rounded-lg border border-[#1A4D2E] bg-[#0A2E18] focus-within:ring-2 focus-within:ring-[#FFCC6A]/50 focus-within:border-[#FFCC6A]/60 transition-colors touch-manipulation';
+  'min-h-[44px] rounded-lg border border-[#FFCC6A]/25 bg-[#0A2E18] focus-within:ring-2 focus-within:ring-[#FFCC6A]/50 focus-within:border-[#FFCC6A]/60 transition-colors touch-manipulation';
 const inputInnerClass = 'w-full min-h-[44px] rounded-lg border-0 bg-transparent px-3 py-2 text-sm text-[#F6F5F1] focus:ring-0 focus:outline-none touch-manipulation';
 const labelClass = 'text-xs text-[#B8B5AE] mb-1 block';
 
@@ -251,7 +251,7 @@ export const AssetsUnlockPanel: React.FC<AssetsUnlockPanelProps> = ({
   const currencyCode = currency as import('../config/currency').CurrencyCode;
 
   return (
-    <section className="rounded-xl border border-[#1A4D2E]/60 bg-[#163d28] p-4 sm:p-6" aria-labelledby="assets-unlock-label">
+    <section className="rounded-xl border border-[#FFCC6A]/25 bg-[#163d28] p-4 sm:p-6" aria-labelledby="assets-unlock-label">
       <h2 id="assets-unlock-label" className="font-serif-section mb-1 text-base font-bold uppercase sm:text-lg">
         Unlocking Capital
       </h2>
@@ -272,7 +272,7 @@ export const AssetsUnlockPanel: React.FC<AssetsUnlockPanelProps> = ({
             const displayLabel = asset.label || MECHANISM_LABELS[asset.mechanism];
             const subtitle = MECHANISM_SUBTITLES[asset.mechanism];
             return (
-              <li key={asset.id} className="rounded-xl border border-[#1A4D2E]/60 bg-[#0f2e1c]/80 p-3 sm:p-4 space-y-3">
+              <li key={asset.id} className="rounded-xl border border-[#FFCC6A]/25 bg-[#0f2e1c]/80 p-3 sm:p-4 space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-serif-section text-sm font-bold uppercase text-[#FFCC6A]">
@@ -284,7 +284,7 @@ export const AssetsUnlockPanel: React.FC<AssetsUnlockPanelProps> = ({
                     type="button"
                     onClick={() => removeAssetUnlock(asset.id)}
                     aria-label="Remove asset"
-                    className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-[#B8B5AE] hover:bg-[#1A4D2E] hover:text-[#F6F5F1]"
+                    className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-[#B8B5AE] hover:bg-[#0D3A1D]/80 hover:text-[#F6F5F1]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -328,7 +328,7 @@ export const AssetsUnlockPanel: React.FC<AssetsUnlockPanelProps> = ({
                     </span>
                   </div>
                 </div>
-                <div className="mt-2 pt-2 border-t border-[#1A4D2E]/50 space-y-1">
+                <div className="mt-2 pt-2 border-t border-[#FFCC6A]/20 space-y-1">
                   {liquidity > 0 && (
                     <p className="text-xs text-[#F6F5F1]">
                       Loan Amount (Unlocked Liquidity): {formatCurrency(liquidity, currencyCode)}
@@ -388,7 +388,7 @@ export const AssetsUnlockPanel: React.FC<AssetsUnlockPanelProps> = ({
                   key={m}
                   type="button"
                   onClick={() => handleAdd(m)}
-                  className="min-h-[44px] rounded-lg px-3 py-2 text-xs font-medium text-[#F6F5F1] bg-[#0F4222] hover:bg-[#1A4D2E] border border-[#1A4D2E] touch-manipulation"
+                  className="min-h-[44px] rounded-lg px-3 py-2 text-xs font-medium text-[#F6F5F1] bg-[#0F4222] hover:bg-[#0D3A1D]/80 border border-[#FFCC6A]/25 touch-manipulation"
                 >
                   {MECHANISM_LABELS[m]}
                 </button>

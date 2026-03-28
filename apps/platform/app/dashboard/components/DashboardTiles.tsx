@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
@@ -160,19 +161,8 @@ export function DashboardTiles() {
                 }}
               >
                 {tileBusy ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                    <span
-                      aria-hidden
-                      style={{
-                        display: "inline-block",
-                        width: 18,
-                        height: 18,
-                        border: "2px solid rgba(255,204,106,0.25)",
-                        borderTopColor: "rgba(255,204,106,0.95)",
-                        borderRadius: "50%",
-                        animation: "cb-platform-spin 0.75s linear infinite",
-                      }}
-                    />
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <Loader2 size={18} strokeWidth={2.25} aria-hidden className="cb-framework-launch-spin" />
                     Loading…
                   </span>
                 ) : (

@@ -102,7 +102,7 @@ export const WhatThisMeansBox: React.FC<WhatThisMeansBoxProps> = ({
   const { sectionTitle, summary, subheading, suggestions, tagline } = getSectionContent(status, invalidReason);
 
   return (
-    <div className="rounded-xl border border-[#1A4D2E] bg-[#0D3A1D]/60 p-4 sm:p-6" aria-labelledby="what-means-label">
+    <div className="rounded-xl border border-[#FFCC6A]/25 bg-[#0D3A1D]/60 p-4 sm:p-6" aria-labelledby="what-means-label">
       <h2 id="what-means-label" className="font-serif-section mb-2 text-sm font-bold uppercase">
         {sectionTitle}
       </h2>

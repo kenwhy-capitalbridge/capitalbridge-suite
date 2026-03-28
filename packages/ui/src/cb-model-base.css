@@ -8,8 +8,13 @@
   --cb-gold: #ffcc6a;
   --cb-gold-dark: #8b6914;
   --cb-cream: #f6f5f1;
+  --cb-black: #2b2b2b;
   --cb-font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --cb-font-serif: "Roboto Serif", Georgia, "Noto Serif", "Times New Roman", serif;
+  /** Monorepo default body rhythm (model apps + shared utilities). */
+  --cb-body-font-size: 1rem;
+  --cb-body-line-height: 1.5;
+  --cb-body-font-weight: 400;
   /* Legacy variable names used in some legacy CSS */
   --green: var(--cb-green);
   --gold: var(--cb-gold);
@@ -21,7 +26,9 @@ body {
   margin: 0;
   padding: 0;
   font-family: var(--cb-font-sans);
-  font-size: 16px;
+  font-size: var(--cb-body-font-size);
+  line-height: var(--cb-body-line-height);
+  font-weight: var(--cb-body-font-weight);
   background-color: var(--cb-green);
   color: var(--cb-cream);
   -webkit-font-smoothing: antialiased;
@@ -40,4 +47,112 @@ h6 {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/**
+ * Explicit body copy wrapper (cards, modals) — same rhythm as `html, body`.
+ */
+.cb-body {
+  font-family: var(--cb-font-sans);
+  font-size: var(--cb-body-font-size);
+  line-height: var(--cb-body-line-height);
+  font-weight: var(--cb-body-font-weight);
+}
+
+/**
+ * Gold fill primary CTA — soft gold glow; hover matches login header / platform `pf-chrome-gold-btn`.
+ */
+.cb-gold-primary-cta {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 204, 106, 0.55);
+  background-color: rgba(255, 204, 106, 0.92);
+  color: var(--cb-green);
+  font-family: var(--cb-font-sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.12),
+    0 0 18px rgba(255, 204, 106, 0.28);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.cb-gold-primary-cta:hover:not(:disabled) {
+  background-color: var(--cb-green);
+  color: var(--cb-cream);
+  border-color: var(--cb-green);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.25),
+    0 0 22px rgba(13, 58, 29, 0.45);
+}
+
+.cb-gold-primary-cta:focus-visible {
+  outline: 2px solid var(--cb-gold);
+  outline-offset: 2px;
+}
+
+.cb-gold-primary-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/**
+ * Gold-outline CTA on dark green (secondary emphasis) — hover still green + cream.
+ */
+.cb-gold-outline-cta {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 2px solid rgba(255, 204, 106, 0.65);
+  background-color: rgba(255, 204, 106, 0.08);
+  color: var(--cb-gold);
+  font-family: var(--cb-font-sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(255, 204, 106, 0.12);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.cb-gold-outline-cta:hover:not(:disabled) {
+  background-color: var(--cb-green);
+  color: var(--cb-cream);
+  border-color: var(--cb-green);
+  box-shadow: 0 0 18px rgba(13, 58, 29, 0.35);
+}
+
+.cb-gold-outline-cta:focus-visible {
+  outline: 2px solid var(--cb-gold);
+  outline-offset: 2px;
+}
+
+.cb-gold-outline-cta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

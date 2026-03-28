@@ -122,15 +122,9 @@ function ForgotPasswordInner() {
           >
             {forgotPasswordActionLabel(cooldown, loading)}
           </button>
-          <button
-            type="button"
-            className="cb-btn-quiet mt-4"
-            onClick={() => {
-              window.location.href = "/access";
-            }}
-          >
+          <NavAssignButton href="/access" className="cb-btn-quiet mt-4" loadingLabel="Loading…">
             {ACCESS_PRIMARY_CTA}
-          </button>
+          </NavAssignButton>
           <div className="mt-8 border-t border-cb-gold/30 pt-6">
             <CalmAuthMessage text={ACCESS_SUPPORT_HINT} className="text-center text-sm font-normal leading-relaxed text-cb-green/55" />
           </div>

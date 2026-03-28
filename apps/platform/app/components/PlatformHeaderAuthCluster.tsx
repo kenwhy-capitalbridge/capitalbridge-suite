@@ -25,6 +25,8 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
         aria-label={label}
         title="Profile"
         aria-busy={isPending}
+        aria-disabled={isPending}
+        tabIndex={isPending ? -1 : undefined}
         onClick={(e) => {
           if (e.defaultPrevented) return;
           if (e.button !== 0) return;
@@ -38,13 +40,15 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          width: 32,
-          height: 32,
+          /* ~Same outer height as PlatformLogoutToMarketing (0.35rem×2 + one line at 0.65rem, border-box) */
+          width: 24,
+          height: 24,
+          boxSizing: "border-box",
           flexShrink: 0,
           borderRadius: 9999,
-          fontSize: "0.7rem",
-          fontWeight: 800,
-          letterSpacing: "0.02em",
+          fontSize: "0.65rem",
+          fontWeight: 700,
+          letterSpacing: "0.06em",
           color: "rgba(13, 58, 29, 0.95)",
           backgroundColor: "rgba(255, 204, 106, 0.92)",
           border: "1px solid rgba(255, 204, 106, 0.55)",
@@ -57,7 +61,7 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
         {isPending ? (
           <Loader2
             className="pf-header-avatar-spin"
-            size={16}
+            size={11}
             strokeWidth={2.5}
             aria-hidden
           />

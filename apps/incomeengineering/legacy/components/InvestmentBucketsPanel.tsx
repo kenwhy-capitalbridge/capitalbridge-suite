@@ -82,7 +82,7 @@ export const InvestmentBucketsPanel: React.FC = () => {
   const totalDisplay = Number.isFinite(totalAllocation) ? totalAllocation : 0;
 
   return (
-    <section className="rounded-xl border border-[#1A4D2E]/60 bg-[#163d28] p-4 sm:p-6" aria-labelledby="investments-label">
+    <section className="rounded-xl border border-[#FFCC6A]/25 bg-[#163d28] p-4 sm:p-6" aria-labelledby="investments-label">
       <h2 id="investments-label" className="font-serif-section mb-1 text-base font-bold uppercase sm:text-lg">
         Investment Assumptions
       </h2>
@@ -101,7 +101,7 @@ export const InvestmentBucketsPanel: React.FC = () => {
           const monthlyEst = estimatedMonthlyReturn(bucket.allocation, bucket.expectedReturnAnnual);
           const yearlyEst = estimatedYearlyReturn(bucket.allocation, bucket.expectedReturnAnnual);
           return (
-            <li key={cat.id} className="rounded-xl border border-[#1A4D2E]/60 bg-[#0f2e1c]/80 p-3 sm:p-4">
+            <li key={cat.id} className="rounded-xl border border-[#FFCC6A]/25 bg-[#0f2e1c]/80 p-3 sm:p-4">
               <h3 className="font-serif-section mb-0.5 text-sm font-bold uppercase text-[#FFCC6A]">
                 {cat.title}
               </h3>

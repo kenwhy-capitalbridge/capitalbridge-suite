@@ -182,15 +182,14 @@ function PlatformAccessNotice({
     return (
       <div className="w-full border-b border-cb-gold/40 bg-amber-50 px-3 py-2.5 text-center text-cb-green sm:px-4 sm:py-3">
         <p className="text-sm font-semibold">{COPY_VERIFY_ACCESS_FAILED}</p>
-        <button
-          type="button"
-          className="mt-2 text-sm font-bold underline decoration-cb-gold-dark/60 underline-offset-2"
-          onClick={() => {
-            window.location.href = "/access";
-          }}
+        <NavAssignButton
+          href="/access"
+          className="mt-2 text-sm font-bold text-cb-green underline decoration-cb-gold-dark/60 underline-offset-2"
+          spinnerClassName="border-cb-green/30 border-t-cb-green"
+          loadingLabel="Loading…"
         >
           {COPY_TRY_AGAIN_BTN}
-        </button>
+        </NavAssignButton>
       </div>
     );
   }
@@ -995,10 +994,10 @@ function AccessInner() {
                 Still on this page? Click continue to dashboard below to log into your account.
               </p>
             )}
-            <a
+            <NavAssignButton
               href={destination}
-              className="cb-btn-primary mt-6 inline-block w-full max-w-xs text-center font-semibold no-underline"
-              onClick={() => {
+              className="cb-btn-primary mx-auto mt-6 block w-full max-w-xs font-semibold"
+              onBeforeNavigate={() => {
                 suppressTabSignOutForAuthNavigation();
                 try {
                   sessionStorage.removeItem(DEV_ACCESS_SUCCESS_PREVIEW_KEY);
@@ -1006,9 +1005,10 @@ function AccessInner() {
                   /* ignore */
                 }
               }}
+              loadingLabel="Continue to Dashboard"
             >
               Continue to Dashboard
-            </a>
+            </NavAssignButton>
           </div>
         </main>
       </div>

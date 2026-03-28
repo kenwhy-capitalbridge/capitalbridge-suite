@@ -39,7 +39,7 @@ export const CurrencySelector: React.FC = () => {
             className={`flex flex-1 min-w-0 min-h-[36px] sm:min-h-[38px] items-center justify-center rounded-lg py-1.5 text-xs sm:text-sm font-semibold transition-all touch-manipulation active:scale-[0.98] ${
               currency === code
                 ? 'bg-[#FFCC6A] text-[#0D3A1D]'
-                : 'bg-[#0F4222]/60 text-[#B8B5AE] hover:bg-[#1A4D2E] hover:text-[#F6F5F1]'
+                : 'bg-[#0F4222]/60 text-[#B8B5AE] hover:bg-[#0D3A1D]/80 hover:text-[#F6F5F1]'
             }`}
           >
             {code}
@@ -64,14 +64,14 @@ export const CurrencySelector: React.FC = () => {
             <button
               type="button"
               onClick={handleConfirm}
-              className="rounded-lg bg-[#FFCC6A] px-3 py-1.5 text-sm font-bold text-[#0D3A1D]"
+              className="cb-gold-primary-cta !rounded-lg !px-3 !py-1.5 !text-sm !font-bold"
             >
               Confirm
             </button>
             <button
               type="button"
               onClick={handleCancel}
-              className="rounded-lg border border-[#1A4D2E] px-3 py-1.5 text-sm text-[#B8B5AE] hover:bg-[#0F4222]"
+              className="rounded-lg border border-[#FFCC6A]/25 px-3 py-1.5 text-sm text-[#B8B5AE] hover:bg-[#0F4222]"
             >
               Cancel
             </button>
@@ -82,7 +82,7 @@ export const CurrencySelector: React.FC = () => {
   );
 
   return (
-    <section className="rounded-xl border border-[#1A4D2E] bg-[#0D3A1D]/60 p-4" aria-labelledby="currency-label">
+    <section className="rounded-xl border border-[#FFCC6A]/25 bg-[#0D3A1D]/60 p-4" aria-labelledby="currency-label">
       <h2 id="currency-label" className="font-serif-section mb-2 text-sm font-bold uppercase">Currency</h2>
       <p className="mb-2 text-xs text-[#B8B5AE]">All numbers in this currency</p>
       {content}
@@ -110,7 +110,7 @@ export function CurrencySelectorEmbedded() {
             aria-pressed={currency === code}
             aria-label={`Select ${code}`}
             className={`flex flex-1 min-w-0 min-h-[36px] sm:min-h-[38px] items-center justify-center rounded-lg py-1.5 text-xs sm:text-sm font-semibold transition-all touch-manipulation active:scale-[0.98] ${
-              currency === code ? 'bg-[#FFCC6A] text-[#0D3A1D]' : 'bg-[#0F4222]/60 text-[#B8B5AE] hover:bg-[#1A4D2E] hover:text-[#F6F5F1]'
+              currency === code ? 'bg-[#FFCC6A] text-[#0D3A1D]' : 'bg-[#0F4222]/60 text-[#B8B5AE] hover:bg-[#0D3A1D]/80 hover:text-[#F6F5F1]'
             }`}
           >
             {code}
@@ -122,8 +122,8 @@ export function CurrencySelectorEmbedded() {
           <p id="currency-confirm-title" className="text-sm font-medium text-[#F6F5F1]">Changing currency will reset all amounts.</p>
           <p className="mt-1 text-xs text-[#B8B5AE]">Defaults for {pending}: {formatCurrency(cfg.defaultMonthlyExpenses, pending)} monthly expenses.</p>
           <div className="mt-3 flex gap-2">
-            <button type="button" onClick={handleConfirm} className="rounded-lg bg-[#FFCC6A] px-3 py-1.5 text-sm font-bold text-[#0D3A1D]">Confirm</button>
-            <button type="button" onClick={handleCancel} className="rounded-lg border border-[#1A4D2E] px-3 py-1.5 text-sm text-[#B8B5AE] hover:bg-[#0F4222]">Cancel</button>
+            <button type="button" onClick={handleConfirm} className="cb-gold-primary-cta !rounded-lg !px-3 !py-1.5 !text-sm !font-bold">Confirm</button>
+            <button type="button" onClick={handleCancel} className="rounded-lg border border-[#FFCC6A]/25 px-3 py-1.5 text-sm text-[#B8B5AE] hover:bg-[#0F4222]">Cancel</button>
           </div>
         </div>
       )}

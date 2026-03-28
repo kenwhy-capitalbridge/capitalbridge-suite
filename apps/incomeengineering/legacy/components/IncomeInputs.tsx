@@ -6,7 +6,7 @@ import type { IncomeRow } from '../types/calculator';
 
 /** Input wrapper matching refinance: same height, border, focus. Currency prefix inside the field. */
 const currencyInputWrapperClass =
-  'flex min-h-[44px] w-full items-center gap-2 rounded-lg border border-[#1A4D2E] bg-[#0A2E18] pl-3 pr-3 py-2 focus-within:ring-2 focus-within:ring-[#FFCC6A]/50 focus-within:border-[#FFCC6A]/60 transition-colors touch-manipulation';
+  'flex min-h-[44px] w-full items-center gap-2 rounded-lg border border-[#FFCC6A]/25 bg-[#0A2E18] pl-3 pr-3 py-2 focus-within:ring-2 focus-within:ring-[#FFCC6A]/50 focus-within:border-[#FFCC6A]/60 transition-colors touch-manipulation';
 
 const labelClass = 'text-xs text-[#B8B5AE] mb-1 block';
 
@@ -22,7 +22,7 @@ export const IncomeInputs: React.FC = () => {
 
   return (
     <section
-      className="rounded-xl border border-[#1A4D2E]/60 bg-[#163d28] p-4 sm:p-6"
+      className="rounded-xl border border-[#FFCC6A]/25 bg-[#163d28] p-4 sm:p-6"
       aria-labelledby="incomes-label"
     >
       <h2 id="incomes-label" className="font-serif-section mb-1 text-sm font-bold uppercase tracking-wide">
@@ -58,7 +58,7 @@ export const IncomeInputs: React.FC = () => {
                     type="button"
                     onClick={() => removeIncomeRow(row.id)}
                     aria-label={`Remove ${row.label}`}
-                    className="min-h-[44px] min-w-[44px] flex shrink-0 items-center justify-center rounded-lg border border-[#1A4D2E] bg-[#0A2E18] text-[#B8B5AE] hover:bg-[#134833] hover:text-[#F6F5F1] touch-manipulation focus:outline-none focus:ring-2 focus:ring-[#FFCC6A]/50"
+                    className="min-h-[44px] min-w-[44px] flex shrink-0 items-center justify-center rounded-lg border border-[#FFCC6A]/25 bg-[#0A2E18] text-[#B8B5AE] hover:bg-[#134833] hover:text-[#F6F5F1] touch-manipulation focus:outline-none focus:ring-2 focus:ring-[#FFCC6A]/50"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>

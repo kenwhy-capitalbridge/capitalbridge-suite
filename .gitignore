@@ -10,3 +10,8 @@ dist
 s.env
 npm-debug.log*
 
+# Playwright E2E (manual storage state — never commit)
+e2e/.auth/
+playwright-report/
+test-results/
+

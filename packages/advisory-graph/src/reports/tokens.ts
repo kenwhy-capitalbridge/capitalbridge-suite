@@ -7,7 +7,7 @@
 export const REPORT_BRAND_GREEN = '#1B4D3E';
 /** Body copy — high contrast on white */
 export const REPORT_TEXT = '#0D3A1D';
-export const REPORT_ACCENT = '#C6A24D';
+export const REPORT_ACCENT = '#FFCC6A';
 export const REPORT_BORDER = 'rgba(27, 77, 62, 0.22)';
 export const REPORT_MUTED = 'rgba(13, 58, 29, 0.78)';
 export const REPORT_BG = '#ffffff';

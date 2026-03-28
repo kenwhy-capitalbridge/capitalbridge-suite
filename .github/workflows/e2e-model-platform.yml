@@ -1,0 +1,53 @@
+# E2E: Forever → platform BACK + advisory save.
+# Prerequisites: secret CB_E2E_STORAGE_JSON = full contents of e2e/.auth/storage.json
+# Optional vars: CB_E2E_FOREVER_ORIGIN, CB_E2E_PLATFORM_ORIGIN (defaults to production hosts).
+# Scheduled runs fail until the secret is set; disable the schedule in the workflow file if unused.
+name: E2E model → platform
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 3"
+
+concurrency:
+  group: e2e-model-platform
+  cancel-in-progress: false
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Write storage state from secret
+        env:
+          CB_E2E_STORAGE_JSON: ${{ secrets.CB_E2E_STORAGE_JSON }}
+        run: |
+          mkdir -p e2e/.auth
+          if [ -z "$CB_E2E_STORAGE_JSON" ]; then
+            echo "Set repository secret CB_E2E_STORAGE_JSON (contents of e2e/.auth/storage.json)"
+            exit 1
+          fi
+          printf '%s' "$CB_E2E_STORAGE_JSON" > e2e/.auth/storage.json
+
+      - name: Run Playwright
+        env:
+          CB_E2E_FOREVER_ORIGIN: ${{ vars.CB_E2E_FOREVER_ORIGIN }}
+          CB_E2E_PLATFORM_ORIGIN: ${{ vars.CB_E2E_PLATFORM_ORIGIN }}
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type LaunchItem = { href: string; label: string };
 
@@ -35,7 +36,12 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
           >
             {active ? (
               <span className="cb-launch-btn-inner">
-                <span className="cb-loading-ring" aria-hidden />
+                <Loader2
+                  className="cb-framework-launch-spin"
+                  size={16}
+                  strokeWidth={2.25}
+                  aria-hidden
+                />
                 Loading…
               </span>
             ) : (

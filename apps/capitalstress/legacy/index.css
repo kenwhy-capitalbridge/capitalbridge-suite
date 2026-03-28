@@ -24,16 +24,16 @@ h2,
 }
 
 .cb-gold {
-  color: #c6a24d;
+  color: #ffcc6a;
 }
 .cb-bg-gold {
-  background-color: #c6a24d;
+  background-color: #ffcc6a;
 }
 .cb-border-gold {
-  border-color: #c6a24d;
+  border-color: #ffcc6a;
 }
 .cb-dark-green {
-  background-color: #002b1b;
+  background-color: #0d3a1d;
 }
 
 button {
@@ -68,9 +68,8 @@ button {
     background-color: white !important;
     color: #0d3a1d !important;
   }
-  .bg-\[\#002B1B\],
-  .bg-\[\#C6A24D\],
-  .bg-\[\#0D3A1D\] {
+  .bg-\[\#0D3A1D\],
+  .bg-\[\#FFCC6A\] {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

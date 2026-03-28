@@ -58,7 +58,7 @@ export interface PrintReportProps {
 }
 
 const PRINT_TEXT = '#0D3A1D';
-const PRINT_ACCENT = '#C6A24D';
+const PRINT_ACCENT = '#FFCC6A';
 const PRINT_BORDER = 'rgba(13, 58, 29, 0.2)';
 
 export function PrintReport(props: PrintReportProps) {

@@ -11,7 +11,7 @@ export function ModelAppHeaderBackButton({ href }: { href: string }) {
       className={styles.back}
       aria-label="Back to Capital Bridge platform"
     >
-      Back
+      BACK
     </a>
   );
 }

@@ -1,3 +1,5 @@
+@import "@cb/ui/cb-model-base.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,16 +9,24 @@
    --------------------------------------------------------------------------- */
 @layer base {
   :root {
+    /* cb-model-base.css also sets these; keep in sync for Tailwind @apply */
     --cb-green: #0d3a1d;
     --cb-gold: #ffcc6a;
     --cb-gold-dark: #8b6914;
     --cb-cream: #f6f5f1;
+    --cb-black: #2b2b2b;
+    --cb-body-font-size: 1rem;
+    --cb-body-line-height: 1.5;
+    --cb-body-font-weight: 400;
   }
 
   html,
   body {
     background-color: #0d3a1d !important;
     color: #0d3a1d !important;
+    font-size: var(--cb-body-font-size);
+    line-height: var(--cb-body-line-height);
+    font-weight: var(--cb-body-font-weight);
   }
 
   /* All headings use Roboto Serif; body inherits Inter from layout */
@@ -81,13 +91,13 @@
     box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.28);
   }
 
-  /* Primary action: gold bg, green text, rounded, medium weight, hover turns green */
+  /* Primary: gold + glow; hover green + cream (matches header gold buttons) */
   .cb-btn-primary {
-    @apply rounded-xl bg-cb-gold px-3 py-2.5 text-sm font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] transition hover:bg-cb-green hover:text-white disabled:opacity-55 disabled:hover:bg-cb-gold disabled:hover:text-cb-green sm:px-4 sm:py-3 sm:text-base;
+    @apply rounded-xl border border-cb-gold/55 bg-cb-gold px-3 py-2.5 text-sm font-medium text-cb-green shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12),0_0_18px_rgba(255,204,106,0.28)] transition-colors duration-150 hover:border-cb-green hover:bg-cb-green hover:text-cb-cream disabled:opacity-55 disabled:hover:border-cb-gold/55 disabled:hover:bg-cb-gold disabled:hover:text-cb-green sm:px-4 sm:py-3 sm:text-base;
   }
 
   .cb-btn-secondary {
-    @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-3 py-2.5 text-sm font-medium text-cb-green transition hover:border-cb-gold/90 hover:bg-cb-green/[0.12] hover:text-cb-green disabled:opacity-50 disabled:hover:border-cb-gold/60 disabled:hover:bg-white/90 sm:px-4 sm:py-3 sm:text-base;
+    @apply rounded-xl border-2 border-cb-gold/60 bg-white/90 px-3 py-2.5 text-sm font-medium text-cb-green transition-colors duration-150 hover:border-cb-green hover:bg-cb-green hover:text-cb-cream disabled:opacity-50 disabled:hover:border-cb-gold/60 disabled:hover:bg-white/90 disabled:hover:text-cb-green sm:px-4 sm:py-3 sm:text-base;
   }
 
   /* Quiet secondary — does not compete with gold primary CTA */
@@ -96,18 +106,10 @@
   }
 
   /**
-   * “View all plans” / secondary nav on dark green — base state must be readable
-   * without hover (high contrast). Hover enhances only.
+   * “View all plans” on dark green — gold fill + glow; hover green + cream.
    */
   .cb-btn-view-plans {
-    @apply inline-flex w-auto max-w-full items-center justify-center rounded-lg border-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-none transition focus:outline-none focus:ring-2 focus:ring-cb-gold/40;
-    background-color: #1f6b45;
-    border-color: #d4af37;
-  }
-
-  .cb-btn-view-plans:hover {
-    background-color: #d4af37;
-    color: #0f3d2e;
+    @apply inline-flex w-auto max-w-full items-center justify-center rounded-lg border-2 border-cb-gold/85 bg-cb-gold/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-cb-green shadow-[0_0_14px_rgba(255,204,106,0.22)] transition-colors duration-150 hover:border-cb-green hover:bg-cb-green hover:text-cb-cream focus:outline-none focus:ring-2 focus:ring-cb-gold/40;
   }
 
   /**
@@ -119,10 +121,10 @@
   }
 
   .cb-btn-auth-view-plans:hover:not(:disabled) {
-    @apply border-cb-green/40 bg-cb-green/[0.05] text-cb-green;
+    @apply border-cb-green bg-cb-green text-cb-cream;
     text-decoration: underline;
     text-underline-offset: 3px;
-    text-decoration-color: rgba(212, 175, 55, 0.5);
+    text-decoration-color: rgba(246, 245, 241, 0.45);
   }
 
   .cb-btn-auth-view-plans:focus-visible {

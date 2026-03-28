@@ -1,7 +1,8 @@
 import { Suspense } from "react";
-import { PricingContent } from "./PricingContent";
+import { PricingContent } from "../pricing/PricingContent";
 
-export default function PricingPage() {
+/** Same plans UI as /pricing; header uses BACK → platform profile (see Header.tsx). */
+export default function PlansBrowsePage() {
   return (
     <Suspense
       fallback={

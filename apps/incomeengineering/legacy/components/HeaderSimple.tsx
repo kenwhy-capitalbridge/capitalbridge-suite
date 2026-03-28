@@ -2,11 +2,11 @@ import React from 'react';
 
 const CAPITAL_BRIDGE_URL = 'https://thecapitalbridge.com/advisory-platform/';
 
-const HEADER_BG = '#0C3A1C';
+const HEADER_BG = '#0D3A1D';
 
 export const HeaderSimple: React.FC = () => (
   <header
-    className="fixed left-0 right-0 top-0 z-50 w-full border-b border-[#1A4D2E] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur supports-[backdrop-filter]:bg-[#0C3A1C]/90"
+    className="fixed left-0 right-0 top-0 z-50 w-full border-b border-[#FFCC6A]/25 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur supports-[backdrop-filter]:bg-[#0D3A1D]/90"
     role="banner"
     style={{ backgroundColor: `${HEADER_BG}F2` }}
   >
@@ -34,7 +34,7 @@ export const HeaderSimple: React.FC = () => (
           href={CAPITAL_BRIDGE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 text-xs font-medium text-[#F6F5F1]/90 underline-offset-2 hover:text-[#FFCC6A] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFCC6A]/50 focus:ring-offset-2 focus:ring-offset-[#0C3A1C]"
+          className="shrink-0 text-xs font-medium text-[#F6F5F1]/90 underline-offset-2 hover:text-[#FFCC6A] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFCC6A]/50 focus:ring-offset-2 focus:ring-offset-[#0D3A1D]"
         >
           ← Exit Model
         </a>

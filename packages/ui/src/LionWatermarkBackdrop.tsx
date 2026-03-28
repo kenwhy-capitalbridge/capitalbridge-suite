@@ -16,16 +16,16 @@ type MarkSpec = {
   opacity: number;
 };
 
-const MARK_COUNT = 6;
+const MARK_COUNT = 4;
 const TOP_RANGE_LO = 7;
 const TOP_RANGE_HI = 83;
 const LEFT_RANGE_LO = 3;
 const LEFT_RANGE_HI = 97;
 
-const WIDTH_PX_MIN = 168;
-const WIDTH_PX_MAX = 310;
-const OPACITY_MIN = 0.034;
-const OPACITY_MAX = 0.056;
+const WIDTH_PX_MIN = 150;
+const WIDTH_PX_MAX = 260;
+const OPACITY_MIN = 0.026;
+const OPACITY_MAX = 0.044;
 
 function randomBetween(a: number, b: number): number {
   return a + Math.random() * (b - a);
@@ -41,7 +41,7 @@ function pct(n: number): string {
  */
 function separationThresholdPx(wa: number, wb: number): number {
   const avg = (wa + wb) / 2;
-  return 13 + avg / 21;
+  return 16 + avg / 18;
 }
 
 function farEnough(a: MarkSpec, b: MarkSpec): boolean {
@@ -67,12 +67,10 @@ function tryOneMark(existing: MarkSpec[]): MarkSpec | null {
 /** Sparse fallback if random placement fails (should be rare). */
 function fallbackMarks(): MarkSpec[] {
   return [
-    { leftPct: 9, topPct: 16, widthPx: 220, rotateDeg: -12, opacity: 0.042 },
-    { leftPct: 46, topPct: 36, widthPx: 198, rotateDeg: 9, opacity: 0.04 },
-    { leftPct: 91, topPct: 19, widthPx: 228, rotateDeg: 14, opacity: 0.044 },
-    { leftPct: 26, topPct: 56, widthPx: 205, rotateDeg: -17, opacity: 0.041 },
-    { leftPct: 74, topPct: 51, widthPx: 238, rotateDeg: -7, opacity: 0.043 },
-    { leftPct: 58, topPct: 76, widthPx: 200, rotateDeg: 19, opacity: 0.04 },
+    { leftPct: 12, topPct: 22, widthPx: 185, rotateDeg: -10, opacity: 0.034 },
+    { leftPct: 78, topPct: 28, widthPx: 175, rotateDeg: 14, opacity: 0.032 },
+    { leftPct: 38, topPct: 58, widthPx: 195, rotateDeg: 8, opacity: 0.033 },
+    { leftPct: 88, topPct: 72, widthPx: 168, rotateDeg: -16, opacity: 0.031 },
   ];
 }
 

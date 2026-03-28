@@ -11,6 +11,7 @@ import {
 import { buildAccessUrl, persistCheckoutEmail } from "@/lib/checkoutEmailPersistence";
 import { PaymentTargetEmailLine } from "@/components/PaymentTargetEmailCopy";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
+import { NavAssignButton } from "@/components/NavAssignButton";
 import {
   HANDOFF_FORBIDDEN_ORIGIN,
   HANDOFF_SUCCESS_EMAIL_SENT,
@@ -232,18 +233,12 @@ function PaymentHandoffContent() {
             </p>
           )}
           <div className="mt-4 flex w-full flex-col items-center gap-2 sm:mt-6 sm:gap-3">
-            <button type="button" className={btnSecondary} onClick={() => { window.location.href = accessHref; }}>
+            <NavAssignButton href={accessHref} className={btnSecondary} loadingLabel="Loading…">
               Continue to set your password
-            </button>
-            <button
-              type="button"
-              className="cb-btn-auth-view-plans max-w-[12rem]"
-              onClick={() => {
-                window.location.href = "/pricing";
-              }}
-            >
+            </NavAssignButton>
+            <NavAssignButton href="/pricing" className="cb-btn-auth-view-plans max-w-[12rem]" loadingLabel="Loading…">
               View Other Plans
-            </button>
+            </NavAssignButton>
           </div>
           <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
             <CalmAuthMessage
@@ -292,25 +287,21 @@ function PaymentHandoffContent() {
             </a>
           )}
           {billId && (
-            <button
-              type="button"
+            <NavAssignButton
+              href={`/payment-return?billplz[id]=${encodeURIComponent(billId)}`}
               className={btnSecondary}
-              onClick={() => {
-                window.location.href = `/payment-return?billplz[id]=${encodeURIComponent(billId)}`;
-              }}
+              loadingLabel="Loading…"
             >
               I already paid
-            </button>
+            </NavAssignButton>
           )}
-          <button
-            type="button"
+          <NavAssignButton
+            href="/pricing"
             className="cb-btn-auth-view-plans mx-auto max-w-[12rem]"
-            onClick={() => {
-              window.location.href = "/pricing";
-            }}
+            loadingLabel="Loading…"
           >
             View Other Plans
-          </button>
+          </NavAssignButton>
         </div>
         <div className="mt-4 border-t border-cb-gold/30 pt-3 sm:mt-5 sm:pt-4">
           <CalmAuthMessage

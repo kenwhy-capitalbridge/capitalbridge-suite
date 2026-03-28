@@ -29,7 +29,7 @@ export const ExpensesInput: React.FC = () => {
         <p id="expenses-label" className="text-xs font-medium uppercase tracking-wider text-[#B8B5AE] mb-1">
           {viewMode === 'annual' ? 'Desired Yearly Expenses' : 'Desired Monthly Expenses'}
         </p>
-        <div className="flex min-h-[44px] w-full items-center gap-2 rounded-lg border border-[#1A4D2E] bg-[#0A2E18] pl-3 pr-3 py-2 focus-within:ring-2 focus-within:ring-[#FFCC6A]/50 focus-within:border-[#FFCC6A]/60 transition-colors touch-manipulation">
+        <div className="flex min-h-[44px] w-full items-center gap-2 rounded-lg border border-[#FFCC6A]/25 bg-[#0A2E18] pl-3 pr-3 py-2 focus-within:ring-2 focus-within:ring-[#FFCC6A]/50 focus-within:border-[#FFCC6A]/60 transition-colors touch-manipulation">
           <span className="text-sm text-[#F6F5F1] shrink-0">{currency === 'RM' ? 'RM ' : `${currency} `}</span>
           <NumberInput
             value={Math.round(displayValue)}

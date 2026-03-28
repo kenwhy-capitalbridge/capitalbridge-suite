@@ -57,32 +57,22 @@ export function PlatformLogoutToMarketing({
       disabled={pending}
       aria-busy={pending}
       aria-disabled={pending}
+      className="pf-chrome-gold-btn"
       style={{
         ...(inline ? {} : { justifySelf: "end" }),
-        padding: "0.35rem 0.75rem",
-        fontSize: "0.65rem",
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: "rgba(13, 58, 29, 0.95)",
-        backgroundColor: "rgba(255, 204, 106, 0.92)",
-        border: "1px solid rgba(255, 204, 106, 0.55)",
-        borderRadius: 4,
         cursor: pending ? "wait" : "pointer",
         opacity: pending ? 0.6 : 1,
-        transition: "opacity 0.15s ease",
         pointerEvents: pending ? "none" : "auto",
-        whiteSpace: "nowrap",
       }}
     >
       <style>{`@keyframes cbSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       {pending ? (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <Loader2 size={14} style={{ animation: "cbSpin 0.8s linear infinite" }} />
-          Signing out…
+          SIGNING OUT…
         </span>
       ) : (
-        "Logout"
+        "LOGOUT"
       )}
     </button>
   );

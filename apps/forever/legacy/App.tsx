@@ -323,7 +323,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
     { name: 'Remaining Gap', value: results.gap > 0 ? results.gap : 0 },
   ];
 
-  const COLORS = ['#FFCC6A', '#F97316', '#22C55E', '#164d2a'];
+  const COLORS = ['#FFCC6A', '#F97316', '#22C55E', '#0D3A1D'];
 
   const isSurplusState = results.currentAssets >= results.capitalNeeded;
   const capitalDiff = results.isSustainable ? Math.abs(results.currentAssets - results.capitalNeeded) : 0;
@@ -379,7 +379,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
   }, [results.isSustainable, results.progressPercent]);
 
   return (
-    <div className="min-h-screen p-3 sm:p-5 lg:p-10 flex flex-col items-center">
+    <div className="cb-body min-h-screen p-3 sm:p-5 lg:p-10 flex flex-col items-center">
       <main className="w-full max-w-[900px] bg-[#0D3A1D] rounded-3xl border-2 border-[#FFCC6A] shadow-[0_0_50px_rgba(255,204,106,0.1)] overflow-hidden">
         <div className="flex flex-col">
           <div className="p-5 sm:p-7 md:p-10 lg:p-12 bg-black/10 border-b border-[#FFCC6A]/20">
@@ -476,7 +476,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Total Assets</p>
                   <p className="text-xl font-black text-white">{formatCurrency(results.currentAssets, currency)}</p>
                 </div>
-                <div className={`p-4 rounded-xl transition-colors duration-500 ${isSurplusState ? 'bg-emerald-950/40 border-emerald-500/30' : 'bg-[#164d2a]/30 border-[#FFCC6A]/20'} text-center relative overflow-hidden border flex flex-col justify-center min-h-[135px]`}>
+                <div className={`p-4 rounded-xl transition-colors duration-500 ${isSurplusState ? 'bg-emerald-950/40 border-emerald-500/30' : 'bg-[#0D3A1D]/30 border-[#FFCC6A]/20'} text-center relative overflow-hidden border flex flex-col justify-center min-h-[135px]`}>
                   <p className={`text-[10px] uppercase tracking-widest mb-0.5 font-bold ${isSurplusState ? 'text-emerald-400/70' : 'text-[#FFCC6A]/60'}`}>
                     {isSurplusState ? 'Wealth Surplus' : 'Capital Depletion'}
                   </p>
@@ -540,7 +540,15 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
 
             <div className="mt-8 md:mt-12 lg:mt-14 relative z-10">
               <div className="flex justify-center">
-                <button onClick={handleDownloadPDF} disabled={!results.isSustainable || isGenerating} className={`py-3 px-6 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all ${results.isSustainable && !isGenerating ? 'bg-[#FFCC6A] text-[#0D3A1D] hover:bg-white hover:scale-105 hover:-translate-y-0.5 shadow-lg shadow-[#FFCC6A]/30 animate-download-cta' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}>
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={!results.isSustainable || isGenerating}
+                  className={
+                    results.isSustainable && !isGenerating
+                      ? 'cb-gold-primary-cta py-3 px-6'
+                      : 'flex items-center justify-center gap-2 rounded-xl border border-gray-700 bg-gray-800 py-3 px-6 text-sm font-bold text-gray-500 cursor-not-allowed shadow-none'
+                  }
+                >
                   {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Download className="w-4 h-4" /> Download Report</>}
                 </button>
               </div>

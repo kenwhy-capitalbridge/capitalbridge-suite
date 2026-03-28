@@ -671,7 +671,7 @@ const CalculatorScreen = forwardRef<
 
   return (
     <TapToRevealProvider>
-    <div className="min-h-screen bg-transparent text-[#F6F5F1] overflow-x-hidden">
+    <div className="cb-body min-h-screen bg-transparent text-[#F6F5F1] overflow-x-hidden">
       {/* Toast */}
       {toast && (
         <div
@@ -1497,7 +1497,7 @@ const CalculatorScreen = forwardRef<
                         type="button"
                         onClick={undo}
                         disabled={history.length === 0}
-                        className="shrink-0 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-[#FFCC6A] text-[#0D3A1D] hover:bg-[#FFCC6A]/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#FFCC6A]"
+                        className="cb-gold-primary-cta shrink-0 !rounded-lg !px-2 !py-1 sm:!px-3 sm:!py-1.5 !text-[10px] sm:!text-xs !font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] disabled:opacity-50 disabled:cursor-not-allowed"
                         aria-label="Undo"
                       >
                         Undo
@@ -1735,11 +1735,11 @@ const CalculatorScreen = forwardRef<
             </p>
           )}
           <div className="flex justify-center mb-6">
-          <button 
+          <button
             type="button"
               onClick={handlePrintOrSaveReport}
               disabled={reportGenerating}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-6 rounded-lg border border-[#FFCC6A] bg-[#0D3A1D] text-[#FFCC6A] font-medium text-sm hover:bg-[#FFCC6A]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="cb-gold-outline-cta w-full sm:w-auto !rounded-lg !py-3 !px-6 !text-sm !font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] disabled:opacity-60 disabled:cursor-not-allowed"
           >
               <Printer className="h-4 w-4 flex-shrink-0" aria-hidden />
               {reportGenerating ? 'Generating…' : 'Print or Save Report'}

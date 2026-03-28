@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
 import { persistCheckoutEmail, buildAccessUrl } from "@/lib/checkoutEmailPersistence";
 import { ButtonSpinner } from "@/components/ButtonSpinner";
+import { NavAssignButton } from "@/components/NavAssignButton";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import {
   CHECKOUT_ACCOUNT_EXISTS,
@@ -244,15 +245,13 @@ function CheckoutContent() {
         <p className="cb-card-subtitle text-center">Set up your access in seconds.</p>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-cb-green/85">
           <p className="min-w-0 flex-1 text-left">Plan: {planLabel}</p>
-          <button
-            type="button"
+          <NavAssignButton
+            href="/pricing"
             className="cb-btn-auth-view-plans w-auto shrink-0"
-            onClick={() => {
-              window.location.href = "/pricing";
-            }}
+            loadingLabel="Loading…"
           >
             View Other Plans
-          </button>
+          </NavAssignButton>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-3 sm:mt-6 sm:gap-4" noValidate>

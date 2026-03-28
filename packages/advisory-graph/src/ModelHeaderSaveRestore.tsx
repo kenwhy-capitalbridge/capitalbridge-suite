@@ -207,6 +207,11 @@ export function ModelHeaderSaveRestore({
     color: "rgba(13, 58, 29, 0.95)",
     opacity: 1,
   };
+  const saveGoldHoverStyle: CSSProperties = {
+    background: "#0d3a1d",
+    border: "1px solid #0d3a1d",
+    color: "#f6f5f1",
+  };
 
   if (!useV2) {
     return (
@@ -240,11 +245,23 @@ export function ModelHeaderSaveRestore({
         type="button"
         onClick={handleSave}
         disabled={saveBlocked}
+        onMouseEnter={(e) => {
+          if (saveBlocked) return;
+          Object.assign(e.currentTarget.style, saveGoldHoverStyle);
+        }}
+        onMouseLeave={(e) => {
+          if (saveBlocked) {
+            Object.assign(e.currentTarget.style, saveMutedStyle);
+            return;
+          }
+          Object.assign(e.currentTarget.style, saveActiveStyle);
+        }}
         style={{
           ...headerActionButtonStyle,
           ...(saveBlocked ? saveMutedStyle : saveActiveStyle),
           cursor: saveBlocked ? (trialLocked ? "not-allowed" : "wait") : "pointer",
           opacity: trialLocked ? 0.6 : 1,
+          transition: "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease",
         }}
         title={
           trialLocked

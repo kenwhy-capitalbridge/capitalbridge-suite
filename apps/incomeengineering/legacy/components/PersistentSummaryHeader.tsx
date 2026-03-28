@@ -61,7 +61,7 @@ export const PersistentSummaryHeader: React.FC<PersistentSummaryHeaderProps> = (
 
   return (
     <header
-      className="fixed top-14 left-0 right-0 z-40 border-b border-[#1A4D2E]/80 bg-[#0D3A1D] shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+      className="fixed top-14 left-0 right-0 z-40 border-b border-[#FFCC6A]/30 bg-[#0D3A1D] shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
       aria-label="Summary"
     >
       <div className="mx-auto w-full max-w-[100%] px-3 py-3 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-4 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-6 min-[1025px]:max-w-[1200px] min-[1441px]:max-w-[1440px] min-[1441px]:px-8">

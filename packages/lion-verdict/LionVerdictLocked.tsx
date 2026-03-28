@@ -98,7 +98,7 @@ export function LionVerdictLocked({
         href={href}
         rel="noopener noreferrer"
         aria-label="See plans and unlock the full diagnosis"
-        className="mx-auto mb-7 block w-full max-w-[min(100%,20rem)] rounded-full bg-[#FFCC6A] px-5 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-[#0D3A1D] shadow-[0_10px_30px_rgba(255,204,106,0.4)] sm:mb-8 sm:max-w-none sm:px-6 sm:text-sm sm:tracking-widest"
+        className="cb-gold-primary-cta mx-auto mb-7 w-full max-w-[min(100%,20rem)] !rounded-full px-5 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] sm:mb-8 sm:max-w-none sm:px-6 sm:text-sm sm:tracking-widest"
       >
         <span className="sm:hidden">See plans to unlock</span>
         <span className="hidden sm:inline">See plans and unlock the full diagnosis</span>

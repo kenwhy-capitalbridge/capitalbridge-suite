@@ -31,7 +31,7 @@ export type ClientScoreDashboardProps = {
 };
 
 const TEXT = '#0D3A1D';
-const ACCENT = '#C6A24D';
+const ACCENT = '#FFCC6A';
 const SCORE_COLOR = REPORT_BRAND_GREEN;
 const CARD_BG = 'rgba(255, 204, 106, 0.1)';
 const BORDER = 'rgba(198, 162, 77, 0.35)';
@@ -195,7 +195,7 @@ export function ClientScoreDashboard({
               height: '100%',
               width: `${pct}%`,
               borderRadius: 999,
-              background: `linear-gradient(90deg, ${ACCENT}, #e8c97a)`,
+              background: `linear-gradient(90deg, ${ACCENT}, #FFE9B0)`,
               transition: 'width 0.35s ease',
             }}
           />

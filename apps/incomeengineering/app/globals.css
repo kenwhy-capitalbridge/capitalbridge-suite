@@ -3,3 +3,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans antialiased text-cb-cream;
+    font-size: var(--cb-body-font-size);
+    line-height: var(--cb-body-line-height);
+    font-weight: var(--cb-body-font-weight);
+  }
+}

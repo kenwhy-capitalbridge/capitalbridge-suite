@@ -1,6 +1,6 @@
 {
   "$schema_note": "Capital Bridge login/onboarding chatbot training. Aligns with apps/login flows. No secrets. Use {{placeholders}} when wiring live data.",
-  "version": "1.1",
+  "version": "1.2",
   "product_name": "Capital Bridge",
   "support_email": "admin@thecapitalbridge.com",
   "elfsight_setup_critical": "Elfsight’s built-in AI often ignores uploaded FAQs and invents generic SaaS steps. Paste elfsight_ai_system_prompt into the widget’s Custom instructions / AI behavior field (exact wording Elfsight shows in your plan). Without this, users get wrong answers about mobile apps and SSO.",
@@ -35,8 +35,10 @@
     "account_access": "/access",
     "checkout": "/checkout",
     "pricing": "/pricing",
+    "plans": "/plans",
     "forgot_password": "/forgot-password",
-    "payment_return": "/payment-return"
+    "payment_return": "/payment-return",
+    "platform_profile": "https://platform.thecapitalbridge.com/profile"
   },
   "system_facts_for_bot": {
     "payment_first_onboarding": "Users normally pay first, then get an email to set a password, then sign in at Account Access.",
@@ -44,7 +46,8 @@
     "resend_email": "Send Me A New Link and Forgot password both send the same type of password-setup email. There is a short wait between sends (about 45 seconds).",
     "latest_link_only": "If they opened more than one email link, only the newest one should be used.",
     "billing_email_source": "For payment follow-up, the email on file is the one tied to that payment — not a different address unless they completed an email change through the product.",
-    "password_setup_after_payment": "After paying, users may see a screen to send the password-setup email; it always goes to the email stored for that payment."
+    "password_setup_after_payment": "After paying, users may see a screen to send the password-setup email; it always goes to the email stored for that payment.",
+    "plans_and_pricing": "Packages and subscriptions are listed at Plans (/plans) on the login site. Pricing (/pricing) compares plans. Signed-in users on the platform can open View Available Plans from their profile (https://platform.thecapitalbridge.com/profile)."
   },
   "escalation_ladder": {
     "step_1_retry": "Suggest one simple retry (correct email, wait for cooldown, check spam, use latest link).",
@@ -269,12 +272,14 @@
           },
           {
             "if_user_says": "access_not_active",
-            "bot_reply": "Open Pricing to choose a plan again, or email admin@thecapitalbridge.com with the email you use for Capital Bridge so we can check your account."
+            "bot_reply": "Open Plans (/plans) on the login site to see packages and subscribe, or Pricing (/pricing) to compare plans. If you are already signed in on the platform, use View Available Plans from your profile (platform profile). Otherwise email admin@thecapitalbridge.com with the email you use for Capital Bridge so we can check your account."
           }
         ],
         "next_steps_ui": [
           "/access",
-          "/pricing"
+          "/plans",
+          "/pricing",
+          "https://platform.thecapitalbridge.com/profile"
         ]
       },
       "data_aware": "Use data_aware_response_patterns.access_validity when integrated.",

@@ -21,35 +21,22 @@ export function PlatformLoginButton({ href }: { href: string }) {
         disabled={pending}
         aria-busy={pending}
         aria-disabled={pending}
+        className="pf-chrome-outline-btn"
         style={{
           justifySelf: "end",
-          padding: "0.35rem 0.75rem",
-          fontSize: "0.65rem",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "rgba(255, 204, 106, 0.95)",
-          backgroundColor: "transparent",
-          border: "1px solid rgba(255, 204, 106, 0.55)",
-          borderRadius: 4,
-          textDecoration: "none",
-          whiteSpace: "nowrap",
-          cursor: pending ? "wait" : "pointer",
           opacity: pending ? 0.6 : 1,
           pointerEvents: pending ? "none" : "auto",
-          transition: "opacity 0.15s ease",
         }}
       >
         {pending ? (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <Loader2 size={14} style={{ animation: "cbSpin 0.8s linear infinite" }} />
-            Login…
+            LOGIN…
           </span>
         ) : (
-          "Login"
+          "LOGIN"
         )}
       </button>
     </>
   );
 }
-

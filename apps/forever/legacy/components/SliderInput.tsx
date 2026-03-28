@@ -60,7 +60,7 @@ const SliderInput: React.FC<SliderInputProps> = ({
         <label className="text-[10px] sm:text-xs font-semibold text-gray-300 uppercase tracking-wider leading-tight max-w-[200px] whitespace-pre-line">
           {label}
         </label>
-        <div className="flex items-center bg-[#164d2a] rounded-lg px-3 py-1.5 border border-[#FFCC6A]/30 transition-all focus-within:border-[#FFCC6A] w-full xs:w-auto">
+        <div className="flex items-center bg-[#0D3A1D] rounded-lg px-3 py-1.5 border border-[#FFCC6A]/30 transition-all focus-within:border-[#FFCC6A] w-full xs:w-auto">
           <span className="text-[#FFCC6A] mr-1 text-sm font-bold">{prefix}</span>
           <input
             type="text"

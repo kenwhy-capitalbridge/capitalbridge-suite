@@ -59,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ForeverCalculatorProvider>
               <ModelAppHeader
                 titleDesktop="FOREVER INCOME MODEL"
-                titleMobile="FOREVER INCOME"
+                titleMobile="FOREVER"
                 backHref={foreverBackToPlatformHref}
                 actions={
                   user ? (
