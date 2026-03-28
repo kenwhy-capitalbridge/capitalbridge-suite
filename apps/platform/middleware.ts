@@ -87,6 +87,28 @@ async function redirectWithSignOut(
   return response;
 }
 
+/**
+ * Send to login **without** `signOut()`. Clearing cookies here was wiping valid
+ * suite-wide sessions when the first platform request briefly saw no user (e.g.
+ * after navigating from a model app) — same redirect URL as “logged out” but the
+ * root cause was aggressive cookie clearing, not the Back link.
+ */
+function redirectToLoginPage(
+  req: NextRequest,
+  extraParams?: Record<string, string>
+): NextResponse {
+  const u = new URL(`${LOGIN_APP_URL}/access`);
+  u.searchParams.set("redirectTo", `${req.nextUrl.origin}${req.nextUrl.pathname}`);
+  if (extraParams) {
+    for (const [k, v] of Object.entries(extraParams)) {
+      if (v) u.searchParams.set(k, v);
+    }
+  }
+  const res = NextResponse.redirect(u.toString());
+  applyHtmlNoStoreHeaders(res);
+  return res;
+}
+
 function redirectToSignIn(
   req: NextRequest,
   supabaseUrl: string,
@@ -162,11 +184,19 @@ export async function middleware(req: NextRequest) {
 
   if (userErr) {
     console.error("[platform middleware] getUser failed", userErr.message);
-    return redirectToSignIn(req, supabaseUrl, supabaseAnonKey);
+    return redirectToLoginPage(req);
   }
 
   if (!user) {
-    return redirectToSignIn(req, supabaseUrl, supabaseAnonKey);
+    return redirectToLoginPage(req);
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const accessToken = session?.access_token ?? null;
+  if (!accessToken) {
+    return redirectToLoginPage(req);
   }
 
   const userId = user.id;
@@ -210,14 +240,6 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const accessToken = session?.access_token;
-  if (!accessToken) {
-    return redirectToSignIn(req, supabaseUrl, supabaseAnonKey, userId);
-  }
-
   const jwtSessionId = getJwtSessionIdFromAccessToken(accessToken);
 
   const querySlot = async () =>
@@ -237,7 +259,7 @@ export async function middleware(req: NextRequest) {
 
   if (slotErr) {
     console.error("[platform middleware] user_active_session lookup failed", slotErr.message);
-    return redirectToSignIn(req, supabaseUrl, supabaseAnonKey, userId);
+    return response;
   }
 
   if (slot?.session_id && !isUserActiveSessionStale(typeof slot.updated_at === "string" ? slot.updated_at : null)) {
