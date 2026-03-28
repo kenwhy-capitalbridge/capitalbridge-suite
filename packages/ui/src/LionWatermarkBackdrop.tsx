@@ -17,7 +17,8 @@ type MarkSpec = {
 /**
  * Edge- and corner-anchored scatter: faint, non-overlapping “zones” (corners + mid-edges),
  * varied size/rotation so it reads random without SSR/client randomness.
- * Used on Income Engineering, Capital Health, and Capital Stress only (not Forever / platform / login).
+ * Used on Forever, Income Engineering, Capital Health, and Capital Stress model layouts only.
+ * Not used on login (incl. access/pricing) or platform (dashboard, etc.).
  * Opacity ~0.01–0.018 — larger marks, slightly softer than small-tile era.
  */
 const LION_WATERMARK_MARKS: readonly MarkSpec[] = [
@@ -44,8 +45,8 @@ function positionStyle(m: MarkSpec): CSSProperties {
  * Subtle full-viewport lion marks behind the app. Uses `/brand/lionhead_Gold.svg`
  * (synced from `packages/ui/src/assets/lionhead_Gold.svg`).
  *
- * Intended for Income Engineering, Capital Health, and Capital Stress layouts only
- * (not Forever, platform, or login).
+ * Intended for the four calculator apps’ root layouts (Forever, Income Engineering,
+ * Capital Health, Capital Stress). Omit on login and platform apps.
  *
  * Pair with a sibling wrapper `className="relative z-[1] min-h-screen"` so content
  * stacks above this layer (`z-index: 0` fixed can paint over in-flow content otherwise).

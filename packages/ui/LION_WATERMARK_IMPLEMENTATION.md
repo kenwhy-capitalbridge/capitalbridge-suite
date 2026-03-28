@@ -2,7 +2,7 @@
 
 ## What you see
 
-Several copies of the gold lion SVG sit **fixed** to the viewport, **low opacity** (~3–7%), **rotated** at different angles, and **spread** so they read as a soft watermark—not a single hero image. They sit **behind** all app UI and ignore pointer events.
+Several copies of the gold lion SVG sit **fixed** to the viewport, **low opacity**, **rotated** at different angles, and **spread** so they read as a soft watermark—not a single hero image. They sit **behind** all app UI and ignore pointer events.
 
 ## Source asset
 
@@ -15,7 +15,7 @@ Several copies of the gold lion SVG sit **fixed** to the viewport, **low opacity
 | Piece | Role |
 |--------|------|
 | `packages/ui/src/LionWatermarkBackdrop.tsx` | Renders the scattered `<img>` marks; edit `LION_WATERMARK_MARKS` to move, resize, or fade lions. |
-| Income Engineering, Capital Health, Capital Stress `app/layout.tsx` | Renders `<LionWatermarkBackdrop />` first in `<body>`, then wraps the rest in `<div className="relative z-[1] min-h-screen">…</div>`. Not used on Forever, platform, or login. |
+| Forever, Income Engineering, Capital Health, Capital Stress `app/layout.tsx` | Renders `<LionWatermarkBackdrop />` first in `<body>`, then wraps the rest in `<div className="relative z-[1] min-h-screen">…</div>`. **Not** used on login (access, pricing, etc.) or platform (dashboard, profile, …). |
 
 ### Why the `z-[1]` wrapper?
 
@@ -48,4 +48,4 @@ True random placement needs client-only layout and can flash on load. Fixed posi
 
 ## Apps wired
 
-Income Engineering, Capital Health, and Capital Stress model layouts import `LionWatermarkBackdrop` from `@cb/ui` and use the pattern above.
+Forever, Income Engineering, Capital Health, and Capital Stress model layouts import `LionWatermarkBackdrop` from `@cb/ui` and use the pattern above.
