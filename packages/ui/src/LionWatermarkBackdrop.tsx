@@ -9,8 +9,8 @@ type MarkSpec = {
   /** Fine-tune after position (keeps rotation centered on the mark). */
   translate?: string;
   /**
-   * Lion asset faces left; left-anchored marks flip so they look toward the page center.
-   * Right-anchored marks stay unflipped (already facing inward).
+   * Gold lion asset faces right. Left-anchored = unflipped (nose toward center).
+   * Right-anchored = mirror so nose points left toward center.
    */
   flipX?: boolean;
 } & (
@@ -20,26 +20,23 @@ type MarkSpec = {
   | { bottom: string; right: string; left?: never; top?: never }
 );
 
-function facesTowardCenter(m: MarkSpec): boolean {
-  if ("left" in m && m.left !== undefined) return true;
-  return false;
+/** Default: mirror only right-edge marks so both sides appear to face the middle. */
+function flipTowardCenterByDefault(m: MarkSpec): boolean {
+  return "right" in m && m.right !== undefined;
 }
 
 /**
- * Wide scatter: gutters + mid-field, uneven vertical rhythm, varied rotation.
- * (Plain 1–2% alpha on #0d3a1d is effectively invisible — see opacity + soft-light in CSS.)
+ * Six marks in alternating vertical bands (~25%+ between centers) so silhouettes
+ * do not stack. Smaller widths reduce rotational overlap at the margins.
  */
 const LION_WATERMARK_MARKS: readonly MarkSpec[] = [
-  { top: "9%", left: "-5%", widthPx: 232, rotateDeg: -21, opacity: 0.078 },
-  { top: "31%", left: "3%", widthPx: 198, rotateDeg: 34, opacity: 0.062 },
-  { top: "58%", left: "-7%", widthPx: 218, rotateDeg: 7, opacity: 0.07, translate: "0, -50%" },
-  { bottom: "22%", left: "1%", widthPx: 244, rotateDeg: -14, opacity: 0.082 },
-  { top: "44%", left: "11%", widthPx: 176, rotateDeg: 41, opacity: 0.055 },
+  { top: "12%", left: "-4%", widthPx: 168, rotateDeg: -16, opacity: 0.076 },
+  { top: "40%", left: "2%", widthPx: 158, rotateDeg: 24, opacity: 0.065 },
+  { top: "70%", left: "-5%", widthPx: 172, rotateDeg: 9, opacity: 0.072 },
 
-  { top: "14%", right: "-4%", widthPx: 226, rotateDeg: 18, opacity: 0.075 },
-  { top: "67%", right: "-6%", widthPx: 208, rotateDeg: -24, opacity: 0.068, translate: "0, -50%" },
-  { bottom: "16%", right: "2%", widthPx: 236, rotateDeg: 12, opacity: 0.08 },
-  { top: "52%", right: "9%", widthPx: 184, rotateDeg: -9, opacity: 0.056 },
+  { top: "20%", right: "-3%", widthPx: 166, rotateDeg: 14, opacity: 0.074 },
+  { top: "48%", right: "3%", widthPx: 154, rotateDeg: -20, opacity: 0.064 },
+  { top: "78%", right: "-4%", widthPx: 170, rotateDeg: -11, opacity: 0.07 },
 ];
 
 function positionStyle(m: MarkSpec): CSSProperties {
@@ -53,7 +50,7 @@ function positionStyle(m: MarkSpec): CSSProperties {
 
 function buildTransform(m: MarkSpec): string {
   const t = m.translate ?? "0, 0";
-  const flip = m.flipX ?? facesTowardCenter(m);
+  const flip = m.flipX ?? flipTowardCenterByDefault(m);
   const sx = flip ? -1 : 1;
   return `translate(${t}) rotate(${m.rotateDeg}deg) scaleX(${sx})`;
 }
