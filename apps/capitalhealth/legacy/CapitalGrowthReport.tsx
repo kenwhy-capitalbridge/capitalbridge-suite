@@ -13,6 +13,25 @@ import type { Style } from '@react-pdf/types';
 
 // Enforce UTF-8-friendly rendering: prevent mid-word breaks and malformed characters
 Font.registerHyphenationCallback((word) => [word]);
+
+Font.register({
+  family: "Roboto Serif",
+  fonts: [
+    {
+      src: "https://fonts.gstatic.com/s/robotoserif/v17/R71RjywflP6FLr3gZx7K8UyuXDs9zVwDmXCb8lxYgmuii32UGoVldX6UgfjL4-3sMM_kB_qXSEXTJQCFLH5-_bcElvQqp6c.ttf",
+      fontWeight: 600,
+    },
+    {
+      src: "https://fonts.gstatic.com/s/robotoserif/v17/R71RjywflP6FLr3gZx7K8UyuXDs9zVwDmXCb8lxYgmuii32UGoVldX6UgfjL4-3sMM_kB_qXSEXTJQCFLH5-_bcEls0qp6c.ttf",
+      fontWeight: 700,
+    },
+    {
+      src: "https://fonts.gstatic.com/s/robotoserif/v17/R71XjywflP6FLr3gZx7K8UyEVQnyR1E7VN-f51xYuGCQepOvB0KLc2v0wKKB0Q4MSZxyqf2CgAchbDJ69BcVZxkDg-JuqON8BQ.ttf",
+      fontWeight: 700,
+      fontStyle: "italic",
+    },
+  ],
+});
 import type { CalculatorInputs, SimulationResult, StatusKind } from './calculator-types';
 import { runSimulation } from './calculator-engine';
 import { TIER_COLORS, type RiskTierKey } from './src/lib/statusCopy';
@@ -344,6 +363,30 @@ const styles = StyleSheet.create({
   verdictSectionWrap: { marginBottom: SECTION_SPACING },
   sectionWrap: { marginBottom: SECTION_SPACING },
   sectionTitleLarge: { fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5, color: GREEN, marginBottom: 6, textTransform: 'uppercase', textAlign: 'left', paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: GOLD },
+  /** THE LION'S VERDICT — Roboto Serif (registered above). */
+  sectionTitleLionVerdict: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: GREEN,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    textAlign: 'left',
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: GOLD,
+    fontFamily: "Roboto Serif",
+  },
+  verdictDynamicHeadline: {
+    fontFamily: "Roboto Serif",
+    fontSize: 11,
+    fontStyle: "italic",
+    fontWeight: "bold",
+    color: DARK,
+    marginBottom: SUBSECTION_SPACING,
+    lineHeight: 1.5,
+    textTransform: "capitalize",
+  },
   subsectionTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: SUBSECTION_SPACING, textAlign: 'left' },
   confidenceBarWrap: { marginBottom: 8 },
   confidenceBar: { height: 12, backgroundColor: '#e5e7eb', borderRadius: 6, overflow: 'hidden', flexDirection: 'row' },
@@ -516,7 +559,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <View style={styles.headerLeft}>
               {baseUrl ? (
                 <Image
-                  src={`${baseUrl}/Capital_Health_Advisory_Report_Logo-removebg-preview.png`}
+                  src={`${baseUrl}/logo-capital-bridge.png`}
                   style={{ maxHeight: LOGO_MAX_HEIGHT, width: 'auto', height: LOGO_MAX_HEIGHT, objectFit: 'contain' }}
                 />
               ) : (
@@ -766,7 +809,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
           <View style={[styles.verdictSectionWrap, PDF_BREAK_INSIDE_AVOID]} wrap={false}>
             <Text style={[styles.subsectionTitle, { marginBottom: 4 }]}>STRUCTURAL STATUS: {riskTierLabel}</Text>
             <View style={styles.verdictDivider} />
-            <Text style={styles.sectionTitleLarge}>THE LION&apos;S VERDICT</Text>
+            <Text style={styles.sectionTitleLionVerdict}>THE LION&apos;S VERDICT</Text>
             <View style={styles.verdictDivider} />
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 8 }]} wrap={false}>
               {depletionMo != null && depletionMo < 1200
@@ -774,7 +817,7 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
                 : 'Income structure is sustainable under current assumptions.'}
             </Text>
             <Text style={styles.subsectionTitle}>Verdict</Text>
-            <Text style={[styles.bodyText, { fontStyle: 'italic', marginBottom: SUBSECTION_SPACING }]}>{verdictHeadline ?? verdictNarrative}</Text>
+            <Text style={styles.verdictDynamicHeadline}>{verdictHeadline ?? verdictNarrative}</Text>
             <Text style={styles.subsectionTitle}>Structural Diagnosis</Text>
             <Text style={[styles.bodyText, { marginBottom: SUBSECTION_SPACING }]}>{structuralDiagnosis}</Text>
             <Text style={styles.subsectionTitle}>Primary Risk Driver</Text>

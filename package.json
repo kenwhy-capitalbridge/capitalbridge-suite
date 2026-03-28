@@ -26,7 +26,9 @@
     "typecheck": "npm run typecheck -w @cb/login && npm run typecheck -w @cb/platform && npm run typecheck -w @cb/api",
     "typecheck:all": "npm run typecheck --workspaces --if-present",
     "lion:sync-copy": "node ./scripts/sync-lion-copy.mjs",
-    "lion:check-copy": "node ./scripts/sync-lion-copy.mjs --check"
+    "lion:check-copy": "node ./scripts/sync-lion-copy.mjs --check",
+    "brand:sync": "node ./scripts/sync-brand-assets.mjs",
+    "docs:sample-pdf-capital-health": "npx tsx apps/capitalhealth/scripts/render-sample-pdf-for-docs.ts"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
