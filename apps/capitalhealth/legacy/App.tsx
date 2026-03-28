@@ -32,7 +32,6 @@ import {
   lionStrongEligibilityFromHealthTier,
   runLionVerdictEngineCapitalHealth,
 } from '@cb/advisory-graph/lionsVerdict';
-import { BrandLionWatermark } from "@cb/ui";
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
@@ -909,8 +908,7 @@ const CalculatorScreen = forwardRef<
               </div>
       </header>
 
-      <main id="calculator-panel" className="relative max-w-4xl mx-auto overflow-x-hidden px-3 sm:px-4 pt-[200px] sm:pt-[240px] md:pt-[260px] pb-4 sm:pb-6 space-y-6 sm:space-y-8" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
-        <BrandLionWatermark />
+      <main id="calculator-panel" className="max-w-4xl mx-auto px-3 sm:px-4 pt-[200px] sm:pt-[240px] md:pt-[260px] pb-4 sm:pb-6 space-y-6 sm:space-y-8" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
         {/* Mode selector */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-2 sm:p-4 text-white text-center sm:text-left mt-4 sm:mt-6">
           <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2 sm:mb-3">

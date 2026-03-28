@@ -5,7 +5,7 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
-import { ModelAppHeader } from "@cb/ui";
+import { LionWatermarkBackdrop, ModelAppHeader } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
@@ -45,23 +45,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <ModelSaveHandlersProvider>
-          <ModelAppHeader
-            titleDesktop="CAPITAL STRESS MODEL"
-            titleMobile="CAPITAL STRESS"
-            actions={
-              user ? (
-                <ModelHeaderSaveRestore
-                  userId={user.id}
-                  serverCanSave={canSave}
-                  initialSessionId={initialSessionId}
-                  logTag="[capital-stress]"
-                />
-              ) : null
-            }
-          />
-          {children}
-        </ModelSaveHandlersProvider>
+        <LionWatermarkBackdrop />
+        <div className="relative z-[1] min-h-screen">
+          <ModelSaveHandlersProvider>
+            <ModelAppHeader
+              titleDesktop="CAPITAL STRESS MODEL"
+              titleMobile="CAPITAL STRESS"
+              actions={
+                user ? (
+                  <ModelHeaderSaveRestore
+                    userId={user.id}
+                    serverCanSave={canSave}
+                    initialSessionId={initialSessionId}
+                    logTag="[capital-stress]"
+                  />
+                ) : null
+              }
+            />
+            {children}
+          </ModelSaveHandlersProvider>
+        </div>
       </body>
     </html>
   );
