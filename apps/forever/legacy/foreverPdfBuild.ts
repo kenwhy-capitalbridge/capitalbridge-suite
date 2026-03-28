@@ -6,6 +6,7 @@
 import type { LionVerdictClientReport } from "@cb/advisory-graph/lionsVerdict";
 import { formatLionPublicStatusLabel } from "@cb/advisory-graph/lionsVerdict";
 import { advisoryFrameworkPdfIntro } from "@cb/shared/advisoryFramework";
+import { formatReportGeneratedAtLabel, reportPreparedForLine } from "@cb/shared/reportIdentity";
 import { jsPDF } from "jspdf";
 import type { CalculationResult } from "./types";
 import { ExpenseType } from "./types";
@@ -158,6 +159,8 @@ export interface ForeverStrategicWealthPdfContext {
   /** Rasterized PNG data URLs from green brand SVGs (lion + wordmark). */
   logoLionPngDataUrl: string | null;
   logoWordmarkPngDataUrl: string | null;
+  /** First + last name for the cover when available. */
+  reportClientDisplayName?: string;
 }
 
 /**
@@ -181,6 +184,7 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
     includeLionsVerdict,
     logoLionPngDataUrl,
     logoWordmarkPngDataUrl,
+    reportClientDisplayName = "Client",
   } = ctx;
 
   const doc = new jsPDF("p", "mm", "a4");
@@ -254,14 +258,17 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...bodyGray);
-  doc.text("Capital Sustainability Diagnostic", headerLeft, pos.y);
+  const diagnosticY = pos.y;
+  doc.text("Capital Sustainability Diagnostic", headerLeft, diagnosticY);
   doc.setFontSize(8);
   doc.text(
-    `Report Generated: ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`,
+    `Report generated: ${formatReportGeneratedAtLabel()}`,
     pageWidth - margin,
-    pos.y - 4,
+    diagnosticY - 1,
     { align: "right" },
   );
+  pos.y += 5;
+  doc.text(reportPreparedForLine(reportClientDisplayName), headerLeft, pos.y);
   pos.y += 10;
   drawSectionDivider();
 

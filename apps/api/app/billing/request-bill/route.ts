@@ -36,7 +36,15 @@ export async function OPTIONS(req: Request) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
 }
 
-type Body = { email?: string; plan?: string; name?: string; deviceId?: string };
+type Body = {
+  email?: string;
+  plan?: string;
+  /** @deprecated use firstName + lastName */
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  deviceId?: string;
+};
 
 function getPaymentFirstRedirectUrl(): string {
   return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
@@ -53,13 +61,26 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Body;
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const requestedPlan = (body.plan ?? "trial").toString();
-  const name = typeof body.name === "string" ? body.name.trim() : email || "Customer";
+  const firstName = typeof body.firstName === "string" ? body.firstName.trim() : "";
+  const lastName = typeof body.lastName === "string" ? body.lastName.trim() : "";
+  const billplzName = `${firstName} ${lastName}`.trim();
   const deviceIdRaw = typeof body.deviceId === "string" ? body.deviceId.trim() : "";
   const deviceId = deviceIdRaw.length > 0 && deviceIdRaw.length <= 128 ? deviceIdRaw : "";
   const checkoutIpHash = hashTrialCheckoutIp(parseClientIpFromRequest(req));
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400, headers });
+  }
+
+  if (!firstName || !lastName) {
+    return NextResponse.json(
+      {
+        error: "name_required",
+        detail: "first_name_and_last_name_required",
+        message: "First name and last name are required.",
+      },
+      { status: 400, headers }
+    );
   }
 
   const svc = createServiceClient();
@@ -107,15 +128,19 @@ export async function POST(req: Request) {
   }
 
   const tempPassword = randomBytes(28).toString("base64url");
+  const userMetadata: Record<string, string | boolean> = {
+    first_name: firstName,
+    last_name: lastName,
+    full_name: billplzName,
+    name: billplzName,
+    checkout_pending: true,
+  };
+
   const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
     email,
     password: tempPassword,
     email_confirm: false,
-    user_metadata: {
-      full_name: name,
-      name,
-      checkout_pending: true,
-    },
+    user_metadata: userMetadata,
   });
 
   if (createUserErr || !authUser?.user?.id) {
@@ -144,6 +169,8 @@ export async function POST(req: Request) {
       {
         id: userId,
         email,
+        first_name: firstName,
+        last_name: lastName,
       },
       { onConflict: "id" }
     );
@@ -188,7 +215,7 @@ export async function POST(req: Request) {
       amountCents: planRow.price_cents,
       description: `Capital Bridge — ${planRow.name}`,
       email,
-      name: name || email,
+      name: billplzName,
       reference1: session.id,
       redirectUrl: getPaymentFirstRedirectUrl(),
     });

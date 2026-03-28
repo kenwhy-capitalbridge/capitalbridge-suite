@@ -132,6 +132,8 @@ export type Database = {
           payment_status: string | null;
           pending_plan: string | null;
           email: string | null;
+          first_name: string | null;
+          last_name: string | null;
           plan_change_intent: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;

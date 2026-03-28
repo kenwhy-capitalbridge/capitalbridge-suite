@@ -141,12 +141,14 @@ type CapitalStressAppProps = {
   canUseStressModel?: boolean;
   canSeeVerdict?: boolean;
   lionAccessUser?: LionAccessUser;
+  reportClientDisplayName?: string;
 };
 
 const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function App(props, ref) {
   const canUseStressModel = props.canUseStressModel ?? true;
   const canSeeVerdict = props.canSeeVerdict ?? true;
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
+  const reportClientDisplayName = props.reportClientDisplayName ?? 'Client';
   const lionAccessEnabled = canAccessLion(lionAccessUser);
   const [investment, setInvestment] = useState<number>(1000000);
   const [withdrawal, setWithdrawal] = useState<number>(0);
@@ -1884,6 +1886,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             recommendedAdjustments={canSeeVerdict ? getRecommendedAdjustments(advisoryInputs) : []}
             microSignals={canSeeVerdict ? getMicroDiagnosticSignals(advisoryInputs) : []}
             medianPathYearly={mcResult.medianPathYearly}
+            reportClientDisplayName={reportClientDisplayName}
           />
         );
       })()}

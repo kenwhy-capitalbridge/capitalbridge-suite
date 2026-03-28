@@ -9,6 +9,7 @@
     "./sessionFingerprint": "./src/sessionFingerprint.ts",
     "./advisoryFramework": "./src/advisoryFramework.ts",
     "./typography": "./src/typography.ts",
-    "./cbReportTemplate": "./src/cbReportTemplate.ts"
+    "./cbReportTemplate": "./src/cbReportTemplate.ts",
+    "./reportIdentity": "./src/reportIdentity.ts"
   }
 }

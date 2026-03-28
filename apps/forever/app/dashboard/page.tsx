@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
+import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { ForeverDashboardClient } from "./ForeverDashboardClient";
@@ -15,6 +16,19 @@ export default async function ForeverDashboard() {
     redirect(
       `${LOGIN_APP_URL}/access?redirectTo=${encodeURIComponent("https://forever.thecapitalbridge.com/dashboard")}`
     );
+
+  const { data: profile } = await supabase
+    .schema("public")
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const reportClientDisplayName = reportClientDisplayNameFromAuth({
+    email: user.email,
+    userMetadata: user.user_metadata as Record<string, unknown>,
+    profile: profile ?? null,
+  });
 
   const now = new Date().toISOString();
   const { data: membership } = await supabase
@@ -43,7 +57,10 @@ export default async function ForeverDashboard() {
 
   return (
     <main>
-      <ForeverDashboardClient lionAccessUser={lionAccessUser} />
+      <ForeverDashboardClient
+        lionAccessUser={lionAccessUser}
+        reportClientDisplayName={reportClientDisplayName}
+      />
     </main>
   );
 }

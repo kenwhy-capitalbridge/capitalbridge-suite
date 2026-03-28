@@ -6,6 +6,8 @@ type Body = {
   email?: string;
   password?: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
 };
 
 function getApiBaseUrl(): string {
@@ -27,6 +29,8 @@ export async function POST(req: Request) {
         email: body.email ?? "",
         password: body.password ?? "",
         name: body.name ?? "",
+        firstName: typeof body.firstName === "string" ? body.firstName : undefined,
+        lastName: typeof body.lastName === "string" ? body.lastName : undefined,
       }),
       cache: "no-store",
     });

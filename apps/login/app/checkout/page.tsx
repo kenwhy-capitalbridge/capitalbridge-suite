@@ -54,9 +54,12 @@ function CheckoutContent() {
   const planLabel = PLAN_LABELS[plan] ?? plan;
 
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [emailFieldError, setEmailFieldError] = useState<string | null>(null);
+  const [firstNameFieldError, setFirstNameFieldError] = useState<string | null>(null);
+  const [lastNameFieldError, setLastNameFieldError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [securing, setSecuring] = useState(false);
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
@@ -87,6 +90,23 @@ function CheckoutContent() {
     return true;
   }
 
+  function validateNames(f: string, l: string): boolean {
+    let ok = true;
+    if (!f.trim()) {
+      setFirstNameFieldError("First name is required.");
+      ok = false;
+    } else {
+      setFirstNameFieldError(null);
+    }
+    if (!l.trim()) {
+      setLastNameFieldError("Last name is required.");
+      ok = false;
+    } else {
+      setLastNameFieldError(null);
+    }
+    return ok;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submittingRef.current) return;
@@ -96,10 +116,17 @@ function CheckoutContent() {
     submittingRef.current = true;
 
     const normalizedEmail = email.trim().toLowerCase();
+    const fn = firstName.trim();
+    const ln = lastName.trim();
     if (!validateEmail(normalizedEmail)) {
       setLoading(false);
       submittingRef.current = false;
       emailInputRef.current?.focus();
+      return;
+    }
+    if (!validateNames(fn, ln)) {
+      setLoading(false);
+      submittingRef.current = false;
       return;
     }
 
@@ -119,7 +146,8 @@ function CheckoutContent() {
         credentials: "include",
         body: JSON.stringify({
           email: normalizedEmail,
-          name: name.trim() || undefined,
+          firstName: fn,
+          lastName: ln,
           plan,
           ...(deviceId ? { deviceId } : {}),
         }),
@@ -136,6 +164,15 @@ function CheckoutContent() {
           setError(CHECKOUT_ACCOUNT_EXISTS);
           setEmailAlreadyExists(true);
           emailInputRef.current?.focus();
+          return;
+        }
+        if (res.status === 400 && data?.error === "name_required") {
+          setError(
+            typeof data?.message === "string"
+              ? data.message
+              : "First name and last name are required.",
+          );
+          validateNames(fn, ln);
           return;
         }
         if (res.status === 403 && data?.error === "trial_unavailable") {
@@ -262,15 +299,49 @@ function CheckoutContent() {
           </label>
 
           <label className="grid gap-1.5 text-left">
-            <span className="text-sm font-medium text-cb-green">Name:</span>
+            <span className="text-sm font-medium text-cb-green">First name</span>
             <input
               className="cb-input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                if (firstNameFieldError) setFirstNameFieldError(null);
+              }}
               type="text"
-              autoComplete="name"
-              placeholder="Your name"
+              autoComplete="given-name"
+              placeholder="First name"
+              required
+              aria-invalid={!!firstNameFieldError}
+              aria-describedby={firstNameFieldError ? "checkout-first-name-error" : undefined}
             />
+            {firstNameFieldError && (
+              <p id="checkout-first-name-error" className="cb-message-error mt-1 text-sm">
+                {firstNameFieldError}
+              </p>
+            )}
+          </label>
+
+          <label className="grid gap-1.5 text-left">
+            <span className="text-sm font-medium text-cb-green">Last name</span>
+            <input
+              className="cb-input"
+              value={lastName}
+              onChange={(e) => {
+                setLastName(e.target.value);
+                if (lastNameFieldError) setLastNameFieldError(null);
+              }}
+              type="text"
+              autoComplete="family-name"
+              placeholder="Last name"
+              required
+              aria-invalid={!!lastNameFieldError}
+              aria-describedby={lastNameFieldError ? "checkout-last-name-error" : undefined}
+            />
+            {lastNameFieldError && (
+              <p id="checkout-last-name-error" className="cb-message-error mt-1 text-sm">
+                {lastNameFieldError}
+              </p>
+            )}
           </label>
 
           <p className="text-center text-sm leading-relaxed text-cb-green/75">

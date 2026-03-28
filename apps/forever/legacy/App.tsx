@@ -43,6 +43,7 @@ const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialU
 
 type ForeverAppProps = {
   lionAccessUser?: LionAccessUser;
+  reportClientDisplayName?: string;
 };
 
 /** Imperative API for Supabase save/restore (AdvisoryShell). */
@@ -59,6 +60,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
 
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
+  const reportClientDisplayName = props.reportClientDisplayName ?? "Client";
   const lionAccessEnabled = canAccessLion(lionAccessUser);
 
   const isAllowed =
@@ -356,6 +358,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
         includeLionsVerdict: lionAccessEnabled,
         logoLionPngDataUrl: lionPngDataUrl,
         logoWordmarkPngDataUrl: wordmarkPngDataUrl,
+        reportClientDisplayName,
       });
 
       doc.save(`Capital-Bridge-Strategic-Wealth-Diagnostic-${new Date().getTime()}.pdf`);

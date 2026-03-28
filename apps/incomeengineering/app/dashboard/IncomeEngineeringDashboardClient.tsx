@@ -7,9 +7,13 @@ import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
 type Props = {
   lionAccessUser: LionAccessUser;
+  reportClientDisplayName: string;
 };
 
-export function IncomeEngineeringDashboardClient({ lionAccessUser }: Props) {
+export function IncomeEngineeringDashboardClient({
+  lionAccessUser,
+  reportClientDisplayName,
+}: Props) {
   const appRef = useRef<IncomeEngineeringAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
@@ -25,7 +29,7 @@ export function IncomeEngineeringDashboardClient({ lionAccessUser }: Props) {
 
   return (
     <main>
-      <LegacyApp ref={appRef} lionAccessUser={lionAccessUser} />
+      <LegacyApp ref={appRef} lionAccessUser={lionAccessUser} reportClientDisplayName={reportClientDisplayName} />
     </main>
   );
 }

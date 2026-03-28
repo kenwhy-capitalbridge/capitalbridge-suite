@@ -6,7 +6,14 @@ export const runtime = "nodejs";
  * Payment-first proxy: forwards to API billing/request-bill.
  * Creates Auth user (pending) + session + Billplz bill; webhook completes activation + set-password email.
  */
-type Body = { email?: string; name?: string; plan?: string; deviceId?: string };
+type Body = {
+  email?: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  plan?: string;
+  deviceId?: string;
+};
 
 function getApiBaseUrl(): string {
   const url =
@@ -31,6 +38,8 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         email: body.email ?? "",
         name: body.name ?? "",
+        firstName: typeof body.firstName === "string" ? body.firstName : undefined,
+        lastName: typeof body.lastName === "string" ? body.lastName : undefined,
         plan: body.plan ?? "trial",
         deviceId: typeof body.deviceId === "string" ? body.deviceId : undefined,
       }),

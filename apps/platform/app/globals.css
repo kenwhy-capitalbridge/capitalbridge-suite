@@ -31,9 +31,9 @@ a {
   text-decoration: none;
 }
 
-/* Advisory framework static landing (.cb-*) */
+/* Advisory framework static landing (.cb-*) — Tinos via --font-cb-framework (layout) */
 .cb-framework {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  font-family: var(--font-cb-framework), ui-serif, Georgia, "Times New Roman", serif;
   background-color: var(--green);
   color: var(--offwhite);
   padding: 2rem 1rem 3rem;
@@ -120,7 +120,7 @@ a {
 }
 
 .cb-platform-label {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 600;
   color: var(--gold);
   letter-spacing: 0.2em;
@@ -129,8 +129,8 @@ a {
 }
 
 .cb-hero h1 {
-  font-family: ui-serif, Georgia, serif;
-  font-size: clamp(1.75rem, 4.5vw, 2.5rem);
+  font-family: var(--font-cb-framework), ui-serif, Georgia, serif;
+  font-size: clamp(1.45rem, 4vw, 2.05rem);
   font-weight: 700;
   color: var(--offwhite);
   margin: 0 0 1rem;
@@ -138,7 +138,7 @@ a {
 }
 
 .cb-hero-desc {
-  font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+  font-size: clamp(0.84rem, 1.85vw, 0.98rem);
   color: rgba(246, 245, 241, 0.85);
   max-width: 560px;
   margin: 0 auto 0.5rem;
@@ -146,7 +146,7 @@ a {
 }
 
 .cb-hero-descriptor {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: rgba(246, 245, 241, 0.55);
   margin: 0;
 }
@@ -163,8 +163,8 @@ a {
 }
 
 .cb-section-title {
-  font-family: ui-serif, Georgia, serif;
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-family: var(--font-cb-framework), ui-serif, Georgia, serif;
+  font-size: clamp(1.2rem, 3.4vw, 1.85rem);
   font-weight: 700;
   color: var(--offwhite);
   text-align: center;
@@ -173,7 +173,7 @@ a {
 }
 
 .cb-section-subtitle {
-  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-size: clamp(0.8rem, 1.85vw, 0.94rem);
   color: rgba(246, 245, 241, 0.8);
   text-align: center;
   max-width: 640px;
@@ -196,7 +196,7 @@ a {
 }
 
 .cb-flow-cell {
-  font-size: clamp(0.92rem, 2vw, 1.05rem);
+  font-size: clamp(0.8rem, 1.85vw, 0.95rem);
   font-weight: 500;
   color: var(--gold);
   letter-spacing: 0.03em;
@@ -302,7 +302,7 @@ a {
 }
 
 .cb-system-header-desc {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: rgba(246, 245, 241, 0.7);
   letter-spacing: 0.02em;
 }
@@ -358,6 +358,7 @@ a {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  min-width: 0;
 }
 
 .cb-module:hover {
@@ -411,7 +412,7 @@ a {
 }
 
 .cb-module h2 {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--gold);
   margin: 0 0 0.5rem;
@@ -421,7 +422,7 @@ a {
 }
 
 .cb-module-why {
-  font-size: 0.8125rem;
+  font-size: 0.78rem;
   color: rgba(246, 245, 241, 0.8);
   line-height: 1.5;
   margin-bottom: 0.75rem;
@@ -436,7 +437,7 @@ a {
 }
 
 .cb-module-desc {
-  font-size: 0.9375rem;
+  font-size: 0.84rem;
   color: var(--offwhite);
   line-height: 1.6;
   margin-bottom: 1rem;
@@ -444,30 +445,46 @@ a {
 }
 
 .cb-module-label {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--offwhite);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.65rem;
 }
 
 .cb-module-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.cb-module-buttons .cb-btn,
+.cb-module-buttons a.cb-btn,
+.cb-module-buttons button.cb-btn {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.28;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .cb-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--gold);
   color: var(--green);
-  font-size: 0.8125rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-align: center;
-  padding: 0.85rem 1.25rem;
+  padding: 0.65rem 0.85rem;
   border-radius: 8px;
   border: 2px solid transparent;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.055em;
   transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
@@ -550,31 +567,39 @@ a {
     padding: 0.875rem 1rem 1rem;
   }
   .cb-module h2 {
-    font-size: 1rem;
+    font-size: 0.92rem;
+    letter-spacing: 0.035em;
   }
   .cb-module-why {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     margin-bottom: 0.5rem;
   }
   .cb-module-desc {
-    font-size: 0.8125rem;
+    font-size: 0.78rem;
   }
   .cb-module-meta,
   .cb-module-engine-label {
-    font-size: 0.5625rem;
+    font-size: 0.52rem;
   }
   .cb-module-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
   .cb-btn {
-    padding: 0.75rem 1rem;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    min-width: min-content;
+    padding: 0.52rem 0.55rem;
+    font-size: clamp(0.58rem, 3.15vw, 0.66rem);
+    letter-spacing: 0.045em;
+    white-space: normal;
+    line-height: 1.28;
+    word-break: break-word;
+    hyphens: auto;
     min-height: 44px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
   }
 }
 
@@ -592,4 +617,42 @@ a {
 
 .pf-header-avatar-spin {
   animation: pf-header-avatar-spin 0.7s linear infinite;
+}
+
+/* --- Profile page: fluid layout + narrow screens --- */
+.profile-page {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+.profile-page-email-row {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(0.5rem, 2vw, 0.75rem);
+}
+
+@media (max-width: 480px) {
+  .profile-page-email-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-page-email-row > .profile-page-email-input {
+    flex: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .profile-page-email-row > .profile-page-email-submit {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+  }
 }

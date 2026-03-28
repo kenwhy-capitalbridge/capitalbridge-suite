@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { Tinos } from "next/font/google";
 import { createAppServerClient } from "@cb/supabase/server";
 import "./globals.css";
+
+const cbFrameworkFont = Tinos({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-cb-framework",
+});
 import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
 
@@ -33,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const initialSafeMode = await readInitialSafeMode();
 
   return (
-    <html lang="en">
+    <html lang="en" className={cbFrameworkFont.variable}>
       <body>
         <MembershipSessionCheck initialSafeMode={initialSafeMode} />
         {children}

@@ -8,9 +8,10 @@ import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
 type Props = {
   lionAccessUser: LionAccessUser;
+  reportClientDisplayName: string;
 };
 
-export function ForeverDashboardClient({ lionAccessUser }: Props) {
+export function ForeverDashboardClient({ lionAccessUser, reportClientDisplayName }: Props) {
   const appRef = useRef<ForeverAppHandle>(null);
   const { setHandlers } = useForeverCalculatorContext();
 
@@ -26,7 +27,7 @@ export function ForeverDashboardClient({ lionAccessUser }: Props) {
 
   return (
     <AdvisoryShell>
-      <ForeverApp ref={appRef} lionAccessUser={lionAccessUser} />
+      <ForeverApp ref={appRef} lionAccessUser={lionAccessUser} reportClientDisplayName={reportClientDisplayName} />
     </AdvisoryShell>
   );
 }

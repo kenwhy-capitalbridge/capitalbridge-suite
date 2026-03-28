@@ -70,6 +70,7 @@ async function main() {
       medianCoverage: result.medianCoverage,
       worstMonthCoverage: result.worstMonthCoverage,
       lionAccessEnabled: true,
+      reportClientDisplayName: "Sample Client",
     }),
   );
 

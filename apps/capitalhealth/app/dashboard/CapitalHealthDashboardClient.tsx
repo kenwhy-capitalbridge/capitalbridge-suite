@@ -8,9 +8,14 @@ import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 type Props = {
   canSeeVerdict: boolean;
   lionAccessUser: LionAccessUser;
+  reportClientDisplayName: string;
 };
 
-export function CapitalHealthDashboardClient({ canSeeVerdict, lionAccessUser }: Props) {
+export function CapitalHealthDashboardClient({
+  canSeeVerdict,
+  lionAccessUser,
+  reportClientDisplayName,
+}: Props) {
   const appRef = useRef<CapitalHealthAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
@@ -26,7 +31,12 @@ export function CapitalHealthDashboardClient({ canSeeVerdict, lionAccessUser }: 
 
   return (
     <main>
-      <LegacyApp ref={appRef} canSeeVerdict={canSeeVerdict} lionAccessUser={lionAccessUser} />
+      <LegacyApp
+        ref={appRef}
+        canSeeVerdict={canSeeVerdict}
+        lionAccessUser={lionAccessUser}
+        reportClientDisplayName={reportClientDisplayName}
+      />
     </main>
   );
 }

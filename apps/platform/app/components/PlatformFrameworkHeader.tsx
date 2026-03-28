@@ -17,12 +17,15 @@ export type PlatformFrameworkHeaderProps = {
   verifiedUserEmail?: string | null;
   /** Logged-out framework landing: same chrome with Login instead of Logout. */
   publicBrowse?: boolean;
+  /** Center label in the sticky bar (default: Framework). */
+  centerTitle?: string;
 };
 
 /** Sticky bar: logo (marketing) | Framework | Logout (auth) or Login (public). */
 export async function PlatformFrameworkHeader({
   verifiedUserEmail,
   publicBrowse = false,
+  centerTitle = "Framework",
 }: PlatformFrameworkHeaderProps = {}) {
   const supabase = await createAppServerClient();
   const {
@@ -178,7 +181,7 @@ export async function PlatformFrameworkHeader({
             whiteSpace: "nowrap",
           }}
         >
-          Framework
+          {centerTitle}
         </span>
 
         <PlatformHeaderAuthCluster initials={initials} />

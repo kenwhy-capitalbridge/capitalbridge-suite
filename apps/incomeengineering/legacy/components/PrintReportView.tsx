@@ -4,6 +4,7 @@ import {
   formatLionPublicStatusLabel,
 } from '@cb/advisory-graph/lionsVerdict';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
+import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
 import { CB_FONT_SERIF } from '@cb/shared/typography';
 import { LionVerdictLocked } from "../../../../packages/lion-verdict/LionVerdictLocked";
 import { formatCurrency } from '../utils/format';
@@ -161,6 +162,7 @@ interface PrintReportViewProps {
   medianCoverage: number;
   worstMonthCoverage: number;
   lionAccessEnabled: boolean;
+  reportClientDisplayName?: string;
 }
 
 const sectionHeading: React.CSSProperties = {
@@ -224,6 +226,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   medianCoverage,
   worstMonthCoverage,
   lionAccessEnabled,
+  reportClientDisplayName = 'Client',
 }) => {
   const totalIncome = summary.monthlyIncome + summary.estimatedMonthlyInvestmentIncome;
   const totalExpenses = summary.monthlyExpenses + summary.monthlyLoanRepayments;
@@ -279,6 +282,12 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     [],
   );
 
+  const reportGeneratedAtLabel = useMemo(() => formatReportGeneratedAtLabel(), []);
+  const preparedForLine = useMemo(
+    () => reportPreparedForLine(reportClientDisplayName),
+    [reportClientDisplayName],
+  );
+
   const totalAllocation = investmentBuckets.reduce((s, b) => s + (b.allocation ?? 0), 0);
   const getBucket = (id: string) => {
     const cat = INVESTMENT_CATEGORIES.find((c) => c.id === id);
@@ -310,7 +319,10 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             Income Sustainability Analysis
           </p>
           <p style={{ fontSize: '12px', color: '#0D3A1D', opacity: 0.85, marginTop: '10px', marginBottom: 0 }}>
-            Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {preparedForLine}
+          </p>
+          <p style={{ fontSize: '12px', color: '#0D3A1D', opacity: 0.85, marginTop: '6px', marginBottom: 0 }}>
+            Report generated: {reportGeneratedAtLabel}
           </p>
         </div>
 

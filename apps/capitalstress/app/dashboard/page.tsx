@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
+import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
@@ -25,6 +26,19 @@ export default async function CapitalStressDashboard() {
     const target = encodeURIComponent(await dashboardRedirectTo());
     redirect(`${LOGIN_APP_URL}/access?redirectTo=${target}`);
   }
+
+  const { data: profile } = await supabase
+    .schema("public")
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const reportClientDisplayName = reportClientDisplayNameFromAuth({
+    email: user.email,
+    userMetadata: user.user_metadata as Record<string, unknown>,
+    profile: profile ?? null,
+  });
 
   const now = new Date().toISOString();
   const { data: membership } = await supabase
@@ -57,6 +71,7 @@ export default async function CapitalStressDashboard() {
       canUseStressModel={ent.canUseStressModel}
       canSeeVerdict={ent.canSeeVerdict}
       lionAccessUser={lionAccessUser}
+      reportClientDisplayName={reportClientDisplayName}
     />
   );
 }

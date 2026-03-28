@@ -40,6 +40,7 @@ import type { ScenarioAdjustments } from './src/lib/capitalHealthTypes';
 import { APP_NAME } from './src/lib/capitalHealthCopy';
 import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
+import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
 import {
   CB_REPORT_BRAND_LION_GREEN_PATH,
   CB_REPORT_BRAND_WORDMARK_GREEN_PATH,
@@ -456,6 +457,8 @@ interface ReportProps {
   currentAge?: number;
   /** Trial / locked users: omit the Lion's Verdict block from the PDF. */
   includeLionsVerdict?: boolean;
+  /** Shown on the cover (first + last from profile when available). */
+  reportClientDisplayName?: string;
 }
 
 function durationPhrase(result: SimulationResult): string {
@@ -600,10 +603,12 @@ export function CapitalGrowthReport({
   chartData = [],
   currentAge,
   includeLionsVerdict = true,
+  reportClientDisplayName = 'Client',
 }: ReportProps) {
   const symbol = inputs.currency.symbol;
   const formatCurrency = (val: number) => `${symbol} ${formatNum(val)}`;
-  const dateStr = new Date().toLocaleDateString(undefined, { dateStyle: 'long' });
+  const generatedAtStr = formatReportGeneratedAtLabel();
+  const preparedForStr = reportPreparedForLine(reportClientDisplayName);
   const horizonYears = inputs.timeHorizonYears;
   const horizonYearsFormatted = horizonYears % 1 === 0 ? String(Math.round(horizonYears)) : horizonYears.toFixed(1);
   const sustainableMonthly = (result as ReportResult & { sustainableIncomeMonthly?: number }).sustainableIncomeMonthly
@@ -696,7 +701,8 @@ export function CapitalGrowthReport({
               <View style={styles.coverDivider} />
               <View style={styles.coverMetadata}>
                 <Text style={[styles.coverMetadataLine, { fontWeight: 'bold', fontSize: 11 }]}>Capital Health Model Analysis</Text>
-                <Text style={styles.coverMetadataLine}>Generated: {dateStr}</Text>
+                <Text style={styles.coverMetadataLine}>{preparedForStr}</Text>
+                <Text style={styles.coverMetadataLine}>Report generated: {generatedAtStr}</Text>
                 <Text style={styles.coverMetadataLine}>Prepared by Capital Bridge — Capital Health Model</Text>
               </View>
               <View style={styles.coverFirmBlock}>
@@ -1016,6 +1022,7 @@ export async function generateReportBlob(
     chartData?: ChartPoint[];
     currentAge?: number;
     includeLionsVerdict?: boolean;
+    reportClientDisplayName?: string;
   }
 ): Promise<Blob> {
   const baseUrl = options?.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined);
@@ -1024,6 +1031,7 @@ export async function generateReportBlob(
   const chartData = options?.chartData ?? [];
   const currentAge = options?.currentAge;
   const includeLionsVerdict = options?.includeLionsVerdict ?? true;
+  const reportClientDisplayName = options?.reportClientDisplayName;
   const doc = (
     <CapitalGrowthReport
       inputs={inputs}
@@ -1034,6 +1042,7 @@ export async function generateReportBlob(
       chartData={chartData}
       currentAge={currentAge}
       includeLionsVerdict={includeLionsVerdict}
+      reportClientDisplayName={reportClientDisplayName}
     />
   );
   return pdf(doc).toBlob();

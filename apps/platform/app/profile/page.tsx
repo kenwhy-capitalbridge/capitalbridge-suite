@@ -1,4 +1,4 @@
-import Link from "next/link";
+import type { CSSProperties } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
@@ -6,6 +6,7 @@ import { getServerUserAndMembership } from "../../lib/auth";
 import { formatPlanLabel, initialsFromDisplayName } from "../../lib/profileInitials";
 import { PlatformFrameworkHeader } from "../components/PlatformFrameworkHeader";
 import { ProfileAccountEmailForm } from "../components/ProfileAccountEmailForm";
+import { ProfileHistoryBackButton } from "../components/ProfileHistoryBackButton";
 
 export const dynamic = "force-dynamic";
 
@@ -48,24 +49,44 @@ export default async function ProfilePage() {
 
   const pricingHref = `${LOGIN_APP_URL.replace(/\/+$/, "")}/pricing`;
 
+  const dtStyle: CSSProperties = {
+    margin: 0,
+    fontSize: "clamp(0.58rem, 1.8vw, 0.68rem)",
+    fontWeight: 700,
+    letterSpacing: "clamp(0.05em, 0.6vw, 0.08em)",
+    textTransform: "uppercase",
+    color: "rgba(255, 204, 106, 0.78)",
+  };
+
+  const ddStyle: CSSProperties = {
+    margin: "clamp(0.18rem, 0.55vw, 0.25rem) 0 0",
+    fontSize: "clamp(0.78rem, 2.4vw, 0.92rem)",
+    color: "rgba(246, 245, 241, 0.92)",
+    lineHeight: 1.45,
+  };
+
+  const avatarSize = "clamp(40px, 10.5vw, 48px)";
+
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#0b2e18" }}>
-      <PlatformFrameworkHeader verifiedUserEmail={user.email} />
+    <div className="profile-page" style={{ minHeight: "100vh", backgroundColor: "#0b2e18" }}>
+      <PlatformFrameworkHeader verifiedUserEmail={user.email} centerTitle="USER PROFILE" />
 
       <main
         style={{
           maxWidth: 720,
           margin: "0 auto",
-          padding: "1.5rem 1rem 3rem",
+          padding:
+            "clamp(0.7rem, 1.8vw + 0.35rem, 1.5rem) clamp(0.5rem, 2.2vw + 0.2rem, 1rem) clamp(1.6rem, 3.5vw + 0.75rem, 3rem)",
           boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.85rem",
-            marginBottom: "1.25rem",
+            gap: "clamp(0.55rem, 2.2vw, 0.85rem)",
+            marginBottom: "clamp(0.85rem, 2.5vw, 1.25rem)",
           }}
         >
           <span
@@ -73,10 +94,10 @@ export default async function ProfilePage() {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 48,
-              height: 48,
+              width: avatarSize,
+              height: avatarSize,
               borderRadius: 9999,
-              fontSize: "1rem",
+              fontSize: "clamp(0.78rem, 2.6vw, 1rem)",
               fontWeight: 800,
               letterSpacing: "0.02em",
               color: "rgba(13, 58, 29, 0.95)",
@@ -87,14 +108,15 @@ export default async function ProfilePage() {
           >
             {initials}
           </span>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h1
               style={{
                 margin: 0,
-                fontSize: "clamp(1.25rem, 3.5vw, 1.5rem)",
+                fontSize: "clamp(1.02rem, 2.6vw + 0.45rem, 1.5rem)",
                 fontWeight: 700,
                 fontFamily: 'ui-serif, "Roboto Serif", Georgia, serif',
                 color: "rgba(246, 245, 241, 0.98)",
+                lineHeight: 1.2,
               }}
             >
               Your profile
@@ -102,9 +124,10 @@ export default async function ProfilePage() {
             {displayName ? (
               <p
                 style={{
-                  margin: "0.2rem 0 0",
-                  fontSize: "0.88rem",
+                  margin: "clamp(0.12rem, 0.5vw, 0.2rem) 0 0",
+                  fontSize: "clamp(0.74rem, 2.1vw, 0.88rem)",
                   color: "rgba(246, 245, 241, 0.75)",
+                  lineHeight: 1.35,
                 }}
               >
                 {displayName}
@@ -115,56 +138,32 @@ export default async function ProfilePage() {
 
         <div
           style={{
-            padding: "1.25rem 1.15rem",
-            borderRadius: 10,
+            padding:
+              "clamp(0.75rem, 2.6vw, 1.25rem) clamp(0.65rem, 2.4vw, 1.15rem)",
+            borderRadius: "clamp(8px, 2vw, 10px)",
             backgroundColor: "rgba(13, 58, 29, 0.55)",
             border: "1px solid rgba(255, 204, 106, 0.22)",
           }}
         >
-          <dl style={{ margin: 0, display: "grid", gap: "0.85rem" }}>
+          <dl
+            style={{
+              margin: 0,
+              display: "grid",
+              gap: "clamp(0.6rem, 2vw, 0.85rem)",
+            }}
+          >
             <div>
-              <dt
-                style={{
-                  margin: 0,
-                  fontSize: "0.68rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "rgba(255, 204, 106, 0.78)",
-                }}
-              >
-                Account type
-              </dt>
-              <dd
-                style={{
-                  margin: "0.25rem 0 0",
-                  fontSize: "0.92rem",
-                  color: "rgba(246, 245, 241, 0.92)",
-                  lineHeight: 1.45,
-                }}
-              >
+              <dt style={dtStyle}>Account type</dt>
+              <dd style={ddStyle}>
                 Active member{membership?.plan ? ` · ${planLabel} plan` : ""}
               </dd>
             </div>
 
             <div>
-              <dt
-                style={{
-                  margin: 0,
-                  fontSize: "0.68rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "rgba(255, 204, 106, 0.78)",
-                }}
-              >
-                Sign-in email
-              </dt>
+              <dt style={dtStyle}>Sign-in email</dt>
               <dd
                 style={{
-                  margin: "0.25rem 0 0",
-                  fontSize: "0.92rem",
-                  color: "rgba(246, 245, 241, 0.92)",
+                  ...ddStyle,
                   wordBreak: "break-word",
                 }}
               >
@@ -173,29 +172,19 @@ export default async function ProfilePage() {
             </div>
 
             <div>
-              <dt
-                style={{
-                  margin: 0,
-                  fontSize: "0.68rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "rgba(255, 204, 106, 0.78)",
-                }}
-              >
-                Access period
-              </dt>
-              <dd
-                style={{
-                  margin: "0.25rem 0 0",
-                  fontSize: "0.92rem",
-                  color: "rgba(246, 245, 241, 0.92)",
-                  lineHeight: 1.45,
-                }}
-              >
+              <dt style={dtStyle}>Access period</dt>
+              <dd style={ddStyle}>
                 {validitySummary}
                 {startLabel || endLabel ? (
-                  <span style={{ display: "block", marginTop: "0.35rem", fontSize: "0.82rem", opacity: 0.85 }}>
+                  <span
+                    style={{
+                      display: "block",
+                      marginTop: "clamp(0.28rem, 1vw, 0.35rem)",
+                      fontSize: "clamp(0.72rem, 2vw, 0.82rem)",
+                      opacity: 0.85,
+                      lineHeight: 1.4,
+                    }}
+                  >
                     {startLabel ? `Started: ${startLabel}` : null}
                     {startLabel && endLabel ? " · " : null}
                     {endLabel && membership?.end_date != null ? `Ends: ${endLabel}` : null}
@@ -205,13 +194,13 @@ export default async function ProfilePage() {
             </div>
           </dl>
 
-          <div style={{ marginTop: "1.35rem" }}>
+          <div style={{ marginTop: "clamp(1rem, 2.8vw, 1.35rem)" }}>
             <p
               style={{
                 margin: 0,
-                fontSize: "0.68rem",
+                fontSize: "clamp(0.58rem, 1.8vw, 0.68rem)",
                 fontWeight: 700,
-                letterSpacing: "0.08em",
+                letterSpacing: "clamp(0.05em, 0.6vw, 0.08em)",
                 textTransform: "uppercase",
                 color: "rgba(255, 204, 106, 0.78)",
               }}
@@ -220,8 +209,8 @@ export default async function ProfilePage() {
             </p>
             <p
               style={{
-                margin: "0.35rem 0 0",
-                fontSize: "0.88rem",
+                margin: "clamp(0.28rem, 0.9vw, 0.35rem) 0 0",
+                fontSize: "clamp(0.76rem, 2.1vw, 0.88rem)",
                 lineHeight: 1.5,
                 color: "rgba(246, 245, 241, 0.78)",
               }}
@@ -231,13 +220,17 @@ export default async function ProfilePage() {
             <a
               href={pricingHref}
               style={{
-                display: "inline-block",
-                marginTop: "0.65rem",
-                fontSize: "0.82rem",
+                display: "inline-flex",
+                alignItems: "center",
+                marginTop: "clamp(0.5rem, 1.5vw, 0.65rem)",
+                minHeight: 44,
+                fontSize: "clamp(0.76rem, 2vw, 0.82rem)",
                 fontWeight: 600,
                 color: "rgba(255, 214, 150, 0.98)",
                 textDecoration: "underline",
                 textUnderlineOffset: 3,
+                padding: "0.15rem 0",
+                boxSizing: "border-box",
               }}
             >
               Open pricing & packages
@@ -246,18 +239,7 @@ export default async function ProfilePage() {
 
           <ProfileAccountEmailForm currentEmail={user.email ?? null} />
 
-          <p style={{ margin: "1.75rem 0 0", fontSize: "0.8rem", color: "rgba(246, 245, 241, 0.55)" }}>
-            <Link
-              href="/"
-              style={{
-                color: "rgba(255, 214, 150, 0.9)",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              ← Back to Framework home
-            </Link>
-          </p>
+          <ProfileHistoryBackButton />
         </div>
       </main>
     </div>

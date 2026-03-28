@@ -244,6 +244,7 @@ const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialU
 type CapitalHealthAppProps = {
   canSeeVerdict?: boolean;
   lionAccessUser?: LionAccessUser;
+  reportClientDisplayName?: string;
 };
 
 type CapitalHealthVerdictBundle = {
@@ -259,18 +260,19 @@ export default forwardRef<CapitalHealthAppHandle, CapitalHealthAppProps>(functio
       ref={ref}
       canSeeVerdict={props.canSeeVerdict ?? true}
       lionAccessUser={lionAccessUser}
+      reportClientDisplayName={props.reportClientDisplayName ?? 'Client'}
     />
   );
 });
 
 const CalculatorScreen = forwardRef<
   CapitalHealthAppHandle,
-  { canSeeVerdict: boolean; lionAccessUser: LionAccessUser }
+  { canSeeVerdict: boolean; lionAccessUser: LionAccessUser; reportClientDisplayName: string }
 >(function CalculatorScreen(
   props,
   ref
 ) {
-  const { lionAccessUser, canSeeVerdict } = props;
+  const { lionAccessUser, canSeeVerdict, reportClientDisplayName } = props;
   const [inputs, setInputsRaw] = useState<CalculatorInputs>(defaultInputs);
   const [history, setHistory] = useState<CalculatorInputs[]>([]);
   const [toast, setToast] = useState<string | null>(null);
@@ -659,12 +661,13 @@ const CalculatorScreen = forwardRef<
         chartPoints,
         currentAge: currentAge ?? undefined,
         includeLionsVerdict: lionAccessEnabled,
+        reportClientDisplayName,
       });
       setReportReady(true);
     } finally {
       setReportGenerating(false);
     }
-  }, [inputs, result, chartData, lionAccessEnabled, currentAge]);
+  }, [inputs, result, chartData, lionAccessEnabled, currentAge, reportClientDisplayName]);
 
   return (
     <TapToRevealProvider>

@@ -12,10 +12,12 @@ const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
 export default async function Page({
   searchParams,
 }: {
-  searchParams?: { plan?: string };
+  searchParams?: Promise<{ plan?: string }>;
 }) {
   const { user, membership } = await getServerUserAndMembership();
   if (!user) return <FrameworkStaticLanding />;
+
+  const sp = searchParams ? await searchParams : undefined;
 
   const now = new Date();
   const isActive =
@@ -27,7 +29,7 @@ export default async function Page({
     return (
       <>
         <PlatformFrameworkHeader verifiedUserEmail={user.email} />
-        <PaymentGate userId={user.id} plan={searchParams?.plan ?? null} />
+        <PaymentGate userId={user.id} plan={sp?.plan ?? null} />
       </>
     );
   }

@@ -14,6 +14,7 @@ export default function CapitalHealthLocalPreview() {
     <CapitalHealthDashboardClient
       canSeeVerdict
       lionAccessUser={{ isPaid: true, hasActiveTrialUpgrade: false }}
+      reportClientDisplayName="Preview user"
     />
   );
 }

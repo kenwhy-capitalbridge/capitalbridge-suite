@@ -79,6 +79,7 @@ async function main() {
     includeLionsVerdict: true,
     logoLionPngDataUrl,
     logoWordmarkPngDataUrl,
+    reportClientDisplayName: "Sample Client",
   });
 
   const outPath = join(repoRoot, "docs", "samples", "forever-income-report.pdf");

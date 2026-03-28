@@ -45,7 +45,10 @@ const deriveTierFromStatus = (status: SustainabilityStatus | undefined): Tier =>
   }
 };
 
-const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAccessUser }>(
+const AppInner = forwardRef<
+  IncomeEngineeringAppHandle,
+  { lionAccessUser: LionAccessUser; reportClientDisplayName: string }
+>(
   function AppInner(props, ref) {
   const { state, dispatch } = useCalculatorStoreInternals();
   const { currency, monthlyExpenses, incomeRows, assetUnlocks, investmentBuckets } = state;
@@ -284,17 +287,22 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
           medianCoverage={result.medianCoverage}
           worstMonthCoverage={result.worstMonthCoverage}
           lionAccessEnabled={lionAccessEnabled}
+          reportClientDisplayName={props.reportClientDisplayName}
         />
       </div>
     </div>
   );
 });
 
-const App = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser?: LionAccessUser }>(function App(props, ref) {
+const App = forwardRef<
+  IncomeEngineeringAppHandle,
+  { lionAccessUser?: LionAccessUser; reportClientDisplayName?: string }
+>(function App(props, ref) {
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
+  const reportClientDisplayName = props.reportClientDisplayName ?? 'Client';
   return (
     <CalculatorStoreProvider>
-      <AppInner ref={ref} lionAccessUser={lionAccessUser} />
+      <AppInner ref={ref} lionAccessUser={lionAccessUser} reportClientDisplayName={reportClientDisplayName} />
     </CalculatorStoreProvider>
   );
 });
