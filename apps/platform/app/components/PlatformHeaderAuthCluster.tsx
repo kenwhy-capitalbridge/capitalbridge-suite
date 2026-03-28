@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import { PlatformLogoutToMarketing } from "./PlatformLogoutToMarketing";
 
 export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const label = `Account profile (${initials})`;
 
   return (
@@ -19,6 +24,16 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
         href="/profile"
         aria-label={label}
         title="Profile"
+        aria-busy={isPending}
+        onClick={(e) => {
+          if (e.defaultPrevented) return;
+          if (e.button !== 0) return;
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          startTransition(() => {
+            router.push("/profile");
+          });
+        }}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -35,9 +50,20 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
           border: "1px solid rgba(255, 204, 106, 0.55)",
           textDecoration: "none",
           lineHeight: 1,
+          pointerEvents: isPending ? "none" : undefined,
+          opacity: isPending ? 0.92 : 1,
         }}
       >
-        {initials}
+        {isPending ? (
+          <Loader2
+            className="pf-header-avatar-spin"
+            size={16}
+            strokeWidth={2.5}
+            aria-hidden
+          />
+        ) : (
+          initials
+        )}
       </Link>
       <PlatformLogoutToMarketing inline />
     </div>

@@ -583,3 +583,13 @@ a {
     content: " ";
   }
 }
+
+@keyframes pf-header-avatar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pf-header-avatar-spin {
+  animation: pf-header-avatar-spin 0.7s linear infinite;
+}
