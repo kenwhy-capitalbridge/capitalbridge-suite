@@ -5,6 +5,7 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
+import { PLATFORM_APP_URL } from "@cb/shared/urls";
 import { ModelAppHeader } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ForeverCalculatorProvider } from "./ForeverCalculatorProvider";
@@ -41,6 +42,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   }
 
+  const platformHome = `${PLATFORM_APP_URL.replace(/\/+$/, "")}/`;
+
   return (
     <html lang="en">
       <body>
@@ -48,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ModelAppHeader
             titleDesktop="FOREVER INCOME MODEL"
             titleMobile="FOREVER INCOME"
-            backHref="https://platform.thecapitalbridge.com/"
+            backHref={platformHome}
             actions={
               user ? (
                 <ModelHeaderSaveRestore

@@ -1,34 +1,17 @@
-"use client";
-
-import { useCallback, useState } from "react";
 import styles from "./ModelAppHeader.module.css";
 
+/**
+ * Full navigation to the advisory platform (not client-side routing).
+ * Using a real link avoids any ambiguity with auth flows and supports open-in-new-tab.
+ */
 export function ModelAppHeaderBackButton({ href }: { href: string }) {
-  const [pending, setPending] = useState(false);
-
-  const onClick = useCallback(() => {
-    if (pending) return;
-    setPending(true);
-    window.location.assign(href);
-  }, [href, pending]);
-
   return (
-    <button
-      type="button"
+    <a
+      href={href}
       className={styles.back}
-      onClick={onClick}
-      disabled={pending}
-      aria-busy={pending}
-      aria-label={pending ? "Going back, please wait" : "Back to platform"}
+      aria-label="Back to Capital Bridge platform"
     >
-      {pending ? (
-        <>
-          <span className={styles.backSpinner} aria-hidden />
-          <span>Back</span>
-        </>
-      ) : (
-        "Back"
-      )}
-    </button>
+      Back
+    </a>
   );
 }
