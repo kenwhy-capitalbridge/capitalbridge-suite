@@ -15,7 +15,7 @@ Several copies of the gold lion SVG sit **fixed** to the viewport, **low opacity
 | Piece | Role |
 |--------|------|
 | `packages/ui/src/LionWatermarkBackdrop.tsx` | Renders the scattered `<img>` marks; edit `LION_WATERMARK_MARKS` to move, resize, or fade lions. |
-| Model app `app/layout.tsx` | Renders `<LionWatermarkBackdrop />` first in `<body>`, then wraps the rest in `<div className="relative z-[1] min-h-screen">…</div>`. |
+| Income Engineering, Capital Health, Capital Stress `app/layout.tsx` | Renders `<LionWatermarkBackdrop />` first in `<body>`, then wraps the rest in `<div className="relative z-[1] min-h-screen">…</div>`. Not used on Forever, platform, or login. |
 
 ### Why the `z-[1]` wrapper?
 
@@ -41,11 +41,11 @@ True random placement needs client-only layout and can flash on load. Fixed posi
 
 ## Tuning
 
-- **Stronger hint:** raise `opacity` on each mark (cap ~0.05 so it stays a watermark; defaults are ~0.012–0.026).
+- **Stronger hint:** raise `opacity` on each mark (cap ~0.05 so it stays a watermark; defaults are ~0.01–0.018 with larger tiles).
 - **Softer:** lower opacity or remove a mark.
 - **Less busy:** delete entries from `LION_WATERMARK_MARKS`.
 - **Print:** the root uses `print:hidden` so PDFs/print routes are not tiled with lions unless you remove that class.
 
 ## Apps wired
 
-Model apps (Forever, Income Engineering, Capital Health, Capital Stress), **platform**, and **login** root layouts import `LionWatermarkBackdrop` from `@cb/ui` and use the pattern above (`relative z-[1]` wrapper around app chrome).
+Income Engineering, Capital Health, and Capital Stress model layouts import `LionWatermarkBackdrop` from `@cb/ui` and use the pattern above.

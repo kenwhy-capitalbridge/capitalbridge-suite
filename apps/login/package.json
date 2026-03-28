@@ -14,7 +14,6 @@
     "@cb/membership": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
-    "@cb/ui": "*",
     "autoprefixer": "^10.4.27",
     "next": "^15.5.14",
     "postcss": "^8.5.8",

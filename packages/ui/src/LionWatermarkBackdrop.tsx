@@ -17,17 +17,18 @@ type MarkSpec = {
 /**
  * Edge- and corner-anchored scatter: faint, non-overlapping “zones” (corners + mid-edges),
  * varied size/rotation so it reads random without SSR/client randomness.
- * Opacity ~0.011–0.021 — slightly lowered vs smaller marks so larger art stays subtle.
+ * Used on Income Engineering, Capital Health, and Capital Stress only (not Forever / platform / login).
+ * Opacity ~0.01–0.018 — larger marks, slightly softer than small-tile era.
  */
 const LION_WATERMARK_MARKS: readonly MarkSpec[] = [
-  { top: "5%", left: "-7%", widthPx: 204, rotateDeg: -13, opacity: 0.018 },
-  { top: "8%", right: "-6%", widthPx: 184, rotateDeg: 21, opacity: 0.016 },
-  { top: "46%", left: "-11%", widthPx: 172, rotateDeg: 6, opacity: 0.013, translate: "0, -50%" },
-  { top: "50%", right: "-10%", widthPx: 190, rotateDeg: -19, opacity: 0.015, translate: "0, -50%" },
-  { bottom: "16%", left: "-5%", widthPx: 214, rotateDeg: 11, opacity: 0.02 },
-  { bottom: "12%", right: "-7%", widthPx: 198, rotateDeg: -27, opacity: 0.017 },
-  { top: "26%", left: "3%", widthPx: 154, rotateDeg: 38, opacity: 0.011 },
-  { top: "34%", right: "4%", widthPx: 142, rotateDeg: -8, opacity: 0.012 },
+  { top: "5%", left: "-8%", widthPx: 248, rotateDeg: -13, opacity: 0.016 },
+  { top: "7%", right: "-7%", widthPx: 228, rotateDeg: 21, opacity: 0.014 },
+  { top: "46%", left: "-12%", widthPx: 212, rotateDeg: 6, opacity: 0.011, translate: "0, -50%" },
+  { top: "50%", right: "-11%", widthPx: 232, rotateDeg: -19, opacity: 0.012, translate: "0, -50%" },
+  { bottom: "14%", left: "-6%", widthPx: 262, rotateDeg: 11, opacity: 0.018 },
+  { bottom: "10%", right: "-8%", widthPx: 242, rotateDeg: -27, opacity: 0.015 },
+  { top: "24%", left: "2%", widthPx: 188, rotateDeg: 38, opacity: 0.01 },
+  { top: "32%", right: "3%", widthPx: 176, rotateDeg: -8, opacity: 0.01 },
 ];
 
 function positionStyle(m: MarkSpec): CSSProperties {
@@ -42,6 +43,9 @@ function positionStyle(m: MarkSpec): CSSProperties {
 /**
  * Subtle full-viewport lion marks behind the app. Uses `/brand/lionhead_Gold.svg`
  * (synced from `packages/ui/src/assets/lionhead_Gold.svg`).
+ *
+ * Intended for Income Engineering, Capital Health, and Capital Stress layouts only
+ * (not Forever, platform, or login).
  *
  * Pair with a sibling wrapper `className="relative z-[1] min-h-screen"` so content
  * stacks above this layer (`z-index: 0` fixed can paint over in-flow content otherwise).
