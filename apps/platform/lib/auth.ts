@@ -20,7 +20,13 @@ export async function getServerUser() {
 }
 
 export async function getServerUserAndMembership(): Promise<{
-  user: { id: string; email?: string | null; name?: string | null } | null;
+  user: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
   membership: ServerMembership;
 }> {
   try {
@@ -29,6 +35,13 @@ export async function getServerUserAndMembership(): Promise<{
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { user: null, membership: null };
+
+    const { data: profile } = await supabase
+      .schema("public")
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", user.id)
+      .maybeSingle();
 
     const { data: membership } = await supabase
       .schema("public")
@@ -56,11 +69,16 @@ export async function getServerUserAndMembership(): Promise<{
       (user.user_metadata?.full_name as string | undefined)?.trim() ||
       null;
 
+    const firstName = profile?.first_name?.trim() || null;
+    const lastName = profile?.last_name?.trim() || null;
+
     return {
       user: {
         id: user.id,
         email: user.email ?? null,
         name: name || null,
+        firstName,
+        lastName,
       },
       membership: membership
         ? {

@@ -28,7 +28,10 @@ export default async function Page({
   if (!isActive) {
     return (
       <>
-        <PlatformFrameworkHeader verifiedUserEmail={user.email} />
+        <PlatformFrameworkHeader
+          verifiedUserEmail={user.email}
+          profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+        />
         <PaymentGate userId={user.id} plan={sp?.plan ?? null} />
       </>
     );
@@ -40,7 +43,10 @@ export default async function Page({
 
   return (
     <>
-      <PlatformFrameworkHeader verifiedUserEmail={user.email} />
+      <PlatformFrameworkHeader
+        verifiedUserEmail={user.email}
+        profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+      />
       <main>
         <div
           style={{

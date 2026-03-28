@@ -1,72 +1,134 @@
+"use client";
+
 import type { CSSProperties } from "react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { BRAND_LIONHEAD_GOLD } from "./brandPaths";
 import styles from "./LionWatermarkBackdrop.module.css";
 
 type MarkSpec = {
+  /** Horizontal center of the mark (% of backdrop width). */
+  leftPct: number;
+  /** Vertical center of the mark (% of backdrop height below header). */
+  topPct: number;
   widthPx: number;
   rotateDeg: number;
   opacity: number;
-  /** Fine-tune after position (keeps rotation centered on the mark). */
-  translate?: string;
-  /**
-   * Gold lion asset faces right. Left-anchored = unflipped (nose toward center).
-   * Right-anchored = mirror so nose points left toward center.
-   */
-  flipX?: boolean;
-} & (
-  | { top: string; left: string; right?: never; bottom?: never }
-  | { top: string; right: string; left?: never; bottom?: never }
-  | { bottom: string; left: string; right?: never; top?: never }
-  | { bottom: string; right: string; left?: never; top?: never }
-);
+};
 
-/** Default: mirror only right-edge marks so both sides appear to face the middle. */
-function flipTowardCenterByDefault(m: MarkSpec): boolean {
-  return "right" in m && m.right !== undefined;
+const MARK_COUNT = 6;
+const TOP_RANGE_LO = 7;
+const TOP_RANGE_HI = 83;
+const LEFT_RANGE_LO = 3;
+const LEFT_RANGE_HI = 97;
+
+const WIDTH_PX_MIN = 112;
+const WIDTH_PX_MAX = 218;
+const OPACITY_MIN = 0.034;
+const OPACITY_MAX = 0.056;
+
+function randomBetween(a: number, b: number): number {
+  return a + Math.random() * (b - a);
+}
+
+function pct(n: number): string {
+  return `${n.toFixed(1)}%`;
 }
 
 /**
- * Six marks in alternating vertical bands (~25%+ between centers) so silhouettes
- * do not stack. Smaller widths reduce rotational overlap at the margins.
+ * Minimum center-to-center distance (%), scaled by mark size so larger lions stay apart.
+ * Uses a ~900px-wide reference; good enough for overlap avoidance without measuring the viewport.
  */
-const LION_WATERMARK_MARKS: readonly MarkSpec[] = [
-  { top: "12%", left: "-4%", widthPx: 168, rotateDeg: -16, opacity: 0.076 },
-  { top: "40%", left: "2%", widthPx: 158, rotateDeg: 24, opacity: 0.065 },
-  { top: "70%", left: "-5%", widthPx: 172, rotateDeg: 9, opacity: 0.072 },
-
-  { top: "20%", right: "-3%", widthPx: 166, rotateDeg: 14, opacity: 0.074 },
-  { top: "48%", right: "3%", widthPx: 154, rotateDeg: -20, opacity: 0.064 },
-  { top: "78%", right: "-4%", widthPx: 170, rotateDeg: -11, opacity: 0.07 },
-];
-
-function positionStyle(m: MarkSpec): CSSProperties {
-  const base: CSSProperties = { width: m.widthPx };
-  if ("top" in m && m.top !== undefined) base.top = m.top;
-  if ("left" in m && m.left !== undefined) base.left = m.left;
-  if ("right" in m && m.right !== undefined) base.right = m.right;
-  if ("bottom" in m && m.bottom !== undefined) base.bottom = m.bottom;
-  return base;
+function separationThresholdPx(wa: number, wb: number): number {
+  const avg = (wa + wb) / 2;
+  return 11 + avg / 26;
 }
 
+function farEnough(a: MarkSpec, b: MarkSpec): boolean {
+  const dx = a.leftPct - b.leftPct;
+  const dy = a.topPct - b.topPct;
+  return Math.hypot(dx, dy) >= separationThresholdPx(a.widthPx, b.widthPx);
+}
+
+function tryOneMark(existing: MarkSpec[]): MarkSpec | null {
+  for (let i = 0; i < 70; i++) {
+    const m: MarkSpec = {
+      leftPct: randomBetween(LEFT_RANGE_LO, LEFT_RANGE_HI),
+      topPct: randomBetween(TOP_RANGE_LO, TOP_RANGE_HI),
+      widthPx: Math.round(randomBetween(WIDTH_PX_MIN, WIDTH_PX_MAX)),
+      rotateDeg: Math.round(randomBetween(-21, 21)),
+      opacity: randomBetween(OPACITY_MIN, OPACITY_MAX),
+    };
+    if (existing.every((e) => farEnough(m, e))) return m;
+  }
+  return null;
+}
+
+/** Sparse fallback if random placement fails (should be rare). */
+function fallbackMarks(): MarkSpec[] {
+  return [
+    { leftPct: 9, topPct: 16, widthPx: 155, rotateDeg: -12, opacity: 0.042 },
+    { leftPct: 46, topPct: 36, widthPx: 138, rotateDeg: 9, opacity: 0.04 },
+    { leftPct: 91, topPct: 19, widthPx: 162, rotateDeg: 14, opacity: 0.044 },
+    { leftPct: 26, topPct: 56, widthPx: 148, rotateDeg: -17, opacity: 0.041 },
+    { leftPct: 74, topPct: 51, widthPx: 172, rotateDeg: -7, opacity: 0.043 },
+    { leftPct: 58, topPct: 76, widthPx: 142, rotateDeg: 19, opacity: 0.04 },
+  ];
+}
+
+function generateLionWatermarkMarks(): MarkSpec[] {
+  for (let attempt = 0; attempt < 450; attempt++) {
+    const marks: MarkSpec[] = [];
+    let ok = true;
+    for (let n = 0; n < MARK_COUNT; n++) {
+      const m = tryOneMark(marks);
+      if (!m) {
+        ok = false;
+        break;
+      }
+      marks.push(m);
+    }
+    if (ok) return marks;
+  }
+  return fallbackMarks();
+}
+
+/**
+ * Gold lion asset faces right. Centers on the right half of the width flip so the nose points
+ * toward the horizontal middle (inward).
+ */
 function buildTransform(m: MarkSpec): string {
-  const t = m.translate ?? "0, 0";
-  const flip = m.flipX ?? flipTowardCenterByDefault(m);
+  const flip = m.leftPct >= 50;
   const sx = flip ? -1 : 1;
-  return `translate(${t}) rotate(${m.rotateDeg}deg) scaleX(${sx})`;
+  return `translate(-50%, -50%) rotate(${m.rotateDeg}deg) scaleX(${sx})`;
+}
+
+function positionStyle(m: MarkSpec): CSSProperties {
+  return {
+    left: pct(m.leftPct),
+    top: pct(m.topPct),
+    width: m.widthPx,
+  };
 }
 
 /**
  * Gold lion watermarks for Forever / Income Engineering / Capital Health / Capital Stress.
- * Renders **inside** the app `relative min-h-screen` shell (first child) so stacking matches
- * the calculator. `z-index: 0` sits under the UI shell (`relative z-10`). Uses CSS module positioning
- * so production builds don’t drop arbitrary Tailwind classes.
+ * Random positions across full width and height band; some sit under center content by design.
+ * Regenerates on pathname change. Client-only so SSR never sees `Math.random()`.
  */
 export function LionWatermarkBackdrop() {
+  const pathname = usePathname();
+  const [marks, setMarks] = useState<MarkSpec[]>([]);
+
+  useEffect(() => {
+    setMarks(generateLionWatermarkMarks());
+  }, [pathname]);
+
   return (
     <div className={`${styles.root} print:hidden`} aria-hidden>
-      {LION_WATERMARK_MARKS.map((m, i) => (
+      {marks.map((m, i) => (
         <img
-          key={i}
+          key={`${pathname}-${i}`}
           src={BRAND_LIONHEAD_GOLD}
           alt=""
           width={m.widthPx}

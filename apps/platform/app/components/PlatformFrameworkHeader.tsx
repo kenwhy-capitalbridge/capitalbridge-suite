@@ -2,7 +2,7 @@ import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
 import { PlatformLoginButton } from "./PlatformLoginButton";
 import { PlatformHeaderAuthCluster } from "./PlatformHeaderAuthCluster";
-import { initialsFromDisplayName } from "../../lib/profileInitials";
+import { initialsFromFirstLastOrFallback } from "../../lib/profileInitials";
 
 function marketingHomeUrl(): string {
   const base = MARKETING_SITE_URL.replace(/\/+$/, "");
@@ -15,6 +15,8 @@ export type PlatformFrameworkHeaderProps = {
    * render the bar even if `getUser()` is empty in this nested RSC (defensive).
    */
   verifiedUserEmail?: string | null;
+  /** When set (e.g. from `getServerUserAndMembership`), skips a duplicate `profiles` read. */
+  profileNames?: { firstName: string | null; lastName: string | null };
   /** Logged-out framework landing: same chrome with Login instead of Logout. */
   publicBrowse?: boolean;
   /** Center label in the sticky bar (default: Framework). */
@@ -24,6 +26,7 @@ export type PlatformFrameworkHeaderProps = {
 /** Sticky bar: logo (marketing) | Framework | Logout (auth) or Login (public). */
 export async function PlatformFrameworkHeader({
   verifiedUserEmail,
+  profileNames,
   publicBrowse = false,
   centerTitle = "Framework",
 }: PlatformFrameworkHeaderProps = {}) {
@@ -115,7 +118,26 @@ export async function PlatformFrameworkHeader({
       )
     : null;
   const emailForInitials = user?.email ?? verifiedUserEmail ?? null;
-  const initials = initialsFromDisplayName(displayName, emailForInitials);
+
+  let profileFirst = profileNames?.firstName ?? null;
+  let profileLast = profileNames?.lastName ?? null;
+  if (user && !profileNames) {
+    const { data: prof } = await supabase
+      .schema("public")
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", user.id)
+      .maybeSingle();
+    profileFirst = prof?.first_name?.trim() ?? null;
+    profileLast = prof?.last_name?.trim() ?? null;
+  }
+
+  const initials = initialsFromFirstLastOrFallback(
+    profileFirst,
+    profileLast,
+    displayName,
+    emailForInitials
+  );
 
   const home = marketingHomeUrl();
 

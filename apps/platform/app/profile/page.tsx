@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 import { getServerUserAndMembership } from "../../lib/auth";
-import { formatPlanLabel, initialsFromDisplayName } from "../../lib/profileInitials";
+import { formatPlanLabel, initialsFromFirstLastOrFallback } from "../../lib/profileInitials";
 import { PlatformFrameworkHeader } from "../components/PlatformFrameworkHeader";
 import { ProfileAccountEmailForm } from "../components/ProfileAccountEmailForm";
 import { ProfileHistoryBackButton } from "../components/ProfileHistoryBackButton";
@@ -34,8 +34,16 @@ export default async function ProfilePage() {
     redirect(loginUrl.toString());
   }
 
-  const displayName = user.name?.trim() || null;
-  const initials = initialsFromDisplayName(displayName, user.email ?? null);
+  const fn = user.firstName?.trim();
+  const ln = user.lastName?.trim();
+  const displayName =
+    fn && ln ? `${fn} ${ln}` : fn || ln ? (fn ?? ln)! : user.name?.trim() || null;
+  const initials = initialsFromFirstLastOrFallback(
+    user.firstName,
+    user.lastName,
+    user.name?.trim() || null,
+    user.email ?? null
+  );
   const planLabel = formatPlanLabel(membership?.plan);
   const startLabel = formatDateIso(membership?.start_date ?? null);
   const endLabel = formatDateIso(membership?.end_date ?? null);
@@ -69,7 +77,11 @@ export default async function ProfilePage() {
 
   return (
     <div className="profile-page" style={{ minHeight: "100vh", backgroundColor: "#0b2e18" }}>
-      <PlatformFrameworkHeader verifiedUserEmail={user.email} centerTitle="USER PROFILE" />
+      <PlatformFrameworkHeader
+        verifiedUserEmail={user.email}
+        centerTitle="USER PROFILE"
+        profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+      />
 
       <main
         style={{

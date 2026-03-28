@@ -1,3 +1,28 @@
+/**
+ * Prefer first + last name from `profiles`; otherwise same fallbacks as `initialsFromDisplayName`.
+ */
+export function initialsFromFirstLastOrFallback(
+  firstName: string | null | undefined,
+  lastName: string | null | undefined,
+  displayName: string | null | undefined,
+  email: string | null | undefined
+): string {
+  const f = firstName?.trim();
+  const l = lastName?.trim();
+  if (f && l) {
+    const a = f[0];
+    const b = l[0];
+    if (a && b) return `${a}${b}`.toUpperCase();
+  }
+  if (f && !l) {
+    return f.length >= 2 ? f.slice(0, 2).toUpperCase() : f.toUpperCase();
+  }
+  if (l && !f) {
+    return l.length >= 2 ? l.slice(0, 2).toUpperCase() : l.toUpperCase();
+  }
+  return initialsFromDisplayName(displayName, email);
+}
+
 /** Two-letter (or one) initials for header avatar and profile chrome. */
 export function initialsFromDisplayName(
   fullName: string | null | undefined,
