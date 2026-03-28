@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "./supabaseClient";
 import { fetchPersona, deriveEntitlements } from "./platformAccess";
 import { useModelSaveHandlers } from "./ModelSaveHandlersContext";
@@ -66,7 +67,8 @@ export function ModelHeaderSaveRestore({
   logTag,
 }: ModelHeaderSaveRestoreProps) {
   const { getHandlers } = useModelSaveHandlers();
-  const [supabase] = useState(() => createSupabaseBrowserClient());
+  /** Create only in the browser after mount — avoids SSR / Strict Mode double-instantiation fighting the same refresh_token. */
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(() => initialSessionId ?? null);
   const [canSave, setCanSave] = useState(serverCanSave);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "ok" | "error">("idle");
@@ -76,7 +78,11 @@ export function ModelHeaderSaveRestore({
   const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
-    if (!userId || !useV2) return;
+    setSupabase((prev) => prev ?? createSupabaseBrowserClient());
+  }, []);
+
+  useEffect(() => {
+    if (!supabase || !userId || !useV2) return;
     fetchPersona(supabase).then((p) => {
       const fromClient = deriveEntitlements(p?.active_plan ?? null).canSaveToServer;
       setCanSave(serverCanSave || fromClient);
