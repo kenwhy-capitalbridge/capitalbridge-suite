@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./cb-model-base.css": "./src/cb-model-base.css"
+    "./cb-model-base.css": "./src/cb-model-base.css",
+    "./brandPaths": "./src/brandPaths.ts"
   },
   "dependencies": {
     "@cb/shared": "*",

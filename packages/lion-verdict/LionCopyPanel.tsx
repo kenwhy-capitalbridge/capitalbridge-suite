@@ -2,7 +2,13 @@
 
 import type { GetLionVerdictOutput } from "./getLionVerdict";
 import { LionVerdictMark } from "./LionVerdictMark";
-import { LION_VERDICT_HEADER_RULE, LION_VERDICT_PANEL_BOX } from "./lionVerdictPanelStyles";
+import {
+  LION_VERDICT_HEADLINE,
+  LION_VERDICT_HEADER_RULE,
+  LION_VERDICT_PANEL_BOX,
+  LION_VERDICT_TITLE,
+} from "./lionVerdictPanelStyles";
+import { LionVerdictScoreLine, LionVerdictStatusBadge } from "./LionVerdictStatusBadge";
 
 type FullVerdict = {
   closingLine: string;
@@ -39,36 +45,23 @@ export function LionCopyPanel({
   fullVerdict,
 }: LionCopyPanelProps) {
   if (!canSeeVerdict || !copy || !fullVerdict) return null;
-  const cleanHeadline = copy.headline?.replace(" ,", ",").replace("The lion", "the lion");
+  const cleanHeadline = copy.headline?.replace(" ,", ",");
 
   return (
     <div className={`${LION_VERDICT_PANEL_BOX} ${className ?? ""} space-y-5`}>
       <div className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${LION_VERDICT_HEADER_RULE}`}>
         <div className="flex min-w-0 items-center gap-2.5">
-          <LionVerdictMark className="h-7 w-7 shrink-0 text-[#FFCC6A] sm:h-8 sm:w-8" />
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#FFCC6A]">
-            THE LION&apos;S VERDICT
-          </p>
+          <LionVerdictMark className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
+          <p className={LION_VERDICT_TITLE}>THE LION&apos;S VERDICT</p>
         </div>
-        <div className="flex shrink-0 flex-col items-start gap-0.5 sm:items-end sm:text-right">
-          {tierLabel ? (
-            <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/85">
-              {tierLabel.replaceAll("_", " ")}
-            </div>
-          ) : null}
-          {typeof score === "number" ? (
-            <div className="text-[20px] font-black tabular-nums tracking-wide text-[#FFCC6A] sm:text-[22px]">
-              {Math.round(score)}
-            </div>
-          ) : null}
+        <div className="flex shrink-0 flex-col items-start gap-1.5 sm:items-end sm:text-right">
+          {tierLabel ? <LionVerdictStatusBadge tierLabel={tierLabel} /> : null}
+          <LionVerdictScoreLine score={score} />
         </div>
       </div>
 
       <blockquote className="m-0 border-none p-0">
-        <p
-          className="font-serif text-xl font-bold italic leading-snug text-[#FFCC6A] sm:text-2xl sm:leading-tight lg:text-[1.65rem]"
-          aria-live="polite"
-        >
+        <p className={LION_VERDICT_HEADLINE} aria-live="polite">
           {LD}
           {cleanHeadline}
           {RD}
@@ -76,7 +69,7 @@ export function LionCopyPanel({
       </blockquote>
 
       {copy.emphasis ? (
-        <div className="rounded-xl border border-[#FFCC6A]/35 bg-[#16331f]/75 px-4 py-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#F6F5F1]/90">
+        <div className="rounded-xl border border-[#FFCC6A]/35 bg-[#16331f]/75 px-4 py-3 font-serif text-xs font-semibold uppercase tracking-[0.28em] text-[#F6F5F1]/90">
           {copy.emphasis}
         </div>
       ) : null}
@@ -88,7 +81,7 @@ export function LionCopyPanel({
         <Section label="Progress so far" content={fullVerdict.progress} />
         <Section label="What your money can realistically do" content={fullVerdict.capitalReality} />
         <div className="rounded-xl bg-[#122419]/85 px-4 py-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">
+          <p className="mb-2 font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">
             Options to discuss
           </p>
           <ul className="list-none space-y-1.5 pl-0 text-sm leading-relaxed text-white/85">
@@ -105,7 +98,7 @@ export function LionCopyPanel({
         <Section label="Decision on your money" content={fullVerdict.capitalDecision} bordered />
         <Section label="If things change" content={fullVerdict.scenarioGuidance} bordered />
         <div className="rounded-xl bg-[#122419]/85 px-4 py-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">
+          <p className="mb-2 font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">
             Practical next steps
           </p>
           <ul className="list-none space-y-1.5 pl-0 text-sm leading-relaxed text-white/85">
@@ -147,7 +140,7 @@ function Section({
             : "bg-[#122419]/85"
       }`}
     >
-      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">{label}</p>
+      <p className="mb-1.5 font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">{label}</p>
       <p className="text-sm leading-relaxed text-white/88">{content}</p>
     </div>
   );

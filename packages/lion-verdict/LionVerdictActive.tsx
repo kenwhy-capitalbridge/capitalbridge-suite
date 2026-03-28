@@ -127,6 +127,7 @@ export function LionVerdictActive({
     return (
       <LionVerdictLocked
         tierLabel={tier}
+        score={score}
         headline={copy.headline}
         teaserGuidance={copy.guidanceBullets.slice(0, 2)}
         hiddenGuidanceCount={Math.max(copy.guidanceBullets.length - 2, 0)}

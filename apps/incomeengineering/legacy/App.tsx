@@ -94,8 +94,8 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
         }
         const lionVerdictClient = buildLionVerdictClientReportFromIncomeEngineering(
           {
-            medianCoveragePct: result.medianCoverage,
-            worstMonthCoveragePct: result.worstMonthCoverage,
+            medianCoveragePct: result.medianCoverage * 100,
+            worstMonthCoveragePct: result.worstMonthCoverage * 100,
             sustainabilityStatus: result.summary.sustainabilityStatus,
             totalMonthlyIncome: totalIncome,
             totalMonthlyExpenses: totalExpenses,
@@ -251,7 +251,7 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
 
           <div className="mt-8 mx-auto max-w-xl space-y-4">
             <p className="text-center text-sm font-semibold text-[#FFCC6A]">
-              Please save or print a copy for your records. Capital Bridge does not save or store your personal information.
+              Please save or print a copy for your records.
             </p>
             <button
               type="button"
@@ -278,6 +278,7 @@ const AppInner = forwardRef<IncomeEngineeringAppHandle, { lionAccessUser: LionAc
           totalCapital={totalCapital}
           monthlyExpenses={monthlyExpenses}
           incomeRows={incomeRows}
+          loans={loansFromAssets}
           assetUnlocks={assetUnlocks}
           investmentBuckets={investmentBuckets}
           medianCoverage={result.medianCoverage}

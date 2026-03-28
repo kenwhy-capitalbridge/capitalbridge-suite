@@ -13,12 +13,12 @@ export const HeaderSimple: React.FC = () => (
     <div className="mx-auto grid h-14 min-h-[44px] max-w-6xl grid-cols-3 items-center gap-2 px-3 sm:gap-4 sm:px-4">
       <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
         <img
-          src="/capital-bridge-logo-header.png"
+          src="/brand/CapitalBridgeLogo_Gold.svg"
           alt="Capital Bridge — Strength Behind Every Structure"
           className="h-6 w-auto max-w-[100px] shrink-0 object-contain object-left sm:h-9 sm:max-w-[160px] md:h-10 md:max-w-[180px]"
-          style={{ mixBlendMode: 'lighten' }}
           width={180}
           height={40}
+          decoding="async"
         />
       </div>
       <div className="flex justify-center">

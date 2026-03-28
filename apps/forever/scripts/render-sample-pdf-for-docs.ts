@@ -1,12 +1,13 @@
 /**
  * Writes docs/samples/forever-income-report.pdf (design review).
- * Run from repo root: npx tsx apps/forever/scripts/render-sample-pdf-for-docs.ts
+ * Run from repo root: node node_modules/tsx/dist/cli.mjs apps/forever/scripts/render-sample-pdf-for-docs.ts
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildLionVerdictClientReportFromForever, parseForeverRunway } from "@cb/advisory-graph/lionsVerdict";
+import sharp from "sharp";
 import { ExpenseType } from "../legacy/types";
 import { buildForeverStrategicWealthPdf } from "../legacy/foreverPdfBuild";
 import { computeForeverResults } from "../legacy/foreverModel";
@@ -14,9 +15,24 @@ import { formatCurrency } from "../legacy/utils/formatters";
 
 const scriptDir = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = join(scriptDir, "..", "..", "..");
-const appPublic = join(scriptDir, "..", "public");
+const uiAssets = join(repoRoot, "packages", "ui", "src", "assets");
 
-function main() {
+/** Wordmark SVG viewBox is wider than 4:1; default sharp `resize` uses `cover` and crops the sides. */
+const WORDMARK_RASTER_W = Math.ceil((90 * 568.703125) / 114.5);
+
+async function svgFileToPngDataUrl(absPath: string, width: number, height: number): Promise<string | null> {
+  try {
+    const buf = await sharp(readFileSync(absPath))
+      .resize(width, height, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .png()
+      .toBuffer();
+    return `data:image/png;base64,${buf.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
+async function main() {
   const currency = "RM";
   const inputs = {
     expenseType: ExpenseType.MONTHLY,
@@ -50,13 +66,10 @@ function main() {
     formatCurrency: (n) => formatCurrency(n, currency),
   });
 
-  let logoDataUrl: string | null = null;
-  try {
-    const buf = readFileSync(join(appPublic, "capital-bridge-logo.png"));
-    logoDataUrl = `data:image/png;base64,${buf.toString("base64")}`;
-  } catch {
-    /* optional */
-  }
+  const [logoLionPngDataUrl, logoWordmarkPngDataUrl] = await Promise.all([
+    svgFileToPngDataUrl(join(uiAssets, "lionhead_Green.svg"), 128, 128),
+    svgFileToPngDataUrl(join(uiAssets, "CapitalBridgeLogo_Green.svg"), WORDMARK_RASTER_W, 90),
+  ]);
 
   const doc = buildForeverStrategicWealthPdf({
     currency,
@@ -64,7 +77,8 @@ function main() {
     results,
     foreverLionReport,
     includeLionsVerdict: true,
-    logoDataUrl,
+    logoLionPngDataUrl,
+    logoWordmarkPngDataUrl,
   });
 
   const outPath = join(repoRoot, "docs", "samples", "forever-income-report.pdf");
@@ -74,4 +88,7 @@ function main() {
   console.log(`Wrote ${outPath} (${buf.length} bytes)`);
 }
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

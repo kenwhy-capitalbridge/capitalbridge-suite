@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 15.5 568.703125 114.5">
+  <defs>
+    <style>
+      .title {
+        font-family: "Tinos", serif;
+        font-size: 66px;
+        font-weight: 700;
+        fill: #0D3A1D;
+      }
+      .tagline {
+        font-family: "Tinos", serif;
+        font-size: 43.4px;
+        fill: #0D3A1D;
+      }
+    </style>
+  </defs>
+
+  <text x="50%" y="75" text-anchor="middle" class="title">
+    CAPITAL BRIDGE
+  </text>
+
+  <text x="50%" y="120" text-anchor="middle" class="tagline">
+    Strength Behind Every Structure
+  </text>
+</svg>

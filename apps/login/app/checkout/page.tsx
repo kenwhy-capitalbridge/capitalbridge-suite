@@ -18,6 +18,7 @@ import {
   ACCESS_SUPPORT_HINT,
   FORM_EMAIL_INVALID,
 } from "@/lib/sanitizeAuthErrorMessage";
+import { getOrCreateTrialDeviceId } from "@/lib/trialDeviceId";
 
 /** Assistive only — common domain typos (does not block submit). */
 function getEmailTypoSuggestion(raw: string): string | null {
@@ -111,6 +112,7 @@ function CheckoutContent() {
         return;
       }
 
+      const deviceId = plan === "trial" ? getOrCreateTrialDeviceId() : "";
       const res = await fetch("/api/bill/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,6 +121,7 @@ function CheckoutContent() {
           email: normalizedEmail,
           name: name.trim() || undefined,
           plan,
+          ...(deviceId ? { deviceId } : {}),
         }),
       });
 
@@ -133,6 +136,14 @@ function CheckoutContent() {
           setError(CHECKOUT_ACCOUNT_EXISTS);
           setEmailAlreadyExists(true);
           emailInputRef.current?.focus();
+          return;
+        }
+        if (res.status === 403 && data?.error === "trial_unavailable") {
+          setError(
+            typeof data?.message === "string"
+              ? data.message
+              : "Trial is not available for this device or network.",
+          );
           return;
         }
         const message = typeof data?.message === "string" ? data.message : null;

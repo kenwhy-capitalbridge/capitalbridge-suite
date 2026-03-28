@@ -653,12 +653,18 @@ const CalculatorScreen = forwardRef<
     setReportReady(false);
     try {
       const chartPoints = chartData.map(({ month, nominal }) => ({ month, nominal }));
-      await exportCapitalHealthReport({ inputs, result, chartPoints, currentAge: currentAge ?? undefined });
+      await exportCapitalHealthReport({
+        inputs,
+        result,
+        chartPoints,
+        currentAge: currentAge ?? undefined,
+        includeLionsVerdict: lionAccessEnabled,
+      });
       setReportReady(true);
     } finally {
       setReportGenerating(false);
     }
-  }, [inputs, result, chartData]);
+  }, [inputs, result, chartData, lionAccessEnabled, currentAge]);
 
   return (
     <TapToRevealProvider>
@@ -965,7 +971,7 @@ const CalculatorScreen = forwardRef<
         {/* Section A — Expectations */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-4 text-white">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-4 flex items-center justify-center sm:justify-start gap-2">
-            <img src="/lion.png" alt="" className="h-4 w-4" aria-hidden />
+            <img src="/brand/lionhead_Gold.svg" alt="" className="h-4 w-4" aria-hidden />
             Expectations
           </h2>
           {inputs.mode === 'withdrawal' ? (
@@ -1120,7 +1126,7 @@ const CalculatorScreen = forwardRef<
         {/* Section B — Capital & Returns */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-4 text-white">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-4 flex items-center gap-2">
-            <img src="/lion.png" alt="" className="h-4 w-4" aria-hidden />
+            <img src="/brand/lionhead_Gold.svg" alt="" className="h-4 w-4" aria-hidden />
             Capital & Returns
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1228,7 +1234,7 @@ const CalculatorScreen = forwardRef<
         {/* Section C — Cash Management */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-4 text-white">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-4 flex items-center gap-2">
-            <img src="/lion.png" alt="" className="h-4 w-4" aria-hidden />
+            <img src="/brand/lionhead_Gold.svg" alt="" className="h-4 w-4" aria-hidden />
             Cash Management
           </h2>
 
@@ -1320,7 +1326,7 @@ const CalculatorScreen = forwardRef<
         <section id="results" className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-3 sm:p-4 text-white">
           <div className="mb-3 sm:mb-4">
             <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A] flex items-center gap-1.5 sm:gap-2">
-              <img src="/lion.png" alt="" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
+              <img src="/brand/lionhead_Gold.svg" alt="" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
               Results
             </h2>
           </div>
@@ -1617,7 +1623,7 @@ const CalculatorScreen = forwardRef<
           <div className="capital-stress-section mt-8 sm:mt-12 pt-8 sm:pt-12 mb-4 sm:mb-6 text-center sm:text-left">
             <div className="stress-section-header">
               <div className="stress-title-row">
-                <img src="/lion.png" alt="" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
+                <img src="/brand/lionhead_Gold.svg" alt="" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
                 <span className="stress-title text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A]">CAPITAL STRESS TEST</span>
               </div>
               <p className="stress-description text-[9px] sm:text-xs text-white/70">
@@ -1714,9 +1720,7 @@ const CalculatorScreen = forwardRef<
           <p className="mb-2">
             This model is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.
           </p>
-          <p className="mb-4">
-            Please save or print a copy for your records. Capital Bridge does not save or store your personal information.
-          </p>
+          <p className="mb-4">Please save or print a copy for your records.</p>
           {reportGenerating && (
             <p className="mb-3 text-[#FFCC6A] font-medium" role="status">
               Generating AI Financial Diagnostic...

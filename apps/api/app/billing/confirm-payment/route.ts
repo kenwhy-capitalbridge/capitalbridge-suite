@@ -94,13 +94,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
   }
 
-  const { data: profileRow } = await svc.schema("public").from("profiles").select("trial_use_count").eq("id", userId).maybeSingle();
-  const currentTrialCount = profileRow?.trial_use_count ?? 0;
-  const newTrialCount = planRow.is_trial ? currentTrialCount + 1 : currentTrialCount;
   await svc
     .schema("public")
     .from("profiles")
-    .upsert({ id: userId, email: userEmail, trial_use_count: newTrialCount }, { onConflict: "id" });
+    .upsert({ id: userId, email: userEmail }, { onConflict: "id" });
 
   const activate = await activateMembershipFromPaidBillingSession({
     svc,
@@ -117,10 +114,6 @@ export async function GET(req: Request) {
       { ok: false, error: "membership_activate_failed", detail: activate.ok ? undefined : activate.error },
       { status: 500 }
     );
-  }
-
-  if (planRow.is_trial) {
-    void svc.rpc("increment_trial_use_count" as never, { user_id: userId }).then(() => {}, () => {});
   }
 
   try {

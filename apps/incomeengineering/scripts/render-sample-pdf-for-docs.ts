@@ -17,8 +17,16 @@ import { runSimulation } from "../legacy/lib/simulation";
 import type { IncomeRow } from "../legacy/types/calculator";
 
 const PRINT_CSS = `
-  @page { size: A4; margin: 14mm; }
+  @page { size: A4; margin: 16mm; }
   body { margin: 0; background: #fff; }
+  .print-report [data-pdf-part] {
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .print-report section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 `;
 
 async function main() {
@@ -56,6 +64,7 @@ async function main() {
       totalCapital,
       monthlyExpenses,
       incomeRows,
+      loans: [],
       assetUnlocks: [],
       investmentBuckets,
       medianCoverage: result.medianCoverage,

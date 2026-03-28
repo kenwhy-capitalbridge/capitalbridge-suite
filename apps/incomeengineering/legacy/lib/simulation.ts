@@ -55,7 +55,9 @@ export interface SimulationResult {
   monthlyRows: MonthRow[];
   yearlyRows: YearRow[];
   summary: SummaryKPIs;
+  /** Coverage ratio: (monthly income incl. modeled investment) ÷ (expenses + loan repayments). 1.0 = 100% coverage — multiply by 100 for %-style APIs (e.g. Lion’s Verdict). */
   medianCoverage: number;
+  /** Same unit as `medianCoverage` (single snapshot → usually identical). */
   worstMonthCoverage: number;
   yearsToDepletion: number | null;
 }

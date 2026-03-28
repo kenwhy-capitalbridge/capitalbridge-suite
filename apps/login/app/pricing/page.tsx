@@ -65,7 +65,6 @@ const INDIVIDUAL_PLANS = [
     name: "Trial Access (7 days)",
     price: 1,
     durationLabel: "7 Day Access",
-    supportingLine: "RM 1.00 · Max 2 trials per account",
     description:
       "Try the advisory dashboard and models before committing.",
     includes: [

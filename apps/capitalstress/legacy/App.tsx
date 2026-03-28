@@ -1751,7 +1751,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             className="bg-[#002B1B] p-6 md:p-8 rounded-sm border border-[#C6A24D]/20 shadow-2xl"
             style={{ opacity: canSeeVerdict ? 1 : 0.55 }}
           >
-            <h2 className="text-sm md:text-lg font-bold mb-4 text-[#C6A24D] uppercase tracking-wide serif-font">The Lion&apos;s Verdict</h2>
+            <h2 className="text-sm md:text-lg font-bold mb-4 font-serif text-[#C6A24D] uppercase tracking-wide">
+              THE LION&apos;S VERDICT
+            </h2>
             {showLionActive ? (
               <LionVerdictActive
                 user={lionAccessUser}
@@ -1769,7 +1771,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 progress={progressPercent}
               />
             ) : (
-              <LionVerdictLocked tierLabel={lionTierLabel} />
+              <LionVerdictLocked tierLabel={lionTierLabel} score={lionScore} />
             )}
           </div>
 
@@ -1807,7 +1809,6 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           <div className="flex flex-col items-center py-16 text-center">
             <div className="mb-8 space-y-2">
               <p className="text-[10px] md:text-[11px] font-bold text-[#C6A24D] uppercase tracking-widest">Please save or print a copy for your records.</p>
-              <p className="text-[9px] md:text-[10px] text-gray-300 uppercase tracking-tight">Capital Bridge does not save or store your personal information.</p>
             </div>
             <button 
               onClick={handlePrint}

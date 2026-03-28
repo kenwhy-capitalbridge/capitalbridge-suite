@@ -106,9 +106,11 @@ export function PrintReport(props: PrintReportProps) {
   const lionPublicLabelPrint = formatLionPublicStatusLabel(
     lionPublicStatusFromScore0to100(lionScorePrint, lionStrongEligibilityFromStressInputs(bandStressInputs)),
   );
-  const generatedDate = typeof window !== 'undefined'
-    ? new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-    : '';
+  const generatedDate = new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   // Executive summary copy
   const overallAssessment =
@@ -402,43 +404,131 @@ export function PrintReport(props: PrintReportProps) {
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Capital Outcome Probability Distribution
         </h2>
-        <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.75em' }}>Distribution of ending capital across simulated scenarios. Gold bar indicates typical outcome.</p>
-        <div className="print-chart-wrap" style={{ height: 160 }}>
-          {(() => {
-            const finals = mcResult.paths.map(p => p.finalCapital).filter(x => x >= 0);
-            if (finals.length === 0) return null;
-            const minV = Math.min(...finals);
-            const maxV = Math.max(...finals);
-            const range = maxV - minV || 1;
-            const bins = 24;
-            const step = range / bins;
-            const hist: number[] = Array(bins).fill(0);
-            finals.forEach(v => {
-              const idx = Math.min(bins - 1, Math.floor((v - minV) / step));
-              hist[idx]++;
-            });
-            const maxCount = Math.max(...hist, 1);
-            const barW = 100 / bins;
-            const medianVal = mcResult.percentile50;
-            const medianBin = Math.min(bins - 1, Math.max(0, Math.floor((medianVal - minV) / step)));
-            return (
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
-                {hist.map((count, i) => (
-                  <rect
-                    key={i}
-                    x={i * barW + 1}
-                    y={100 - (count / maxCount) * 85}
-                    width={barW - 0.5}
-                    height={(count / maxCount) * 85}
-                    fill={i === medianBin ? PRINT_ACCENT : `rgba(13, 58, 29, 0.25)`}
-                    stroke={i === medianBin ? PRINT_ACCENT : 'transparent'}
-                    strokeWidth="0.5"
-                  />
-                ))}
-              </svg>
-            );
-          })()}
-        </div>
+        <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>
+          Histogram of <strong>ending capital</strong> after {years} year{years !== 1 ? 's' : ''} across {mcResult.simulationCount.toLocaleString()} simulated paths. Each bar is one capital range; height shows how many scenarios finished in that range. The <strong style={{ color: PRINT_ACCENT }}>gold</strong> bar marks the bucket that contains the <strong>median (typical)</strong> outcome.
+        </p>
+        {(() => {
+          const finals = mcResult.paths.map((p) => p.finalCapital).filter((x) => x >= 0);
+          if (finals.length === 0) {
+            return <p style={{ fontSize: '10pt', color: PRINT_TEXT }}>No distribution data available.</p>;
+          }
+          const minV = Math.min(...finals);
+          const maxV = Math.max(...finals);
+          const range = maxV - minV || 1;
+          const bins = 24;
+          const step = range / bins;
+          const hist: number[] = Array(bins).fill(0);
+          finals.forEach((v) => {
+            const idx = Math.min(bins - 1, Math.floor((v - minV) / step));
+            hist[idx]++;
+          });
+          const maxCount = Math.max(...hist, 1);
+          const midCount = Math.round(maxCount / 2);
+          const barW = 100 / bins;
+          const medianVal = mcResult.percentile50;
+          const medianBin = Math.min(bins - 1, Math.max(0, Math.floor((medianVal - minV) / step)));
+          const plotTop = 8;
+          const plotBase = 70;
+          const plotH = plotBase - plotTop;
+          const xMid = minV + range / 2;
+          return (
+            <>
+              <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.25em' }}>Y-axis: scenario count per bucket</p>
+              <p style={{ fontSize: '8pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.45 }}>
+                Vertical scale counts paths ending in each capital band. Compare bar heights to see which ending balances are most common versus rare.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 168,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    fontSize: '8pt',
+                    color: PRINT_TEXT,
+                    textAlign: 'right',
+                    paddingBottom: 26,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span>{maxCount}</span>
+                  <span>{midCount}</span>
+                  <span>0</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="print-chart-wrap" style={{ height: 168 }}>
+                    <svg viewBox="0 0 100 78" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', display: 'block' }} aria-label="Capital outcome distribution">
+                      <line x1="0" y1={plotBase} x2="100" y2={plotBase} stroke={PRINT_ACCENT} strokeWidth="0.45" strokeOpacity={0.85} />
+                      <line x1="0" y1={plotTop} x2="0" y2={plotBase} stroke={PRINT_ACCENT} strokeWidth="0.45" strokeOpacity={0.85} />
+                      {[0.5, 1].map((t) => (
+                        <line
+                          key={t}
+                          x1="0"
+                          y1={plotBase - t * plotH}
+                          x2="100"
+                          y2={plotBase - t * plotH}
+                          stroke={PRINT_BORDER}
+                          strokeWidth="0.2"
+                          strokeDasharray="1 1"
+                        />
+                      ))}
+                      {hist.map((count, i) => {
+                        const h = (count / maxCount) * (plotH - 2);
+                        return (
+                          <rect
+                            key={i}
+                            x={i * barW + 0.12}
+                            y={plotBase - h}
+                            width={barW - 0.28}
+                            height={Math.max(h, count > 0 ? 0.8 : 0)}
+                            fill={i === medianBin ? PRINT_ACCENT : 'rgba(13, 58, 29, 0.22)'}
+                            stroke={i === medianBin ? PRINT_ACCENT : 'rgba(13, 58, 29, 0.15)'}
+                            strokeWidth="0.15"
+                          />
+                        );
+                      })}
+                    </svg>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '8pt',
+                      color: PRINT_TEXT,
+                      marginTop: 4,
+                      gap: 4,
+                    }}
+                  >
+                    <span style={{ flex: 1, textAlign: 'left' }}>{formatCurrency(Math.round(minV))}</span>
+                    <span style={{ flex: 1, textAlign: 'center' }}>{formatCurrency(Math.round(xMid))}</span>
+                    <span style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(Math.round(maxV))}</span>
+                  </div>
+                  <p style={{ fontSize: '8pt', color: PRINT_TEXT, marginTop: 8, lineHeight: 1.45, textAlign: 'center' }}>
+                    <strong>X-axis: ending capital</strong> ({bins} bins from lowest to highest simulated ending balance after the horizon).
+                  </p>
+                </div>
+              </div>
+              <div
+                style={{
+                  marginTop: '0.75em',
+                  padding: '0.75em 1em',
+                  border: `1px solid ${PRINT_ACCENT}`,
+                  borderRadius: 6,
+                  backgroundColor: 'rgba(255, 252, 245, 0.95)',
+                }}
+              >
+                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.25em' }}>Typical outcome (median)</p>
+                <p style={{ fontSize: '9pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>
+                  {formatCurrency(medianVal)} — the gold bar is the bin containing this median ending capital. Compare it to the rest of the shape: if the tallest bars sit to the left of the gold bar, many scenarios finish below the median; if the mass sits to the right, more paths end with higher capital than the median.
+                </p>
+              </div>
+              <p style={{ fontSize: '9pt', color: PRINT_TEXT, marginTop: '0.75em', lineHeight: 1.5, marginBottom: 0 }}>
+                <strong>How to read this:</strong> A single sharp peak means outcomes cluster around one ending level; a wide spread means uncertainty in where capital lands. Compare the left tail (low bars on the left) to your risk tolerance — heavy mass near zero indicates meaningful depletion risk in the simulation. This view complements the percentile table above (5th / 25th / 50th / 75th / 95th).
+              </p>
+            </>
+          );
+        })()}
       </div>
 
       {/* Capital Stress Timeline + Capital Breakpoint Indicator */}
@@ -796,11 +886,22 @@ export function PrintReport(props: PrintReportProps) {
         </ul>
 
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
-          Lion&apos;s Verdict
+          THE LION&apos;S VERDICT
         </h2>
         {verdict && (
           <>
-            <p style={{ fontSize: '12pt', fontWeight: 700, fontStyle: 'italic', color: PRINT_TEXT, marginBottom: '0.75em' }}>&ldquo;{verdict.opening}&rdquo;</p>
+            <p
+              style={{
+                fontSize: '12pt',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                color: PRINT_TEXT,
+                marginBottom: '0.75em',
+                textTransform: 'capitalize',
+              }}
+            >
+              &ldquo;{verdict.opening}&rdquo;
+            </p>
             <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.interpretation}</p>
             <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.outcomeSummary}</p>
             <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.riskExplanation}</p>
@@ -857,7 +958,7 @@ export function PrintReport(props: PrintReportProps) {
       {/* Final page: Disclosure only */}
       <div className="print-disclosure-page print-section">
         <p style={{ fontSize: '11pt', color: PRINT_TEXT, textAlign: 'center', marginTop: '2em' }}>
-          Capital Bridge does not save or store your personal information.
+          Please save or print a copy for your records.
         </p>
       </div>
     </div>

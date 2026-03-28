@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
 import { PlatformLoginButton } from "./PlatformLoginButton";
@@ -65,19 +64,19 @@ export async function PlatformFrameworkHeader({
               minWidth: 0,
             }}
           >
-            <Image
-              src="/logo-capital-bridge.png"
-              alt="Capital Bridge"
+            <img
+              src="/brand/CapitalBridgeLogo_Gold.svg"
+              alt="Capital Bridge — Strength Behind Every Structure"
               width={200}
-              height={36}
-              priority
+              height={40}
+              fetchPriority="high"
+              decoding="async"
               style={{
                 height: "clamp(18px, 4.2vw, 28px)",
                 width: "auto",
                 maxWidth: "min(34vw, 170px)",
                 objectFit: "contain",
                 objectPosition: "left center",
-                mixBlendMode: "lighten",
               }}
             />
           </a>
@@ -150,19 +149,19 @@ export async function PlatformFrameworkHeader({
             minWidth: 0,
           }}
         >
-          <Image
-            src="/logo-capital-bridge.png"
-            alt="Capital Bridge"
+          <img
+            src="/brand/CapitalBridgeLogo_Gold.svg"
+            alt="Capital Bridge — Strength Behind Every Structure"
             width={200}
-            height={36}
-            priority
+            height={40}
+            fetchPriority="high"
+            decoding="async"
             style={{
               height: "clamp(18px, 4.2vw, 28px)",
               width: "auto",
               maxWidth: "min(34vw, 170px)",
               objectFit: "contain",
               objectPosition: "left center",
-              mixBlendMode: "lighten",
             }}
           />
         </a>

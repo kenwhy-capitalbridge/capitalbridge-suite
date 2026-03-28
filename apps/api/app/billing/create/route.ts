@@ -51,11 +51,11 @@ export async function POST(req: Request) {
       const { data: profile } = await svc
         .schema("public")
         .from("profiles")
-        .select("trial_use_count")
+        .select("trial_count")
         .eq("id", user.id)
         .maybeSingle();
-      const used = profile?.trial_use_count ?? 0;
-      if (used >= 2) {
+      const used = Number(profile?.trial_count) || 0;
+      if (used >= 1) {
         return NextResponse.json({ error: "trial_limit_reached" }, { status: 403 });
       }
     }

@@ -36,6 +36,7 @@ import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdi
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import { buildForeverStrategicWealthPdf } from "./foreverPdfBuild";
+import { loadForeverGreenBrandLogosForPdf } from "./foreverPdfLogos";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -336,21 +337,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
     setIsGenerating(true);
 
     try {
-      let logoDataUrl: string | null = null;
-      try {
-        const res = await fetch("/capital-bridge-logo.png");
-        if (res.ok) {
-          const blob = await res.blob();
-          logoDataUrl = await new Promise<string>((resolve, reject) => {
-            const r = new FileReader();
-            r.onload = () => resolve(r.result as string);
-            r.onerror = reject;
-            r.readAsDataURL(blob);
-          });
-        }
-      } catch {
-        /* optional logo */
-      }
+      const { lionPngDataUrl, wordmarkPngDataUrl } = await loadForeverGreenBrandLogosForPdf();
 
       const doc = buildForeverStrategicWealthPdf({
         currency,
@@ -367,7 +354,8 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
         results,
         foreverLionReport,
         includeLionsVerdict: lionAccessEnabled,
-        logoDataUrl,
+        logoLionPngDataUrl: lionPngDataUrl,
+        logoWordmarkPngDataUrl: wordmarkPngDataUrl,
       });
 
       doc.save(`Capital-Bridge-Strategic-Wealth-Diagnostic-${new Date().getTime()}.pdf`);
@@ -554,7 +542,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
                 </button>
               </div>
               <p className="mt-3 text-center text-[10px] text-white font-medium italic px-4 leading-normal">
-                *Please save or print a copy for your records. Capital Bridge does not save or store your personal information.
+                Please save or print a copy for your records.
               </p>
             </div>
           </div>

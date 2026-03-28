@@ -2,11 +2,19 @@
 
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 import { LionVerdictMark } from "./LionVerdictMark";
-import { LION_VERDICT_HEADER_RULE, LION_VERDICT_PANEL_BOX } from "./lionVerdictPanelStyles";
+import {
+  LION_VERDICT_HEADLINE,
+  LION_VERDICT_HEADER_RULE,
+  LION_VERDICT_PANEL_BOX,
+  LION_VERDICT_TITLE,
+} from "./lionVerdictPanelStyles";
+import { LionVerdictScoreLine, LionVerdictStatusBadge } from "./LionVerdictStatusBadge";
 
 type LionVerdictLockedProps = {
   className?: string;
   tierLabel?: string;
+  /** Shown as `Verdict Score=` when set (e.g. trial preview). */
+  score?: number;
   /** Defaults to login app `/pricing` (subscribe / upgrade). */
   unlockHref?: string;
   headline?: string;
@@ -25,6 +33,7 @@ function defaultUnlockHref(): string {
 export function LionVerdictLocked({
   className = "",
   tierLabel = "TRIAL",
+  score,
   unlockHref,
   headline,
   teaserGuidance,
@@ -37,24 +46,23 @@ export function LionVerdictLocked({
     "Simple actions to reduce the risk of running out",
   ];
   const renderedGuidance = guidance.length > 0 ? guidance : fallbackGuidance;
-  const displayHeadline = (headline || "Unlock your full Lion's Verdict").replace("The lion", "the lion");
+  const displayHeadline = headline || "Unlock your full Lion's Verdict";
 
   return (
     <div className={`${LION_VERDICT_PANEL_BOX} text-left ${className}`}>
       <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${LION_VERDICT_HEADER_RULE}`}>
         <div className="flex min-w-0 items-center gap-2.5">
-          <LionVerdictMark className="h-7 w-7 shrink-0 text-[#FFCC6A] sm:h-8 sm:w-8" />
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#FFCC6A]">
-            THE LION&apos;S VERDICT
-          </p>
+          <LionVerdictMark className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
+          <p className={LION_VERDICT_TITLE}>THE LION&apos;S VERDICT</p>
         </div>
-        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.28em] text-white/85">
-          {tierLabel.replaceAll("_", " ")}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
+          <LionVerdictStatusBadge tierLabel={tierLabel} />
+          <LionVerdictScoreLine score={score} />
+        </div>
       </div>
 
       <blockquote className="m-0 border-none p-0">
-        <p className="font-serif text-xl font-bold italic leading-snug text-[#FFCC6A] sm:text-2xl sm:leading-tight">
+        <p className={LION_VERDICT_HEADLINE}>
           {LD}
           {displayHeadline}
           {RD}
@@ -71,7 +79,7 @@ export function LionVerdictLocked({
       <div className="rounded-xl border border-[#FFCC6A]/30 bg-gradient-to-br from-black/30 via-[#00160f]/80 to-black/50 p-4 text-[13px] leading-relaxed text-white/72 tracking-wide">
         <div className="flex items-center gap-2 text-[#FFCC6A]">
           <span aria-hidden>🔒</span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.22em]">Inside the full report</span>
+          <span className="font-serif text-[10px] font-semibold uppercase tracking-[0.22em]">Inside the full report</span>
         </div>
         <ul className="mt-3 list-none space-y-1.5 pl-0">
           {renderedGuidance.map((line) => (

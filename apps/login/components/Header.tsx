@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
@@ -32,8 +31,8 @@ export default function Header() {
     : "relative flex min-w-0 max-w-[42%] shrink items-center sm:max-w-none sm:h-9";
 
   const logoImageClassName = pricingHeaderGrid
-    ? "h-[15px] w-auto max-w-full object-contain object-left [mix-blend-mode:lighten] min-[400px]:h-4 sm:h-9"
-    : "h-4 w-auto max-w-full object-contain object-left [mix-blend-mode:lighten] sm:h-9";
+    ? "h-[15px] w-auto max-w-full object-contain object-left min-[400px]:h-4 sm:h-9"
+    : "h-4 w-auto max-w-full object-contain object-left sm:h-9";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cb-gold/20 bg-[#0D3A1D] pt-[env(safe-area-inset-top)]">
@@ -45,13 +44,14 @@ export default function Header() {
         }
       >
         <a href={MARKETING_URL} className={logoClassName}>
-          <Image
-            src="/logo-capital-bridge.png"
+          <img
+            src="/brand/CapitalBridgeLogo_Gold.svg"
             alt="Capital Bridge — Strength Behind Every Structure"
             width={200}
-            height={36}
+            height={40}
             className={logoImageClassName}
-            priority
+            fetchPriority="high"
+            decoding="async"
           />
         </a>
 

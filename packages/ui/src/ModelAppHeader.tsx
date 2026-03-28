@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import { MARKETING_SITE_URL, PLATFORM_APP_URL } from "@cb/shared/urls";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
+import { BRAND_CAPITAL_BRIDGE_LOGO_GOLD } from "./brandPaths";
 import styles from "./ModelAppHeader.module.css";
 
 function marketingHomeUrl(): string {
@@ -59,19 +59,19 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
               minWidth: 0,
             }}
           >
-            <Image
-              src="/logo-capital-bridge.png"
-              alt="Capital Bridge"
+            <img
+              src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
+              alt="Capital Bridge — Strength Behind Every Structure"
               width={200}
-              height={36}
-              priority
+              height={40}
+              decoding="async"
+              fetchPriority="high"
               style={{
                 height: "clamp(14px, 3.8vw, 24px)",
                 width: "auto",
                 maxWidth: "min(28vw, 128px)",
                 objectFit: "contain",
                 objectPosition: "left center",
-                mixBlendMode: "lighten",
               }}
             />
           </a>

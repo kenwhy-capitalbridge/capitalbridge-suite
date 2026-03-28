@@ -41,6 +41,18 @@ import { APP_NAME } from './src/lib/capitalHealthCopy';
 import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import {
+  CB_REPORT_BRAND_LION_GREEN_PATH,
+  CB_REPORT_BRAND_WORDMARK_GREEN_PATH,
+  CB_REPORT_FIRM_ADDRESS_LINES,
+  CB_REPORT_FOOTER_RESERVE_PT,
+  CB_REPORT_FRAME_BORDER_PT,
+  CB_REPORT_FRAME_PADDING_PT,
+  CB_REPORT_GOLD,
+  CB_REPORT_INK_GREEN,
+  CB_REPORT_PAGE_MARGIN_MM,
+  cbReportMmToPt,
+} from '@cb/shared/cbReportTemplate';
+import {
   formatLionPublicStatusLabel,
   healthTierToLion,
   lionPublicStatusFromScore0to100,
@@ -72,10 +84,9 @@ const ADVISORY_LONG: Record<StatusKind, string> = {
     'On these settings, spending is likely to outpace what the portfolio can replace. That can wear down savings faster than people expect — it is maths, not a judgement. Before chasing higher returns, consider lowering withdrawals, adding capital, or extending your horizon. Sort stability first.',
 };
 
-const GOLD = '#FFCC6A';
-const GREEN = '#0D3A1D';
-/** Body and heading text color (dark green, was black). */
-const DARK = '#0D3A1D';
+const GOLD = CB_REPORT_GOLD;
+const GREEN = CB_REPORT_INK_GREEN;
+const DARK = CB_REPORT_INK_GREEN;
 const MUTED = '#444';
 const STATUS_COLORS: Record<StatusKind, string> = {
   sustainable: '#11B981',
@@ -99,73 +110,24 @@ function formatRunwayYearsMonths(depletionMonths: number | null): string {
 }
 
 const CHART_HEIGHT = 72;
-const CHART_WIDTH = 320;
+/** Tick column width; Y-axis title sits in a separate left gutter so it cannot paint under bars. */
+const CHART_Y_AXIS_W = 40;
+const CHART_Y_LABEL_GUTTER = 68;
+/** A4 content box inside page padding (pt) — full-height gold frame on every page. */
+const PAGE_W_PT = 595.28;
+const PAGE_H_PT = 841.89;
 const BAR_COUNT = 48;
 
-const PAGE_MARGIN = 28;
-const TOP_INSET = 28;
-const CONTENT_PADDING = 20;
+const REPORT_PAGE_OUTER = cbReportMmToPt(CB_REPORT_PAGE_MARGIN_MM);
+const CONTENT_PADDING = 12;
 const BORDER_RADIUS = 8;
 const SECTION_SPACING = 36;
 const SUBSECTION_SPACING = 22;
 const CHART_SPACING = 28;
 const CARD_SPACING = 20;
-const IDENTITY_BAR_HEIGHT = 4;
-const LOGO_MAX_HEIGHT = 60;
-const LOGO_TITLE_GAP = 16;
+const LOGO_TITLE_GAP = 12;
 
 const styles = StyleSheet.create({
-  page: {
-    paddingTop: PAGE_MARGIN + IDENTITY_BAR_HEIGHT + 10 + TOP_INSET,
-    paddingRight: PAGE_MARGIN,
-    paddingBottom: PAGE_MARGIN,
-    paddingLeft: PAGE_MARGIN + 6,
-    fontSize: 11,
-    fontFamily: 'Helvetica',
-    backgroundColor: '#ffffff',
-  },
-  identityBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: IDENTITY_BAR_HEIGHT,
-    backgroundColor: GOLD,
-  },
-  docLabel: {
-    position: 'absolute',
-    left: PAGE_MARGIN + 6,
-    right: PAGE_MARGIN,
-    top: IDENTITY_BAR_HEIGHT + 6,
-    fontSize: 9,
-    color: MUTED,
-    textAlign: 'left',
-  },
-  pageFooter: {
-    position: 'absolute',
-    left: PAGE_MARGIN + 6,
-    right: PAGE_MARGIN,
-    bottom: 10,
-    fontSize: 9,
-    color: MUTED,
-    textAlign: 'center',
-  },
-  pageBorder: {
-    position: 'absolute',
-    left: PAGE_MARGIN,
-    top: PAGE_MARGIN,
-    right: PAGE_MARGIN,
-    bottom: PAGE_MARGIN,
-    borderWidth: 0,
-  },
-  verticalAccentBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 6,
-    backgroundColor: GOLD,
-  },
   warningPanel: {
     borderWidth: 2,
     borderColor: '#CD5B52',
@@ -279,6 +241,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: GOLD,
+    fontFamily: 'Roboto Serif',
   },
   chartContainer: {
     flexDirection: 'row',
@@ -344,17 +307,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: SECTION_SPACING,
   },
-  headerLeft: { width: '28%', marginRight: LOGO_TITLE_GAP },
+  headerLeft: { width: '36%', marginRight: LOGO_TITLE_GAP, paddingRight: 6 },
   headerRight: { width: '28%', textAlign: 'right', fontSize: 9, color: MUTED, lineHeight: 1.4 },
   titleBlock: { flex: 1, textAlign: 'left', marginBottom: SECTION_SPACING },
-  mainTitle: { fontSize: 28, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4, textAlign: 'left' },
+  mainTitle: { fontSize: 28, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4, textAlign: 'left', fontFamily: 'Roboto Serif' },
   coverTitleBlock: { marginBottom: 12, textAlign: 'left' },
   /** Single-line cover title; smaller font so "CLIENT ADVISORY REPORT" fits on one line. */
-  coverMainTitle: { fontSize: 22, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 0, textAlign: 'left' },
+  coverMainTitle: { fontSize: 17, fontWeight: 'bold', color: GREEN, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 0, textAlign: 'left', fontFamily: 'Roboto Serif', paddingRight: 12 },
   coverDivider: { borderBottomWidth: 1, borderBottomColor: GOLD, marginTop: 10, marginBottom: 16 },
   coverMetadata: { marginBottom: 18 },
   coverMetadataLine: { fontSize: 10, color: DARK, marginBottom: 4, textAlign: 'left' },
-  coverFirmBlock: { fontSize: 9, color: MUTED, lineHeight: 1.5, textAlign: 'left' },
+  coverFirmBlock: { fontSize: 9, color: DARK, lineHeight: 1.5, textAlign: 'left' },
   subTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: 2, textAlign: 'left' },
   generatedDate: { fontSize: 9, color: MUTED, marginBottom: 6, textAlign: 'left' },
   titleDescription: { fontSize: 11, color: MUTED, fontStyle: 'italic', textAlign: 'left' },
@@ -362,7 +325,7 @@ const styles = StyleSheet.create({
   /** Keeps entire Lion's Verdict block on one page; pair with PDF_BREAK_INSIDE_AVOID on the View. */
   verdictSectionWrap: { marginBottom: SECTION_SPACING },
   sectionWrap: { marginBottom: SECTION_SPACING },
-  sectionTitleLarge: { fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5, color: GREEN, marginBottom: 6, textTransform: 'uppercase', textAlign: 'left', paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: GOLD },
+  sectionTitleLarge: { fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5, color: GREEN, marginBottom: 6, textTransform: 'uppercase', textAlign: 'left', paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: GOLD, fontFamily: 'Roboto Serif' },
   /** THE LION'S VERDICT — Roboto Serif (registered above). */
   sectionTitleLionVerdict: {
     fontSize: 16,
@@ -387,7 +350,7 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
     textTransform: "capitalize",
   },
-  subsectionTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: SUBSECTION_SPACING, textAlign: 'left' },
+  subsectionTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: SUBSECTION_SPACING, textAlign: 'left', fontFamily: 'Roboto Serif' },
   confidenceBarWrap: { marginBottom: 8 },
   confidenceBar: { height: 12, backgroundColor: '#e5e7eb', borderRadius: 6, overflow: 'hidden', flexDirection: 'row' },
   confidenceFill: { height: '100%', borderRadius: 6 },
@@ -413,13 +376,86 @@ export interface ChartPoint {
   nominal: number;
 }
 
+function ReportPage({
+  pageNumber,
+  totalPages,
+  children,
+}: {
+  pageNumber: number;
+  totalPages: number;
+  children: React.ReactNode;
+}) {
+  const frameW = PAGE_W_PT - 2 * REPORT_PAGE_OUTER;
+  const frameH = PAGE_H_PT - 2 * REPORT_PAGE_OUTER;
+  return (
+    <Page
+      size="A4"
+      style={{
+        backgroundColor: '#ffffff',
+        padding: REPORT_PAGE_OUTER,
+        fontFamily: 'Helvetica',
+        fontSize: 11,
+      }}
+    >
+      <View
+        style={{
+          width: frameW,
+          minHeight: frameH,
+          borderWidth: CB_REPORT_FRAME_BORDER_PT,
+          borderColor: CB_REPORT_GOLD,
+          borderRadius: 10,
+          paddingTop: 20,
+          paddingLeft: CB_REPORT_FRAME_PADDING_PT,
+          paddingRight: CB_REPORT_FRAME_PADDING_PT,
+          paddingBottom: CB_REPORT_FOOTER_RESERVE_PT,
+          position: 'relative',
+          flexDirection: 'column',
+        }}
+      >
+        <Text
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: CB_REPORT_FRAME_PADDING_PT,
+            right: CB_REPORT_FRAME_PADDING_PT,
+            fontSize: 8,
+            color: '#4a6b52',
+            paddingRight: 8,
+          }}
+        >
+          Capital Bridge — Client Advisory Report
+        </Text>
+        <View style={{ flexGrow: 1, flexShrink: 0, marginTop: 14, minHeight: 0 }}>{children}</View>
+        <Text
+          style={{
+            position: 'absolute',
+            bottom: 10,
+            left: CB_REPORT_FRAME_PADDING_PT,
+            right: CB_REPORT_FRAME_PADDING_PT,
+            fontSize: 9,
+            color: '#4a6b52',
+            textAlign: 'center',
+          }}
+        >
+          Page {pageNumber} of {totalPages}
+        </Text>
+      </View>
+    </Page>
+  );
+}
+
 interface ReportProps {
   inputs: CalculatorInputs;
   result: ReportResult;
   baseUrl?: string;
+  /** Raster brand marks (e.g. PNG data URLs) when `baseUrl` is unavailable (Node sample PDF). */
+  brandLionPngDataUrl?: string | null;
+  brandWordmarkPngDataUrl?: string | null;
   chartData?: ChartPoint[];
   /** Client age for Capital Survival Age (optional). */
   currentAge?: number;
+  /** Trial / locked users: omit the Lion's Verdict block from the PDF. */
+  includeLionsVerdict?: boolean;
 }
 
 function durationPhrase(result: SimulationResult): string {
@@ -463,34 +499,108 @@ function computeStressScenarios(inputs: CalculatorInputs): StressRow[] {
   });
 }
 
-function SampleChart({ chartData }: { chartData: ChartPoint[] }) {
+function CapitalProjectionChart({
+  chartData,
+  formatY,
+  yAxisLabel,
+  xAxisLabel,
+  lastPointCaption,
+  insight,
+}: {
+  chartData: ChartPoint[];
+  formatY: (n: number) => string;
+  yAxisLabel: string;
+  xAxisLabel: string;
+  lastPointCaption: string;
+  insight: string;
+}) {
   if (!chartData.length) return null;
   const maxVal = Math.max(...chartData.map((d) => d.nominal), 1);
   const minVal = Math.min(...chartData.map((d) => d.nominal), 0);
   const range = maxVal - minVal || 1;
+  const yHi = maxVal;
+  const yLo = minVal;
+  const yMid = minVal + range / 2;
 
+  const labelColW = CHART_Y_LABEL_GUTTER + CHART_Y_AXIS_W;
   return (
-    <View style={styles.chartContainer}>
-      {chartData.map((d, i) => {
-        const heightPct = (d.nominal - minVal) / range;
-        const height = Math.max(2, Math.round(CHART_HEIGHT * heightPct));
-        return (
-          <View
-            key={i}
-            style={[
-              styles.chartBar,
-              {
-                height,
-              },
-            ]}
-          />
-        );
-      })}
+    <View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+        <View style={{ width: labelColW, marginRight: 2 }}>
+          <Text
+            style={{
+              fontSize: 7,
+              color: DARK,
+              marginBottom: 4,
+              width: labelColW - 2,
+              textAlign: 'left',
+            }}
+          >
+            {yAxisLabel}
+          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+            <View style={{ width: CHART_Y_AXIS_W, height: CHART_HEIGHT, justifyContent: 'space-between', paddingRight: 4 }}>
+              <Text style={{ fontSize: 7, color: DARK, textAlign: 'right' }} wrap={false}>
+                {formatY(yHi)}
+              </Text>
+              <Text style={{ fontSize: 7, color: DARK, textAlign: 'right' }} wrap={false}>
+                {formatY(yMid)}
+              </Text>
+              <Text style={{ fontSize: 7, color: DARK, textAlign: 'right' }} wrap={false}>
+                {formatY(yLo)}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={{ flex: 1, flexDirection: 'column', minWidth: 0 }}>
+          <View style={[styles.chartContainer, { height: CHART_HEIGHT, flex: 0 }]}>
+            {chartData.map((d, i) => {
+              const heightPct = (d.nominal - minVal) / range;
+              const height = Math.max(2, Math.round(CHART_HEIGHT * heightPct));
+              return (
+                <View
+                  key={i}
+                  style={[
+                    styles.chartBar,
+                    {
+                      height,
+                    },
+                  ]}
+                />
+              );
+            })}
+          </View>
+          <Text style={{ fontSize: 8, color: DARK, textAlign: 'center', marginTop: 6 }}>{xAxisLabel}</Text>
+        </View>
+      </View>
+      <View
+        style={{
+          marginTop: 8,
+          padding: 8,
+          borderWidth: 1,
+          borderColor: GOLD,
+          borderRadius: 6,
+          backgroundColor: 'rgba(255, 252, 245, 0.95)',
+        }}
+      >
+        <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 2 }}>Latest value (end of series)</Text>
+        <Text style={{ fontSize: 9, color: DARK }}>{lastPointCaption}</Text>
+      </View>
+      <Text style={{ fontSize: 9, color: DARK, marginTop: 8, lineHeight: 1.45 }}>{insight}</Text>
     </View>
   );
 }
 
-export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], currentAge }: ReportProps) {
+export function CapitalGrowthReport({
+  inputs,
+  result,
+  baseUrl,
+  brandLionPngDataUrl,
+  brandWordmarkPngDataUrl,
+  chartData = [],
+  currentAge,
+  includeLionsVerdict = true,
+}: ReportProps) {
   const symbol = inputs.currency.symbol;
   const formatCurrency = (val: number) => `${symbol} ${formatNum(val)}`;
   const dateStr = new Date().toLocaleDateString(undefined, { dateStyle: 'long' });
@@ -550,25 +660,38 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
   return (
     <Document>
       {/* Page 1: Executive Summary */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      <ReportPage pageNumber={1} totalPages={TOTAL_PAGES}>
           <View style={[styles.headerRow, PDF_BREAK_INSIDE_AVOID]}>
             <View style={styles.headerLeft}>
-              {baseUrl ? (
-                <Image
-                  src={`${baseUrl}/logo-capital-bridge.png`}
-                  style={{ maxHeight: LOGO_MAX_HEIGHT, width: 'auto', height: LOGO_MAX_HEIGHT, objectFit: 'contain' }}
-                />
+              {brandLionPngDataUrl && brandWordmarkPngDataUrl ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image
+                    src={brandLionPngDataUrl}
+                    style={{ height: 44, width: 44, marginRight: 6, objectFit: 'contain' }}
+                  />
+                  <Image
+                    src={brandWordmarkPngDataUrl}
+                    style={{ width: 148, height: 40, objectFit: 'contain' }}
+                  />
+                </View>
+              ) : baseUrl ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image
+                    src={`${baseUrl}${CB_REPORT_BRAND_LION_GREEN_PATH}`}
+                    style={{ height: 44, width: 44, marginRight: 6, objectFit: 'contain' }}
+                  />
+                  <Image
+                    src={`${baseUrl}${CB_REPORT_BRAND_WORDMARK_GREEN_PATH}`}
+                    style={{ width: 148, height: 40, objectFit: 'contain' }}
+                  />
+                </View>
               ) : (
                 <Text style={{ fontSize: 11, fontWeight: 'bold', color: GREEN }}>Capital Bridge</Text>
               )}
             </View>
-            <View style={[styles.titleBlock, { flex: 1 }]}>
+            <View style={[styles.titleBlock, { flex: 1, paddingRight: 8 }]}>
               <View style={styles.coverTitleBlock}>
-                <Text style={styles.coverMainTitle} wrap={false}>{'CLIENT\u00A0ADVISORY\u00A0REPORT'}</Text>
+                <Text style={styles.coverMainTitle}>{'CLIENT\u00A0ADVISORY\u00A0REPORT'}</Text>
               </View>
               <View style={styles.coverDivider} />
               <View style={styles.coverMetadata}>
@@ -577,11 +700,9 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
                 <Text style={styles.coverMetadataLine}>Prepared by Capital Bridge — Capital Health Model</Text>
               </View>
               <View style={styles.coverFirmBlock}>
-                <Text>Capital Bridge</Text>
-                <Text>No. 6 Jalan Kia Peng</Text>
-                <Text>50450 Kuala Lumpur</Text>
-                <Text>T: +603-2789 4810</Text>
-                <Text>contact@capitalbridge.my</Text>
+                {CB_REPORT_FIRM_ADDRESS_LINES.map((line) => (
+                  <Text key={line}>{line}</Text>
+                ))}
               </View>
             </View>
           </View>
@@ -616,16 +737,10 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6 }]}>Overall Structural Status: {riskTierLabel}</Text>
             <Text style={[styles.bodyText, { lineHeight: 1.5 }]}>{executiveSummary}</Text>
           </View>
-          <View style={[styles.pageFooter]}><Text>Page 1 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+      </ReportPage>
 
       {/* Page 2: Capital Structure Diagnosis, Structural Confidence, Capital Health Summary */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      <ReportPage pageNumber={2} totalPages={TOTAL_PAGES}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
             <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
@@ -646,7 +761,10 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
               </View>
               <Text style={styles.confidenceLabel}>STRONG · STABLE · FRAGILE · AT RISK · NOT SUSTAINABLE</Text>
             </View>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>Lion score is mapped from the model risk tier; same scale as Lion&apos;s Verdict in the app.</Text>
+            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>
+              Lion score is mapped from the model risk tier
+              {includeLionsVerdict ? "; same scale as Lion's Verdict in the app." : '.'}
+            </Text>
           </View>
 
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
@@ -667,16 +785,10 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
               </View>
             </View>
           </View>
-          <View style={[styles.pageFooter]}><Text>Page 2 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+      </ReportPage>
 
       {/* Page 3: Structure Overview, Capital Projection Chart */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      <ReportPage pageNumber={3} totalPages={TOTAL_PAGES}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURE OVERVIEW</Text>
             <Text style={styles.bodyText}>Desired Monthly Income {formatCurrency(inputs.targetMonthlyIncome)}</Text>
@@ -689,21 +801,23 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
           {chartPoints.length > 0 ? (
             <View style={[styles.chartSection, { marginBottom: CHART_SPACING }, PDF_BREAK_INSIDE_AVOID]}>
               <Text style={styles.chartTitle}>CAPITAL PROJECTION OVER TIME</Text>
-              <Text style={{ fontSize: 9, color: MUTED, marginBottom: 4 }}>Green bars = capital balance. Gold line = depletion trajectory.</Text>
-              <SampleChart chartData={chartPoints} />
-              <Text style={{ fontSize: 9, color: MUTED, marginTop: 4 }}>Capital is projected to deplete in {runwayYearsText} under the current assumptions.</Text>
+              <CapitalProjectionChart
+                chartData={chartPoints}
+                formatY={(n) => `${symbol} ${formatNum(Math.round(n))}`}
+                yAxisLabel={`Y-axis: portfolio capital (${inputs.currency.code})`}
+                xAxisLabel="X-axis: time (month index along the projection; bars are sampled across the horizon)"
+                lastPointCaption={(() => {
+                  const last = chartPoints[chartPoints.length - 1];
+                  return `Month ${last.month}: ${formatCurrency(last.nominal)} — compare to starting capital and sustainable return assumptions.`;
+                })()}
+                insight="Each bar shows modelled portfolio capital at that month. Use this strip to see whether balances trend flat, rise, or fall toward depletion. The right-hand side reflects outcomes late in the horizon under your withdrawal and return settings."
+              />
             </View>
           ) : null}
-          <View style={[styles.pageFooter]}><Text>Page 3 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+      </ReportPage>
 
       {/* Page 4: Model Assumptions */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      <ReportPage pageNumber={4} totalPages={TOTAL_PAGES}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTIONS</Text>
             <View style={styles.row}>
@@ -724,16 +838,10 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             </View>
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 8 }]}>Portfolio Structure: {100 - inputs.cashBufferPct}% invested at {formatNum(inputs.expectedAnnualReturnPct, 1)}% · {inputs.cashBufferPct}% liquidity buffer earning {formatNum(inputs.cashAPY, 1)}%</Text>
           </View>
-          <View style={[styles.pageFooter]}><Text>Page 4 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+      </ReportPage>
 
       {/* Page 5: Key Outcomes, Outcome Optimiser */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      <ReportPage pageNumber={5} totalPages={TOTAL_PAGES}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>KEY OUTCOMES</Text>
             <View style={[styles.row, { marginBottom: 4 }]}>
@@ -768,16 +876,10 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
               <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>These adjustments illustrate potential paths to improve sustainability while maintaining income flexibility.</Text>
             </View>
           </View>
-          <View style={[styles.pageFooter]}><Text>Page 5 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+      </ReportPage>
 
-      {/* Page 6: Stress Test, Capital Protection Warning, Lion's Verdict */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      {/* Page 6: Stress Test, Capital Protection Warning, optional Lion's Verdict */}
+      <ReportPage pageNumber={6} totalPages={TOTAL_PAGES}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRESS TEST</Text>
             <View style={[styles.stressTable, PDF_BREAK_INSIDE_AVOID]}>
@@ -806,35 +908,34 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             </View>
           ) : null}
 
-          <View style={[styles.verdictSectionWrap, PDF_BREAK_INSIDE_AVOID]} wrap={false}>
-            <Text style={[styles.subsectionTitle, { marginBottom: 4 }]}>STRUCTURAL STATUS: {riskTierLabel}</Text>
-            <View style={styles.verdictDivider} />
-            <Text style={styles.sectionTitleLionVerdict}>THE LION&apos;S VERDICT</Text>
-            <View style={styles.verdictDivider} />
-            <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 8 }]} wrap={false}>
-              {depletionMo != null && depletionMo < 1200
-                ? `Income structure projected to deplete capital in ${runwayYearsText}.`
-                : 'Income structure is sustainable under current assumptions.'}
-            </Text>
-            <Text style={styles.subsectionTitle}>Verdict</Text>
-            <Text style={styles.verdictDynamicHeadline}>{verdictHeadline ?? verdictNarrative}</Text>
-            <Text style={styles.subsectionTitle}>Structural Diagnosis</Text>
-            <Text style={[styles.bodyText, { marginBottom: SUBSECTION_SPACING }]}>{structuralDiagnosis}</Text>
-            <Text style={styles.subsectionTitle}>Primary Risk Driver</Text>
-            <Text style={[styles.bodyText, { marginBottom: SUBSECTION_SPACING }]}>{primaryRiskDriver}</Text>
-            <Text style={styles.subsectionTitle}>Stabilisation Pathway</Text>
-            <Text style={styles.bodyText}>{stabilisationPathway}</Text>
-          </View>
-          <View style={[styles.pageFooter]}><Text>Page 6 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+          {includeLionsVerdict ? (
+            <View style={[styles.verdictSectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+              <Text style={[styles.subsectionTitle, { marginBottom: 4 }]}>STRUCTURAL STATUS: {riskTierLabel}</Text>
+              <View style={styles.verdictDivider} />
+              <Text style={styles.sectionTitleLionVerdict}>THE LION&apos;S VERDICT</Text>
+              <View style={styles.verdictDivider} />
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6, fontSize: 12 }]}>
+                Lion score: {lionScorePdf} / 100 · {lionStatusPdf}
+              </Text>
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 8 }]} wrap={false}>
+                {depletionMo != null && depletionMo < 1200
+                  ? `Income structure projected to deplete capital in ${runwayYearsText}.`
+                  : 'Income structure is sustainable under current assumptions.'}
+              </Text>
+              <Text style={styles.subsectionTitle}>Verdict</Text>
+              <Text style={styles.verdictDynamicHeadline}>{verdictHeadline ?? verdictNarrative}</Text>
+              <Text style={styles.subsectionTitle}>Structural Diagnosis</Text>
+              <Text style={[styles.bodyText, { marginBottom: SUBSECTION_SPACING }]}>{structuralDiagnosis}</Text>
+              <Text style={styles.subsectionTitle}>Primary Risk Driver</Text>
+              <Text style={[styles.bodyText, { marginBottom: SUBSECTION_SPACING }]}>{primaryRiskDriver}</Text>
+              <Text style={styles.subsectionTitle}>Stabilisation Pathway</Text>
+              <Text style={styles.bodyText}>{stabilisationPathway}</Text>
+            </View>
+          ) : null}
+      </ReportPage>
 
       {/* Page 7: Advisory Action Plan, Primary Structural Adjustment, Model Assumption Transparency, Advisor Notes */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      <ReportPage pageNumber={7} totalPages={TOTAL_PAGES}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>ADVISORY ACTION PLAN</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Recommended Next Steps</Text>
@@ -874,16 +975,10 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
             <Text style={styles.actionItem}>• Improving portfolio returns through strategy or risk tolerance review</Text>
             <Text style={styles.actionItem}>• Extending the investment horizon where appropriate</Text>
           </View>
-          <View style={[styles.pageFooter]}><Text>Page 7 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+      </ReportPage>
 
       {/* Page 8: System Overview, Client Meeting Summary, Footer */}
-      <Page size="A4" style={styles.page}>
-        <View fixed style={styles.verticalAccentBar} />
-        <View fixed style={styles.identityBar} />
-        <View fixed style={styles.docLabel}><Text>Capital Bridge — Client Advisory Report</Text></View>
-        <View style={styles.pageContent}>
+      <ReportPage pageNumber={8} totalPages={TOTAL_PAGES}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL BRIDGE SYSTEM OVERVIEW</Text>
             <Text style={styles.bodyText}>Capital Bridge functions as a financial modelling and diagnostic platform designed to evaluate capital sustainability and income resilience.</Text>
@@ -905,11 +1000,8 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
 
           <View style={[styles.disclaimer, { marginTop: SECTION_SPACING }]}>
             <Text style={{ textAlign: 'left', fontSize: 9, color: MUTED }}>This report is a structural projection tool for advisory discussions. Results depend entirely on the assumptions provided and do not guarantee future performance.</Text>
-            <Text style={{ textAlign: 'left', fontSize: 9, color: MUTED, marginTop: 4 }}>Capital Bridge does not store personal financial information.</Text>
           </View>
-          <View style={[styles.pageFooter]}><Text>Page 8 of {TOTAL_PAGES}</Text></View>
-        </View>
-      </Page>
+      </ReportPage>
     </Document>
   );
 }
@@ -917,11 +1009,32 @@ export function CapitalGrowthReport({ inputs, result, baseUrl, chartData = [], c
 export async function generateReportBlob(
   inputs: CalculatorInputs,
   result: ReportResult,
-  options?: { baseUrl?: string; chartData?: ChartPoint[]; currentAge?: number }
+  options?: {
+    baseUrl?: string;
+    brandLionPngDataUrl?: string | null;
+    brandWordmarkPngDataUrl?: string | null;
+    chartData?: ChartPoint[];
+    currentAge?: number;
+    includeLionsVerdict?: boolean;
+  }
 ): Promise<Blob> {
   const baseUrl = options?.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined);
+  const brandLionPngDataUrl = options?.brandLionPngDataUrl;
+  const brandWordmarkPngDataUrl = options?.brandWordmarkPngDataUrl;
   const chartData = options?.chartData ?? [];
   const currentAge = options?.currentAge;
-  const doc = <CapitalGrowthReport inputs={inputs} result={result} baseUrl={baseUrl} chartData={chartData} currentAge={currentAge} />;
+  const includeLionsVerdict = options?.includeLionsVerdict ?? true;
+  const doc = (
+    <CapitalGrowthReport
+      inputs={inputs}
+      result={result}
+      baseUrl={baseUrl}
+      brandLionPngDataUrl={brandLionPngDataUrl}
+      brandWordmarkPngDataUrl={brandWordmarkPngDataUrl}
+      chartData={chartData}
+      currentAge={currentAge}
+      includeLionsVerdict={includeLionsVerdict}
+    />
+  );
   return pdf(doc).toBlob();
 }

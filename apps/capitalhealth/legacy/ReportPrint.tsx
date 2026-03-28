@@ -281,7 +281,7 @@ export function ReportPrint({
         <div className="divider" />
 
         <div className="callout">
-          <h4>The Lion&apos;s Verdict</h4>
+          <h4>THE LION&apos;S VERDICT</h4>
           <p className="sub" style={{ marginBottom: 8, fontWeight: 600 }}>
             Lion score: {lionClient.verdict.score} / 100 · {formatLionPublicStatusLabel(lionClient.verdict.status)}
           </p>
@@ -292,7 +292,7 @@ export function ReportPrint({
 
         <div className="disclaimer">
           <div>This model is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.</div>
-          <div style={{ marginTop: 6 }}>Please save or print a copy for your records. Capital Bridge does not save or store your personal information.</div>
+          <div style={{ marginTop: 6 }}>Please save or print a copy for your records.</div>
         </div>
       </section>
     </div>

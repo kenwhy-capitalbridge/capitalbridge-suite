@@ -84,9 +84,23 @@ export type Database = {
           payment_confirmed_at: string | null;
           created_at: string;
           updated_at: string;
+          checkout_ip_hash: string | null;
+          checkout_device_id: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["billing_sessions"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["billing_sessions"]["Row"]>;
+        Relationships: [];
+      };
+      trial_consumption_fingerprints: {
+        Row: {
+          id: string;
+          user_id: string;
+          ip_hash: string | null;
+          device_id: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["trial_consumption_fingerprints"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["trial_consumption_fingerprints"]["Row"]>;
         Relationships: [];
       };
       user_active_session: {
@@ -113,6 +127,7 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
+          trial_count: number | null;
           trial_use_count: number | null;
           payment_status: string | null;
           pending_plan: string | null;

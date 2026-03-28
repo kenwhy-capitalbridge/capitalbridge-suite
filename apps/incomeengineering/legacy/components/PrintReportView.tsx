@@ -9,7 +9,20 @@ import { LionVerdictLocked } from "../../../../packages/lion-verdict/LionVerdict
 import { formatCurrency } from '../utils/format';
 import type { CurrencyCode } from '../config/currency';
 import type { SummaryKPIs } from '../types/calculator';
-import type { IncomeRow, AssetUnlock, InvestmentBucket } from '../types/calculator';
+import type {
+  AssetSaleParams,
+  AssetUnlock,
+  FDPledgeParams,
+  IncomeRow,
+  InvestmentBucket,
+  LifePolicyParams,
+  LoanRow,
+  RefinancingParams,
+  SBLParams,
+  ShortTermLoanParams,
+  SPLOCParams,
+  TermLoanParams,
+} from '../types/calculator';
 import type { SustainabilityStatus } from '../types/calculator';
 import { MECHANISM_LABELS } from '../lib/assetUnlockDefaults';
 import { getUnlockedLiquidity, getLoanForAsset } from '../lib/assetUnlockToLoans';
@@ -26,6 +39,48 @@ function getStatusLabel(tier: SustainabilityStatus): string {
   if (tier === 'amber') return 'PLAUSIBLE';
   if (tier === 'red') return 'UNSUSTAINABLE';
   return 'INVALID';
+}
+
+function summarizeUnlockParams(asset: AssetUnlock, currency: CurrencyCode): string {
+  const c = (n: number) => formatCurrency(n, currency);
+  const p = asset.params;
+  switch (asset.mechanism) {
+    case 'refinancing': {
+      const x = p as RefinancingParams;
+      return `Property value ${c(x.currentValue)} · Target LTV ${x.targetLTV}% · Interest ${x.interestRate}% p.a. · Tenure ${x.tenureYears} yr`;
+    }
+    case 'sploc': {
+      const x = p as SPLOCParams;
+      return `Portfolio ${c(x.portfolioValue)} · Allowed LTV ${x.allowedLTV}% · Rate ${x.interestRate}% p.a. · Tenure ${x.tenureYears} yr · Margin buffer ${x.marginCallBufferPercent}%`;
+    }
+    case 'sbl': {
+      const x = p as SBLParams;
+      return `Portfolio ${c(x.portfolioValue)} · Advance ${x.advanceRate}% · Rate ${x.rate}% p.a. · Tenure ${x.tenureYears} yr`;
+    }
+    case 'fd_pledge': {
+      const x = p as FDPledgeParams;
+      return `Deposit / collateral ${c(x.depositValue)} · Advance ${x.advanceRate}% · Rate ${x.rate}% p.a. · Tenure ${x.tenureYears} yr`;
+    }
+    case 'life_policy': {
+      const x = p as LifePolicyParams;
+      return `Cash surrender value ${c(x.cashSurrenderValue)} · Advance ${x.advanceRate}% · Rate ${x.rate}% p.a. · Tenure ${x.tenureYears} yr`;
+    }
+    case 'term_loan': {
+      const x = p as TermLoanParams;
+      return `Principal ${c(x.amount)} · Rate ${x.rate}% p.a. · Tenure ${x.tenureYears} yr`;
+    }
+    case 'short_term_loan': {
+      const x = p as ShortTermLoanParams;
+      return `Principal ${c(x.amount)} · Rate ${x.rate}% p.a. · Tenure ${x.tenureYears} yr`;
+    }
+    case 'asset_sale': {
+      const x = p as AssetSaleParams;
+      const useFor = x.useProceedsFor === 'investments' ? 'investments' : 'debt paydown';
+      return `Value ${c(x.currentValue)} · Sell ${x.percentToSell}% · Fees ${x.feesPercent}% · Taxes ${x.taxesPercent}% · Proceeds to ${useFor}`;
+    }
+    default:
+      return '';
+  }
 }
 
 function getOptimisationContent(
@@ -99,6 +154,8 @@ interface PrintReportViewProps {
   totalCapital: number;
   monthlyExpenses: number;
   incomeRows: IncomeRow[];
+  /** Loan rows derived from enabled unlocking-capital mechanisms (matches simulation). */
+  loans: LoanRow[];
   assetUnlocks: AssetUnlock[];
   investmentBuckets: InvestmentBucket[];
   medianCoverage: number;
@@ -117,17 +174,26 @@ const sectionHeading: React.CSSProperties = {
   borderBottom: '1px solid #FFCC6A',
 };
 
+const lionVerdictSectionHeading: React.CSSProperties = {
+  ...sectionHeading,
+  fontFamily: CB_FONT_SERIF,
+};
+
 const sectionBlock: React.CSSProperties = {
   marginBottom: '20px',
   padding: '14px 16px',
   background: '#f8fbf8',
   borderRadius: '8px',
   border: '1px solid rgba(255, 204, 106, 0.4)',
+  breakInside: 'avoid',
+  pageBreakInside: 'avoid',
 };
 
+/** `clone` repeats border/background on each page fragment so the gold frame closes at page bottoms (print/PDF). */
 const reportBoxStyle: React.CSSProperties = {
   fontFamily: CB_FONT_SERIF,
   padding: '32px',
+  paddingBottom: '36px',
   color: '#1a1a1a',
   fontSize: '14px',
   lineHeight: 1.5,
@@ -135,6 +201,15 @@ const reportBoxStyle: React.CSSProperties = {
   borderRadius: '16px',
   background: '#fff',
   boxShadow: '0 0 0 1px rgba(13, 58, 29, 0.08)',
+  WebkitBoxDecorationBreak: 'clone',
+  boxDecorationBreak: 'clone',
+};
+
+/** Part 2 follows part 1 in one print/PDF flow — start on a new sheet like the in-app PDF path. */
+const reportBoxPart2Style: React.CSSProperties = {
+  ...reportBoxStyle,
+  breakBefore: 'page',
+  pageBreakBefore: 'always',
 };
 
 export const PrintReportView: React.FC<PrintReportViewProps> = ({
@@ -143,6 +218,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   totalCapital,
   monthlyExpenses,
   incomeRows,
+  loans,
   assetUnlocks,
   investmentBuckets,
   medianCoverage,
@@ -175,8 +251,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     if (!lionAccessEnabled) return null;
     return buildLionVerdictClientReportFromIncomeEngineering(
       {
-        medianCoveragePct: medianCoverage,
-        worstMonthCoveragePct: worstMonthCoverage,
+        // Simulation stores coverage as income/denominator ratio (1.0 = 100%); Lion expects 0–100+ %.
+        medianCoveragePct: medianCoverage * 100,
+        worstMonthCoveragePct: worstMonthCoverage * 100,
         sustainabilityStatus: summary.sustainabilityStatus,
         totalMonthlyIncome: totalIncome,
         totalMonthlyExpenses: totalExpenses,
@@ -244,6 +321,8 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             borderLeft: '4px solid #FFCC6A',
             background: 'rgba(255, 252, 245, 0.98)',
             textAlign: 'left',
+            breakInside: 'avoid',
+            pageBreakInside: 'avoid',
           }}
         >
           <p
@@ -267,13 +346,158 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: 0 }}>{incomeFrameworkIntro.body}</p>
         </div>
 
+        <section style={sectionBlock}>
+          <h2 style={sectionHeading}>Your model inputs</h2>
+          <p style={{ margin: 0, fontSize: '12px', color: '#4b5563', lineHeight: 1.55 }}>
+            Values in the following sections match what you entered in the calculator (expectations, income, loans from unlocking capital, each unlock line, and investment buckets).
+          </p>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionHeading}>Expectations</h2>
+          <p style={{ margin: '0 0 4px', color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Currency:</strong> {currency}</p>
+          <p style={{ margin: 0, color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Desired monthly expenses:</strong> {formatCurrency(monthlyExpenses, currency)}</p>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionHeading}>Monthly income</h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <tbody>
+              {incomeRows.map((row) => (
+                <tr key={row.id}>
+                  <td style={{ padding: '4px 0', color: '#2d3748' }}>{row.label || 'Income'}</td>
+                  <td style={{ textAlign: 'right', color: '#0D3A1D' }}>{formatCurrency(row.amount, currency)}</td>
+                </tr>
+              ))}
+              <tr style={{ borderTop: '1px solid rgba(255,204,106,0.5)' }}>
+                <td style={{ padding: '6px 0', fontWeight: 600, color: '#0D3A1D' }}>Total recurring income</td>
+                <td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(summary.monthlyIncome, currency)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionHeading}>Loan repayments (from unlocking capital)</h2>
+          {loans.length > 0 ? (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {loans.map((loan) => {
+                  const pay = monthlyPayment(loan.principal, loan.annualRate, loan.tenureYears);
+                  return (
+                    <tr key={loan.id}>
+                      <td style={{ padding: '4px 0', color: '#2d3748', verticalAlign: 'top' }}>{loan.label}</td>
+                      <td style={{ textAlign: 'right', color: '#0D3A1D' }}>
+                        Principal {formatCurrency(loan.principal, currency)} · {loan.annualRate}% p.a. · {loan.tenureYears} yr · {formatCurrency(pay, currency)}/mo
+                      </td>
+                    </tr>
+                  );
+                })}
+                <tr style={{ borderTop: '1px solid rgba(255,204,106,0.5)' }}>
+                  <td style={{ padding: '6px 0', fontWeight: 600, color: '#0D3A1D' }}>Total monthly loan repayments</td>
+                  <td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(summary.monthlyLoanRepayments, currency)}</td>
+                </tr>
+              </tbody>
+            </table>
+          ) : (
+            <p style={{ margin: 0, color: '#2d3748' }}>No loan facilities modelled from unlocking capital.</p>
+          )}
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionHeading}>Unlocking capital</h2>
+          {assetUnlocks.length > 0 ? (
+            <div>
+              {assetUnlocks.map((asset) => {
+                const label = asset.label || MECHANISM_LABELS[asset.mechanism];
+                const liq = getUnlockedLiquidity(asset);
+                const loan = getLoanForAsset(asset);
+                const repayment = loan ? monthlyPayment(loan.principal, loan.annualRate, loan.tenureYears) : 0;
+                const invRet = asset.estimatedInvestmentReturnPercent;
+                const yieldM = asset.estimatedMonthlyYield;
+                return (
+                  <div
+                    key={asset.id}
+                    style={{
+                      marginBottom: '12px',
+                      paddingBottom: '12px',
+                      borderBottom: '1px solid rgba(255,204,106,0.35)',
+                    }}
+                  >
+                    <p style={{ margin: '0 0 4px', fontWeight: 700, color: '#0D3A1D' }}>{label}</p>
+                    <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#6b7280' }}>{MECHANISM_LABELS[asset.mechanism]} · {asset.enabled ? 'Enabled' : 'Disabled'}</p>
+                    <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#2d3748', lineHeight: 1.5 }}>{summarizeUnlockParams(asset, currency)}</p>
+                    {(asset.enabled && (liq > 0 || repayment > 0)) && (
+                      <p style={{ margin: 0, fontSize: '12px', color: '#2d3748' }}>
+                        Modelled liquidity: {formatCurrency(liq, currency)}
+                        {repayment > 0 && <> · Repayment: {formatCurrency(repayment, currency)}/mo</>}
+                      </p>
+                    )}
+                    {(invRet != null && invRet > 0) || (yieldM != null && yieldM > 0) ? (
+                      <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#2d3748' }}>
+                        {yieldM != null && yieldM > 0 && <>Est. monthly yield: {formatCurrency(yieldM, currency)} · </>}
+                        {invRet != null && invRet > 0 && <>Reinvest assumption: {invRet}% p.a.</>}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ margin: 0, color: '#2d3748' }}>No unlocking-capital lines added.</p>
+          )}
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionHeading}>Investment buckets</h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <tbody>
+              {INVESTMENT_CATEGORIES.map((cat) => {
+                const b = getBucket(cat.id);
+                return (
+                  <tr key={cat.id}>
+                    <td style={{ padding: '4px 0', color: '#2d3748' }}>{cat.title}</td>
+                    <td style={{ textAlign: 'right', color: '#0D3A1D' }}>{formatCurrency(b.allocation, currency)} · {b.expectedReturnAnnual}% p.a.</td>
+                  </tr>
+                );
+              })}
+              <tr style={{ borderTop: '1px solid rgba(255,204,106,0.5)' }}>
+                <td style={{ padding: '6px 0', fontWeight: 600, color: '#0D3A1D' }}>Total allocation</td>
+                <td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(totalAllocation, currency)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section style={sectionBlock}>
+          <h2 style={sectionHeading}>Coverage (from your inputs)</h2>
+          <p style={{ margin: 0, fontSize: '12px', color: '#2d3748', lineHeight: 1.55 }}>
+            Median monthly coverage: <strong style={{ color: '#0D3A1D' }}>{(medianCoverage * 100).toFixed(1)}%</strong>
+            {' · '}
+            Weakest month: <strong style={{ color: '#0D3A1D' }}>{(worstMonthCoverage * 100).toFixed(1)}%</strong>
+            {' '}(recurring income + modelled investment income vs expenses + loan repayments).
+          </p>
+        </section>
+
         {lionAccessEnabled && lionReport ? (
         <section style={sectionBlock}>
-          <h2 style={sectionHeading}>The Lion's Verdict</h2>
+          <h2 style={lionVerdictSectionHeading}>THE LION&apos;S VERDICT</h2>
           <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700, color: '#0D3A1D' }}>
             Lion score: {lionReport.verdict.score} / 100 · {formatLionPublicStatusLabel(lionReport.verdict.status)}
           </p>
-          <p style={{ margin: '0 0 14px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.verdict.summary}</p>
+          <p
+            style={{
+              margin: '0 0 14px',
+              color: '#2d3748',
+              lineHeight: 1.55,
+              fontFamily: CB_FONT_SERIF,
+              fontStyle: 'italic',
+              fontWeight: 700,
+              textTransform: 'capitalize',
+            }}
+          >
+            {lionReport.verdict.summary}
+          </p>
           <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>Strengths</h3>
           <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
             {lionReport.strengths.map((s, i) => (
@@ -318,80 +542,10 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             </tbody>
           </table>
         </section>
-
-        <section style={sectionBlock}>
-          <h2 style={sectionHeading}>Expectations</h2>
-          <p style={{ margin: 0, color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Currency:</strong> {currency}</p>
-          <p style={{ margin: '8px 0 0', color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Desired Monthly Expenses:</strong> {formatCurrency(monthlyExpenses, currency)}</p>
-        </section>
-
-        <section style={sectionBlock}>
-          <h2 style={sectionHeading}>Monthly Income</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <tbody>
-              {incomeRows.map((row) => (
-                <tr key={row.id}>
-                  <td style={{ padding: '4px 0', color: '#2d3748' }}>{row.label || 'Income'}</td>
-                  <td style={{ textAlign: 'right', color: '#0D3A1D' }}>{formatCurrency(row.amount, currency)}</td>
-                </tr>
-              ))}
-              <tr style={{ borderTop: '1px solid rgba(255,204,106,0.5)' }}>
-                <td style={{ padding: '6px 0', fontWeight: 600, color: '#0D3A1D' }}>Total Recurring Income</td>
-                <td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(summary.monthlyIncome, currency)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
       </div>
 
-      {/* Part 2: Unlocking Capital onward (starts on new page in PDF) */}
-      <div data-pdf-part="2" style={reportBoxStyle}>
-      {assetUnlocks.length > 0 && (
-        <section style={sectionBlock}>
-          <h2 style={sectionHeading}>Unlocking Capital</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <tbody>
-              {assetUnlocks.map((asset) => {
-                const loan = getLoanForAsset(asset);
-                const liquidity = getUnlockedLiquidity(asset);
-                const repayment = loan ? monthlyPayment(loan.principal, loan.annualRate, loan.tenureYears) : 0;
-                const label = asset.label || MECHANISM_LABELS[asset.mechanism];
-                return (
-                  <tr key={asset.id}>
-                    <td style={{ padding: '6px 0', verticalAlign: 'top', color: '#2d3748' }}>{label}</td>
-                    <td style={{ textAlign: 'right', padding: '6px 0', color: '#0D3A1D' }}>
-                      Liquidity: {formatCurrency(liquidity, currency)}
-                      {repayment > 0 && <> · Repayment: {formatCurrency(repayment, currency)}/mo</>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </section>
-      )}
-
-      <section style={sectionBlock}>
-        <h2 style={sectionHeading}>Investment Assumptions</h2>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <tbody>
-            {INVESTMENT_CATEGORIES.map((cat) => {
-              const b = getBucket(cat.id);
-              return (
-                <tr key={cat.id}>
-                  <td style={{ padding: '4px 0', color: '#2d3748' }}>{cat.title}</td>
-                  <td style={{ textAlign: 'right', color: '#0D3A1D' }}>{formatCurrency(b.allocation, currency)} · {b.expectedReturnAnnual}% p.a.</td>
-                </tr>
-              );
-            })}
-            <tr style={{ borderTop: '1px solid rgba(255,204,106,0.5)' }}>
-              <td style={{ padding: '6px 0', fontWeight: 600, color: '#0D3A1D' }}>Total Allocation</td>
-              <td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(totalAllocation, currency)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
+      {/* Part 2: optimisation + disclaimers (inputs and Lion live in part 1) */}
+      <div data-pdf-part="2" style={reportBoxPart2Style}>
       <section style={sectionBlock}>
         <h2 style={sectionHeading}>{optSectionTitle}</h2>
         <span
@@ -423,72 +577,12 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         ) : null}
       </section>
 
-      <section style={sectionBlock}>
-        <h2 style={sectionHeading}>The Lion&apos;s Verdict</h2>
-        {lionReport ? (
-          <>
-            <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700, color: '#0D3A1D' }}>
-              Lion score: {lionReport.verdict.score} / 100 ·{' '}
-              {formatLionPublicStatusLabel(lionReport.verdict.status)}
-            </p>
-            <p style={{ margin: '0 0 14px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.verdict.summary}</p>
-            <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Strengths
-            </h3>
-            <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-              {lionReport.strengths.map((s, i) => (
-                <li key={i} style={{ marginBottom: '4px' }}>
-                  {s}
-                </li>
-              ))}
-            </ul>
-            <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>Risks</h3>
-            <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-              {lionReport.risks.map((s, i) => (
-                <li key={i} style={{ marginBottom: '4px' }}>
-                  {s}
-                </li>
-              ))}
-            </ul>
-            <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Strategic options
-            </h3>
-            <ol style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-              {lionReport.strategic_options.map((o, i) => (
-                <li key={i} style={{ marginBottom: '6px' }}>
-                  <strong>{o.type}:</strong> {o.action} — {o.impact}
-                </li>
-              ))}
-            </ol>
-            <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Priority actions
-            </h3>
-            <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-              {lionReport.priority_actions.map((s, i) => (
-                <li key={i} style={{ marginBottom: '4px' }}>
-                  {s}
-                </li>
-              ))}
-            </ul>
-            <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.do_nothing_outcome}</p>
-            <p style={{ margin: 0, fontSize: '13px', fontStyle: 'italic', fontWeight: 300, color: '#0D3A1D' }}>
-              {lionReport.closing_line}
-            </p>
-          </>
-        ) : (
-          <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.55 }}>
-            The full Lion&apos;s Verdict (score, narrative, and action plan) is available after you upgrade from trial.
-            Your structural summary and optimisation notes above still reflect this model&apos;s outputs.
-          </p>
-        )}
-      </section>
-
       <p style={{ fontSize: '12px', color: '#4a5568', marginTop: '20px' }}>
         This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.
       </p>
 
-      <p style={{ fontSize: '13px', fontWeight: 700, color: '#0D3A1D', marginTop: '14px', padding: '14px 16px', background: 'linear-gradient(135deg, #E8F5E9 0%, #f0fdf4 100%)', borderLeft: '4px solid #FFCC6A', borderRadius: '6px' }}>
-        Please save or print a copy for your records. Capital Bridge does not save or store your personal information.
+      <p style={{ fontSize: '13px', fontWeight: 700, color: '#0D3A1D', marginTop: '14px', padding: '14px 16px', background: 'linear-gradient(135deg, #E8F5E9 0%, #f0fdf4 100%)', borderLeft: '4px solid #FFCC6A', borderRadius: '6px', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+        Please save or print a copy for your records.
       </p>
       </div>
     </div>

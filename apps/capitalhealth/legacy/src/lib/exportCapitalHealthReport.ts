@@ -10,10 +10,13 @@ export async function exportCapitalHealthReport(args: {
   result: CalculatorResults;
   chartPoints: ReportChartPoint[];
   currentAge?: number | null;
+  /** Paid / entitled users only; trial exports omit Lion's Verdict in the PDF. */
+  includeLionsVerdict?: boolean;
 }): Promise<void> {
   const blob = await generateReportBlob(args.inputs, args.result, {
     chartData: args.chartPoints,
     currentAge: args.currentAge ?? undefined,
+    includeLionsVerdict: args.includeLionsVerdict ?? true,
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

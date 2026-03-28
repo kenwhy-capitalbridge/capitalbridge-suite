@@ -17,7 +17,7 @@ export async function activateMembershipFromPaidBillingSession(params: {
   const { data: sessionRow, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
-    .select("id, status, user_id, plan_id, membership_id, email")
+    .select("id, status, user_id, plan_id, membership_id, email, checkout_ip_hash, checkout_device_id")
     .eq("id", billingSessionId)
     .maybeSingle();
 
@@ -72,6 +72,35 @@ export async function activateMembershipFromPaidBillingSession(params: {
     .eq("user_id", userId)
     .eq("status", "active");
 
+  const sess = sessionRow as typeof sessionRow & {
+    checkout_ip_hash?: string | null;
+    checkout_device_id?: string | null;
+  };
+  const ipHashStored = typeof sess.checkout_ip_hash === "string" ? sess.checkout_ip_hash.trim() : "";
+  const deviceStored = typeof sess.checkout_device_id === "string" ? sess.checkout_device_id.trim() : "";
+  const hasTrialFingerprintSignal = Boolean(ipHashStored) || Boolean(deviceStored);
+
+  let fingerprintRowId: string | null = null;
+  if (planRow.is_trial && hasTrialFingerprintSignal) {
+    const row: { user_id: string; ip_hash?: string; device_id?: string } = { user_id: userId };
+    if (ipHashStored) row.ip_hash = ipHashStored;
+    if (deviceStored) row.device_id = deviceStored;
+    const { data: fpRow, error: fpErr } = await svc
+      .schema("public")
+      .from("trial_consumption_fingerprints")
+      .insert(row)
+      .select("id")
+      .single();
+    if (fpErr?.code === "23505") {
+      return { ok: false, error: "trial_fingerprint_already_used" };
+    }
+    if (fpErr) {
+      console.error("[activate-membership] trial fingerprint insert failed", fpErr.message);
+      return { ok: false, error: fpErr.message };
+    }
+    fingerprintRowId = fpRow?.id ? String(fpRow.id) : null;
+  }
+
   const { data: inserted, error: insErr } = await svc
     .schema("public")
     .from("memberships")
@@ -89,6 +118,9 @@ export async function activateMembershipFromPaidBillingSession(params: {
     .single();
 
   if (insErr || !inserted?.id) {
+    if (fingerprintRowId) {
+      await svc.schema("public").from("trial_consumption_fingerprints").delete().eq("id", fingerprintRowId);
+    }
     if (insErr?.code === "23505") {
       const { data: activeRow } = await svc
         .schema("public")

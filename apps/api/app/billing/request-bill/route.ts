@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
+import { hashTrialCheckoutIp, parseClientIpFromRequest } from "@/lib/trialCheckoutSignals";
 
 export const runtime = "nodejs";
 
@@ -35,7 +36,7 @@ export async function OPTIONS(req: Request) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
 }
 
-type Body = { email?: string; plan?: string; name?: string };
+type Body = { email?: string; plan?: string; name?: string; deviceId?: string };
 
 function getPaymentFirstRedirectUrl(): string {
   return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
@@ -53,6 +54,9 @@ export async function POST(req: Request) {
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const requestedPlan = (body.plan ?? "trial").toString();
   const name = typeof body.name === "string" ? body.name.trim() : email || "Customer";
+  const deviceIdRaw = typeof body.deviceId === "string" ? body.deviceId.trim() : "";
+  const deviceId = deviceIdRaw.length > 0 && deviceIdRaw.length <= 128 ? deviceIdRaw : "";
+  const checkoutIpHash = hashTrialCheckoutIp(parseClientIpFromRequest(req));
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400, headers });
@@ -69,6 +73,37 @@ export async function POST(req: Request) {
 
   if (planErr || !planRow) {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400, headers });
+  }
+
+  if (planRow.is_trial) {
+    if (checkoutIpHash) {
+      const { data: ipHit } = await svc
+        .schema("public")
+        .from("trial_consumption_fingerprints")
+        .select("id")
+        .eq("ip_hash", checkoutIpHash)
+        .maybeSingle();
+      if (ipHit?.id) {
+        return NextResponse.json(
+          { error: "trial_unavailable", message: "A trial has already been started from this network. Use your existing account or choose a paid plan." },
+          { status: 403, headers }
+        );
+      }
+    }
+    if (deviceId) {
+      const { data: devHit } = await svc
+        .schema("public")
+        .from("trial_consumption_fingerprints")
+        .select("id")
+        .eq("device_id", deviceId)
+        .maybeSingle();
+      if (devHit?.id) {
+        return NextResponse.json(
+          { error: "trial_unavailable", message: "A trial has already been used on this browser. Sign in with that account or choose a paid plan." },
+          { status: 403, headers }
+        );
+      }
+    }
   }
 
   const tempPassword = randomBytes(28).toString("base64url");
@@ -124,6 +159,8 @@ export async function POST(req: Request) {
       status: "pending",
       payment_attempt_count: 0,
       updated_at: new Date().toISOString(),
+      ...(checkoutIpHash ? { checkout_ip_hash: checkoutIpHash } : {}),
+      ...(deviceId ? { checkout_device_id: deviceId } : {}),
     })
     .select("id")
     .single();

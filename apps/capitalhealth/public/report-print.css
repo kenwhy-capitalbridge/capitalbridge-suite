@@ -24,6 +24,23 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Roboto Serif';
+  src: url('https://fonts.gstatic.com/s/robotoserif/v17/R71RjywflP6FLr3gZx7K8UyuXDs9zVwDmXCb8lxYgmuii32UGoVldX6UgfjL4-3sMM_kB_qXSEXTJQCFLH5-_bcElvQqp6c.ttf')
+    format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roboto Serif';
+  src: url('https://fonts.gstatic.com/s/robotoserif/v17/R71RjywflP6FLr3gZx7K8UyuXDs9zVwDmXCb8lxYgmuii32UGoVldX6UgfjL4-3sMM_kB_qXSEXTJQCFLH5-_bcEls0qp6c.ttf')
+    format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --ink: #111827;
   --ink-2: #374151;
@@ -262,12 +279,18 @@ body {
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
+  font-family: 'Roboto Serif', Georgia, 'Noto Serif', serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .callout .headline {
   margin: 0 0 2mm 0;
   font-size: 12px;
   font-style: italic;
+  font-weight: 700;
   color: var(--ink-2);
+  font-family: 'Roboto Serif', Georgia, 'Noto Serif', serif;
+  text-transform: capitalize;
 }
 .callout .body {
   margin: 0 0 2mm 0;

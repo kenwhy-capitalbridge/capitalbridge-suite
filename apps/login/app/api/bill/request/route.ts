@@ -6,7 +6,7 @@ export const runtime = "nodejs";
  * Payment-first proxy: forwards to API billing/request-bill.
  * Creates Auth user (pending) + session + Billplz bill; webhook completes activation + set-password email.
  */
-type Body = { email?: string; name?: string; plan?: string };
+type Body = { email?: string; name?: string; plan?: string; deviceId?: string };
 
 function getApiBaseUrl(): string {
   const url =
@@ -20,13 +20,19 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as Body;
     const apiUrl = `${getApiBaseUrl()}/billing/request-bill`;
+    const fwdHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    const xff = req.headers.get("x-forwarded-for");
+    const xri = req.headers.get("x-real-ip");
+    if (xff) fwdHeaders["x-forwarded-for"] = xff;
+    if (xri) fwdHeaders["x-real-ip"] = xri;
     const res = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: fwdHeaders,
       body: JSON.stringify({
         email: body.email ?? "",
         name: body.name ?? "",
         plan: body.plan ?? "trial",
+        deviceId: typeof body.deviceId === "string" ? body.deviceId : undefined,
       }),
       cache: "no-store",
     });

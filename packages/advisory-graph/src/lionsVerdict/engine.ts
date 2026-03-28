@@ -116,7 +116,7 @@ function capitalUnlockGuidanceFor(tier: LionScoreTier, withdrawalHigh: boolean):
 function scenarioActionsFor(withdrawalHigh: boolean, drawdownHigh: boolean, avgBelowStart: boolean): string[] {
   const a: string[] = ['Run the model again after changing only one variable (return, inflation, or withdrawal).'];
   if (avgBelowStart) a.push('Compare median vs worst-case paths to see erosion timing, not just averages.');
-  if (drawdownHigh) a.push('Add a “deep drawdown” scenario (−35% to −45% first three years) if not already modelled.');
+  if (drawdownHigh) a.push('Add a “deep drawdown” scenario (-35% to -45% first three years) if not already modelled.');
   if (withdrawalHigh) a.push('Scenario: hold returns flat and reduce withdrawals 10%; note the runway delta.');
   return a.slice(0, 5);
 }
@@ -521,7 +521,7 @@ export function runLionVerdictEngineForever(
   const strategicOptions = strategicOptionsFor(status, status === 'Critical' || status === 'Weak', !input.isSustainable);
   const capitalUnlockGuidance = capitalUnlockGuidanceFor(status, !input.isSustainable);
   const scenarioActions = [
-    'Model −1% / +1% real return bands around your base case.',
+    'Model -1% / +1% real return bands around your base case.',
     'Stress-test higher property rates or shorter amortisation if debt is material.',
   ];
   const priorityActions = input.isSustainable
