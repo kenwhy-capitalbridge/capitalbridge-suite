@@ -549,7 +549,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
               </p>
             </div>
           </div>
-          <div className="mt-10">
+          <div className="mt-10 px-6 md:px-10 pb-6 md:pb-10">
             <div className="mx-auto max-w-3xl">
               <div className="bg-[#00160f] border border-[#FFCC6A]/20 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 text-sm text-gray-200">
                 <LionVerdictActive
