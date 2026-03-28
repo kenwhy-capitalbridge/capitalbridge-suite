@@ -8,7 +8,8 @@ const nextConfig = {
   envDir: monorepoRoot,
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true }
+  typescript: { ignoreBuildErrors: true },
+  transpilePackages: ["@cb/ui"],
 };
 
 export default nextConfig;

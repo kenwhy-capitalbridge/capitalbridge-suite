@@ -48,4 +48,4 @@ True random placement needs client-only layout and can flash on load. Fixed posi
 
 ## Apps wired
 
-Forever, Income Engineering, Capital Health, and Capital Stress model layouts import `LionWatermarkBackdrop` from `@cb/ui` and use the pattern above.
+Model apps (Forever, Income Engineering, Capital Health, Capital Stress), **platform**, and **login** root layouts import `LionWatermarkBackdrop` from `@cb/ui` and use the pattern above (`relative z-[1]` wrapper around app chrome).
