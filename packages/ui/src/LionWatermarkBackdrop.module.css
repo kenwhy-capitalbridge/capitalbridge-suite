@@ -16,8 +16,39 @@
   }
 }
 
-.mark {
+.markWrap {
   position: absolute;
+  transform: translate(-50%, -50%);
+  max-width: none;
+}
+
+.markFloat {
+  animation: wm-float var(--wm-float-dur, 11s) ease-in-out infinite;
+  animation-delay: var(--wm-float-delay, 0s);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markFloat {
+    animation: none;
+  }
+}
+
+@keyframes wm-float {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(
+      calc(-1 * var(--wm-drift-x, 0.35vw)),
+      calc(-1 * var(--wm-drift-y, 0.3vh))
+    );
+  }
+}
+
+.mark {
+  display: block;
   height: auto;
   max-width: none;
   user-select: none;

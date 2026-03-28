@@ -35,6 +35,7 @@ import {
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
+import { LionWatermarkStateSync } from "@cb/ui";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
@@ -669,8 +670,14 @@ const CalculatorScreen = forwardRef<
     }
   }, [inputs, result, chartData, lionAccessEnabled, currentAge, reportClientDisplayName]);
 
+  const capitalWatermarkRiskNorm = useMemo(() => {
+    const tier = Math.min(5, Math.max(1, result.riskMetrics.riskTier));
+    return (tier - 1) / 4;
+  }, [result.riskMetrics.riskTier]);
+
   return (
     <TapToRevealProvider>
+    <LionWatermarkStateSync capitalRiskNorm={capitalWatermarkRiskNorm} lionScore={lionScore} />
     <div className="cb-body min-h-screen bg-transparent text-[#F6F5F1] overflow-x-hidden">
       {/* Toast */}
       {toast && (

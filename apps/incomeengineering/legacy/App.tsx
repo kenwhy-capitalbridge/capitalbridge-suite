@@ -23,6 +23,7 @@ import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdi
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { SustainabilityStatus } from './types/calculator';
 import { formatCurrency } from './utils/format';
+import { LionWatermarkStateSync } from "@cb/ui";
 
 export type IncomeEngineeringAppHandle = {
   getInputs: () => Record<string, unknown>;
@@ -135,6 +136,26 @@ const AppInner = forwardRef<
   const progressPercent = targetCapital > 0 ? Math.min(100, (totalCapital / targetCapital) * 100) : 0;
   const lionScore = lionConfidenceScore * 100;
 
+  const incomeWatermarkRiskNorm = useMemo(() => {
+    switch (result.summary.sustainabilityStatus) {
+      case 'green':
+        return 0.22;
+      case 'amber':
+        return 0.55;
+      case 'red':
+        return 0.92;
+      case 'invalid':
+        return 0.5;
+      default:
+        return 0.35;
+    }
+  }, [result.summary.sustainabilityStatus]);
+
+  const incomeWatermarkLionScore = useMemo(
+    () => Math.round(Math.min(100, Math.max(0, result.medianCoverage * 100))),
+    [result.medianCoverage],
+  );
+
   const reportRef = useRef<HTMLDivElement>(null);
 
   const handlePrintReport = async () => {
@@ -196,6 +217,10 @@ const AppInner = forwardRef<
 
   return (
     <div className="cb-body min-h-screen min-w-0 overflow-x-hidden bg-transparent text-[#F6F5F1]">
+      <LionWatermarkStateSync
+        capitalRiskNorm={incomeWatermarkRiskNorm}
+        lionScore={incomeWatermarkLionScore}
+      />
       {/* On-screen app (hidden when printing) */}
       <div className="no-print">
         <div className="pt-14">

@@ -5,7 +5,7 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
-import { LionWatermarkBackdrop, ModelAppHeader } from "@cb/ui";
+import { LionWatermarkShell, ModelAppHeader } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ForeverCalculatorProvider } from "./ForeverCalculatorProvider";
 import "./globals.css";
@@ -53,29 +53,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <div className="relative min-h-screen">
-          <LionWatermarkBackdrop />
-          <div className="relative z-10">
-            <ForeverCalculatorProvider>
-              <ModelAppHeader
-                titleDesktop="FOREVER INCOME MODEL"
-                titleMobile="FOREVER"
-                backHref={foreverBackToPlatformHref}
-                actions={
-                  user ? (
-                    <ModelHeaderSaveRestore
-                      userId={user.id}
-                      serverCanSave={canSave}
-                      initialSessionId={initialSessionId}
-                      logTag="[forever]"
-                    />
-                  ) : null
-                }
-              />
-              {children}
-            </ForeverCalculatorProvider>
-          </div>
-        </div>
+        <LionWatermarkShell>
+          <ForeverCalculatorProvider>
+            <ModelAppHeader
+              titleDesktop="FOREVER INCOME MODEL"
+              titleMobile="FOREVER"
+              backHref={foreverBackToPlatformHref}
+              actions={
+                user ? (
+                  <ModelHeaderSaveRestore
+                    userId={user.id}
+                    serverCanSave={canSave}
+                    initialSessionId={initialSessionId}
+                    logTag="[forever]"
+                  />
+                ) : null
+              }
+            />
+            {children}
+          </ForeverCalculatorProvider>
+        </LionWatermarkShell>
       </body>
     </html>
   );
