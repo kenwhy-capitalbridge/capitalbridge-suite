@@ -26,6 +26,7 @@ import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLoc
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { BrandLionWatermark } from "@cb/ui";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -638,7 +639,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
       <div className="min-h-screen bg-[#0D3A1D] text-gray-100 font-sans selection:bg-[#C6A24D] selection:text-black pt-0 pb-4 md:pb-16">
         <div className="h-36 sm:h-40 md:h-44 shrink-0 no-print" aria-hidden="true" role="presentation" />
-        <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 space-y-4 sm:space-y-8 md:space-y-12">
+        <main className="relative w-full max-w-5xl mx-auto overflow-x-hidden px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 space-y-4 sm:space-y-8 md:space-y-12">
+        <BrandLionWatermark />
         {/* Module 3 note — standalone mode */}
         <div className="pt-6 pb-2 sm:pt-2 no-print">
           <p className="text-[10px] text-[#C6A24D]/90 leading-relaxed text-center">This model represents <strong className="text-[#C6A24D]">Module 3 of the Capital Bridge Advisory Framework</strong>, focusing on capital resilience under market volatility and withdrawal pressure over the selected time horizon.</p>

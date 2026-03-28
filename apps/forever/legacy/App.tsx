@@ -31,6 +31,7 @@ import {
   formatLionPublicStatusLabel,
   parseForeverRunway,
 } from "@cb/advisory-graph/lionsVerdict";
+import { BrandLionWatermark } from "@cb/ui";
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
@@ -455,9 +456,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
           </div>
 
           <div className="p-6 md:p-10 flex flex-col relative overflow-hidden">
-            <div className="absolute right-[-10%] bottom-[-5%] opacity-[0.03] pointer-events-none transform rotate-[-15deg]">
-              <img src="/brand/lionhead_Gold.svg" alt="" className="w-96 h-96 opacity-90" />
-            </div>
+            <BrandLionWatermark />
 
             <div className="flex justify-between items-start mb-10 relative z-10">
               <h2 className="text-xl font-semibold text-[#FFCC6A]">Strategic Gap Analysis</h2>

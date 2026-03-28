@@ -10,3 +10,4 @@ export {
   BRAND_LIONHEAD_GOLD,
   BRAND_LIONHEAD_GREEN,
 } from "./brandPaths";
+export { BrandLionWatermark, type BrandLionWatermarkProps } from "./BrandLionWatermark";

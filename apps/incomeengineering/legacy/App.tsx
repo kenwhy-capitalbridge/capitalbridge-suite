@@ -18,6 +18,7 @@ import { Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-graph/lionsVerdict';
+import { BrandLionWatermark } from "@cb/ui";
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
@@ -200,7 +201,8 @@ const AppInner = forwardRef<
       <div className="no-print">
         <div className="pt-14">
           <PersistentSummaryHeader summary={result.summary} currency={currency} totalCapital={totalCapital} />
-        <div className="mx-auto w-full max-w-[100%] pt-52 pb-6 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-56 min-[641px]:pb-8 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-60 min-[1025px]:pb-10 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-64 min-[1441px]:pb-12">
+        <div className="relative mx-auto w-full max-w-[100%] overflow-x-hidden pt-52 pb-6 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-56 min-[641px]:pb-8 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-60 min-[1025px]:pb-10 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-64 min-[1441px]:pb-12">
+          <BrandLionWatermark />
           <section aria-label="Expectations setting" className="space-y-6">
             <div className="rounded-xl border border-[#1A4D2E]/60 bg-[#163d28] p-4 sm:p-6">
               <h2 className="font-serif-section mb-1 text-base font-bold uppercase sm:text-lg">Expectations Setting</h2>
