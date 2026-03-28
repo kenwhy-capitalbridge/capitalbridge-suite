@@ -46,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         <LionWatermarkBackdrop />
-        <div className="relative z-[1] min-h-screen">
+        <div className="relative min-h-screen">
           <ModelSaveHandlersProvider>
             <ModelAppHeader
               titleDesktop="CAPITAL STRESS MODEL"

@@ -48,13 +48,14 @@ function positionStyle(m: MarkSpec): CSSProperties {
  * Intended for the four calculator apps’ root layouts (Forever, Income Engineering,
  * Capital Health, Capital Stress). Omit on login and platform apps.
  *
- * Pair with a sibling wrapper `className="relative z-[1] min-h-screen"` so content
- * stacks above this layer (`z-index: 0` fixed can paint over in-flow content otherwise).
+ * Stack **above** opaque legacy app roots (`z-[100]`) but **below** `ModelAppHeader`
+ * (`z-index: 200`). Starts below the fixed header bar so lions sit in the content band.
+ * Pair with a sibling `className="relative min-h-screen"` (no z-index on the shell).
  */
 export function LionWatermarkBackdrop() {
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden print:hidden"
+      className="pointer-events-none fixed left-0 right-0 bottom-0 z-[100] overflow-hidden print:hidden top-[calc(48px+1px+env(safe-area-inset-top))] sm:top-[calc(52px+1px+env(safe-area-inset-top))]"
       aria-hidden
     >
       {LION_WATERMARK_MARKS.map((m, i) => (

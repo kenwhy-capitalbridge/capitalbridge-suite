@@ -671,7 +671,7 @@ const CalculatorScreen = forwardRef<
 
   return (
     <TapToRevealProvider>
-    <div className="min-h-screen text-[#F6F5F1] overflow-x-hidden" style={{ backgroundColor: '#0d3a1d' }}>
+    <div className="min-h-screen bg-transparent text-[#F6F5F1] overflow-x-hidden">
       {/* Toast */}
       {toast && (
         <div

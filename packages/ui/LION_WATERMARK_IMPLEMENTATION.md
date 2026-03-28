@@ -15,11 +15,11 @@ Several copies of the gold lion SVG sit **fixed** to the viewport, **low opacity
 | Piece | Role |
 |--------|------|
 | `packages/ui/src/LionWatermarkBackdrop.tsx` | Renders the scattered `<img>` marks; edit `LION_WATERMARK_MARKS` to move, resize, or fade lions. |
-| Forever, Income Engineering, Capital Health, Capital Stress `app/layout.tsx` | Renders `<LionWatermarkBackdrop />` first in `<body>`, then wraps the rest in `<div className="relative z-[1] min-h-screen">…</div>`. **Not** used on login (access, pricing, etc.) or platform (dashboard, profile, …). |
+| Forever, Income Engineering, Capital Health, Capital Stress `app/layout.tsx` | Renders `<LionWatermarkBackdrop />` first in `<body>`, then wraps the rest in `<div className="relative min-h-screen">…</div>` (no z-index on the shell). **Not** used on login (access, pricing, etc.) or platform (dashboard, profile, …). |
 
-### Why the `z-[1]` wrapper?
+### Stacking (`z-index`)
 
-A `position: fixed` element with `z-index: 0` is painted **on top of** normal in-flow content in the usual stacking rules. The wrapper creates a sibling stacking layer above `z-0` so the real app stays visible while the watermark stays behind it.
+The backdrop uses **`z-[100]`** and sits **below** `ModelAppHeader` (**`z-index: 200`**). Legacy calculator roots use a **transparent** full-page background so `body`’s green and the lions show in the gutters; cards keep their own backgrounds.
 
 ### Why not random JS?
 
@@ -30,7 +30,7 @@ True random placement needs client-only layout and can flash on load. Fixed posi
 ```tsx
 <body>
   <LionWatermarkBackdrop />
-  <div className="relative z-[1] min-h-screen">
+  <div className="relative min-h-screen">
     <ModelSaveHandlersProvider>
       <ModelAppHeader … />
       {children}

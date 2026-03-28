@@ -636,7 +636,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         </div>
       </header>
 
-      <div className="min-h-screen bg-[#0D3A1D] text-gray-100 font-sans selection:bg-[#C6A24D] selection:text-black pt-0 pb-4 md:pb-16">
+      <div className="min-h-screen bg-transparent text-gray-100 font-sans selection:bg-[#C6A24D] selection:text-black pt-0 pb-4 md:pb-16">
         <div className="h-36 sm:h-40 md:h-44 shrink-0 no-print" aria-hidden="true" role="presentation" />
         <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 space-y-4 sm:space-y-8 md:space-y-12">
         {/* Module 3 note — standalone mode */}

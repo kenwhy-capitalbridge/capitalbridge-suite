@@ -195,7 +195,7 @@ const AppInner = forwardRef<
   };
 
   return (
-    <div className="min-h-screen min-w-0 overflow-x-hidden bg-[#0D3A1D] text-[#F6F5F1] [font-size:14px]">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-transparent text-[#F6F5F1] [font-size:14px]">
       {/* On-screen app (hidden when printing) */}
       <div className="no-print">
         <div className="pt-14">
