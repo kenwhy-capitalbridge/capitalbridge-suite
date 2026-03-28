@@ -25,6 +25,7 @@ import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictAct
 import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
+import { LOGIN_APP_URL } from "@cb/shared/urls";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -525,6 +526,28 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             const showLionActive = lionEngine && advisoryInputs;
             return (
               <>
+      {!canUseStressModel && (
+        <div
+          className="fixed inset-0 z-[10050] flex flex-col items-center justify-start pt-[max(5.5rem,env(safe-area-inset-top,0px)+4.5rem)] sm:pt-28 px-3 sm:px-6 pointer-events-none"
+          aria-live="polite"
+        >
+          <div className="pointer-events-auto w-full max-w-md rounded-lg border-2 border-[#C6A24D] bg-[#001a11]/95 px-4 py-3.5 shadow-[0_12px_48px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#C6A24D] mb-1.5">Trial plan</p>
+            <h2 className="text-[0.95rem] sm:text-base font-bold text-[#FFCC6A] mb-2 leading-snug">
+              Capital Stress Model is not available on trial
+            </h2>
+            <p className="text-[11px] sm:text-xs leading-relaxed text-[#F6F5F1]/88 mb-3">
+              You can scroll and read how the engine is laid out, but inputs, simulation runs, and exports stay locked. Upgrade to a paid plan to use this model fully.
+            </p>
+            <a
+              href={`${LOGIN_APP_URL.replace(/\/+$/, "")}/pricing`}
+              className="flex w-full items-center justify-center rounded border border-[#C6A24D] bg-[#C6A24D]/12 py-2.5 text-[10px] font-bold uppercase tracking-wide text-[#FFCC6A] hover:bg-[#C6A24D]/22 transition-colors"
+            >
+              View paid plans
+            </a>
+          </div>
+        </div>
+      )}
       <div
         id="screen-content"
         style={{ opacity: canUseStressModel ? 1 : 0.55, pointerEvents: canUseStressModel ? "auto" : "none" }}
@@ -631,12 +654,12 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               
               {/* CURRENCY */}
               <div className="w-full overflow-x-hidden pb-2 no-print">
-                <div className="flex flex-nowrap gap-1.5 sm:gap-2 w-full">
+                <div className="flex flex-nowrap gap-1 sm:gap-2 w-full items-stretch">
                   {CURRENCIES.map((c, idx) => (
                     <button
                       key={c.code}
                       onClick={() => setCurrencyIndex(idx)}
-                      className={`flex-1 min-w-0 h-7 flex items-center justify-center py-1 text-[9px] sm:text-[11px] md:text-xs font-bold rounded-[6px] sm:rounded-[8px] border transition-all uppercase tracking-tight whitespace-nowrap ${
+                      className={`flex-1 min-w-0 min-h-[1.5rem] sm:min-h-0 h-6 sm:h-7 flex items-center justify-center py-0.5 px-0.5 sm:py-1 sm:px-1 text-[7px] sm:text-[11px] md:text-xs font-bold rounded-[5px] sm:rounded-[8px] border transition-all uppercase tracking-tight whitespace-nowrap leading-none ${
                         currencyIndex === idx
                         ? 'bg-[#FDC366] text-[#002B1B] border-[#FDC366]'
                         : 'bg-[#002B1B]/60 text-[#C6A24D]/60 border-[#C6A24D]/20 hover:border-[#C6A24D]/60'
@@ -1798,12 +1821,6 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               </button>
             </div>
           )}
-          {!canUseStressModel && (
-            <div className="mt-4 rounded-sm border border-[#C6A24D]/40 bg-[#0D3A1D]/70 p-3 text-xs text-[#FFCC6A]">
-              Trial plan: Capital Stress model is view-only. Upgrade to Monthly or above to run stress scenarios.
-            </div>
-          )}
-
             </div>
           )}
 

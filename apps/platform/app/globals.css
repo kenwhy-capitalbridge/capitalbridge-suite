@@ -342,6 +342,7 @@ a {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  align-self: stretch;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   overflow: hidden;
 }
@@ -464,10 +465,12 @@ a {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  white-space: normal;
-  line-height: 1.28;
-  word-break: break-word;
-  hyphens: auto;
+  white-space: nowrap;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+  hyphens: manual;
 }
 
 .cb-btn {
@@ -544,6 +547,8 @@ a {
   }
   .cb-modules {
     display: flex;
+    flex-direction: row;
+    align-items: stretch;
     grid-template-columns: unset;
     gap: 1rem;
     overflow-x: auto;
@@ -560,6 +565,7 @@ a {
     flex: 0 0 82%;
     min-width: 82%;
     max-width: 82%;
+    min-height: min(78vh, 620px);
     scroll-snap-align: center;
     scroll-snap-stop: always;
   }
@@ -600,6 +606,20 @@ a {
     align-items: center;
     justify-content: center;
     text-align: center;
+  }
+
+  /* Launch model CTAs: stay on one line on narrow phones */
+  .cb-module-buttons .cb-btn,
+  .cb-module-buttons a.cb-btn,
+  .cb-module-buttons button.cb-btn {
+    padding: 0.38rem 0.28rem;
+    font-size: clamp(0.45rem, 1.85vw + 0.28rem, 0.62rem);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    line-height: 1.15;
+    min-height: 2.35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

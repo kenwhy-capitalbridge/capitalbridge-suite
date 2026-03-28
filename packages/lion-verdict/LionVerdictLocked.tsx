@@ -10,6 +10,15 @@ import {
 } from "./lionVerdictPanelStyles";
 import { LionVerdictScoreLine, LionVerdictStatusBadge } from "./LionVerdictStatusBadge";
 
+/** Trial paywall — same bullets in all four model apps. */
+const TRIAL_FULL_REPORT_BULLETS: readonly string[] = [
+  "Full diagnosis of your current position and sustainability",
+  "How long your capital is expected to last under current conditions",
+  "The exact gap between where you are and where you need to be",
+  "Clear, prioritised actions to stabilise and improve your position",
+  "Scenario analysis showing what happens if nothing changes",
+];
+
 type LionVerdictLockedProps = {
   className?: string;
   tierLabel?: string;
@@ -18,8 +27,6 @@ type LionVerdictLockedProps = {
   /** Defaults to login app `/pricing` (subscribe / upgrade). */
   unlockHref?: string;
   headline?: string;
-  teaserGuidance?: string[];
-  hiddenGuidanceCount?: number;
 };
 
 const LD = "\u201C";
@@ -36,16 +43,8 @@ export function LionVerdictLocked({
   score,
   unlockHref,
   headline,
-  teaserGuidance,
-  hiddenGuidanceCount = 2,
 }: LionVerdictLockedProps) {
   const href = unlockHref ?? defaultUnlockHref();
-  const guidance = (teaserGuidance ?? []).filter(Boolean).slice(0, 2);
-  const fallbackGuidance = [
-    "A clear timeline: when funds may run low",
-    "Simple actions to reduce the risk of running out",
-  ];
-  const renderedGuidance = guidance.length > 0 ? guidance : fallbackGuidance;
   const displayHeadline = headline || "Unlock your full Lion's Verdict";
 
   return (
@@ -61,7 +60,7 @@ export function LionVerdictLocked({
         </div>
       </div>
 
-      <blockquote className="m-0 border-none p-0">
+      <blockquote className="m-0 mb-5 border-none p-0 sm:mb-6">
         <p className={LION_VERDICT_HEADLINE}>
           {LD}
           {displayHeadline}
@@ -69,42 +68,44 @@ export function LionVerdictLocked({
         </p>
       </blockquote>
 
-      <p className="text-sm leading-relaxed text-white/82">
+      <p className="mb-4 text-sm leading-relaxed text-white/82 sm:mb-5">
         Plain-language guidance on whether your money can last — without guesswork or jargon.
       </p>
-      <p className="text-sm leading-relaxed text-white/82">
+      <p className="mb-7 text-sm leading-relaxed text-white/82 sm:mb-8">
         On a trial, we show you the direction of travel only. The full picture — how long your savings may last, how big
         the gap is in your currency, and practical next steps — unlocks with membership.
       </p>
-      <div className="rounded-xl border border-[#FFCC6A]/30 bg-gradient-to-br from-black/30 via-[#00160f]/80 to-black/50 p-4 text-[13px] leading-relaxed text-white/72 tracking-wide">
+      <div className="mb-9 rounded-xl border border-[#FFCC6A]/30 bg-gradient-to-br from-black/30 via-[#00160f]/80 to-black/50 p-4 text-[13px] leading-relaxed text-white/72 tracking-wide sm:mb-10 sm:p-5">
         <div className="flex items-center gap-2 text-[#FFCC6A]">
           <span aria-hidden>🔒</span>
           <span className="font-serif text-[10px] font-semibold uppercase tracking-[0.22em]">Inside the full report</span>
         </div>
-        <ul className="mt-3 list-none space-y-1.5 pl-0">
-          {renderedGuidance.map((line) => (
+        <ul className="mt-4 list-none space-y-2 pl-0 sm:mt-4 sm:space-y-2.5">
+          {TRIAL_FULL_REPORT_BULLETS.map((line) => (
             <li key={line} className="flex gap-2">
-              <span className="text-[#FFCC6A]" aria-hidden>
+              <span className="shrink-0 text-[#FFCC6A]" aria-hidden>
                 •
               </span>
               <span>{line}</span>
             </li>
           ))}
-          {hiddenGuidanceCount > 0 ? (
-            <li className="text-white/55">
-              • +{hiddenGuidanceCount} more detailed action line{hiddenGuidanceCount > 1 ? "s" : ""} hidden
-            </li>
-          ) : null}
+          <li className="mt-3 border-t border-[#FFCC6A]/15 pt-3 text-[12px] text-[#FFCC6A]/90 sm:mt-4 sm:pt-4">
+            + Full diagnosis, projections, and action plan hidden
+          </li>
         </ul>
       </div>
       <a
         href={href}
         rel="noopener noreferrer"
-        className="block w-full rounded-full bg-[#FFCC6A] px-6 py-3 text-center text-sm font-semibold uppercase tracking-widest text-[#0D3A1D] shadow-[0_10px_30px_rgba(255,204,106,0.4)]"
+        aria-label="See plans and unlock the full diagnosis"
+        className="mx-auto mb-7 block w-full max-w-[min(100%,20rem)] rounded-full bg-[#FFCC6A] px-5 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-[#0D3A1D] shadow-[0_10px_30px_rgba(255,204,106,0.4)] sm:mb-8 sm:max-w-none sm:px-6 sm:text-sm sm:tracking-widest"
       >
-        See plans and unlock the full diagnosis
+        <span className="sm:hidden">See plans to unlock</span>
+        <span className="hidden sm:inline">See plans and unlock the full diagnosis</span>
       </a>
-      <p className="text-xs leading-relaxed text-white/60">This is educational planning — not a promise of investment returns.</p>
+      <p className="mb-3 text-xs leading-relaxed text-white/60 sm:mb-4">
+        This is educational planning — not a promise of investment returns.
+      </p>
       <p className="text-[10px] uppercase tracking-[0.28em] text-white/70">Good decisions start with a clear picture.</p>
     </div>
   );
