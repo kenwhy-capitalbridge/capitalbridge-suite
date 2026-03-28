@@ -22,8 +22,8 @@ const TOP_RANGE_HI = 83;
 const LEFT_RANGE_LO = 3;
 const LEFT_RANGE_HI = 97;
 
-const WIDTH_PX_MIN = 112;
-const WIDTH_PX_MAX = 218;
+const WIDTH_PX_MIN = 168;
+const WIDTH_PX_MAX = 310;
 const OPACITY_MIN = 0.034;
 const OPACITY_MAX = 0.056;
 
@@ -41,7 +41,7 @@ function pct(n: number): string {
  */
 function separationThresholdPx(wa: number, wb: number): number {
   const avg = (wa + wb) / 2;
-  return 11 + avg / 26;
+  return 13 + avg / 21;
 }
 
 function farEnough(a: MarkSpec, b: MarkSpec): boolean {
@@ -51,7 +51,7 @@ function farEnough(a: MarkSpec, b: MarkSpec): boolean {
 }
 
 function tryOneMark(existing: MarkSpec[]): MarkSpec | null {
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 90; i++) {
     const m: MarkSpec = {
       leftPct: randomBetween(LEFT_RANGE_LO, LEFT_RANGE_HI),
       topPct: randomBetween(TOP_RANGE_LO, TOP_RANGE_HI),
@@ -67,17 +67,17 @@ function tryOneMark(existing: MarkSpec[]): MarkSpec | null {
 /** Sparse fallback if random placement fails (should be rare). */
 function fallbackMarks(): MarkSpec[] {
   return [
-    { leftPct: 9, topPct: 16, widthPx: 155, rotateDeg: -12, opacity: 0.042 },
-    { leftPct: 46, topPct: 36, widthPx: 138, rotateDeg: 9, opacity: 0.04 },
-    { leftPct: 91, topPct: 19, widthPx: 162, rotateDeg: 14, opacity: 0.044 },
-    { leftPct: 26, topPct: 56, widthPx: 148, rotateDeg: -17, opacity: 0.041 },
-    { leftPct: 74, topPct: 51, widthPx: 172, rotateDeg: -7, opacity: 0.043 },
-    { leftPct: 58, topPct: 76, widthPx: 142, rotateDeg: 19, opacity: 0.04 },
+    { leftPct: 9, topPct: 16, widthPx: 220, rotateDeg: -12, opacity: 0.042 },
+    { leftPct: 46, topPct: 36, widthPx: 198, rotateDeg: 9, opacity: 0.04 },
+    { leftPct: 91, topPct: 19, widthPx: 228, rotateDeg: 14, opacity: 0.044 },
+    { leftPct: 26, topPct: 56, widthPx: 205, rotateDeg: -17, opacity: 0.041 },
+    { leftPct: 74, topPct: 51, widthPx: 238, rotateDeg: -7, opacity: 0.043 },
+    { leftPct: 58, topPct: 76, widthPx: 200, rotateDeg: 19, opacity: 0.04 },
   ];
 }
 
 function generateLionWatermarkMarks(): MarkSpec[] {
-  for (let attempt = 0; attempt < 450; attempt++) {
+  for (let attempt = 0; attempt < 550; attempt++) {
     const marks: MarkSpec[] = [];
     let ok = true;
     for (let n = 0; n < MARK_COUNT; n++) {
