@@ -1,8 +1,21 @@
 Sample outputs for design / stakeholder review (not fixtures for automated tests).
 
-capital-health-report.pdf — 8-page Capital Health Client Advisory Report from the same pipeline as the app
-(legacy/CapitalGrowthReport + buildCalculatorResults). Regenerate after layout or copy changes:
+Regenerate all four PDFs (Puppeteer downloads Chromium on npm install):
+
+  npm run docs:sample-pdfs
+
+Individual generators:
 
   npm run docs:sample-pdf-capital-health
+  npx tsx apps/forever/scripts/render-sample-pdf-for-docs.ts
+  npx tsx apps/capitalstress/scripts/render-sample-pdf-for-docs.ts
+  npx tsx apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts
 
-Default scenario: withdrawal mode, RM 10k/mo target, RM 500k start, 10y horizon, balanced preset.
+Files:
+
+  capital-health-report.pdf — Capital Health (react-pdf + buildCalculatorResults)
+  forever-income-report.pdf — Forever Income (jsPDF, legacy/foreverPdfBuild)
+  capital-stress-report.pdf — Capital Stress print layout (PrintReport + Puppeteer)
+  income-engineering-report.pdf — Income Engineering print layout (PrintReportView + Puppeteer)
+
+Default scenarios are documented in each script (representative inputs for review).
