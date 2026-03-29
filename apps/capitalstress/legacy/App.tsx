@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import "./index.css";
 import { MonteCarloResult, StressSeverity, StressScenarioResult } from './types';
 import { runMonteCarlo, getSimulationCount, runStressScenarios, getDepletionBarOutput } from './services/mathUtils';
@@ -26,7 +26,6 @@ import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLoc
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
-import { LionWatermarkStateSync } from "@cb/ui";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -154,67 +153,6 @@ function getCapitalHealthStatus(
   if (tier === 'Strong' || tier === 'Very Strong')
     return depletionPill === 'Stable' && (fiTier === 'FORTIFIED' || fiTier === 'Highly Robust') ? 'Strong' : 'Stable';
   return 'Stable';
-}
-
-function capitalHealthStatusToWatermarkRiskNorm(status: CapitalHealthStatus): number {
-  switch (status) {
-    case 'Strong':
-      return 0.12;
-    case 'Stable':
-      return 0.32;
-    case 'Watchful':
-      return 0.52;
-    case 'Needs Attention':
-      return 0.78;
-    case 'Critical':
-      return 1;
-    default:
-      return 0.35;
-  }
-}
-
-function StressLionWatermarkSync({
-  mcResult,
-  depletionBarOutput,
-  investment,
-  withdrawal,
-  lowerPct,
-  upperPct,
-  effectiveInflation,
-  lionScore,
-}: {
-  mcResult: MonteCarloResult | null;
-  depletionBarOutput: DepletionBarOutput | null;
-  investment: number;
-  withdrawal: number;
-  lowerPct: number;
-  upperPct: number;
-  effectiveInflation: number;
-  lionScore: number;
-}) {
-  const capitalRiskNorm = useMemo(() => {
-    if (!mcResult || !depletionBarOutput) return 0.35;
-    const returnRange = upperPct - lowerPct;
-    const returnSens = Math.min(100, Math.max(0, (returnRange - 5) * 10));
-    const withdrawalSens = investment > 0 ? Math.min(100, (withdrawal / investment) * 500) : 0;
-    const inflationSens = Math.min(100, effectiveInflation * 25);
-    const volSens = Math.min(100, mcResult.maxDrawdownPctAvg * 2);
-    const drawdownSens = Math.min(100, mcResult.maxDrawdownPctAvg * 2.5);
-    const fragilityIndex = Math.round((returnSens + withdrawalSens + inflationSens + volSens + drawdownSens) / 5);
-    const fiTier = getFragilityIndexTier(fragilityIndex);
-    const healthStatus = getCapitalHealthStatus(mcResult.tier, fiTier, depletionBarOutput.pillLabel);
-    return capitalHealthStatusToWatermarkRiskNorm(healthStatus);
-  }, [
-    mcResult,
-    depletionBarOutput,
-    investment,
-    withdrawal,
-    lowerPct,
-    upperPct,
-    effectiveInflation,
-  ]);
-
-  return <LionWatermarkStateSync capitalRiskNorm={capitalRiskNorm} lionScore={lionScore} />;
 }
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -589,16 +527,6 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             const showLionActive = lionEngine && advisoryInputs;
             return (
               <>
-            <StressLionWatermarkSync
-              mcResult={mcResult}
-              depletionBarOutput={depletionBarOutput}
-              investment={investment}
-              withdrawal={withdrawal}
-              lowerPct={lowerPct}
-              upperPct={upperPct}
-              effectiveInflation={effectiveInflation}
-              lionScore={lionScore}
-            />
       {!canUseStressModel && (
         <div
           className="fixed inset-0 z-[10050] flex flex-col items-center justify-start pt-[max(5.5rem,env(safe-area-inset-top,0px)+4.5rem)] sm:pt-28 px-3 sm:px-6 pointer-events-none"

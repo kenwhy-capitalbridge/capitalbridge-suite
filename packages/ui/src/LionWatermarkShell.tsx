@@ -2,18 +2,15 @@
 
 import type { ReactNode } from "react";
 import { LionWatermarkBackdrop } from "./LionWatermarkBackdrop";
-import { LionWatermarkDynamicsProvider } from "./lionWatermarkDynamics";
 
 /**
- * Client wrapper: monorepo-root layouts use this so {@link LionWatermarkBackdrop} shares dynamics context with model apps.
+ * Client wrapper for model layouts: fixed watermark behind main content (z-10 shell).
  */
 export function LionWatermarkShell({ children }: { children: ReactNode }) {
   return (
-    <LionWatermarkDynamicsProvider>
-      <div className="relative min-h-screen">
-        <LionWatermarkBackdrop />
-        <div className="relative z-10">{children}</div>
-      </div>
-    </LionWatermarkDynamicsProvider>
+    <div className="relative min-h-screen">
+      <LionWatermarkBackdrop />
+      <div className="relative z-10">{children}</div>
+    </div>
   );
 }

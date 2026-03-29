@@ -38,7 +38,6 @@ import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLio
 import { buildForeverStrategicWealthPdf } from "./foreverPdfBuild";
 import { loadForeverGreenBrandLogosForPdf } from "./foreverPdfLogos";
 import "./index.css";
-import { LionWatermarkStateSync } from "@cb/ui";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
 
@@ -379,26 +378,8 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
     return { label: 'STRATEGY SECURED', bgColor: 'bg-emerald-900/40', textColor: 'text-emerald-400', borderColor: 'border-emerald-500/30', icon: <ShieldCheck className="w-3.5 h-3.5" /> };
   }, [results.isSustainable, results.progressPercent]);
 
-  const foreverWatermarkRiskNorm = useMemo(() => {
-    switch (foreverLionTier) {
-      case "STRONG":
-        return 0.12;
-      case "STABLE":
-        return 0.3;
-      case "FRAGILE":
-        return 0.52;
-      case "AT_RISK":
-        return 0.78;
-      case "NOT_SUSTAINABLE":
-        return 0.98;
-      default:
-        return 0.35;
-    }
-  }, [foreverLionTier]);
-
   return (
     <div className="cb-body min-h-screen p-3 sm:p-5 lg:p-10 flex flex-col items-center">
-      <LionWatermarkStateSync capitalRiskNorm={foreverWatermarkRiskNorm} lionScore={foreverLionScore} />
       <main className="w-full max-w-[900px] bg-[#0D3A1D] rounded-3xl border-2 border-[#FFCC6A] shadow-[0_0_50px_rgba(255,204,106,0.1)] overflow-hidden">
         <div className="flex flex-col">
           <div className="p-5 sm:p-7 md:p-10 lg:p-12 bg-black/10 border-b border-[#FFCC6A]/20">

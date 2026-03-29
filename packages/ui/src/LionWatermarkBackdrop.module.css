@@ -8,6 +8,25 @@
   z-index: 0;
   overflow: hidden;
   top: calc(48px + 1px + env(safe-area-inset-top, 0px));
+  /* Subtle vertical fade so texture whispers at top/bottom — no hard band */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 10%,
+    black 22%,
+    black 78%,
+    rgba(0, 0, 0, 0.35) 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 10%,
+    black 22%,
+    black 78%,
+    rgba(0, 0, 0, 0.35) 90%,
+    transparent 100%
+  );
 }
 
 @media (min-width: 641px) {
@@ -23,7 +42,7 @@
 }
 
 .markFloat {
-  animation: wm-float var(--wm-float-dur, 11s) ease-in-out infinite;
+  animation: wm-float-y var(--wm-float-dur, 65s) ease-in-out infinite;
   animation-delay: var(--wm-float-delay, 0s);
   will-change: transform;
 }
@@ -34,16 +53,13 @@
   }
 }
 
-@keyframes wm-float {
+@keyframes wm-float-y {
   0%,
   100% {
-    transform: translate(0, 0);
+    transform: translateY(0);
   }
   50% {
-    transform: translate(
-      calc(-1 * var(--wm-drift-x, 0.35vw)),
-      calc(-1 * var(--wm-drift-y, 0.3vh))
-    );
+    transform: translateY(-6px);
   }
 }
 
@@ -52,6 +68,5 @@
   height: auto;
   max-width: none;
   user-select: none;
-  /* Gold on #0d3a1d: low alpha alone is invisible; soft-light reads as a hint without blowing out cards */
   mix-blend-mode: soft-light;
 }

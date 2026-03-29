@@ -12,10 +12,3 @@ export {
 } from "./brandPaths";
 export { LionWatermarkBackdrop } from "./LionWatermarkBackdrop";
 export { LionWatermarkShell } from "./LionWatermarkShell";
-export {
-  LionWatermarkDynamicsProvider,
-  LionWatermarkStateSync,
-  useLionWatermarkDynamics,
-  useSetLionWatermarkDynamics,
-  type LionWatermarkDynamics,
-} from "./lionWatermarkDynamics";

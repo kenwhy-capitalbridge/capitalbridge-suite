@@ -1,195 +1,239 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { BRAND_LIONHEAD_GOLD } from "./brandPaths";
-import { useLionWatermarkDynamics } from "./lionWatermarkDynamics";
 import styles from "./LionWatermarkBackdrop.module.css";
 
-const MARK_GRID = 4;
-const LEFT_RANGE_LO = 3;
-const LEFT_RANGE_HI = 97;
-const TOP_RANGE_LO = 7;
-const TOP_RANGE_HI = 83;
+const GRID = 4;
+const LEFT_LO = 3;
+const LEFT_HI = 97;
+const TOP_LO = 7;
+const TOP_HI = 83;
+const OFFSET_MAX = 4;
+const MIN_DIST_PCT = 20;
+const MIN_DIST_RELAXED = 14;
 
-/** Fill order: inside-out for even coverage as density increases. */
-const CELL_FILL_PRIORITY: readonly number[] = [
-  5, 6, 9, 10, 1, 2, 4, 7, 8, 11, 13, 14, 0, 3, 12, 15,
-];
+type SizeTier = "L" | "M" | "S";
 
-/** Row-major index → structural layer (depth + glow tier). */
-function layerForCell(idx: number): "A" | "B" | "C" {
-  const row = Math.floor(idx / MARK_GRID);
-  if (row <= 1) return "A";
-  if (row === 2) return "B";
-  return "C";
-}
-
-function cellCenter(idx: number): { leftPct: number; topPct: number } {
-  const col = idx % MARK_GRID;
-  const row = Math.floor(idx / MARK_GRID);
-  const left = LEFT_RANGE_LO + ((col + 0.5) / MARK_GRID) * (LEFT_RANGE_HI - LEFT_RANGE_LO);
-  const top = TOP_RANGE_LO + ((row + 0.5) / MARK_GRID) * (TOP_RANGE_HI - TOP_RANGE_LO);
-  return { leftPct: left, topPct: top };
-}
+type LionMarkSpec = {
+  leftPct: number;
+  topPct: number;
+  widthPx: number;
+  opacity: number;
+  blurPx: number;
+  flip: number;
+  floatDurSec: number;
+  floatDelaySec: number;
+};
 
 function pct(n: number): string {
   return `${n.toFixed(2)}%`;
 }
 
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
+function randomBetween(a: number, b: number): number {
+  return a + Math.random() * (b - a);
 }
 
-/** Deterministic structural rotation per anchor (static; not score-driven). */
-function baseRotateDeg(idx: number): number {
-  const x = (idx * 17 + idx * idx * 3) % 43;
-  return x - 21;
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
 }
 
-/** ±0.5° max, deterministic per index. */
-function scoreVarianceDeg(idx: number): number {
-  const v = ((idx * 13 + 7) % 21) - 10;
-  return (v / 10) * 0.5;
+function cellBase(idx: number): { left: number; top: number } {
+  const col = idx % GRID;
+  const row = Math.floor(idx / GRID);
+  return {
+    left: LEFT_LO + ((col + 0.5) / GRID) * (LEFT_HI - LEFT_LO),
+    top: TOP_LO + ((row + 0.5) / GRID) * (TOP_HI - TOP_LO),
+  };
 }
 
-function zForLayer(layer: "A" | "B" | "C"): number {
-  if (layer === "A") return 1;
-  if (layer === "B") return 2;
-  return 3;
+function distPct(
+  a: { left: number; top: number },
+  b: { left: number; top: number },
+): number {
+  return Math.hypot(a.left - b.left, a.top - b.top);
 }
 
-const WIDTH_PX_MIN = 150;
-const WIDTH_PX_MAX = 260;
-const OPACITY_RISK_MIN = 0.02;
-const OPACITY_RISK_MAX = 0.095;
-const GLOBAL_OPACITY_CAP = 0.12;
+/** Exactly one L, rest M/S per count (5–7). */
+function assignTiers(n: number, largeSlot: number): SizeTier[] {
+  const tiers: SizeTier[] = new Array(n).fill("S") as SizeTier[];
+  tiers[largeSlot] = "L";
+  const rem = n - 1;
+  const nMed = rem >= 5 ? 3 : 2;
+  const slots = shuffle(
+    [...Array(n)].map((_, i) => i).filter((i) => i !== largeSlot),
+  );
+  for (let k = 0; k < nMed; k++) tiers[slots[k]!] = "M";
+  return tiers;
+}
 
-const HERO_CELL_INDEX = 10;
-const HERO_RISK_THRESHOLD = 0.45;
-const HERO_WIDTH_MUL = 1.22;
+function edgeAffinity(left: number, top: number): number {
+  return Math.min(left - LEFT_LO, LEFT_HI - left, top - TOP_LO, TOP_HI - top);
+}
 
-const SCORE_TRANSITION = "transform 1s ease-in-out, opacity 1s ease-in-out, filter 1s ease-in-out";
+function nudgeLargeOffEdge(left: number, top: number): { left: number; top: number } {
+  const candidates: ("left" | "right" | "top" | "bottom")[] = [];
+  if (left < 40) candidates.push("left");
+  if (left > 60) candidates.push("right");
+  if (top < 38) candidates.push("top");
+  if (top > 62) candidates.push("bottom");
+  const pick =
+    candidates.length > 0
+      ? candidates[Math.floor(Math.random() * candidates.length)]!
+      : Math.random() < 0.5
+        ? "left"
+        : "right";
+  const off = randomBetween(0.3, 0.5);
+  if (pick === "left") return { left: LEFT_LO - off * 10, top };
+  if (pick === "right") return { left: LEFT_HI + off * 10, top };
+  if (pick === "top") return { left, top: TOP_LO - off * 8 };
+  return { left, top: TOP_HI + off * 8 };
+}
 
-type ActiveMark = {
-  cellIndex: number;
-  leftPct: number;
-  topPct: number;
-  layer: "A" | "B" | "C";
-  widthPx: number;
-  baseRot: number;
-  flip: boolean;
-};
+function widthForTier(t: SizeTier): number {
+  if (t === "L") return Math.round(randomBetween(280, 340));
+  if (t === "M") return Math.round(randomBetween(160, 220));
+  return Math.round(randomBetween(100, 140));
+}
 
-function buildActiveMarks(count: number, riskNorm: number): ActiveMark[] {
-  const n = Math.min(16, Math.max(4, count));
-  const marks: ActiveMark[] = [];
-  for (let i = 0; i < n; i++) {
-    const cellIndex = CELL_FILL_PRIORITY[i]!;
-    const { leftPct, topPct } = cellCenter(cellIndex);
-    const layer = layerForCell(cellIndex);
-    const baseW = Math.round(lerp(WIDTH_PX_MIN, WIDTH_PX_MAX, riskNorm));
-    const hero = riskNorm >= HERO_RISK_THRESHOLD && cellIndex === HERO_CELL_INDEX;
-    const widthPx = Math.round(hero ? baseW * HERO_WIDTH_MUL : baseW);
-    marks.push({
-      cellIndex,
-      leftPct,
-      topPct,
-      layer,
-      widthPx,
-      baseRot: baseRotateDeg(cellIndex),
-      flip: leftPct >= 50,
+function opacityForTier(t: SizeTier): number {
+  let o: number;
+  if (t === "L") o = randomBetween(0.04, 0.055);
+  else if (t === "M") o = randomBetween(0.028, 0.045);
+  else o = randomBetween(0.02, 0.03);
+  return Math.min(0.06, o);
+}
+
+function blurForTier(t: SizeTier): number {
+  if (t === "L") return Math.random() < 0.78 ? randomBetween(2, 3.8) : 0;
+  if (t === "M") return Math.random() < 0.32 ? randomBetween(2, 2.8) : 0;
+  return Math.random() < 0.12 ? randomBetween(1.5, 2.2) : 0;
+}
+
+function tryPickPositions(count: number, minD: number): { idx: number; left: number; top: number }[] {
+  const order = shuffle([...Array(16)].map((_, i) => i));
+  const picked: { idx: number; left: number; top: number }[] = [];
+  for (const idx of order) {
+    if (picked.length >= count) break;
+    const base = cellBase(idx);
+    const left = Math.min(LEFT_HI, Math.max(LEFT_LO, base.left + randomBetween(-OFFSET_MAX, OFFSET_MAX)));
+    const top = Math.min(TOP_HI, Math.max(TOP_LO, base.top + randomBetween(-OFFSET_MAX, OFFSET_MAX)));
+    const candidate = { idx, left, top };
+    if (picked.every((p) => distPct(p, candidate) >= minD)) picked.push(candidate);
+  }
+  return picked;
+}
+
+function pickSpreadPositions(count: number): { idx: number; left: number; top: number }[] {
+  for (const minD of [MIN_DIST_PCT, MIN_DIST_RELAXED]) {
+    for (let t = 0; t < 55; t++) {
+      const picked = tryPickPositions(count, minD);
+      if (picked.length >= count) return picked.slice(0, count);
+    }
+  }
+  return [];
+}
+
+function generateLionMarks(): LionMarkSpec[] {
+  const count = 5 + Math.floor(Math.random() * 3);
+  let picked = pickSpreadPositions(count);
+
+  if (picked.length < 5) {
+    const fallbackIdx = [5, 10, 0, 15, 3, 9, 12];
+    picked = fallbackIdx.slice(0, count).map((idx) => {
+      const b = cellBase(idx);
+      return { idx, left: b.left, top: b.top };
     });
   }
-  return marks;
-}
+  if (picked.length > count) picked = picked.slice(0, count);
 
-function glowForLayer(
-  score01: number,
-  layer: "A" | "B" | "C",
-): { blurPx: number; alpha: number } {
-  const blur = lerp(0, 6, score01);
-  const alphaBase = lerp(0, 0.12, score01);
-  const layerMul = layer === "C" ? 1 : layer === "B" ? 0.85 : 0.55;
-  return { blurPx: blur, alpha: alphaBase * layerMul };
+  let largeSlot = 0;
+  let best = Infinity;
+  for (let i = 0; i < picked.length; i++) {
+    const e = edgeAffinity(picked[i]!.left, picked[i]!.top);
+    if (e < best) {
+      best = e;
+      largeSlot = i;
+    }
+  }
+
+  const tiers = assignTiers(picked.length, largeSlot);
+
+  return picked.map((p, i) => {
+    const tier = tiers[i]!;
+    let { left, top } = p;
+    if (tier === "L") {
+      const nudged = nudgeLargeOffEdge(p.left, p.top);
+      left = nudged.left;
+      top = nudged.top;
+    }
+
+    const widthPx = widthForTier(tier);
+    const opacity = opacityForTier(tier);
+    const blurPx = blurForTier(tier);
+    const flip = left >= 50 ? -1 : 1;
+
+    return {
+      leftPct: left,
+      topPct: top,
+      widthPx,
+      opacity,
+      blurPx,
+      flip,
+      floatDurSec: randomBetween(50, 80),
+      floatDelaySec: randomBetween(0, 14),
+    };
+  });
 }
 
 /**
- * Gold lion watermark: 4×4 anchor grid, layers A/B/C, primary motion/opacity from capital risk,
- * ultra-subtle score-driven rotation, glow, scale, and opacity micro-shift.
+ * Static luxury-style gold lion texture (LV-like monogram): fixed count, soft grid + jitter,
+ * size hierarchy, ultra-low opacity, optional slow vertical drift. Regenerates on route change only.
  */
 export function LionWatermarkBackdrop() {
   const pathname = usePathname();
-  const { capitalRiskNorm, lionScore } = useLionWatermarkDynamics();
+  const [marks, setMarks] = useState<LionMarkSpec[]>([]);
 
-  const riskNorm = capitalRiskNorm;
-  const score01 = lionScore / 100;
-
-  const activeMarks = useMemo(() => {
-    const densityCount = Math.round(4 + riskNorm * 12);
-    return buildActiveMarks(densityCount, riskNorm);
-  }, [riskNorm]);
-
-  const scoreRotBase = lerp(-3, 3, score01);
-  const scoreScale = lerp(0.98, 1.02, score01);
-  const blurReductionPx = lerp(0.55, 0, riskNorm);
+  useEffect(() => {
+    setMarks(generateLionMarks());
+  }, [pathname]);
 
   return (
     <div className={`${styles.root} print:hidden`} aria-hidden>
-      {activeMarks.map((m) => {
-        const v = scoreVarianceDeg(m.cellIndex);
-        const scoreDelta = Math.min(3, Math.max(-3, scoreRotBase + v));
-        const totalRot = m.baseRot + scoreDelta;
-        const flip = m.flip ? -1 : 1;
-
-        const opacityRisk = lerp(OPACITY_RISK_MIN, OPACITY_RISK_MAX, riskNorm);
-        const opacityScoreFactor = lerp(0.95, 1.05, score01);
-        const opacity = Math.min(GLOBAL_OPACITY_CAP, opacityRisk * opacityScoreFactor);
-
-        const { blurPx, alpha } = glowForLayer(score01, m.layer);
+      {marks.map((m, i) => {
         const filterParts: string[] = [];
-        if (blurPx > 0.05 && alpha > 0.002) {
-          filterParts.push(
-            `drop-shadow(0 0 ${blurPx.toFixed(2)}px rgba(255,204,106,${alpha.toFixed(4)}))`,
-          );
-        }
-        if (blurReductionPx > 0.02) {
-          filterParts.push(`blur(${blurReductionPx.toFixed(3)}px)`);
-        }
-        const combinedFilter = filterParts.length > 0 ? filterParts.join(" ") : undefined;
+        if (m.blurPx > 0.05) filterParts.push(`blur(${m.blurPx.toFixed(2)}px)`);
+        const imgFilter = filterParts.length > 0 ? filterParts.join(" ") : undefined;
 
         const imgStyle: CSSProperties = {
           width: "100%",
           height: "auto",
-          opacity,
-          transform: `rotate(${totalRot}deg) scaleX(${flip}) scale(${scoreScale})`,
+          opacity: m.opacity,
+          transform: `scaleX(${m.flip})`,
           transformOrigin: "center center",
-          ...(combinedFilter ? { filter: combinedFilter } : {}),
-          transition: SCORE_TRANSITION,
+          ...(imgFilter ? { filter: imgFilter } : {}),
         };
 
-        const driftX = lerp(0.15, 0.65, riskNorm);
-        const driftY = lerp(0.12, 0.55, riskNorm);
-        const phase = (m.cellIndex % 4) * 0.21;
-        const durSec = lerp(14, 7.5, riskNorm);
-
         const wrapStyle = {
-          "--wm-drift-x": `${driftX}vw`,
-          "--wm-drift-y": `${driftY}vh`,
-          "--wm-float-delay": `${phase}s`,
-          "--wm-float-dur": `${durSec}s`,
+          "--wm-float-dur": `${m.floatDurSec}s`,
+          "--wm-float-delay": `${m.floatDelaySec}s`,
         } as CSSProperties;
 
         return (
           <div
-            key={`${pathname}-${m.cellIndex}`}
+            key={`${pathname}-lion-${i}`}
             className={styles.markWrap}
             style={{
               left: pct(m.leftPct),
               top: pct(m.topPct),
               width: m.widthPx,
-              zIndex: zForLayer(m.layer),
             }}
           >
             <div className={styles.markFloat} style={wrapStyle}>
