@@ -21,6 +21,24 @@
   border-bottom-color: rgba(255, 204, 106, 0.28);
 }
 
+/* Optional: smaller page title next to logo (e.g. Income Engineering). */
+.headerTitleCompact .titleDesk,
+.headerTitleCompact .titleDeskShort {
+  font-size: clamp(13px, 1.55vw, 17px);
+  letter-spacing: 0.08em;
+}
+
+.headerTitleCompact .titleDesk {
+  max-width: min(54vw, 17.5rem);
+}
+
+@media (max-width: 900px) {
+  .headerTitleCompact .titleDeskShort {
+    font-size: clamp(13px, 1.55vw, 17px);
+    max-width: min(52vw, 15rem);
+  }
+}
+
 .spacer {
   height: calc(52px + 1px + env(safe-area-inset-top));
   flex-shrink: 0;
@@ -70,6 +88,22 @@
   display: block;
 }
 
+.legacyLionMobileLink {
+  display: none;
+  align-items: center;
+  flex-shrink: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.legacyLionMobileImg {
+  height: clamp(20px, 5.2vw, 26px);
+  width: auto;
+  max-height: var(--cb-header-logo-h);
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
 
 .titleCenter {
   grid-column: 2;
@@ -145,16 +179,22 @@
     display: none;
   }
 
+  .legacyLionMobileLink {
+    display: flex;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
   .wrap {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    column-gap: 0.35rem;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    column-gap: 0.3rem;
     padding: 0.28rem 0.45rem;
     min-height: 48px;
     align-items: center;
   }
 
   .titleCenter {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 1;
     max-width: none;
     width: 100%;
@@ -174,12 +214,12 @@
   }
 
   .legacyBackSlot {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 1;
   }
 
   .legacyActionsSlot {
-    grid-column: 3;
+    grid-column: 4;
     grid-row: 1;
     justify-self: end;
   }
@@ -369,10 +409,27 @@
 
 .spineMobileTop {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.35rem 0.5rem;
+  gap: 0.3rem 0.4rem;
   min-height: 44px;
+}
+
+.spineMobileLionLink {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.spineMobileLion {
+  height: clamp(20px, 5.2vw, 26px);
+  width: auto;
+  max-height: var(--cb-header-logo-h);
+  object-fit: contain;
+  object-position: center;
+  display: block;
 }
 
 .spineMobileBackSlot {

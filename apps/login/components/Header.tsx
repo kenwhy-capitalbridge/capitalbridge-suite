@@ -60,9 +60,14 @@ function HeaderChrome({
             fetchPriority="high"
             decoding="async"
           />
-          <span className="cb-header-chrome-brand-mobile" aria-hidden>
-            Capital Bridge
-          </span>
+          <img
+            className="cb-header-chrome-lion-mobile shrink-0"
+            src="/brand/lionhead_Gold.svg"
+            alt=""
+            width={32}
+            height={32}
+            decoding="async"
+          />
         </a>
 
         {pricingStyleGrid ? (

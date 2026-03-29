@@ -35,7 +35,7 @@ import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLoc
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
-import { useModelMetricSpine } from "@cb/ui";
+import { ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -127,12 +127,6 @@ function mapStressStatusToTier(status?: string): Tier {
       return 'NOT_SUSTAINABLE';
   }
 }
-
-const PrinterIcon = () => (
-  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-  </svg>
-);
 
 const ChevronDownIcon = () => (
   <svg className="w-4 h-4 text-[#FFCC6A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1852,20 +1846,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           </div>
           )}
 
-          {/* FOOTER */}
-          <div className="flex w-full flex-col items-center px-4 py-14 text-center sm:py-16 lg:py-24">
-            <div className="mb-8 space-y-2">
-              <p className="text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-widest">Please save or print a copy for your records.</p>
-            </div>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="pf-chrome-gold-btn pf-chrome-gold-btn--report no-print"
-            >
-              <PrinterIcon />
-              Save or Print Report
-            </button>
-          </div>
+          <ModelReportDownloadFooter onDownload={handlePrint} />
 
         </section>
       </main>

@@ -292,8 +292,16 @@ export function ModelHeaderSaveRestore({
         </span>
       )}
       {trialLocked && (
-        <span style={{ fontSize: "0.5rem", color: "rgba(255,204,106,0.7)" }} title="Upgrade required">
-          Trial
+        <span
+          style={{
+            fontSize: "0.5rem",
+            fontWeight: 700,
+            color: "rgba(255,204,106,0.7)",
+            letterSpacing: "0.06em",
+          }}
+          title="Upgrade required"
+        >
+          TRIAL
         </span>
       )}
     </div>

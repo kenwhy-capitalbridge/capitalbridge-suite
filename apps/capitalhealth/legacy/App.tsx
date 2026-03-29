@@ -11,7 +11,7 @@ import {
   Tooltip,
   type TooltipContentProps,
 } from 'recharts';
-import { Printer } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import {
   CURRENCIES,
   PRESETS,
@@ -38,7 +38,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
-import { useModelMetricSpine } from '@cb/ui';
+import { ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
 
 /** Coloured rectangular risk badge: label only (e.g. Critical). Institutional, no tier numbers. */
 function RiskTierBadge({ tier, label }: { tier: number; label: string }) {
@@ -1547,33 +1547,29 @@ const CalculatorScreen = forwardRef<
           </div>
         </section>
 
-        <footer className="py-8 border-t border-[#0D3A1D] text-center text-xs text-[#F6F5F1]/80">
-          <p className="mb-2">
-            This model is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.
-          </p>
-          <p className="mb-4">Please save or print a copy for your records.</p>
-          {reportGenerating && (
-            <p className="mb-3 text-[#FFCC6A] font-medium" role="status">
-              Generating AI Financial Diagnostic...
-            </p>
-          )}
-          {reportReady && !reportGenerating && (
-            <p className="mb-3 text-[#55B685] font-medium" role="status">
-              AI-Generated Capital Diagnostic Ready
-            </p>
-          )}
-          <div className="mb-6 flex w-full justify-center px-4">
-            <button
-              type="button"
-              onClick={handlePrintOrSaveReport}
-              disabled={reportGenerating}
-              className="pf-chrome-gold-btn pf-chrome-gold-btn--report pf-chrome-gold-btn--report-sm-auto"
-            >
-              <Printer className="h-4 w-4 shrink-0" aria-hidden />
-              {reportGenerating ? "Generating…" : "Print or Save Report"}
-            </button>
-          </div>
-          </footer>
+        <ModelReportDownloadFooter
+          onDownload={handlePrintOrSaveReport}
+          disabled={reportGenerating}
+          buttonLabel={reportGenerating ? "Generating…" : undefined}
+          buttonLeading={
+            reportGenerating ? <Loader2 className="h-4 w-4 shrink-0 cb-ui-icon-spin" aria-hidden /> : undefined
+          }
+          buttonClassName="pf-chrome-gold-btn pf-chrome-gold-btn--report pf-chrome-gold-btn--report-sm-auto touch-manipulation disabled:opacity-60"
+          statusSlot={
+            <>
+              {reportGenerating ? (
+                <p className="text-[#FFCC6A] font-medium" role="status">
+                  Generating AI Financial Diagnostic...
+                </p>
+              ) : null}
+              {reportReady && !reportGenerating ? (
+                <p className="text-[#55B685] font-medium" role="status">
+                  AI-Generated Capital Diagnostic Ready
+                </p>
+              ) : null}
+            </>
+          }
+        />
       </main>
          </div>
     </TapToRevealProvider>

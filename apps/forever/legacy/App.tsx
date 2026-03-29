@@ -4,7 +4,6 @@
 import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import {
-  Download,
   Info,
   ShieldCheck,
   AlertTriangle,
@@ -37,6 +36,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import { buildForeverStrategicWealthPdf } from "./foreverPdfBuild";
 import { loadForeverGreenBrandLogosForPdf } from "./foreverPdfLogos";
+import { ModelReportDownloadFooter } from "@cb/ui";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -538,35 +538,6 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
               </div>
             </div>
 
-            <div className="relative z-10 mt-8 md:mt-12 lg:mt-14">
-              <div className="flex w-full justify-center px-4">
-                <button
-                  type="button"
-                  onClick={handleDownloadPDF}
-                  disabled={!results.isSustainable || isGenerating}
-                  className={
-                    results.isSustainable
-                      ? "pf-chrome-gold-btn pf-chrome-gold-btn--report"
-                      : "mx-auto flex min-h-[2.5rem] w-full max-w-[min(100%,28rem)] cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-bold text-gray-500 shadow-none"
-                  }
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 cb-ui-icon-spin" aria-hidden />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4 shrink-0" aria-hidden />
-                      Download Report
-                    </>
-                  )}
-                </button>
-              </div>
-              <p className="mt-3 text-center text-[10px] text-white font-medium italic px-4 leading-normal">
-                Please save or print a copy for your records.
-              </p>
-            </div>
           </div>
           <div className="mt-10 md:mt-14 lg:mt-16 px-6 md:px-10 pb-8 md:pb-12">
             <div className="mx-auto max-w-3xl">
@@ -590,6 +561,22 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
                 />
               </div>
             </div>
+          </div>
+
+          <div className="px-6 md:px-10">
+            <ModelReportDownloadFooter
+              onDownload={() => void handleDownloadPDF()}
+              disabled={!results.isSustainable || isGenerating}
+              buttonLabel={isGenerating ? "Generating…" : undefined}
+              buttonLeading={
+                isGenerating ? <Loader2 className="h-4 w-4 shrink-0 cb-ui-icon-spin" aria-hidden /> : undefined
+              }
+              buttonClassName={
+                results.isSustainable
+                  ? undefined
+                  : "mx-auto flex min-h-[2.5rem] w-full max-w-[min(100%,28rem)] cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-bold text-gray-500 shadow-none"
+              }
+            />
           </div>
         </div>
       </main>

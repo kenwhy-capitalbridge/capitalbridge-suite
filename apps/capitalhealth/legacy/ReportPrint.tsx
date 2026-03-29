@@ -291,7 +291,7 @@ export function ReportPrint({
         </div>
 
         <div className="disclaimer">
-          <div>This model is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.</div>
+          <div>This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.</div>
           <div style={{ marginTop: 6 }}>Please save or print a copy for your records.</div>
         </div>
       </section>

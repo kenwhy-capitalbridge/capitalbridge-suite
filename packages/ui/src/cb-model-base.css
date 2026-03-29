@@ -79,26 +79,21 @@
 }
 
 /**
- * Marketing home link: show gold wordmark on small viewports instead of the logo image.
- * Add class `cb-header-chrome-home` on the wrapping `<a>`; image uses `cb-header-chrome-logo`.
+ * Marketing home link: on small viewports hide wide logo, show lion mark (`lionhead_Gold.svg` in `public/brand/`).
+ * Add class `cb-header-chrome-home` on the wrapping `<a>`; full logo uses `cb-header-chrome-logo`.
  */
 .cb-header-chrome-home {
   min-width: 0;
 }
 
-.cb-header-chrome-brand-mobile {
+.cb-header-chrome-lion-mobile {
   display: none;
-  font-family: var(--cb-font-serif);
-  font-size: var(--cb-header-logo-h);
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: clamp(0.04em, 0.35vw, 0.1em);
-  text-transform: uppercase;
-  color: #ffcc6a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: min(42vw, 10.5rem);
+  height: var(--cb-header-logo-h);
+  width: auto;
+  max-height: 26px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  object-position: center;
 }
 
 /* Match model-app header: mobile spine / narrow chrome below 768px. */
@@ -107,7 +102,7 @@
     display: none;
   }
 
-  .cb-header-chrome-home .cb-header-chrome-brand-mobile {
+  .cb-header-chrome-home .cb-header-chrome-lion-mobile {
     display: block;
   }
 }

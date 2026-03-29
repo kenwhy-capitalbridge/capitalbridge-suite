@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { MARKETING_SITE_URL, platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
-import { BRAND_CAPITAL_BRIDGE_LOGO_GOLD } from "./brandPaths";
+import { BRAND_CAPITAL_BRIDGE_LOGO_GOLD, BRAND_LIONHEAD_GOLD } from "./brandPaths";
 import { useModelMetricSpine } from "./modelMetricSpineContext";
 import styles from "./ModelAppHeader.module.css";
 
@@ -21,6 +21,8 @@ export type ModelAppHeaderProps = {
   titleMobile?: string;
   backHref?: string;
   actions?: ReactNode;
+  /** Slightly smaller serif title next to logo (long labels like Income Engineering). */
+  compactTitle?: boolean;
 };
 
 function MetricBlockDesktop({
@@ -60,7 +62,7 @@ function MetricBlockMobile({
 /**
  * Fixed top bar: logo, model title, optional 3-slot metric spine (when provider is active), Back + actions.
  */
-export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }: ModelAppHeaderProps) {
+export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, compactTitle }: ModelAppHeaderProps) {
   const home = marketingHomeUrl();
   const back = backHref ?? platformHomeUrl();
   const short = titleMobile?.trim();
@@ -70,7 +72,7 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
   return (
     <>
       <header
-        className={`${styles.fixed} ${hasSpine ? styles.fixedWithSpine : ""}`}
+        className={`${styles.fixed} ${hasSpine ? styles.fixedWithSpine : ""} ${compactTitle ? styles.headerTitleCompact : ""}`}
         style={{
           position: "fixed",
           top: 0,
@@ -119,6 +121,16 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
 
             <div className={styles.spineMobile}>
               <div className={styles.spineMobileTop}>
+                <a href={home} className={styles.spineMobileLionLink} aria-label="Capital Bridge home">
+                  <img
+                    src={BRAND_LIONHEAD_GOLD}
+                    alt=""
+                    width={32}
+                    height={32}
+                    decoding="async"
+                    className={styles.spineMobileLion}
+                  />
+                </a>
                 <div className={styles.spineMobileBackSlot}>
                   <ModelAppHeaderBackButton href={back} />
                 </div>
@@ -146,6 +158,9 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
                 fetchPriority="high"
                 className={styles.logoImgLegacy}
               />
+            </a>
+            <a href={home} className={styles.legacyLionMobileLink} aria-label="Capital Bridge home">
+              <img src={BRAND_LIONHEAD_GOLD} alt="" width={32} height={32} decoding="async" className={styles.legacyLionMobileImg} />
             </a>
             <div className={styles.titleCenter}>
               <span className={`${styles.titleBase} ${styles.titleLegacyDesk}`}>{titleDesktop}</span>

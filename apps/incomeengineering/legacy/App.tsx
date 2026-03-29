@@ -4,7 +4,7 @@ import React, { useMemo, useRef, forwardRef, useImperativeHandle, useLayoutEffec
 import './index.css';
 import { CalculatorStoreProvider, useCalculatorStoreInternals } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
-import { useModelMetricSpine } from '@cb/ui';
+import { ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
 import { CurrencySelectorEmbedded } from './components/CurrencySelector';
 import { ExpensesInput } from './components/ExpensesInput';
 import { IncomeInputs } from './components/IncomeInputs';
@@ -12,9 +12,7 @@ import { AssetsUnlockPanel } from './components/AssetsUnlockPanel';
 import { assetUnlocksToLoans } from './lib/assetUnlockToLoans';
 import { InvestmentBucketsPanel } from './components/InvestmentBucketsPanel';
 import { WhatThisMeansBox } from './components/WhatThisMeansBox';
-import { FooterDisclaimer } from './components/FooterDisclaimer';
 import { PrintReportView } from './components/PrintReportView';
-import { Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-graph/lionsVerdict';
@@ -319,21 +317,7 @@ const AppInner = forwardRef<
             </div>
           </section>
 
-          <FooterDisclaimer />
-
-          <div className="mt-8 flex w-full flex-col items-center gap-4">
-            <p className="text-center text-sm font-semibold text-[#FFCC6A]">
-              Please save or print a copy for your records.
-            </p>
-            <button
-              type="button"
-              onClick={handlePrintReport}
-              className="pf-chrome-gold-btn pf-chrome-gold-btn--report touch-manipulation no-print"
-            >
-              <Printer className="h-4 w-4 shrink-0" aria-hidden />
-              Print or Save Report
-            </button>
-          </div>
+          <ModelReportDownloadFooter onDownload={() => void handlePrintReport()} />
         </div>
       </div>
 

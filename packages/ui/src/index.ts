@@ -18,3 +18,8 @@ export {
   type ModelMetricSpinePayload,
   type ModelMetricSpineSlot,
 } from "./modelMetricSpineContext";
+export {
+  ModelReportDownloadFooter,
+  MODEL_REPORT_DOWNLOAD_CTA_LABEL,
+  type ModelReportDownloadFooterProps,
+} from "./ModelReportDownloadFooter";

@@ -957,9 +957,22 @@ export function PrintReport(props: PrintReportProps) {
 
       {/* Final page: Disclosure only */}
       <div className="print-disclosure-page print-section">
-        <p style={{ fontSize: '11pt', color: PRINT_TEXT, textAlign: 'center', marginTop: '2em' }}>
-          Please save or print a copy for your records.
-        </p>
+        <div
+          style={{
+            borderTop: '1px solid rgba(255, 204, 106, 0.45)',
+            marginTop: '2em',
+            paddingTop: '1.25em',
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ fontSize: '10pt', fontWeight: 300, color: PRINT_TEXT, lineHeight: 1.5, margin: '0 auto', maxWidth: '36em' }}>
+            This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future
+            performance.
+          </p>
+          <p style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, marginTop: '1em' }}>
+            Please save or print a copy for your records.
+          </p>
+        </div>
       </div>
     </div>
   );

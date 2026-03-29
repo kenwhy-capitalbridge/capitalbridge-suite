@@ -54,6 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ModelAppHeader
                 titleDesktop="INCOME ENGINEERING"
                 titleMobile="INCOME ENGINE"
+                compactTitle
                 actions={
                   user ? (
                     <ModelHeaderSaveRestore
