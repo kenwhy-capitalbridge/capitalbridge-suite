@@ -184,7 +184,7 @@ function CapitalStressMetricSpineSync({
       depletionBarOutput != null ? (
         <span
           title="Method: Net Pressure (bar‑derived)"
-          className="inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-xs font-bold uppercase"
+          className="inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 font-bold uppercase"
           style={{
             backgroundColor: FRAGILITY_GAUGE_COLORS[depletionBarOutput.pillLabel],
             color: getPillTextColor(depletionBarOutput.pillLabel),

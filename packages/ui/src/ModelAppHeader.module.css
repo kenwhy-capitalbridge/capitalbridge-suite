@@ -10,6 +10,9 @@
   border-bottom: 1px solid rgba(255, 204, 106, 0.22);
   background-color: #0d3a1d;
   padding-top: env(safe-area-inset-top);
+  /* One rhythm for title, metric labels, metric values, and header chrome (matches --pf-chrome-font). */
+  --model-header-fs: var(--pf-chrome-font, 0.65rem);
+  --model-header-lh: 1.22;
 }
 
 .fixedWithSpine {
@@ -22,7 +25,7 @@
 }
 
 .spacerWithSpine {
-  height: calc(56px + 1px + env(safe-area-inset-top));
+  height: calc(60px + 1px + env(safe-area-inset-top));
 }
 
 @media (max-width: 767px) {
@@ -121,27 +124,32 @@
 .spineDesktop {
   display: none;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 56px;
+  min-height: 60px;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0.3rem 1rem 0.4rem;
+  padding: 0.35rem clamp(0.65rem, 1.8vw, 1.1rem) 0.4rem;
   box-sizing: border-box;
+  column-gap: clamp(0.5rem, 1.5vw, 1rem);
+  row-gap: 0.35rem;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.75fr) auto;
 }
 
 @media (min-width: 768px) {
   .spineDesktop {
-    display: flex;
+    display: grid;
+  }
+
+  .spineDesktop .actionsCluster {
+    justify-self: end;
+    align-self: center;
   }
 }
 
 .spineDesktopLeft {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: clamp(0.35rem, 1vw, 0.6rem);
   min-width: 0;
-  flex-shrink: 1;
 }
 
 .logoLink {
@@ -151,9 +159,9 @@
 }
 
 .logoImg {
-  height: clamp(16px, 2.2vw, 22px);
+  height: clamp(17px, 2.1vw, 22px);
   width: auto;
-  max-width: min(22vw, 110px);
+  max-width: min(20vw, 104px);
   object-fit: contain;
   object-position: left center;
 }
@@ -166,10 +174,10 @@
 }
 
 .titleDesk {
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
+  font-size: var(--model-header-fs);
+  letter-spacing: 0.12em;
   text-align: left;
-  line-height: 1.15;
+  line-height: var(--model-header-lh);
 }
 
 .titleDeskShort {
@@ -183,8 +191,9 @@
 
   .titleDeskShort {
     display: block;
-    font-size: 0.58rem;
+    font-size: var(--model-header-fs);
     letter-spacing: 0.1em;
+    line-height: var(--model-header-lh);
     text-align: left;
     color: rgba(255, 204, 106, 0.95);
     font-family: ui-serif, "Roboto Serif", Georgia, serif;
@@ -193,33 +202,36 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 28vw;
+    max-width: min(36vw, 12.5rem);
   }
 }
 
 .spineDesktopMetrics {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  gap: clamp(32px, 3.5vw, 48px);
-  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  gap: clamp(0.35rem, 1.4vw, 0.85rem);
   min-width: 0;
-  padding-inline: 0.25rem;
+  padding-inline: clamp(0.15rem, 1vw, 0.45rem);
 }
 
 .metricBlockDesktop {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.15rem;
   min-width: 0;
-  max-width: 34%;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
 }
 
 .metricLabelDesktop {
-  font-size: 11px;
-  line-height: 1.2;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: var(--model-header-fs);
+  line-height: var(--model-header-lh);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -231,8 +243,9 @@
 }
 
 .metricValueDesktop {
-  font-size: clamp(14px, 1.05vw, 16px);
-  line-height: 1.2;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: var(--model-header-fs);
+  line-height: var(--model-header-lh);
   font-weight: 700;
   color: #f6f5f1;
   white-space: nowrap;
@@ -266,6 +279,7 @@
   gap: 0.35rem;
   padding: 0.28rem 0.5rem 0.4rem;
   box-sizing: border-box;
+  --model-header-fs: clamp(0.56rem, 2.85vw, 0.65rem);
 }
 
 @media (min-width: 768px) {
@@ -290,6 +304,13 @@
   flex: 1;
 }
 
+/* More room for title + metrics row on small screens. */
+@media (max-width: 767px) {
+  .spineMobileLeft .logoLink {
+    display: none;
+  }
+}
+
 .logoImgSm {
   height: 14px;
   width: auto;
@@ -300,9 +321,10 @@
 }
 
 .titleMobileOnly {
-  font-size: 0.52rem;
+  font-size: var(--model-header-fs);
+  line-height: var(--model-header-lh);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(255, 204, 106, 0.95);
   font-family: ui-serif, "Roboto Serif", Georgia, serif;
@@ -326,7 +348,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.12rem;
+  gap: 0.1rem;
   min-width: 0;
   padding: 0.2rem 0.15rem;
   border-radius: 5px;
@@ -335,8 +357,8 @@
 }
 
 .metricValueMobile {
-  font-size: 13px;
-  line-height: 1.15;
+  font-size: var(--model-header-fs);
+  line-height: var(--model-header-lh);
   font-weight: 700;
   color: #f6f5f1;
   white-space: nowrap;
@@ -347,8 +369,8 @@
 }
 
 .metricLabelMobile {
-  font-size: 10px;
-  line-height: 1.15;
+  font-size: var(--model-header-fs);
+  line-height: var(--model-header-lh);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;

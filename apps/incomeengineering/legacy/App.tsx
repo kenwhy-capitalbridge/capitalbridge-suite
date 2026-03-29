@@ -175,7 +175,7 @@ const AppInner = forwardRef<
               {spineDeficitSurplusLabel} {spineCoveragePct.toFixed(1)}%
             </span>
             <span
-              className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${spineStatusChipStyles}`}
+              className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 font-bold uppercase tracking-wider ${spineStatusChipStyles}`}
             >
               {spineStatusLabel}
             </span>
