@@ -57,9 +57,12 @@ export function PlatformLogoutToMarketing({
       disabled={pending}
       aria-busy={pending}
       aria-disabled={pending}
-      className="pf-chrome-gold-btn"
+      className={inline ? "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline" : "pf-chrome-gold-btn"}
       style={{
         ...(inline ? {} : { justifySelf: "end" }),
+        ...(inline && pending
+          ? { height: "auto", minHeight: "var(--pf-header-auth-size, 36px)" }
+          : {}),
         cursor: pending ? "wait" : "pointer",
         opacity: pending ? 0.6 : 1,
         pointerEvents: pending ? "none" : "auto",

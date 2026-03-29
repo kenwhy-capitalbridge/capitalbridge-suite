@@ -7,6 +7,8 @@
   --pf-chrome-pad-y: 0.35rem;
   --pf-chrome-pad-x: 0.75rem;
   --pf-chrome-font: 0.65rem;
+  /** Framework header: profile circle + LOGOUT (must match pixel-perfect). */
+  --pf-header-auth-size: 36px;
   --muted-gold: #9a814a;
   --divider-gold-subtle: rgba(201, 164, 90, 0.5);
 }
@@ -674,6 +676,37 @@ a {
   background-color: var(--green);
   color: var(--offwhite);
   border-color: var(--green);
+}
+
+/* Header cluster: profile circle + LOGOUT — chained selector beats .pf-chrome-gold-btn min-height */
+.pf-chrome-gold-btn.pf-chrome-gold-btn--header-inline {
+  min-height: 0;
+  height: var(--pf-header-auth-size);
+  max-height: var(--pf-header-auth-size);
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+  align-self: center;
+}
+
+.pf-header-profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pf-header-auth-size);
+  height: var(--pf-header-auth-size);
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(13, 58, 29, 0.95);
+  background-color: rgba(255, 204, 106, 0.92);
+  border: 1px solid rgba(255, 204, 106, 0.55);
+  text-decoration: none;
+  line-height: 1;
 }
 
 .pf-chrome-outline-btn {

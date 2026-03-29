@@ -22,6 +22,7 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
     >
       <Link
         href="/profile"
+        className="pf-header-profile-avatar"
         aria-label={label}
         title="Profile"
         aria-busy={isPending}
@@ -37,23 +38,6 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
           });
         }}
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          /* ~Same outer height as PlatformLogoutToMarketing (0.35rem×2 + one line at 0.65rem, border-box) */
-          width: 24,
-          height: 24,
-          boxSizing: "border-box",
-          flexShrink: 0,
-          borderRadius: 9999,
-          fontSize: "0.65rem",
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          color: "rgba(13, 58, 29, 0.95)",
-          backgroundColor: "rgba(255, 204, 106, 0.92)",
-          border: "1px solid rgba(255, 204, 106, 0.55)",
-          textDecoration: "none",
-          lineHeight: 1,
           pointerEvents: isPending ? "none" : undefined,
           opacity: isPending ? 0.92 : 1,
         }}
@@ -61,7 +45,7 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
         {isPending ? (
           <Loader2
             className="pf-header-avatar-spin"
-            size={11}
+            size={16}
             strokeWidth={2.5}
             aria-hidden
           />
