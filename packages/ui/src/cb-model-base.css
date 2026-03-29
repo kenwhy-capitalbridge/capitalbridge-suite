@@ -274,13 +274,15 @@ a {
   align-self: center;
 }
 
-/* Print / save / download report — same gold chrome + hover lift as header LOGOUT; scales with --pf-chrome-font on small screens. */
+/* Print / save / download report — same gold chrome as header LOGOUT; centered via block flex + width + margin auto. */
 .pf-chrome-gold-btn.pf-chrome-gold-btn--report {
-  /* block-level flex so width + margin-inline auto centers in the page column (inline-flex ignores horizontal auto margins). */
   display: flex;
-  width: 100%;
-  max-width: min(100%, 28rem);
-  margin-inline: auto;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 28rem);
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
   min-height: clamp(2.2rem, 10.5vw, 2.5rem);
   height: auto;
   max-height: none;
@@ -293,9 +295,8 @@ a {
 
 @media (min-width: 640px) {
   .pf-chrome-gold-btn.pf-chrome-gold-btn--report.pf-chrome-gold-btn--report-sm-auto {
-    width: auto;
-    max-width: none;
-    margin-inline: unset;
+    width: max-content;
+    max-width: min(100%, 28rem);
   }
 }
 
