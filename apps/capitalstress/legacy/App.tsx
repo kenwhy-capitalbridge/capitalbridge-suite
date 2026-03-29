@@ -1,6 +1,15 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useMemo,
+} from 'react';
 import "./index.css";
 import { MonteCarloResult, StressSeverity, StressScenarioResult } from './types';
 import { runMonteCarlo, getSimulationCount, runStressScenarios, getDepletionBarOutput } from './services/mathUtils';
@@ -175,7 +184,7 @@ function CapitalStressMetricSpineSync({
       depletionBarOutput != null ? (
         <span
           title="Method: Net Pressure (bar‑derived)"
-          className="inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase"
+          className="inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-xs font-bold uppercase"
           style={{
             backgroundColor: FRAGILITY_GAUGE_COLORS[depletionBarOutput.pillLabel],
             color: getPillTextColor(depletionBarOutput.pillLabel),
@@ -289,6 +298,44 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       setIsRunning(false);
     }, 0);
   }, [investment, withdrawal, lowerPct, upperPct, years, stressSeverity, confidence]);
+
+  const inputsKey = useMemo(
+    () =>
+      JSON.stringify({
+        investment,
+        withdrawal,
+        lowerPct,
+        upperPct,
+        years,
+        stressSeverity,
+        confidence,
+        effectiveInflation,
+        currencyIndex,
+      }),
+    [
+      investment,
+      withdrawal,
+      lowerPct,
+      upperPct,
+      years,
+      stressSeverity,
+      confidence,
+      effectiveInflation,
+      currencyIndex,
+    ],
+  );
+
+  const lastSyncedInputsKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isRunning && mcResult != null) {
+      lastSyncedInputsKeyRef.current = inputsKey;
+    }
+  }, [isRunning, mcResult, inputsKey]);
+
+  const needsSimulationRefresh =
+    mcResult == null ||
+    (lastSyncedInputsKeyRef.current != null && lastSyncedInputsKeyRef.current !== inputsKey);
 
   const strategyLabel = Object.values(PRESETS).find(
     p => p.lower === lowerPct && p.upper === upperPct
@@ -601,7 +648,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             </p>
             <a
               href={`${LOGIN_APP_URL.replace(/\/+$/, "")}/pricing`}
-              className="cb-gold-primary-cta w-full !rounded-md py-2.5 text-[10px] font-bold uppercase tracking-wide"
+              className="cb-gold-primary-cta w-full !rounded-md py-2.5 text-sm font-bold uppercase tracking-wide"
             >
               View paid plans
             </a>
@@ -621,14 +668,14 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 lg:pt-14 space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
         {/* Module 3 note — standalone mode */}
         <div className="pt-6 pb-2 sm:pt-2 no-print">
-          <p className="text-[10px] text-[#FFCC6A]/90 leading-relaxed text-center">This model represents <strong className="text-[#FFCC6A]">Module 3 of the Capital Bridge Advisory Framework</strong>, focusing on capital resilience under market volatility and withdrawal pressure over the selected time horizon.</p>
+          <p className="text-sm text-[#FFCC6A]/90 leading-relaxed text-center">This model represents <strong className="text-[#FFCC6A]">Module 3 of the Capital Bridge Advisory Framework</strong>, focusing on capital resilience under market volatility and withdrawal pressure over the selected time horizon.</p>
         </div>
 
         {/* Scenario Lab — interactive assumptions */}
         <section>
           <div className="bg-[#0D3A1D]/40 p-6 sm:p-10 md:p-16 rounded-sm border border-[#FFCC6A]/10 shadow-2xl">
             <h2 className="text-sm md:text-lg font-bold mb-1 md:mb-2 text-[#FFCC6A] uppercase tracking-wide border-b border-[#FFCC6A]/10 pb-3 sanserif-font text-center md:text-left">Scenario Builder &amp; Settings</h2>
-            <p className="text-[10px] md:text-[11px] text-[#FFCC6A]/80 mt-2 mb-10 md:mb-16 text-center">Adjust sliders and inputs below; run simulation to update Resilience Score, Depletion Pressure, Durability Curve, Depletion Risk, and Stress Radar.</p>
+            <p className="text-sm md:text-[11px] text-[#FFCC6A]/80 mt-2 mb-10 md:mb-16 text-center">Adjust sliders and inputs below; run simulation to update Resilience Score, Depletion Pressure, Durability Curve, Depletion Risk, and Stress Radar.</p>
             
             <div className="max-w-2xl mx-auto space-y-10 sm:space-y-12 md:space-y-16 lg:space-y-20">
               
@@ -639,7 +686,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                     <button
                       key={c.code}
                       onClick={() => setCurrencyIndex(idx)}
-                      className={`flex-1 min-w-0 min-h-[1.5rem] sm:min-h-0 h-6 sm:h-7 flex items-center justify-center py-0.5 px-0.5 sm:py-1 sm:px-1 text-[7px] sm:text-[11px] md:text-xs font-bold rounded-[5px] sm:rounded-[8px] border transition-all uppercase tracking-tight whitespace-nowrap leading-none ${
+                      className={`flex-1 min-w-0 min-h-[1.5rem] sm:min-h-0 h-6 sm:h-7 flex items-center justify-center py-0.5 px-0.5 sm:py-1 sm:px-1 text-xs sm:text-[11px] md:text-xs font-bold rounded-[5px] sm:rounded-[8px] border transition-all uppercase tracking-tight whitespace-nowrap leading-none ${
                         currencyIndex === idx
                         ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]'
                         : 'bg-[#0D3A1D]/60 text-[#FFCC6A]/60 border-[#FFCC6A]/20 hover:border-[#FFCC6A]/60'
@@ -653,8 +700,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
               {/* INITIAL CAPITAL */}
               <div>
-                <label className="block text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">INITIAL CAPITAL</label>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-3">The initial capital to be invested at the start of the simulation.</p>
+                <label className="block text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">INITIAL CAPITAL</label>
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-3">The initial capital to be invested at the start of the simulation.</p>
 <div className="relative bg-[#0D3A1D]/80 border border-[#FFCC6A]/20 rounded-sm focus-within:border-[#FFCC6A]/50 transition-all h-12 md:h-14">
                   <span className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-[#FFCC6A]/40 text-[9px] md:text-[11px] font-bold uppercase tracking-tight">{selectedCurrency.label}</span>
                   <input
@@ -670,8 +717,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
               {/* WITHDRAWAL */}
               <div>
-                <label className="block text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Yearly Withdrawal (If Any)</label>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-3">Annual outflow for expenses, subtracted at the end of each simulated year.</p>
+                <label className="block text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Yearly Withdrawal (If Any)</label>
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-3">Annual outflow for expenses, subtracted at the end of each simulated year.</p>
                 <div className="relative bg-[#0D3A1D]/80 border border-[#FFCC6A]/20 rounded-sm focus-within:border-[#FFCC6A]/50 transition-all h-12 md:h-14">
 <span className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-[#FFCC6A]/40 text-[9px] md:text-[11px] font-bold uppercase tracking-tight">{selectedCurrency.label}</span>
                   <input
@@ -687,7 +734,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
               {/* RETURN RANGE */}
               <div>
-                <label className="text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-3 block">Expected Return Range</label>
+                <label className="text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-3 block">Expected Return Range</label>
                 <div className="no-print mb-6">
                   <div className="flex gap-2 sm:gap-3 h-8">
                     {(Object.keys(PRESETS) as Array<keyof typeof PRESETS>).map((key) => {
@@ -697,7 +744,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                         <button 
                           key={key}
                           onClick={() => applyPreset(key)}
-                          className={`flex-1 flex items-center justify-center text-[10px] md:text-[12px] font-bold rounded-md border transition-all uppercase tracking-tight px-1 text-center leading-none ${
+                          className={`flex-1 flex items-center justify-center text-sm md:text-[12px] font-bold rounded-md border transition-all uppercase tracking-tight px-1 text-center leading-none ${
                             isActive
                             ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]' 
                             : 'bg-[#0D3A1D]/40 text-[#FFCC6A]/60 border-[#FFCC6A]/20 hover:bg-[#FFCC6A]/10'
@@ -710,17 +757,17 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                   </div>
                 </div>
                 <div className="flex justify-between items-end border-b border-[#FFCC6A]/10 pb-4 mb-8">
-                  <span className="text-[8px] md:text-[9px] font-bold text-[#FFCC6A]/40 uppercase tracking-tight">Selected Boundaries</span>
+                  <span className="text-xs md:text-[9px] font-bold text-[#FFCC6A]/40 uppercase tracking-tight">Selected Boundaries</span>
                   <span className="text-[11px] md:text-[14px] font-bold text-[#FFCC6A] tracking-tight">{formatPercent(lowerPct)} | {formatPercent(upperPct)}</span>
                 </div>
                 
                 <div className="space-y-8 md:space-y-12 lg:space-y-16">
                   <div>
-                    <div className="flex justify-between text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-tight mb-2">
+                    <div className="flex justify-between text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-tight mb-2">
                       <span>Low Point (Worst Year)</span>
                       <span className="font-bold">{lowerPct.toFixed(1)}%</span>
                     </div>
-                    <p className="text-[8px] md:text-[9px] text-[#FFCC6A]/40 mb-3">The minimum expected annual performance in a downturn.</p>
+                    <p className="text-xs md:text-[9px] text-[#FFCC6A]/40 mb-3">The minimum expected annual performance in a downturn.</p>
                     <input 
                       type="range" min="-10" max="0" step="0.1" value={lowerPct}
                       onChange={(e) => setLowerPct(parseFloat(e.target.value))}
@@ -728,11 +775,11 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                     />
                   </div>
                   <div>
-                    <div className="flex justify-between text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-tight mb-2">
+                    <div className="flex justify-between text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-tight mb-2">
                       <span>High Point (Best Year)</span>
                       <span className="font-bold">{upperPct.toFixed(1)}%</span>
                     </div>
-                    <p className="text-[8px] md:text-[9px] text-[#FFCC6A]/40 mb-3">The maximum expected annual performance in a bull market.</p>
+                    <p className="text-xs md:text-[9px] text-[#FFCC6A]/40 mb-3">The maximum expected annual performance in a bull market.</p>
                     <input 
                       type="range" min="0" max="15" step="0.1" value={upperPct}
                       onChange={(e) => setUpperPct(parseFloat(e.target.value))}
@@ -744,10 +791,10 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
               {/* DURATION */}
               <div>
-                <label className="text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1 block">Investment Length: {years} Years</label>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-6">The period over which your capital is simulated and evaluated.</p>
+                <label className="text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1 block">Investment Length: {years} Years</label>
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-6">The period over which your capital is simulated and evaluated.</p>
                 <div className="flex justify-between items-end pb-2 mb-2">
-                  <span className="text-[8px] md:text-[9px] font-bold text-[#FFCC6A]/40 uppercase tracking-tight">Time Horizon</span>
+                  <span className="text-xs md:text-[9px] font-bold text-[#FFCC6A]/40 uppercase tracking-tight">Time Horizon</span>
                   <span className="text-[11px] md:text-[14px] font-bold text-[#FFCC6A] tracking-tight">{years} Years</span>
                 </div>
                 <input 
@@ -759,8 +806,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
               {/* CONFIDENCE */}
               <div>
-                <label className="block text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Confidence Level</label>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-3">90% prioritises realistic scenarios, while 99% plans for extreme, unlikely outcomes.</p>
+                <label className="block text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Confidence Level</label>
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-3">90% prioritises realistic scenarios, while 99% plans for extreme, unlikely outcomes.</p>
                 <div className="relative">
                   <select 
                     value={confidence}
@@ -783,20 +830,20 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
               {/* INFLATION — toggle + rate (Capital Health Model style) */}
               <div>
-                <label className="block text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Inflation Adjustment</label>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-3">When ON, outcomes are shown in real terms. Default: ON, 1.5%. When OFF, inflation is treated as 0%.</p>
+                <label className="block text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Inflation Adjustment</label>
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-3">When ON, outcomes are shown in real terms. Default: ON, 1.5%. When OFF, inflation is treated as 0%.</p>
                 <div className="flex items-center gap-4 mb-3">
                   <button
                     type="button"
                     onClick={() => setInflationAdjustmentOn(true)}
-                    className={`px-4 py-1 rounded border text-[10px] font-bold uppercase ${inflationAdjustmentOn ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]' : 'border-[#FFCC6A]/30 text-[#FFCC6A]/70'}`}
+                    className={`px-4 py-1 rounded border text-sm font-bold uppercase ${inflationAdjustmentOn ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]' : 'border-[#FFCC6A]/30 text-[#FFCC6A]/70'}`}
                   >
                     ON
                   </button>
                   <button
                     type="button"
                     onClick={() => setInflationAdjustmentOn(false)}
-                    className={`px-4 py-1 rounded border text-[10px] font-bold uppercase ${!inflationAdjustmentOn ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]' : 'border-[#FFCC6A]/30 text-[#FFCC6A]/70'}`}
+                    className={`px-4 py-1 rounded border text-sm font-bold uppercase ${!inflationAdjustmentOn ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]' : 'border-[#FFCC6A]/30 text-[#FFCC6A]/70'}`}
                   >
                     OFF
                   </button>
@@ -811,8 +858,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
               {/* STRESS EVENT */}
               <div>
-                <label className="block text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Include Market Shock Event</label>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-3">Adds a single severe market correction at one point within the selected time horizon to test capital resilience.</p>
+                <label className="block text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-wide mb-1">Include Market Shock Event</label>
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-3">Adds a single severe market correction at one point within the selected time horizon to test capital resilience.</p>
                 <div className="relative">
                   <select 
                     value={stressSeverity}
@@ -845,36 +892,36 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           {/* CAPITAL DIAGNOSIS — introduction (horizontal flow on desktop, stacked on mobile) */}
           <div>
             <h2 className="text-sm md:text-lg font-bold uppercase tracking-wide mb-2 md:mb-4 serif-font text-[#FFCC6A]">CAPITAL DIAGNOSIS</h2>
-            <p className="text-[8px] sm:text-[9px] md:text-xs text-[#F6F5F1] mb-4 md:mb-6">This system evaluates the strength of your capital structure using three core indicators:</p>
+            <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] mb-4 md:mb-6">This system evaluates the strength of your capital structure using three core indicators:</p>
             <div className="flex flex-col items-center text-center md:flex-row md:items-start md:justify-between md:text-left gap-3 md:gap-1 mb-4 md:mb-6">
               <div className="flex-1 min-w-0 w-full md:w-auto">
-                <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-wide text-[#FFCC6A] mb-0.5">Resilience Score</p>
-                <p className="text-[8px] sm:text-[9px] md:text-xs text-[#F6F5F1] leading-snug">Measures whether your capital is likely to survive over the selected time horizon.</p>
+                <p className="text-xs sm:text-[9px] md:text-sm font-bold uppercase tracking-wide text-[#FFCC6A] mb-0.5">Resilience Score</p>
+                <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] leading-snug">Measures whether your capital is likely to survive over the selected time horizon.</p>
                 <div className="md:hidden flex justify-center pt-0.5 text-[#FFCC6A]" aria-hidden="true"><span className="text-lg">▼</span></div>
               </div>
               <div className="hidden md:flex items-center shrink-0 text-[#FFCC6A] px-1" aria-hidden="true">
                 <span className="text-xl">→</span>
               </div>
               <div className="flex-1 min-w-0 w-full md:w-auto">
-                <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-wide text-[#FFCC6A] mb-0.5">Fragility Index</p>
-                <p className="text-[8px] sm:text-[9px] md:text-xs text-[#F6F5F1] leading-snug">Measures how sensitive your capital structure is to market shocks and volatility.</p>
+                <p className="text-xs sm:text-[9px] md:text-sm font-bold uppercase tracking-wide text-[#FFCC6A] mb-0.5">Fragility Index</p>
+                <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] leading-snug">Measures how sensitive your capital structure is to market shocks and volatility.</p>
                 <div className="md:hidden flex justify-center pt-0.5 text-[#FFCC6A]" aria-hidden="true"><span className="text-lg">▼</span></div>
               </div>
               <div className="hidden md:flex items-center shrink-0 text-[#FFCC6A] px-1" aria-hidden="true">
                 <span className="text-xl">→</span>
               </div>
               <div className="flex-1 min-w-0 w-full md:w-auto">
-                <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-wide text-[#FFCC6A] mb-0.5">Depletion Pressure</p>
-                <p className="text-[8px] sm:text-[9px] md:text-xs text-[#F6F5F1] leading-snug">Measures whether withdrawals are placing strain on long-term capital sustainability.</p>
+                <p className="text-xs sm:text-[9px] md:text-sm font-bold uppercase tracking-wide text-[#FFCC6A] mb-0.5">Depletion Pressure</p>
+                <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] leading-snug">Measures whether withdrawals are placing strain on long-term capital sustainability.</p>
               </div>
             </div>
             <div className="pt-4">
               <div className="w-32 sm:w-40 mx-auto border-t border-[#FFCC6A]/40 mb-4" aria-hidden="true" />
-              <p className="text-[8px] sm:text-[9px] md:text-xs font-bold uppercase tracking-wide text-[#F6F5F1] mb-2">Think of your capital structure like a car</p>
-              <p className="text-[8px] sm:text-[9px] md:text-xs text-[#F6F5F1] leading-relaxed">
+              <p className="text-xs sm:text-[9px] md:text-xs font-bold uppercase tracking-wide text-[#F6F5F1] mb-2">Think of your capital structure like a car</p>
+              <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] leading-relaxed">
                 <strong className="text-[#FFCC6A]">RESILIENCE SCORE</strong>: The strength of the engine &nbsp;→&nbsp; <strong className="text-[#FFCC6A]">FRAGILITY INDEX</strong>: How sensitive the engine is to road conditions &nbsp;→&nbsp; <strong className="text-[#FFCC6A]">DEPLETION PRESSURE</strong>: How quickly the fuel is being consumed.
               </p>
-              <p className="text-[8px] sm:text-[9px] md:text-xs text-[#F6F5F1] mt-6 pb-8 border-b border-[#FFCC6A]/40">Together these indicators reveal whether the capital structure is strong, vulnerable, or under pressure.</p>
+              <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] mt-6 pb-8 border-b border-[#FFCC6A]/40">Together these indicators reveal whether the capital structure is strong, vulnerable, or under pressure.</p>
             </div>
           </div>
 
@@ -883,7 +930,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             <div className="pb-2 flex flex-row flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="text-sm md:text-lg font-bold text-[#FFCC6A] uppercase tracking-wide serif-font leading-tight mt-0">CAPITAL STRUCTURE HEALTH</h2>
-                <p className="text-[10px] text-[#FFCC6A]/60 mt-1">Combined view of Resilience Score, Fragility Index, and Depletion Pressure.</p>
+                <p className="text-sm text-[#FFCC6A]/60 mt-1">Combined view of Resilience Score, Fragility Index, and Depletion Pressure.</p>
               </div>
               {depletionBarOutput != null && (() => {
                 const returnRange = upperPct - lowerPct;
@@ -919,18 +966,18 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               {/* 1. Resilience Score */}
               <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl h-full flex flex-col min-h-0">
                 <h3 className="text-sm md:text-lg font-bold mb-1 text-[#FFCC6A] uppercase tracking-wide serif-font">Lion score (0–100)</h3>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-4">Step 1: Can your capital survive? Derived from the model resilience index.</p>
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-4">Step 1: Can your capital survive? Derived from the model resilience index.</p>
                 <div className="flex flex-wrap items-center gap-4 gap-y-2">
                   <p className="text-sm md:text-xl font-bold tracking-tight text-white">{stressScoreToDisplay0to100(mcResult.capitalResilienceScore)}</p>
                   <span
-                    className="inline-flex items-center px-4 py-1 rounded-md text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-md"
+                    className="inline-flex items-center px-4 py-1 rounded-md text-sm md:text-xs font-bold uppercase tracking-wider shadow-md"
                     style={{ backgroundColor: TIER_PILL_COLORS[mcResult.tier] || '#FFCC6A', color: mcResult.tier === 'Moderate' ? '#0D3A1D' : getPillTextColor(mcResult.tier) }}
                   >
                     {mcResult.tier.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mt-2">Higher means stronger survival odds over the horizon under your assumptions. Same scale as Lion&apos;s Verdict below.</p>
-                <div className="mt-3 space-y-2 text-[10px] md:text-[11px]">
+                <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mt-2">Higher means stronger survival odds over the horizon under your assumptions. Same scale as Lion&apos;s Verdict below.</p>
+                <div className="mt-3 space-y-2 text-sm md:text-[11px]">
                   <div>
                     <p className="font-bold mb-0.5" style={{ color: '#FFCC6A' }}>Probability of Success Over {years}-Year:</p>
                     <p className="text-[#F6F5F1]">{getResilienceScoreProbabilityCopy(mcResult.tier, years)}</p>
@@ -952,20 +999,20 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 return (
                   <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl h-full flex flex-col min-h-0">
                     <h3 className="text-sm md:text-lg font-bold mb-1 text-[#FFCC6A] uppercase tracking-wide serif-font">Fragility Index</h3>
-                    <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-4">Step 2: How fragile is the structure?</p>
+                    <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-4">Step 2: How fragile is the structure?</p>
                     <div className="flex flex-wrap items-center gap-4 gap-y-2">
                       <p className="text-sm md:text-xl font-bold tracking-tight text-white">{fragilityIndex}</p>
                       <span
-                        className="inline-flex items-center px-4 py-1 rounded-md text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-md"
+                        className="inline-flex items-center px-4 py-1 rounded-md text-sm md:text-xs font-bold uppercase tracking-wider shadow-md"
                         style={{ backgroundColor: FRAGILITY_INDEX_COLORS[fiTier], color: getFragilityIndexPillTextColor(fiTier) }}
                       >
                         {fiTier.toUpperCase()}
                       </span>
                     </div>
                     <p className="text-[9px] text-[#FFCC6A]/60 mt-2">(0–20 FORTIFIED, 21–40 Highly Robust, 41–60 Stable, 61–80 Fragile, 81–100 Critical)</p>
-                    <p className="text-[8px] text-[#FFCC6A]/50 uppercase mt-1">THE LOWER THE BETTER</p>
-                    <p className="text-[10px] md:text-[11px] font-bold mt-2" style={{ color: '#FFCC6A' }}>Measures How Sensitive Your Capital Structure Is To Market Shocks & Market Volatility:</p>
-                    <p className="text-[10px] md:text-[11px] text-[#F6F5F1] italic mt-2">{getFragilityIndexInterpretation(fiTier)}</p>
+                    <p className="text-xs text-[#FFCC6A]/50 uppercase mt-1">THE LOWER THE BETTER</p>
+                    <p className="text-sm md:text-[11px] font-bold mt-2" style={{ color: '#FFCC6A' }}>Measures How Sensitive Your Capital Structure Is To Market Shocks & Market Volatility:</p>
+                    <p className="text-sm md:text-[11px] text-[#F6F5F1] italic mt-2">{getFragilityIndexInterpretation(fiTier)}</p>
                   </div>
                 );
               })()}
@@ -975,15 +1022,15 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           {/* Depletion Pressure */}
           <div className="bg-[#0D3A1D] px-6 md:px-8 pt-3 md:pt-5 pb-8 md:pb-12 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
               <h3 className="text-sm md:text-lg font-bold mb-1 text-[#FFCC6A] uppercase tracking-wide serif-font">Depletion Pressure</h3>
-              <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-4">Step 3: Are withdrawals creating pressure?</p>
-              <p className="text-[10px] md:text-[11px] font-bold mb-2" style={{ color: '#FFCC6A' }}>This Indicator Shows Whether Withdrawals Are Placing Strain On The Sustainability Of Your Capital:</p>
+              <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-4">Step 3: Are withdrawals creating pressure?</p>
+              <p className="text-sm md:text-[11px] font-bold mb-2" style={{ color: '#FFCC6A' }}>This Indicator Shows Whether Withdrawals Are Placing Strain On The Sustainability Of Your Capital:</p>
             {depletionBarOutput != null && (() => {
               const s = depletionBarOutput.segmentStops;
               const POLICY_B_COLORS = ['#CA3A2E', '#D27A1F', '#E3A539', '#9BAA23', '#1F8A4D'];
               const gradientStops = s.map((pct, i) => `${POLICY_B_COLORS[Math.min(i, 4)]} ${pct}%`).join(', ');
               return (
               <div className="w-full max-w-3xl text-left">
-                <p className="text-[8px] text-[#FFCC6A]/50 uppercase mb-3 text-left">The Lower The Better</p>
+                <p className="text-xs text-[#FFCC6A]/50 uppercase mb-3 text-left">The Lower The Better</p>
                 <div className="flex justify-between items-center text-[9px] font-bold text-[#FFCC6A]/60 tracking-wide mb-1.5 px-0.5" style={{ fontVariant: 'small-caps' }}>
                   <span>Critical</span>
                   <span>Stable</span>
@@ -1008,7 +1055,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                       }}
                     />
                     <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col items-center gap-0.5">
-                      <span className="text-[10px] font-bold text-[#FFCC6A] tracking-tight drop-shadow-sm whitespace-nowrap">
+                      <span className="text-sm font-bold text-[#FFCC6A] tracking-tight drop-shadow-sm whitespace-nowrap">
                         {formatSignedPct(depletionBarOutput.displayValue)}
                       </span>
                       <span
@@ -1029,7 +1076,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               </div>
               );
             })()}
-              {depletionBarOutput != null && <p className="text-[10px] md:text-[11px] text-[#F6F5F1] italic mt-10 md:mt-14 pt-4">{getDepletionPressureInterpretation(depletionBarOutput.pillLabel)}</p>}
+              {depletionBarOutput != null && <p className="text-sm md:text-[11px] text-[#F6F5F1] italic mt-10 md:mt-14 pt-4">{getDepletionPressureInterpretation(depletionBarOutput.pillLabel)}</p>}
           </div>
 
           <div className="border-t border-[#FFCC6A]/40 my-0" aria-hidden="true" />
@@ -1063,7 +1110,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 </button>
                 {expanded && (
                   <>
-                <p className="text-[10px] md:text-[11px] font-bold mb-2 mt-2" style={{ color: '#FFCC6A' }}>This map shows how strong your capital structure is based on its sensitivity to market shocks and withdrawal pressure.</p>
+                <p className="text-sm md:text-[11px] font-bold mb-2 mt-2" style={{ color: '#FFCC6A' }}>This map shows how strong your capital structure is based on its sensitivity to market shocks and withdrawal pressure.</p>
                 <div className="max-w-md mx-auto">
                   <svg viewBox="-18 -18 136 136" className="w-full aspect-square" preserveAspectRatio="xMidYMid meet" aria-label="Structural Stability Map: Depletion Pressure horizontal, Fragility Index vertical">
                     <defs>
@@ -1104,8 +1151,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                     <circle cx={xNorm} cy={yNorm} r="2.8" fill="#FFCC6A" stroke="#F6F5F1" strokeWidth="0.9" filter="url(#mapDotGlow)"/>
                     <text x={Math.min(92, xNorm + 5)} y={yNorm} textAnchor={xNorm > 70 ? 'end' : 'start'} dx={xNorm > 70 ? -4 : 4} fontSize="2.8" fill="#FFCC6A" fontWeight="bold">Current Position</text>
                   </svg>
-                  <p className="text-[10px] font-bold mt-2 text-center" style={{ color: '#FFCC6A' }}>Current Position: <span className="text-white uppercase">{currentZone}</span> · Fragility Index: {fragilityIndex} · Depletion Pressure: {depletionBarOutput.pillLabel}</p>
-                  <div className="flex items-end justify-between mt-1 text-[8px] text-[#FFCC6A]/60 gap-2">
+                  <p className="text-sm font-bold mt-2 text-center" style={{ color: '#FFCC6A' }}>Current Position: <span className="text-white uppercase">{currentZone}</span> · Fragility Index: {fragilityIndex} · Depletion Pressure: {depletionBarOutput.pillLabel}</p>
+                  <div className="flex items-end justify-between mt-1 text-xs text-[#FFCC6A]/60 gap-2">
                     <span>Left: lower withdrawal pressure</span>
                     <span className="text-center shrink-0">Bottom: stronger resilience · Top: higher market sensitivity</span>
                     <span>Right: heavier pressure</span>
@@ -1120,7 +1167,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           {/* 2. Simulated Average Outcome */}
           <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
             <h2 className="text-sm md:text-lg font-bold mb-1 text-[#FFCC6A] uppercase tracking-wide serif-font">Simulated Average Outcome</h2>
-            <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mb-4 -mt-0.5">Using the simulated average reduces market noise to show a more stable and representative outcome over {mcResult.simulationCount.toLocaleString()} scenarios.</p>
+            <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-4 -mt-0.5">Using the simulated average reduces market noise to show a more stable and representative outcome over {mcResult.simulationCount.toLocaleString()} scenarios.</p>
             <p className="text-lg md:text-2xl font-bold tracking-tighter break-words" style={{ color: '#F6F5F1' }}>{formatCurrency(mcResult.simulatedAverage)}</p>
             <p className="text-[11px] md:text-xs text-[#FFCC6A]/60 mt-1">After inflation ({effectiveInflation}% p.a.): <span className="font-bold text-[#FFCC6A]">{formatCurrency(mcResult.simulatedAverage / Math.pow(1 + effectiveInflation / 100, years))}</span></p>
           </div>
@@ -1155,7 +1202,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           {/* 5. Capital Durability Curve — landscape line chart (wide, short) */}
           <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
             <h2 className="text-sm md:text-lg font-bold mb-2 text-[#FFCC6A] uppercase tracking-wide serif-font">Capital Durability Curve</h2>
-            <p className="text-[10px] md:text-[11px] font-bold mb-4" style={{ color: '#FFCC6A' }}>Shows how your capital may evolve over time under market conditions and withdrawals:</p>
+            <p className="text-sm md:text-[11px] font-bold mb-4" style={{ color: '#FFCC6A' }}>Shows how your capital may evolve over time under market conditions and withdrawals:</p>
             <div className="relative w-full min-h-[200px] md:min-h-[240px]" style={{ aspectRatio: '3.5/1' }}>
               {mcResult.yearlyPercentileBands.length > 0 && (() => {
                 const bands = mcResult.yearlyPercentileBands;
@@ -1241,7 +1288,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                     const top = Math.max(pad, Math.min(durabilityTooltip.y - 8, typeof window !== 'undefined' ? window.innerHeight - tipH - pad : durabilityTooltip.y - 8));
                     return (
                       <div
-                        className="fixed z-50 px-3 py-2 rounded-md border border-[#FFCC6A]/40 bg-[#0D3A1D] shadow-lg text-[10px] md:text-xs text-left pointer-events-none max-w-[85vw]"
+                        className="fixed z-50 px-3 py-2 rounded-md border border-[#FFCC6A]/40 bg-[#0D3A1D] shadow-lg text-sm md:text-xs text-left pointer-events-none max-w-[85vw]"
                         style={{ left, top, transform: 'translateY(-100%)' }}
                       >
                         <p className="font-bold text-[#FFCC6A] border-b border-[#FFCC6A]/30 pb-1 mb-1">Year {durabilityTooltip.year}</p>
@@ -1254,7 +1301,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 );
               })()}
             </div>
-            <div className="flex justify-between mt-1 text-[8px] text-[#FFCC6A]/60"><span>Year 0</span><span>Year {years}</span></div>
+            <div className="flex justify-between mt-1 text-xs text-[#FFCC6A]/60"><span>Year 0</span><span>Year {years}</span></div>
           </div>
 
           {/* 6. Capital Outcome Probability Distribution */}
@@ -1265,7 +1312,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             </button>
             {!collapsedSections.capitalOutcomeDist && (
               <>
-            <p className="text-[10px] md:text-[11px] font-bold mb-4 mt-2" style={{ color: '#FFCC6A' }}>This chart shows how your ending capital varies across thousands of simulated market scenarios:</p>
+            <p className="text-sm md:text-[11px] font-bold mb-4 mt-2" style={{ color: '#FFCC6A' }}>This chart shows how your ending capital varies across thousands of simulated market scenarios:</p>
             <div className="h-40 sm:h-48 relative">
               {mcResult && (() => {
                 const finals = mcResult.paths.map(p => p.finalCapital).filter(x => x >= 0);
@@ -1338,7 +1385,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                       const top = Math.max(pad, Math.min(distributionTooltip.y - 8, typeof window !== 'undefined' ? window.innerHeight - tipH - pad : distributionTooltip.y - 8));
                       return (
                         <div
-                          className="fixed z-50 px-3 py-2 rounded-md border border-[#FFCC6A]/40 bg-[#0D3A1D] shadow-lg text-[10px] md:text-xs text-left pointer-events-none max-w-[85vw]"
+                          className="fixed z-50 px-3 py-2 rounded-md border border-[#FFCC6A]/40 bg-[#0D3A1D] shadow-lg text-sm md:text-xs text-left pointer-events-none max-w-[85vw]"
                           style={{ left, top, transform: 'translateY(-100%)' }}
                         >
                           <p className="font-bold text-[#FFCC6A] border-b border-[#FFCC6A]/30 pb-1 mb-1">Capital range</p>
@@ -1352,7 +1399,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 );
               })()}
             </div>
-            <p className="text-[8px] text-[#FFCC6A]/50 mt-1">Gold bar represents the most typical outcome.</p>
+            <p className="text-xs text-[#FFCC6A]/50 mt-1">Gold bar represents the most typical outcome.</p>
               </>
             )}
           </div>
@@ -1368,12 +1415,12 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                   <div className="text-center p-3 md:p-6 rounded border border-[#FFCC6A]/20 bg-[#0D3A1D]/30 min-w-0">
                     <p className="text-[11px] font-bold text-[#FFCC6A] uppercase tracking-tight mb-2">VS. STARTING CAPITAL</p>
                     <p className={`text-sm md:text-lg font-bold ${aboveStartPct >= 0 ? 'text-white' : 'text-red-400'}`}>{aboveStartPct.toFixed(1)}%</p>
-                    <p className="text-[10px] text-[#FFCC6A]/60 mt-2">Simulated average ending capital vs. Initial Capital</p>
+                    <p className="text-sm text-[#FFCC6A]/60 mt-2">Simulated average ending capital vs. Initial Capital</p>
                   </div>
                   <div className="text-center p-3 md:p-6 rounded border border-[#FFCC6A]/20 bg-[#0D3A1D]/30 min-w-0">
                     <p className="text-[11px] font-bold text-[#FFCC6A] uppercase tracking-tight mb-2">Within Expected Range</p>
                     <p className="text-sm md:text-lg font-bold text-white">{(withinRange * 100).toFixed(1)}%</p>
-                    <p className="text-[10px] text-[#FFCC6A]/60 mt-2">If you ran this plan many times, the percentage of your ending capital would land in this typical range.</p>
+                    <p className="text-sm text-[#FFCC6A]/60 mt-2">If you ran this plan many times, the percentage of your ending capital would land in this typical range.</p>
                   </div>
                 </div>
               );
@@ -1384,13 +1431,13 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           <div className="bg-[#0D3A1D] rounded-sm border border-[#FFCC6A]/20 shadow-2xl overflow-hidden">
             <div className="p-6 md:p-8 border-b border-[#FFCC6A]/10 bg-[#0D3A1D]/20">
               <h2 className="text-sm md:text-lg font-bold text-[#FFCC6A] uppercase tracking-wide serif-font">Simulated Capital Journey</h2>
-              <p className="text-[9px] md:text-[10px] text-[#FFCC6A]/60 mt-2 mb-4">Markets rarely move in straight lines. These examples show how your capital might evolve under different market conditions.</p>
+              <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mt-2 mb-4">Markets rarely move in straight lines. These examples show how your capital might evolve under different market conditions.</p>
               <div className="flex flex-nowrap sm:flex-wrap gap-1 sm:gap-2 no-print">
                 {(['median', 'best', 'worst'] as const).map(key => (
                   <button
                     key={key}
                     onClick={() => setPathView(key)}
-                    className={`flex-1 min-w-0 sm:flex-initial sm:min-w-0 px-2 py-1.5 sm:px-4 sm:py-2 rounded border text-[8px] sm:text-[10px] font-bold uppercase flex flex-col items-center gap-0.5 text-center ${
+                    className={`flex-1 min-w-0 sm:flex-initial sm:min-w-0 px-2 py-1.5 sm:px-4 sm:py-2 rounded border text-xs sm:text-sm font-bold uppercase flex flex-col items-center gap-0.5 text-center ${
                       pathView === key
                         ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]'
                         : 'bg-transparent text-[#FFCC6A]/70 border-[#FFCC6A]/30 hover:border-[#FFCC6A]/60'
@@ -1400,16 +1447,16 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                       <span className="sm:hidden">{key === 'worst' ? 'Stress Market' : key === 'best' ? 'Strong Market' : 'Typical Market'}</span>
                       <span className="hidden sm:inline">{key === 'worst' ? 'Stress Market Path' : key === 'best' ? 'Strong Market Path' : 'Typical Market Path'}</span>
                     </>
-                    {key === 'median' && <span className="font-normal normal-case text-[7px] sm:text-[8px] opacity-90"><span className="sm:hidden">median outcomes</span><span className="hidden sm:inline">based on median outcomes</span></span>}
-                    {key === 'best' && <span className="font-normal normal-case text-[7px] sm:text-[8px] opacity-90"><span className="sm:hidden">upper-range outcomes</span><span className="hidden sm:inline">based on upper-range outcomes</span></span>}
-                    {key === 'worst' && <span className="font-normal normal-case text-[7px] sm:text-[8px] opacity-90"><span className="sm:hidden">weaker-range outcomes</span><span className="hidden sm:inline">based on weaker-range outcomes</span></span>}
+                    {key === 'median' && <span className="font-normal normal-case text-xs sm:text-xs opacity-90"><span className="sm:hidden">median outcomes</span><span className="hidden sm:inline">based on median outcomes</span></span>}
+                    {key === 'best' && <span className="font-normal normal-case text-xs sm:text-xs opacity-90"><span className="sm:hidden">upper-range outcomes</span><span className="hidden sm:inline">based on upper-range outcomes</span></span>}
+                    {key === 'worst' && <span className="font-normal normal-case text-xs sm:text-xs opacity-90"><span className="sm:hidden">weaker-range outcomes</span><span className="hidden sm:inline">based on weaker-range outcomes</span></span>}
                   </button>
                 ))}
               </div>
             </div>
             <div className="w-full">
               <table className="hidden sm:table w-full text-left text-sm">
-                <thead className="bg-[#0D3A1D] text-[#FFCC6A] font-bold uppercase tracking-tight text-[10px] md:text-[12px]">
+                <thead className="bg-[#0D3A1D] text-[#FFCC6A] font-bold uppercase tracking-tight text-sm md:text-[12px]">
                   <tr>
                     <th className="px-10 py-6">Year</th>
                     <th className="px-10 py-6">Est. Return %</th>
@@ -1458,7 +1505,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                           {index === 0 ? '--' : formatPercentSmall(annualChange)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-[10px] text-[#FFCC6A]/70 font-semibold tracking-tight">
+                      <div className="flex justify-between text-sm text-[#FFCC6A]/70 font-semibold tracking-tight">
                         <span>Est. Return</span>
                         <span>{index === 0 || estReturnPct === null ? '--' : formatPercentSmall(estReturnPct)}</span>
                       </div>
@@ -1508,8 +1555,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               );
               return (
                 <div key={s.key} className="p-4 rounded border border-[#FFCC6A]/20 bg-[#0D3A1D]/30 space-y-2">
-                  <p className="font-bold text-[#FFCC6A] text-[10px] md:text-xs uppercase">{s.label}</p>
-                  <div className="grid grid-cols-2 gap-2 text-[9px] md:text-[10px]">
+                  <p className="font-bold text-[#FFCC6A] text-sm md:text-xs uppercase">{s.label}</p>
+                  <div className="grid grid-cols-2 gap-2 text-[9px] md:text-sm">
                     <span className="text-[#FFCC6A]/80">Lion score: <span className="text-white font-bold">{lionAdj}</span> · {statusAdj}</span>
                     <span className="text-[#FFCC6A]/80">Depletion: <span className="text-white font-bold">{depBar.pillLabel}</span></span>
                   </div>
@@ -1522,7 +1569,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
                   <h2 className="text-sm md:text-lg font-bold mb-2 text-[#FFCC6A] uppercase tracking-wide serif-font">BIGGEST IMPACT IMPROVEMENTS</h2>
                   <p className="text-[9px] text-[#FFCC6A]/60 mb-4">Ranked by impact on Lion score (0–100).</p>
-                  <ol className="list-decimal list-inside space-y-1 text-[10px] md:text-xs text-[#F6F5F1] font-medium">
+                  <ol className="list-decimal list-inside space-y-1 text-sm md:text-xs text-[#F6F5F1] font-medium">
                     {withDelta.slice(0, 3).map((s, i) => (
                       <li key={s.key}>{s.label}</li>
                     ))}
@@ -1538,15 +1585,15 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                   <p className="text-[9px] text-[#FFCC6A]/60 mb-4 mt-2">See how changes to assumptions may improve your capital structure.</p>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-[10px] font-bold text-[#FFCC6A] mb-2">Scenario 1 — Reduce Withdrawals</p>
+                      <p className="text-sm font-bold text-[#FFCC6A] mb-2">Scenario 1 — Reduce Withdrawals</p>
                       {renderScenario(withDelta.find(s => s.key === 'reduceWithdrawal')!)}
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-[#FFCC6A] mb-2">Scenario 2 — Extend Investment Horizon</p>
+                      <p className="text-sm font-bold text-[#FFCC6A] mb-2">Scenario 2 — Extend Investment Horizon</p>
                       {renderScenario(withDelta.find(s => s.key === 'extendHorizon')!)}
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-[#FFCC6A] mb-2">Scenario 3 — Improve Portfolio Returns</p>
+                      <p className="text-sm font-bold text-[#FFCC6A] mb-2">Scenario 3 — Improve Portfolio Returns</p>
                       {renderScenario(withDelta.find(s => s.key === 'improveReturns')!)}
                     </div>
                   </div>
@@ -1656,7 +1703,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               const top = Math.max(pad, radarLabelTooltip.y - 8);
               return (
                 <div
-                  className="fixed z-[10000] px-3 py-2 rounded-md border border-[#FFCC6A]/40 bg-[#0D3A1D] shadow-lg text-[10px] md:text-xs text-left pointer-events-none max-w-[85vw]"
+                  className="fixed z-[10000] px-3 py-2 rounded-md border border-[#FFCC6A]/40 bg-[#0D3A1D] shadow-lg text-sm md:text-xs text-left pointer-events-none max-w-[85vw]"
                   style={{ left, top, transform: 'translateY(-100%)', width: 'max-content', maxWidth: 'min(320px, 85vw)' }}
                 >
                   {radarLabelTooltip.text}
@@ -1678,7 +1725,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             <p className="text-[9px] text-[#FFCC6A]/60 mb-4 mt-2">Shows how the capital structure responds when key assumptions deteriorate.</p>
             {stressScenarioResults ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-[10px] md:text-xs border-collapse">
+                <table className="w-full text-sm md:text-xs border-collapse">
                   <thead>
                     <tr className="bg-[#FFCC6A]/10 text-[#FFCC6A] font-bold uppercase border-b border-[#FFCC6A]/30">
                       <th className="text-center py-3 px-3 border-b border-r border-[#FFCC6A]/20">Stress Driver</th>
@@ -1721,7 +1768,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 </table>
               </div>
             ) : (
-              <p className="text-[10px] text-[#FFCC6A]/60">Run simulation to load stress scenarios.</p>
+              <p className="text-sm text-[#FFCC6A]/60">Run simulation to load stress scenarios.</p>
             )}
               </>
             )}
@@ -1742,7 +1789,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                     capitalAdjustmentSimulator: allExpanded,
                   });
                 }}
-                className="rounded border border-[#FFCC6A]/60 text-[#FFCC6A]/90 py-1.5 px-3 text-[10px] md:text-xs font-bold uppercase tracking-wide hover:bg-[#FFCC6A]/10 transition-colors"
+                className="rounded border border-[#FFCC6A]/60 text-[#FFCC6A]/90 py-1.5 px-3 text-sm md:text-xs font-bold uppercase tracking-wide hover:bg-[#FFCC6A]/10 transition-colors"
               >
                 {Object.values(collapsedSections).some(Boolean) ? 'EXPAND ALL' : 'COLLAPSE ALL'}
               </button>
@@ -1807,11 +1854,11 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           {/* FOOTER */}
           <div className="flex flex-col items-center py-14 sm:py-16 lg:py-24 text-center">
             <div className="mb-8 space-y-2">
-              <p className="text-[10px] md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-widest">Please save or print a copy for your records.</p>
+              <p className="text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-widest">Please save or print a copy for your records.</p>
             </div>
             <button
               onClick={handlePrint}
-              className="cb-gold-outline-cta group !rounded-sm px-10 py-2.5 font-black uppercase tracking-tight text-[10px] md:text-sm no-print"
+              className="cb-gold-outline-cta group !rounded-sm px-10 py-2.5 font-black uppercase tracking-tight text-sm md:text-sm no-print"
             >
               <PrinterIcon />
               Save or Print Report
@@ -1820,11 +1867,19 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
         </section>
       </main>
-      <div className="fixed bottom-8 left-8 md:bottom-10 md:left-10 z-[9998] no-print drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)]">
+      <div className="fixed bottom-6 left-4 right-4 z-[9998] no-print flex max-w-[min(100%,22rem)] flex-col items-stretch gap-2 drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] md:bottom-10 md:left-10 md:right-auto md:items-start">
+        {needsSimulationRefresh && !isRunning ? (
+          <p className="px-0.5 text-center text-xs leading-snug text-[#FFCC6A]/90 md:text-left md:text-sm">
+            Inputs changed — run simulation so the header and results match your settings.
+          </p>
+        ) : null}
         <button
+          type="button"
           onClick={runCalculation}
           disabled={isRunning}
-          className="cb-gold-primary-cta !rounded-sm py-3 px-3 font-black uppercase tracking-tight text-[10px] md:text-xs flex flex-col items-center gap-0.5 md:px-4 disabled:opacity-60"
+          className={`cb-gold-primary-cta !rounded-sm flex w-full flex-col items-center gap-0.5 py-3 px-4 font-black uppercase tracking-tight text-xs md:w-auto md:px-5 md:text-sm disabled:opacity-60 ${
+            needsSimulationRefresh && !isRunning ? 'stress-run-simulation-cta--urgent' : ''
+          }`}
         >
           {isRunning ? 'Running…' : 'Run Simulation'}
         </button>

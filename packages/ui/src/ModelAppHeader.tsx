@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MARKETING_SITE_URL, PLATFORM_APP_URL } from "@cb/shared/urls";
+import { MARKETING_SITE_URL, platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
 import { BRAND_CAPITAL_BRIDGE_LOGO_GOLD } from "./brandPaths";
 import { useModelMetricSpine } from "./modelMetricSpineContext";
@@ -13,8 +13,7 @@ function marketingHomeUrl(): string {
 }
 
 function platformHomeUrl(): string {
-  const base = PLATFORM_APP_URL.replace(/\/+$/, "");
-  return `${base}/`;
+  return platformBackThroughSessionSyncUrl("/");
 }
 
 export type ModelAppHeaderProps = {

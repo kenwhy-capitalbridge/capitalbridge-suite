@@ -160,7 +160,7 @@ const AppInner = forwardRef<
       : spineStatus === 'amber'
         ? 'bg-[#FFAB40] text-[#0D3A1D] border-[#FFAB40]'
         : 'bg-[#DD524C] text-white border-[#DD524C]';
-  const spineRunwayValue = horizonYears !== undefined ? `${horizonLabel} years` : horizonLabel;
+  const spineTotalCapital = formatCurrency(totalCapital, currency);
 
   useLayoutEffect(() => {
     setSpine({
@@ -188,9 +188,9 @@ const AppInner = forwardRef<
         value: spineNetMonthly,
       },
       slot3: {
-        labelDesktop: 'Capital Runway',
-        labelMobile: 'Runway',
-        value: spineRunwayValue,
+        labelDesktop: 'Total Capital',
+        labelMobile: 'Capital',
+        value: spineTotalCapital,
       },
     });
     return () => setSpine(null);
@@ -200,7 +200,7 @@ const AppInner = forwardRef<
     spineDeficitSurplusLabel,
     spineIsSurplus,
     spineNetMonthly,
-    spineRunwayValue,
+    spineTotalCapital,
     spineStatusChipStyles,
     spineStatusLabel,
   ]);

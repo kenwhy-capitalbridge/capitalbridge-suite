@@ -5,6 +5,7 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
+import { platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
 import { LionWatermarkShell, ModelAppHeader } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ForeverCalculatorProvider } from "./ForeverCalculatorProvider";
@@ -47,8 +48,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
    */
   const foreverBackRaw = process.env.NEXT_PUBLIC_FOREVER_BACK_TO_PLATFORM_URL?.trim();
   const foreverBackToPlatformHref = foreverBackRaw
-    ? `${foreverBackRaw.replace(/\/+$/, "")}/`
-    : "https://platform.thecapitalbridge.com/";
+    ? `${foreverBackRaw.replace(/\/+$/, "")}/api/sync-user-active-session?next=${encodeURIComponent("/")}`
+    : platformBackThroughSessionSyncUrl("/");
 
   return (
     <html lang="en">
