@@ -695,3 +695,387 @@ AND
 
 
 
+CONTEXT SUMMARY — LION VERDICT + PRODUCT UX + SYSTEM DESIGN
+
+You are continuing a product, UX, and system design discussion for Capital Bridge (fintech platform), specifically focused on:
+
+1. LION VERDICT SYSTEM (CORE FEATURE)
+- A dynamic advisory system generating financial “verdicts” based on score bands:
+  NOT_SUSTAINABLE (0–39)
+  AT_RISK (39–56)
+  FRAGILE (57–76)
+  STABLE (77–89)
+  STRONG (90–100, gated)
+
+- Built using a structured source file:
+  "/Lion Verdict dynamic copy.txt"
+
+- Each verdict includes:
+  - Headlines (multi-sentence allowed)
+  - Guidance (multi-line, advisory style)
+
+- System requirements:
+  - Dynamic sentence mixing (no fixed templates)
+  - No repetition within session
+  - Weighted selection (prefer unused / less recent lines)
+  - Recombination allowed, but no new tone invention
+  - Strict tone rules per tier:
+    STRONG → no constraint language, effortless
+    STABLE → controlled, includes constraint
+    FRAGILE → uncertainty
+    AT_RISK → deterioration
+    NOT_SUSTAINABLE → finality
+
+- Implemented globally across all models/apps using Cursor prompt
+
+---
+
+2. TRIAL VS PAID EXPERIENCE (CRITICAL FOR CONVERSION)
+
+- Full Lion Verdict ALWAYS generated internally
+- UI controls visibility
+
+PAID:
+- Full headline
+- Full guidance
+- Score visible
+
+TRIAL:
+- Score hidden
+- Headline visible
+- Only 1–2 guidance shown
+- Remaining content hidden (teaser)
+
+Strategic direction:
+- Trial should create tension, not just inform
+- Shift from:
+  “Here’s what you get”
+  → “We already know your outcome. You don’t.”
+
+- Improvements discussed:
+  - More personal consequence
+  - More precision language
+  - Stronger CTA
+  - Use of partially hidden data (e.g. RM XXXX, 20XX)
+
+---
+
+3. CURSOR PROMPT SYSTEM (GLOBAL ENGINE)
+
+- Finalised prompt includes:
+  - Session memory (usedHeadlines, usedGuidance)
+  - Weighted selection logic
+  - Anti-repetition rules
+  - Tone enforcement per tier
+  - Global consistency across all models
+  - Trial vs Paid display logic
+  - Content depth preservation (no simplification)
+
+---
+
+4. UX COPY IMPROVEMENTS
+
+- Login error message updated:
+  “Only one account can be used per browser…”
+
+- Tone:
+  - Direct
+  - Clear instruction
+  - No fluff
+
+---
+
+5. UI / UX LAYOUT DECISIONS
+
+DESKTOP:
+- Remove “MODEL(S)” from titles
+- Increase title font size to match logo height
+- Improve hierarchy and presence
+
+MOBILE:
+- Remove logo entirely
+- Prioritise page title
+
+Shortened app names:
+- FOREVER INCOME → FOREVER INC.
+- INCOME ENGINEERING → INCOME ENGINE
+- CAPITAL HEALTH → CAP. HEALTH
+- CAPITAL STRESS → CAP. STRESS
+
+Mobile header structure:
+- Left: Back
+- Center: Title (shortened)
+- Right: Actions (Save / Menu)
+
+Goal:
+- Function over branding on mobile
+- Clear, readable, uncluttered
+
+---
+
+6. PRODUCT PHILOSOPHY
+
+Across all decisions:
+- Clarity > decoration
+- Tension > explanation (for conversion)
+- Consistency > creativity
+- System > copywriting
+- Feels like an “advisor”, not a UI
+
+---
+
+STATUS
+
+All systems (Lion Verdict logic, Cursor prompt, UX direction) are:
+- Defined
+- Structured
+- Ready for implementation
+
+Next steps likely involve:
+- Refining conversion (trial experience)
+- UI optimisation (mobile + verdict section)
+- System scaling across apps
+
+---
+
+AWAITING NEXT INSTRUCTION
+
+---
+
+## CAPITAL BRIDGE — SYSTEM, PLATFORM & BUSINESS CONTEXT
+
+---
+
+### 1. WHAT IS CAPITAL BRIDGE
+
+Capital Bridge is a fintech platform focused on helping users understand, sustain, and optimise their long-term financial position.
+
+Core philosophy:
+
+- Move users from financial “guessing” → to structured clarity
+- Translate complex financial modelling into simple, actionable insight
+- Provide a system that behaves like an advisor, not a calculator
+
+Primary framework:
+
+- Income sustainability modelling
+- Capital longevity analysis
+- Risk visibility (depletion, gaps, stress scenarios)
+
+The key output system is:
+
+→ **Lion’s Verdict** (dynamic advisory engine)
+
+---
+
+### 2. CORE PRODUCT SYSTEM (MONOREPO)
+
+Capital Bridge operates on a **monorepo architecture**, where multiple apps share:
+
+- Design system
+- Logic framework
+- Lion Verdict engine
+- Authentication layer
+- Data structure
+
+#### Apps inside the ecosystem:
+
+1. **Forever Income**
+   - Long-term income sustainability model
+   - Focus: “Will my income last forever?”
+
+2. **Income Engineering**
+   - Active structuring tool
+   - Focus: adjusting income, expenses, and capital inputs
+
+3. **Capital Health**
+   - Snapshot of financial strength
+   - Focus: current position quality
+
+4. **Capital Stress**
+   - Stress testing scenarios
+   - Focus: downside and volatility impact
+
+All apps:
+
+- Use the same scoring system
+- Feed into Lion’s Verdict
+- Share consistent UX and advisory tone
+
+---
+
+### 3. PLATFORM ARCHITECTURE
+
+#### Frontend & Deployment
+
+- Hosted on **Vercel**
+- Each app is deployed as part of the monorepo
+- Fast iteration and preview environments supported
+
+#### Backend / Database
+
+- Powered by **Supabase**
+- Handles:
+  - Authentication (users, sessions)
+  - Data storage (user inputs, models)
+  - API layer
+
+#### Payments
+
+- Integrated with **Billplz**
+- Handles:
+  - Subscription / access control
+  - Trial → Paid conversion
+  - Payment processing (primarily MY / APAC)
+
+#### Marketing Website
+
+- Hosted at: https://www.thecapitalbridge.com
+- Purpose:
+  - Lead generation
+  - Product explanation
+  - Funnel into app usage
+
+---
+
+### 4. AUTHENTICATION & ACCESS MODEL
+
+- Single login system across all apps
+- One account per browser session (enforced)
+- Trial vs Paid access:
+
+#### Trial Users
+
+- Limited visibility (teaser mode)
+- Lion Verdict partially shown
+- Score hidden
+- Designed to create tension and curiosity
+
+#### Paid Users
+
+- Full access across apps
+- Full Lion Verdict (headline + guidance + score)
+- Full financial diagnosis
+
+---
+
+### 5. LION VERDICT SYSTEM (CORE ENGINE)
+
+- Central intelligence layer across all apps
+- Converts numerical outputs into advisory language
+
+Features:
+
+- Tier-based system (NOT_SUSTAINABLE → STRONG)
+- Dynamic sentence generation
+- Non-repetitive (session memory + weighted selection)
+- Consistent tone across all apps
+
+Purpose:
+
+- Make the platform feel like a financial advisor
+- Not just a modelling tool
+
+---
+
+### 6. BUSINESS MODEL
+
+Primary model:
+
+- Freemium → Paid subscription
+
+Flow:
+
+1. User inputs financial data
+2. Receives partial insights (trial)
+3. Sees gaps / risks (tension)
+4. Unlocks full diagnosis (paid)
+
+Revenue drivers:
+
+- Subscription unlocks
+- Potential advisory upsell (future)
+
+---
+
+### 7. TARGET MARKET (APAC)
+
+Primary focus:
+
+- Malaysia, Singapore, Hong Kong, wider APAC
+
+Target users:
+
+- Working professionals
+- Mass affluent / emerging affluent
+- Individuals planning long-term income sustainability
+
+Key problem:
+
+- Lack of clarity on:
+  - “Will my money last?”
+  - “When do I run out?”
+  - “What should I change?”
+
+---
+
+### 8. PRODUCT VISION
+
+Capital Bridge aims to become:
+
+→ The default financial clarity layer for individuals in APAC
+
+Long-term direction:
+
+- From tool → platform → advisory ecosystem
+- Expand into:
+  - AI-driven recommendations
+  - Financial planning integrations
+  - Institutional partnerships
+
+---
+
+### 9. ROLLOUT STRATEGY
+
+Short-term:
+
+- Stabilise core apps (Forever Income, Income Engineering)
+- Refine Lion Verdict system
+- Improve trial → paid conversion
+
+Mid-term:
+
+- Expand user base in Malaysia & Singapore
+- Strengthen marketing funnel
+- Optimise onboarding experience
+
+---
+
+### 10. UPCOMING EVENT — GITEX ASIA (SINGAPORE)
+
+Event:
+
+- https://gitexasia.com/
+
+Purpose:
+
+- Showcase Capital Bridge platform
+- Demonstrate Lion Verdict system
+- Generate partnerships and leads
+
+Preparation focus:
+
+- Demo-ready product experience
+- Clear narrative:
+  - Problem → System → Insight → Action
+- Strong visual + interactive booth setup
+
+---
+
+### 11. KEY PRINCIPLES (IMPORTANT FOR ALL FUTURE WORK)
+
+- Clarity over complexity
+- System over copywriting
+- Consistency across apps
+- Advisory tone (not technical)
+- Tension drives conversion (trial design)
