@@ -321,7 +321,7 @@ const AppInner = forwardRef<
 
           <FooterDisclaimer />
 
-          <div className="mt-8 mx-auto max-w-xl space-y-4">
+          <div className="mt-8 flex w-full flex-col items-center gap-4">
             <p className="text-center text-sm font-semibold text-[#FFCC6A]">
               Please save or print a copy for your records.
             </p>

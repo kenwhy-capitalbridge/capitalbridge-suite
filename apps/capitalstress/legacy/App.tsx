@@ -1853,7 +1853,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           )}
 
           {/* FOOTER */}
-          <div className="flex flex-col items-center py-14 sm:py-16 lg:py-24 text-center">
+          <div className="flex w-full flex-col items-center px-4 py-14 text-center sm:py-16 lg:py-24">
             <div className="mb-8 space-y-2">
               <p className="text-sm md:text-[11px] font-bold text-[#FFCC6A] uppercase tracking-widest">Please save or print a copy for your records.</p>
             </div>

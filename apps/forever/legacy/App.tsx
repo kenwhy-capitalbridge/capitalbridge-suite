@@ -538,8 +538,8 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
               </div>
             </div>
 
-            <div className="mt-8 md:mt-12 lg:mt-14 relative z-10">
-              <div className="flex justify-center">
+            <div className="relative z-10 mt-8 md:mt-12 lg:mt-14">
+              <div className="flex w-full justify-center px-4">
                 <button
                   type="button"
                   onClick={handleDownloadPDF}

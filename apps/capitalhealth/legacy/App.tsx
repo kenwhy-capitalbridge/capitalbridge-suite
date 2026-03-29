@@ -1562,17 +1562,17 @@ const CalculatorScreen = forwardRef<
               AI-Generated Capital Diagnostic Ready
             </p>
           )}
-          <div className="flex justify-center mb-6">
-          <button
-            type="button"
+          <div className="mb-6 flex w-full justify-center px-4">
+            <button
+              type="button"
               onClick={handlePrintOrSaveReport}
               disabled={reportGenerating}
               className="pf-chrome-gold-btn pf-chrome-gold-btn--report pf-chrome-gold-btn--report-sm-auto"
-          >
+            >
               <Printer className="h-4 w-4 shrink-0" aria-hidden />
-              {reportGenerating ? 'Generating…' : 'Print or Save Report'}
-          </button>
-        </div>
+              {reportGenerating ? "Generating…" : "Print or Save Report"}
+            </button>
+          </div>
           </footer>
       </main>
          </div>
