@@ -1,6 +1,6 @@
 import "server-only";
 
-import { listReports, saveReport, type ModelType } from "../platformAccess";
+import { fetchPersona, listReports, saveReport, type ModelType } from "../platformAccess";
 import { getAdvisoryRequestContext } from "./requestContext";
 
 export type AdvisoryJsonResult = { status: number; body: unknown };
@@ -128,6 +128,29 @@ export async function handleAdvisoryReportPOST(
     return { status: 200, body: out };
   } catch (e) {
     console.error(`${logTag} POST`, e);
+    return { status: 500, body: { error: "server_error" } };
+  }
+}
+
+/**
+ * GET /api/advisory-persona — current user plan for save/restore entitlements (server session only).
+ * Keeps model apps from mounting a browser Supabase client just for `fetchPersona`, which avoids
+ * token refresh traffic and 429 storms when many requests hit `getSession` near token expiry.
+ */
+export async function handleAdvisoryPersonaGET(logTag: string): Promise<AdvisoryJsonResult> {
+  try {
+    let db: Awaited<ReturnType<typeof getAdvisoryRequestContext>>["db"];
+    try {
+      const ctx = await getAdvisoryRequestContext();
+      db = ctx.db;
+    } catch {
+      return { status: 401, body: { error: "unauthorized" } };
+    }
+
+    const persona = await fetchPersona(db);
+    return { status: 200, body: { persona } };
+  } catch (e) {
+    console.error(`${logTag} GET persona`, e);
     return { status: 500, body: { error: "server_error" } };
   }
 }
