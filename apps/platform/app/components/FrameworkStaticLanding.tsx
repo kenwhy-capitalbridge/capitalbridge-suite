@@ -116,11 +116,9 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
                     Assess the strength of the capital funding and withdrawal structure.
                   </p>
                   <span className="cb-module-label">Launch Models:</span>
-                  <div className="cb-module-buttons">
-                    <a className="cb-btn" href="https://capitalhealth.thecapitalbridge.com/">
-                      Capital Health Model
-                    </a>
-                  </div>
+                  <FrameworkLaunchRow
+                    buttons={[{ href: "https://capitalhealth.thecapitalbridge.com/", label: "Capital Health Model" }]}
+                  />
                 </div>
               </article>
               <article className="cb-module">

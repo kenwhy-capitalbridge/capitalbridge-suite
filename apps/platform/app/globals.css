@@ -48,7 +48,7 @@ a {
 .cb-framework a.cb-btn,
 .cb-framework button.cb-btn {
   color: var(--green);
-  font: inherit;
+  /* Do not use font: inherit — it strips .cb-btn font-weight:700 on <a> launch links */
 }
 
 .cb-framework a.cb-btn:hover,
@@ -474,6 +474,7 @@ a {
   max-width: 100%;
   box-sizing: border-box;
   font-size: var(--cb-launch-model-btn-fs);
+  font-weight: 700;
   white-space: nowrap;
   line-height: 1.25;
   overflow: hidden;
@@ -488,6 +489,7 @@ a {
   justify-content: center;
   background: var(--gold);
   color: var(--green);
+  font-family: inherit;
   font-size: var(--cb-body-font-size);
   font-weight: 700;
   text-align: center;
