@@ -57,8 +57,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ForeverCalculatorProvider>
             <ModelAppHeader
-              titleDesktop="FOREVER INCOME MODEL"
-              titleMobile="FOREVER"
+              titleDesktop="FOREVER INCOME"
+              titleMobile="FOREVER INC."
               backHref={foreverBackToPlatformHref}
               actions={
                 user ? (

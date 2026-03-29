@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
               <ModelAppHeader
-                titleDesktop="INCOME ENGINEERING MODEL"
+                titleDesktop="INCOME ENGINEERING"
                 titleMobile="INCOME ENGINE"
                 actions={
                   user ? (

@@ -48,8 +48,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
               <ModelAppHeader
-                titleDesktop="CAPITAL HEALTH MODEL"
-                titleMobile="Capital Health"
+                titleDesktop="CAPITAL HEALTH"
+                titleMobile="CAP. HEALTH"
                 actions={
                   user ? (
                     <ModelHeaderSaveRestore

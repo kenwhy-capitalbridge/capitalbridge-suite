@@ -119,18 +119,13 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
 
             <div className={styles.spineMobile}>
               <div className={styles.spineMobileTop}>
-                <div className={styles.spineMobileLeft}>
-                  <a href={home} className={styles.brandWordmarkLink} aria-label="Capital Bridge home">
-                    <span className={styles.brandWordmark} aria-hidden>
-                      Capital Bridge
-                    </span>
-                  </a>
-                  <span className={styles.titleMobileOnly}>{short ?? titleDesktop}</span>
-                </div>
-                <div className={styles.actionsCluster}>
+                <div className={styles.spineMobileBackSlot}>
                   <ModelAppHeaderBackButton href={back} />
-                  {actions}
                 </div>
+                <div className={styles.spineMobileTitleSlot}>
+                  <span className={styles.titleMobileCentered}>{short ?? titleDesktop}</span>
+                </div>
+                <div className={styles.spineMobileActionsSlot}>{actions}</div>
               </div>
               <div className={styles.spineMobileGrid} role="group" aria-label="Key metrics">
                 <MetricBlockMobile labelMobile={spine.slot1.labelMobile} value={spine.slot1.value} />
@@ -151,23 +146,16 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
                 fetchPriority="high"
                 className={styles.logoImgLegacy}
               />
-              <span className={styles.brandWordmarkLegacy} aria-hidden>
-                Capital Bridge
-              </span>
             </a>
             <div className={styles.titleCenter}>
-              {short && short !== titleDesktop ? (
-                <>
-                  <span className={`${styles.titleBase} ${styles.titleFull}`}>{titleDesktop}</span>
-                  <span className={`${styles.titleBase} ${styles.titleCompact}`}>{short}</span>
-                </>
-              ) : (
-                <span className={`${styles.titleBase} ${styles.titleSingle}`}>{titleDesktop}</span>
-              )}
+              <span className={`${styles.titleBase} ${styles.titleLegacyDesk}`}>{titleDesktop}</span>
+              <span className={`${styles.titleBase} ${styles.titleLegacyMobile}`}>{short ?? titleDesktop}</span>
             </div>
-            <div className={styles.actionsCluster}>
-              <ModelAppHeaderBackButton href={back} />
-              {actions}
+            <div className={styles.legacyRightGroup}>
+              <span className={styles.legacyBackSlot}>
+                <ModelAppHeaderBackButton href={back} />
+              </span>
+              <div className={styles.legacyActionsSlot}>{actions}</div>
             </div>
           </div>
         )}

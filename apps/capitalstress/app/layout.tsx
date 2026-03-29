@@ -49,8 +49,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
               <ModelAppHeader
-                titleDesktop="CAPITAL STRESS MODEL"
-                titleMobile="Capital Stress"
+                titleDesktop="CAPITAL STRESS"
+                titleMobile="CAP. STRESS"
                 actions={
                   user ? (
                     <ModelHeaderSaveRestore
