@@ -10,9 +10,11 @@
   border-bottom: 1px solid rgba(255, 204, 106, 0.22);
   background-color: #0d3a1d;
   padding-top: env(safe-area-inset-top);
-  /* One rhythm for title, metric labels, metric values, and header chrome (matches --pf-chrome-font). */
+  /* One rhythm for metric labels, values, and header chrome (matches --pf-chrome-font). */
   --model-header-fs: var(--pf-chrome-font, 0.65rem);
   --model-header-lh: 1.22;
+  /* Model title (serif): match logo bounding height — same clamp as .logoImg */
+  --model-header-logo-h: clamp(17px, 2.1vw, 22px);
 }
 
 .fixedWithSpine {
@@ -159,7 +161,7 @@
 }
 
 .logoImg {
-  height: clamp(17px, 2.1vw, 22px);
+  height: var(--model-header-logo-h);
   width: auto;
   max-width: min(20vw, 104px);
   object-fit: contain;
@@ -191,9 +193,9 @@
 
   .titleDeskShort {
     display: block;
-    font-size: var(--model-header-fs);
-    letter-spacing: 0.1em;
-    line-height: var(--model-header-lh);
+    font-size: var(--model-header-logo-h);
+    letter-spacing: 0.08em;
+    line-height: 1;
     text-align: left;
     color: rgba(255, 204, 106, 0.95);
     font-family: ui-serif, "Roboto Serif", Georgia, serif;
@@ -321,10 +323,10 @@
 }
 
 .titleMobileOnly {
-  font-size: var(--model-header-fs);
-  line-height: var(--model-header-lh);
+  font-size: var(--model-header-logo-h);
+  line-height: 1.05;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(255, 204, 106, 0.95);
   font-family: ui-serif, "Roboto Serif", Georgia, serif;
