@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useMemo, useRef, forwardRef, useImperativeHandle, useLayoutEffect } from 'react';
 import './index.css';
 import { CalculatorStoreProvider, useCalculatorStoreInternals } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
-import { PersistentSummaryHeader } from './components/PersistentSummaryHeader';
+import { useModelMetricSpine } from '@cb/ui';
 import { CurrencySelectorEmbedded } from './components/CurrencySelector';
 import { ExpensesInput } from './components/ExpensesInput';
 import { IncomeInputs } from './components/IncomeInputs';
@@ -21,7 +21,7 @@ import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
-import type { SustainabilityStatus } from './types/calculator';
+import type { SustainabilityStatus, SummaryKPIs } from './types/calculator';
 import { formatCurrency } from './utils/format';
 
 export type IncomeEngineeringAppHandle = {
@@ -31,6 +31,18 @@ export type IncomeEngineeringAppHandle = {
 };
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
+
+function coveragePctHeader(totalIncome: number, totalExpenses: number): number {
+  if (totalExpenses <= 0) return 100;
+  return (totalIncome / totalExpenses) * 100;
+}
+
+function statusLabelFromSummary(status: SummaryKPIs['sustainabilityStatus']): string {
+  if (status === 'green') return 'SUSTAINABLE';
+  if (status === 'amber') return 'PLAUSIBLE';
+  if (status === 'red') return 'UNSUSTAINABLE';
+  return 'INVALID';
+}
 
 const deriveTierFromStatus = (status: SustainabilityStatus | undefined): Tier => {
   switch (status) {
@@ -135,6 +147,64 @@ const AppInner = forwardRef<
   const progressPercent = targetCapital > 0 ? Math.min(100, (totalCapital / targetCapital) * 100) : 0;
   const lionScore = lionConfidenceScore * 100;
 
+  const { setSpine } = useModelMetricSpine();
+  const spineNetMonthly = formatCurrency(totalIncome - totalExpenses, currency);
+  const spineCoveragePct = coveragePctHeader(totalIncome, totalExpenses);
+  const spineStatusLabel = statusLabelFromSummary(result.summary.sustainabilityStatus);
+  const spineIsSurplus = spineCoveragePct >= 100;
+  const spineDeficitSurplusLabel = spineIsSurplus ? 'SURPLUS' : 'DEFICIT';
+  const spineStatus = result.summary.sustainabilityStatus;
+  const spineStatusChipStyles =
+    spineStatus === 'green'
+      ? 'bg-[#11B981] text-white border-[#11B981]'
+      : spineStatus === 'amber'
+        ? 'bg-[#FFAB40] text-[#0D3A1D] border-[#FFAB40]'
+        : 'bg-[#DD524C] text-white border-[#DD524C]';
+  const spineRunwayValue = horizonYears !== undefined ? `${horizonLabel} years` : horizonLabel;
+
+  useLayoutEffect(() => {
+    setSpine({
+      slot1: {
+        labelDesktop: 'Net Position',
+        labelMobile: 'Position',
+        value: (
+          <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-1">
+            <span
+              className={`shrink-0 font-bold tabular-nums ${spineIsSurplus ? 'text-[#11B981]' : 'text-[#DD524C]'}`}
+            >
+              {spineDeficitSurplusLabel} {spineCoveragePct.toFixed(1)}%
+            </span>
+            <span
+              className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${spineStatusChipStyles}`}
+            >
+              {spineStatusLabel}
+            </span>
+          </span>
+        ),
+      },
+      slot2: {
+        labelDesktop: 'Net Monthly Income',
+        labelMobile: 'Net',
+        value: spineNetMonthly,
+      },
+      slot3: {
+        labelDesktop: 'Capital Runway',
+        labelMobile: 'Runway',
+        value: spineRunwayValue,
+      },
+    });
+    return () => setSpine(null);
+  }, [
+    setSpine,
+    spineCoveragePct,
+    spineDeficitSurplusLabel,
+    spineIsSurplus,
+    spineNetMonthly,
+    spineRunwayValue,
+    spineStatusChipStyles,
+    spineStatusLabel,
+  ]);
+
   const reportRef = useRef<HTMLDivElement>(null);
 
   const handlePrintReport = async () => {
@@ -198,9 +268,7 @@ const AppInner = forwardRef<
     <div className="cb-body min-h-screen min-w-0 overflow-x-hidden bg-transparent text-[#F6F5F1]">
       {/* On-screen app (hidden when printing) */}
       <div className="no-print">
-        <div className="pt-14">
-          <PersistentSummaryHeader summary={result.summary} currency={currency} totalCapital={totalCapital} />
-        <div className="mx-auto w-full max-w-[100%] pt-52 pb-7 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-56 min-[641px]:pb-9 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-60 min-[1025px]:pb-11 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-64 min-[1441px]:pb-14">
+        <div className="mx-auto w-full max-w-[100%] pt-8 pb-7 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-10 min-[641px]:pb-9 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-12 min-[1025px]:pb-11 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-14 min-[1441px]:pb-14">
           <section aria-label="Expectations setting" className="space-y-5 min-[641px]:space-y-7 min-[1025px]:space-y-9 min-[1441px]:space-y-10">
             <div className="rounded-xl border border-[#FFCC6A]/25 bg-[#163d28] p-4 sm:p-6">
               <h2 className="font-serif-section mb-1 text-base font-bold uppercase sm:text-lg">Expectations Setting</h2>
@@ -265,7 +333,6 @@ const AppInner = forwardRef<
               Print or Save Report
             </button>
           </div>
-        </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import "./index.css";
 import { MonteCarloResult, StressSeverity, StressScenarioResult } from './types';
 import { runMonteCarlo, getSimulationCount, runStressScenarios, getDepletionBarOutput } from './services/mathUtils';
@@ -26,6 +26,7 @@ import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLoc
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { useModelMetricSpine } from "@cb/ui";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -156,6 +157,64 @@ function getCapitalHealthStatus(
 }
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
+
+type CapitalStressMetricSpineSyncProps = {
+  depletionBarOutput: DepletionBarOutput | null;
+  withdrawalDisplay: string;
+  horizonDisplay: string;
+};
+
+function CapitalStressMetricSpineSync({
+  depletionBarOutput,
+  withdrawalDisplay,
+  horizonDisplay,
+}: CapitalStressMetricSpineSyncProps) {
+  const { setSpine } = useModelMetricSpine();
+  useLayoutEffect(() => {
+    const slot1Value =
+      depletionBarOutput != null ? (
+        <span
+          title="Method: Net Pressure (bar‑derived)"
+          className="inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase"
+          style={{
+            backgroundColor: FRAGILITY_GAUGE_COLORS[depletionBarOutput.pillLabel],
+            color: getPillTextColor(depletionBarOutput.pillLabel),
+          }}
+        >
+          {depletionBarOutput.pillLabel === 'Vulnerable' ? (
+            <>
+              <span className="sm:hidden">Exposed</span>
+              <span className="hidden sm:inline">Vulnerable</span>
+            </>
+          ) : (
+            depletionBarOutput.pillLabel
+          )}
+        </span>
+      ) : (
+        <span className="text-[#F6F5F1]/80">—</span>
+      );
+
+    setSpine({
+      slot1: {
+        labelDesktop: 'Depletion Status',
+        labelMobile: 'Pressure',
+        value: slot1Value,
+      },
+      slot2: {
+        labelDesktop: 'Withdrawal',
+        labelMobile: 'Withdrawal',
+        value: withdrawalDisplay,
+      },
+      slot3: {
+        labelDesktop: 'Time Horizon',
+        labelMobile: 'Horizon',
+        value: horizonDisplay,
+      },
+    });
+    return () => setSpine(null);
+  }, [depletionBarOutput, withdrawalDisplay, horizonDisplay, setSpine]);
+  return null;
+}
 
 type CapitalStressAppProps = {
   canUseStressModel?: boolean;
@@ -553,92 +612,12 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         id="screen-content"
         style={{ opacity: canUseStressModel ? 1 : 0.55, pointerEvents: canUseStressModel ? "auto" : "none" }}
       >
-      {/* Metrics bar — below ModelAppHeader from layout.tsx (brand row removed) */}
-      <header
-        className="app-header no-print fixed left-0 right-0 z-40 w-full box-border block max-[640px]:top-[calc(48px+1px+env(safe-area-inset-top))] min-[641px]:top-[calc(52px+1px+env(safe-area-inset-top))]"
-        style={{
-          backgroundColor: '#0D3A1D',
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-          borderBottom: '1px solid rgba(255, 204, 106, 0.3)',
-        }}
-      >
-        <div className="w-full px-2 sm:px-4 sm:container sm:mx-auto sm:max-w-6xl">
-          <div className="flex flex-wrap items-center justify-between gap-6 py-4 border-t border-[#FFCC6A]/20">
-            <div className="flex flex-col items-start gap-1.5 text-left">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-[7px] sm:text-[8px] font-bold text-[#FFCC6A]/80 uppercase">STRUCTURE<br className="sm:hidden" />HEALTH</span>
-                {mcResult != null && depletionBarOutput != null ? (() => {
-                  const returnRange = upperPct - lowerPct;
-                  const returnSens = Math.min(100, Math.max(0, (returnRange - 5) * 10));
-                  const withdrawalSens = investment > 0 ? Math.min(100, (withdrawal / investment) * 500) : 0;
-                  const inflationSens = Math.min(100, effectiveInflation * 25);
-                  const volSens = Math.min(100, mcResult.maxDrawdownPctAvg * 2);
-                  const drawdownSens = Math.min(100, mcResult.maxDrawdownPctAvg * 2.5);
-                  const fragilityIndex = Math.round((returnSens + withdrawalSens + inflationSens + volSens + drawdownSens) / 5);
-                  const fiTier = getFragilityIndexTier(fragilityIndex);
-                  const healthStatus = getCapitalHealthStatus(mcResult.tier, fiTier, depletionBarOutput.pillLabel);
-                  return (
-                    <span
-                      className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase shadow"
-                      style={{ backgroundColor: CAPITAL_HEALTH_COLORS[healthStatus], color: healthStatus === 'Watchful' || healthStatus === 'Stable' ? '#0D3A1D' : '#FFFFFF' }}
-                    >
-                      {healthStatus === 'Needs Attention' ? (
-                        <>
-                          <span className="sm:hidden">REVIEW</span>
-                          <span className="hidden sm:inline">NEEDS ATTENTION</span>
-                        </>
-                      ) : healthStatus === 'Watchful' ? (
-                        <>
-                          <span className="sm:hidden">MONITOR</span>
-                          <span className="hidden sm:inline">WATCHFUL</span>
-                        </>
-                      ) : healthStatus.toUpperCase().replace(/\s+/g, ' ')}
-                    </span>
-                  );
-                })() : (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase shadow bg-[#FFCC6A]/30 text-[#FFCC6A]/80">—</span>
-                )}
-              </div>
-              <span className="text-[7px] sm:text-[8px] font-bold text-[#FFCC6A]/80 uppercase">Time: <span className="text-[8px] font-bold text-white">{years} years</span></span>
-            </div>
-            <div className="flex flex-col items-center text-center gap-1.5">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-[7px] sm:text-[8px] font-bold text-[#FFCC6A]/80 uppercase">Typical Outcome:</span>
-                <span className="text-[8px] font-bold text-white">{mcResult != null ? formatCurrency(mcResult.simulatedAverage) : '—'}</span>
-              </div>
-              <span className="text-[7px] sm:text-[8px] font-bold text-[#FFCC6A]/80 uppercase">Initial Capital: <span className="text-[8px] font-bold text-white">{formatCurrency(investment)}</span></span>
-            </div>
-            <div className="flex flex-col items-end gap-1.5 text-right">
-              <div className="flex items-center gap-2 sm:gap-2.5 justify-end">
-                <div className="flex flex-col sm:flex-row items-end sm:items-center text-right sm:text-left">
-                  <span className="text-[7px] sm:text-[8px] font-bold text-[#FFCC6A]/80 uppercase leading-tight">Depletion</span>
-                  <span className="text-[7px] sm:text-[8px] font-bold text-[#FFCC6A]/80 uppercase leading-tight sm:ml-0.5">Pressure</span>
-                </div>
-                {depletionBarOutput != null ? (
-                  <span
-                    title="Method: Net Pressure (bar‑derived)"
-                    className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase shrink-0"
-                    style={{ backgroundColor: FRAGILITY_GAUGE_COLORS[depletionBarOutput.pillLabel], color: getPillTextColor(depletionBarOutput.pillLabel) }}
-                  >
-                    {depletionBarOutput.pillLabel === 'Vulnerable' ? (
-                      <>
-                        <span className="sm:hidden">Exposed</span>
-                        <span className="hidden sm:inline">Vulnerable</span>
-                      </>
-                    ) : depletionBarOutput.pillLabel}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase shrink-0 bg-[#FFCC6A]/30 text-[#FFCC6A]/80">—</span>
-                )}
-              </div>
-              <span className="text-[7px] sm:text-[8px] font-bold text-[#FFCC6A]/80 uppercase">Withdrawal: <span className="text-[8px] font-bold text-white">{formatCurrency(withdrawal)}</span></span>
-            </div>
-          </div>
-        </div>
-      </header>
-
+        <CapitalStressMetricSpineSync
+          depletionBarOutput={depletionBarOutput}
+          withdrawalDisplay={formatCurrency(withdrawal)}
+          horizonDisplay={`${years} years`}
+        />
       <div className="cb-body min-h-screen bg-transparent text-cb-cream font-sans selection:bg-[#FFCC6A] selection:text-black pt-0 pb-4 md:pb-16">
-        <div className="h-36 sm:h-40 md:h-44 shrink-0 no-print" aria-hidden="true" role="presentation" />
         <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 lg:pt-14 space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
         {/* Module 3 note — standalone mode */}
         <div className="pt-6 pb-2 sm:pt-2 no-print">

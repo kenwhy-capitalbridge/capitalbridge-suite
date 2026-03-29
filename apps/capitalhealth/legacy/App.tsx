@@ -1,6 +1,6 @@
 //Capital Health Model
 "use client";
-import React, { useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle, useLayoutEffect } from 'react';
 import './index.css';
 import {
   AreaChart,
@@ -38,6 +38,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
+import { useModelMetricSpine } from '@cb/ui';
 
 /** Coloured rectangular risk badge: label only (e.g. Critical). Institutional, no tier numbers. */
 function RiskTierBadge({ tier, label }: { tier: number; label: string }) {
@@ -669,6 +670,58 @@ const CalculatorScreen = forwardRef<
     }
   }, [inputs, result, chartData, lionAccessEnabled, currentAge, reportClientDisplayName]);
 
+  const capitalHealthSlot3RunwayValue = useMemo(() => {
+    if (inputs.mode === 'growth') return `${horizonYearsFormatted} years`;
+    if (result.runwayPhrase.startsWith('Forever Income')) return 'Forever Income';
+    if (result.depletionMonth != null) return formatRunwayYearsMonths(result.depletionMonth);
+    const rp = result.runwayPhrase;
+    const runsOutMatch = rp.match(/Runs out in (\d+) years (\d+) months/);
+    if (runsOutMatch) return `${runsOutMatch[1]} years ${runsOutMatch[2]} months`;
+    const approxMatch = rp.match(/≈(\d+) years(?: (\d+) months)?/);
+    if (approxMatch) {
+      const y = Number(approxMatch[1]);
+      const m = approxMatch[2] ? Number(approxMatch[2]) : 0;
+      return m === 0 ? `${y} years` : `${y} years ${m} months`;
+    }
+    return rp;
+  }, [inputs.mode, result.runwayPhrase, result.depletionMonth, horizonYearsFormatted]);
+
+  const { setSpine } = useModelMetricSpine();
+  const sustainableIncomeMonthly = (result as { sustainableIncomeMonthly?: number }).sustainableIncomeMonthly ?? 0;
+  const incomeGapMonthly = Math.max(0, inputs.targetMonthlyIncome - sustainableIncomeMonthly);
+  const slot2ValueStr =
+    inputs.mode === 'withdrawal'
+      ? `${formatCurrency(incomeGapMonthly)} / mo`
+      : formatCurrency(inputs.targetFutureCapital);
+
+  useLayoutEffect(() => {
+    setSpine({
+      slot1: {
+        labelDesktop: 'Risk Level',
+        labelMobile: 'Risk',
+        value: <RiskTierBadge tier={result.riskMetrics.riskTier} label={result.riskMetrics.riskTierLabel} />,
+      },
+      slot2: {
+        labelDesktop: inputs.mode === 'withdrawal' ? 'Income Gap' : 'Desired Capital',
+        labelMobile: inputs.mode === 'withdrawal' ? 'Gap' : 'Target',
+        value: slot2ValueStr,
+      },
+      slot3: {
+        labelDesktop: inputs.mode === 'withdrawal' ? SECTIONS.downsideHorizon : 'Time Horizon',
+        labelMobile: inputs.mode === 'withdrawal' ? 'Runway' : 'Horizon',
+        value: capitalHealthSlot3RunwayValue,
+      },
+    });
+    return () => setSpine(null);
+  }, [
+    setSpine,
+    inputs.mode,
+    result.riskMetrics.riskTier,
+    result.riskMetrics.riskTierLabel,
+    slot2ValueStr,
+    capitalHealthSlot3RunwayValue,
+  ]);
+
   return (
     <TapToRevealProvider>
     <div className="cb-body min-h-screen bg-transparent text-[#F6F5F1] overflow-x-hidden">
@@ -682,233 +735,7 @@ const CalculatorScreen = forwardRef<
         </div>
       )}
 
-      {/* Persistent metrics bar — sits below ModelAppHeader (packages/ui); keep z-index under shell */}
-      <header
-        className="fixed left-0 right-0 z-40 shadow-[0_4px_20px_rgba(0,0,0,0.4)] max-[640px]:top-[calc(48px+1px+env(safe-area-inset-top))] min-[641px]:top-[calc(52px+1px+env(safe-area-inset-top))]"
-        style={{ backgroundColor: '#0d3a1d' }}
-      >
-        {/* Header: two metric cards — compact */}
-        <div className="max-w-6xl mx-auto px-2 sm:px-3 grid grid-cols-2 gap-2 sm:gap-3" style={{ paddingBottom: 10 }}>
-          {/* Card 1: Capital Health Summary */}
-          <div
-            className="rounded-[8px] sm:rounded-[10px] border border-[#FFCC6A] p-1 sm:p-2 min-w-0 overflow-hidden"
-            style={{ backgroundColor: '#0D3A1D', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
-          >
-            <h2
-              className="uppercase mb-0.5 sm:mb-1 text-[#FFCC6A] text-center sm:text-left"
-              style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, letterSpacing: '0.1em', fontSize: 'clamp(8px, 1.2vw, 11px)' }}
-            >
-              Capital Health
-          </h2>
-            <div className="grid grid-cols-[1fr_auto] gap-x-1 sm:gap-x-2 gap-y-0.5 items-baseline mt-2 sm:mt-2">
-              <div className="flex items-center gap-1 min-w-0 shrink-0">
-                <span
-                  className="text-[#F6F5F1] whitespace-nowrap"
-                  style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-                >
-                {props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle ? 'Lion score (0–100)' : SECTIONS.healthScore}
-                </span>
-                <TapToReveal
-                  explanation={
-                    props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle
-                      ? 'Lion score is the headline 0–100 measure from Lion’s Verdict, mapped from your modelled risk tier.'
-                      : getHealthScoreCopy()
-                  }
-                  ariaLabel={props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle ? 'Lion score' : 'Capital Strength Score'}
-                  className="shrink-0"
-                  compact
-                />
-              </div>
-              <div
-                className="text-right text-[#F6F5F1] tabular-nums font-bold shrink-0"
-                style={{ fontSize: 'clamp(10px, 1.2vw, 13px)' }}
-              >
-                {props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle
-                  ? lionVerdictBundle.engine.score0to100
-                  : `${formatNum(result.riskMetrics.healthScore, 1)}%`}
-              </div>
-              <div className="col-span-2 w-full min-w-0">
-                <CapitalStrengthBar
-                  score={
-                    props.canSeeVerdict && lionAccessEnabled && lionVerdictBundle
-                      ? lionVerdictBundle.engine.score0to100
-                      : result.riskMetrics.healthScore
-                  }
-                  tier={Math.min(5, Math.max(1, result.riskMetrics.riskTier)) as 1 | 2 | 3 | 4 | 5}
-                />
-              </div>
-              <span
-                className="text-[#F6F5F1] min-w-0 truncate sm:break-words"
-                style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-              >
-                {inputs.mode === 'withdrawal' ? SECTIONS.monthlyWithdrawal : SECTIONS.desiredCapital}
-              </span>
-              <div
-                className="text-right text-[#F6F5F1] tabular-nums font-bold shrink-0 whitespace-nowrap"
-                style={{ fontSize: 'clamp(10px, 1.2vw, 13px)' }}
-              >
-                {inputs.mode === 'withdrawal' ? formatCurrency(inputs.targetMonthlyIncome) : formatCurrency(inputs.targetFutureCapital)}
-              </div>
-              <span
-                className="text-[#F6F5F1] min-w-0 truncate sm:break-words mt-1.5 sm:mt-2"
-                style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-              >
-                {SECTIONS.capitalHorizon}
-              </span>
-              <div
-                className="text-right text-[#F6F5F1] tabular-nums font-bold shrink-0 whitespace-nowrap mt-1.5 sm:mt-2"
-                style={{ fontSize: 'clamp(10px, 1.2vw, 13px)' }}
-              >
-                {horizonYearsFormatted} years
-              </div>
-            </div>
-              </div>
-              
-          {/* Card 2: Risk Overview */}
-          <div
-            className="rounded-[8px] sm:rounded-[10px] border border-[#FFCC6A] p-1 sm:p-2 min-w-0 overflow-hidden"
-            style={{ backgroundColor: '#0d3a1d', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
-          >
-            <h2
-              className="uppercase mb-0.5 sm:mb-1 text-[#FFCC6A] text-center sm:text-left"
-              style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, letterSpacing: '0.1em', fontSize: 'clamp(8px, 1.2vw, 11px)' }}
-            >
-              Risk Overview
-            </h2>
-            <div className="flex flex-col justify-evenly gap-y-0.5 sm:gap-y-1.5 mt-1 sm:mt-1.5" style={{ minHeight: '0' }}>
-              <div className="flex items-center justify-between gap-x-1 sm:gap-x-2 min-h-[1rem] sm:min-h-[1.25rem] shrink-0 min-w-0">
-                <span
-                  className="text-[#F6F5F1] min-w-0 truncate sm:break-words"
-                  style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-                >
-                  {SECTIONS.riskLevel}
-                </span>
-                <div className="text-right min-w-0 shrink-0 flex-shrink-0">
-                  <RiskTierBadge tier={result.riskMetrics.riskTier} label={result.riskMetrics.riskTierLabel} />
-                </div>
-              </div>
-              {inputs.mode === 'withdrawal' && (
-                <div className="flex items-center justify-between gap-x-1 sm:gap-x-2 min-h-[1rem] sm:min-h-[1.25rem] shrink-0 min-w-0">
-                  <span
-                    className="text-[#F6F5F1] min-w-0 truncate sm:break-words"
-                    style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-                  >
-                    Income Gap
-                  </span>
-                  <div
-                    className="text-right text-[#F6F5F1] tabular-nums font-bold shrink-0 whitespace-nowrap"
-                    style={{ fontSize: 'clamp(10px, 1.2vw, 13px)' }}
-                  >
-                    {formatCurrency(Math.max(0, inputs.targetMonthlyIncome - ((result as { sustainableIncomeMonthly?: number }).sustainableIncomeMonthly ?? 0)))} per month
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center justify-between gap-x-1 sm:gap-x-2 min-h-[1rem] sm:min-h-[1.25rem] shrink-0 min-w-0">
-                <span
-                  className="text-[#F6F5F1] min-w-0 truncate sm:break-words"
-                  style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-                >
-                  {inputs.mode === 'growth' ? SECTIONS.estReturnCompounded : SECTIONS.downsideHorizon}
-                </span>
-                <div
-                  className="text-right tabular-nums font-bold min-w-0 shrink-0 whitespace-nowrap"
-                  style={{
-                    fontSize: 'clamp(10px, 1.2vw, 13px)',
-                    color:
-                      inputs.mode === 'withdrawal' && result.runwayPhrase.startsWith('Forever Income')
-                        ? '#55B685'
-                        : '#F6F5F1',
-                  }}
-                >
-                  {inputs.mode === 'growth'
-                    ? formatCurrency(result.nominalCapitalAtHorizon)
-                    : result.runwayPhrase.startsWith('Forever Income')
-                      ? 'Forever Income'
-                      : (() => {
-                          if (result.depletionMonth != null) {
-                            return formatRunwayYearsMonths(result.depletionMonth);
-                          }
-                          const rp = result.runwayPhrase;
-                          const runsOutMatch = rp.match(/Runs out in (\d+) years (\d+) months/);
-                          if (runsOutMatch) {
-                            return `${runsOutMatch[1]} years ${runsOutMatch[2]} months`;
-                          }
-                          const approxMatch = rp.match(/≈(\d+) years(?: (\d+) months)?/);
-                          if (approxMatch) {
-                            const y = Number(approxMatch[1]);
-                            const m = approxMatch[2] ? Number(approxMatch[2]) : 0;
-                            return m === 0 ? `${y} years` : `${y} years ${m} months`;
-                          }
-                          return rp;
-                        })()}
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-x-1 sm:gap-x-2 min-h-[1rem] sm:min-h-[1.25rem] shrink-0 min-w-0 flex-nowrap sm:flex-wrap">
-                <span
-                  className="text-[#F6F5F1] min-w-0 truncate sm:break-words flex items-center gap-1 shrink"
-                  style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-                >
-                  {SECTIONS.estReturnsPct}
-                  {(inputs.inflationEnabled ? Math.max(0, inputs.expectedAnnualReturnPct - inputs.inflationPct) : inputs.expectedAnnualReturnPct) > 8.0 && (
-                    <>
-                      {' '}
-                      <TapToReveal
-                        explanation="Higher expected returns increase risk and may not be achieved."
-                        variant="caution"
-                        ariaLabel="Expected returns risk"
-                        className="shrink-0"
-                        compact
-                      />
-                    </>
-                  )}
-                </span>
-                <div
-                  className="text-right text-[#F6F5F1] tabular-nums font-bold shrink-0 whitespace-nowrap"
-                  style={{ fontSize: 'clamp(10px, 1.2vw, 13px)' }}
-                >
-                  {formatNum(inputs.inflationEnabled ? Math.max(0, inputs.expectedAnnualReturnPct - inputs.inflationPct) : inputs.expectedAnnualReturnPct, 1)}%
-                </div>
-              </div>
-              {inputs.mode === 'withdrawal' && (
-                <div className="flex items-center justify-between gap-x-1 sm:gap-x-2 min-h-[1rem] sm:min-h-[1.25rem] shrink-0 min-w-0 flex-nowrap">
-                  <span
-                    className="text-[#F6F5F1] shrink-0"
-                    style={{ fontSize: 'clamp(8px, 1.1vw, 13px)', fontWeight: 500, opacity: 0.85 }}
-                  >
-                    Capital Survival Age
-                  </span>
-                  <div className="text-right shrink-0 whitespace-nowrap">
-                    <span
-                      className="tabular-nums font-bold"
-                      style={{
-                        fontSize: 'clamp(10px, 1.2vw, 13px)',
-                        color:
-                          result.riskMetrics.riskTier <= 2
-                            ? '#55B685'
-                            : result.riskMetrics.riskTier === 3
-                              ? '#F3AF56'
-                              : '#CD5B52',
-                      }}
-                    >
-                      {(() => {
-                        const runwayYears =
-                          result.depletionMonth != null ? result.depletionMonth / 12 : null;
-                        if (currentAge == null) return 'Enter Age';
-                        if (runwayYears == null) return 'Perpetual';
-                        if (runwayYears >= 100) return 'Perpetual';
-                        const age = Math.floor(currentAge + runwayYears);
-                        return `${age} years old`;
-                      })()}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-                </div>
-              </div>
-      </header>
-
-      <main id="calculator-panel" className="max-w-4xl mx-auto px-3 sm:px-4 pt-[200px] sm:pt-[240px] md:pt-[260px] pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
+      <main id="calculator-panel" className="max-w-4xl mx-auto px-3 sm:px-4 pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
         {/* Mode selector */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-2 sm:p-4 text-white text-center sm:text-left mt-4 sm:mt-6">
           <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2 sm:mb-3">

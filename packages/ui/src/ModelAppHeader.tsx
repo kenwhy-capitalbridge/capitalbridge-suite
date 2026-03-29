@@ -1,7 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { MARKETING_SITE_URL, PLATFORM_APP_URL } from "@cb/shared/urls";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
 import { BRAND_CAPITAL_BRIDGE_LOGO_GOLD } from "./brandPaths";
+import { useModelMetricSpine } from "./modelMetricSpineContext";
 import styles from "./ModelAppHeader.module.css";
 
 function marketingHomeUrl(): string {
@@ -15,32 +18,61 @@ function platformHomeUrl(): string {
 }
 
 export type ModelAppHeaderProps = {
-  /** Large screens: full product line (e.g. INCOME ENGINEERING MODEL). */
   titleDesktop: string;
-  /** Small screens: shorter label so one row fits (e.g. INCOME ENGINEERING). Omit to reuse desktop + smaller font only. */
   titleMobile?: string;
-  /** Defaults to platform origin + `/`. */
   backHref?: string;
-  /** Optional right-side controls (e.g. Save / load snapshots), shown next to Back. */
   actions?: ReactNode;
 };
 
+function MetricBlockDesktop({
+  labelDesktop,
+  value,
+}: {
+  labelDesktop: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className={styles.metricBlockDesktop}>
+      <div className={styles.metricLabelDesktop} title={labelDesktop}>
+        {labelDesktop}
+      </div>
+      <div className={styles.metricValueDesktop}>{value}</div>
+    </div>
+  );
+}
+
+function MetricBlockMobile({
+  labelMobile,
+  value,
+}: {
+  labelMobile: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className={styles.metricBlockMobile}>
+      <div className={styles.metricValueMobile}>{value}</div>
+      <div className={styles.metricLabelMobile} title={labelMobile}>
+        {labelMobile}
+      </div>
+    </div>
+  );
+}
+
 /**
- * Fixed top bar aligned with platform Framework: logo → marketing | title | Back → platform.
- * Uses fixed positioning (not sticky) so it stays visible when legacy calculator CSS sets
- * `overflow-x: hidden` on html/body, which breaks `position: sticky`.
+ * Fixed top bar: logo, model title, optional 3-slot metric spine (when provider is active), Back + actions.
  */
 export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }: ModelAppHeaderProps) {
   const home = marketingHomeUrl();
   const back = backHref ?? platformHomeUrl();
   const short = titleMobile?.trim();
+  const { spine } = useModelMetricSpine();
+  const hasSpine = spine != null;
 
   return (
     <>
       <header
-        className={styles.fixed}
+        className={`${styles.fixed} ${hasSpine ? styles.fixedWithSpine : ""}`}
         style={{
-          /* Inline so positioning survives CSS ordering issues; module still supplies theme. */
           position: "fixed",
           top: 0,
           left: 0,
@@ -49,61 +81,110 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
           width: "100%",
         }}
       >
-        <div className={styles.wrap}>
-          <a
-            href={home}
-            style={{
-              justifySelf: "start",
-              display: "flex",
-              alignItems: "center",
-              minWidth: 0,
-            }}
-          >
-            <img
-              src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
-              alt="Capital Bridge — Strength Behind Every Structure"
-              width={200}
-              height={40}
-              decoding="async"
-              fetchPriority="high"
-              style={{
-                height: "clamp(14px, 3.8vw, 24px)",
-                width: "auto",
-                maxWidth: "min(28vw, 128px)",
-                objectFit: "contain",
-                objectPosition: "left center",
-              }}
-            />
-          </a>
+        {hasSpine ? (
+          <>
+            <div className={styles.spineDesktop}>
+              <div className={styles.spineDesktopLeft}>
+                <a href={home} className={styles.logoLink} aria-label="Capital Bridge home">
+                  <img
+                    src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
+                    alt=""
+                    width={200}
+                    height={40}
+                    decoding="async"
+                    fetchPriority="high"
+                    className={styles.logoImg}
+                  />
+                </a>
+                <div className={styles.titleCluster}>
+                  {short && short !== titleDesktop ? (
+                    <>
+                      <span className={`${styles.titleBase} ${styles.titleDesk}`}>{titleDesktop}</span>
+                      <span className={`${styles.titleBase} ${styles.titleDeskShort}`}>{short}</span>
+                    </>
+                  ) : (
+                    <span className={`${styles.titleBase} ${styles.titleDesk}`}>{titleDesktop}</span>
+                  )}
+                </div>
+              </div>
+              <div className={styles.spineDesktopMetrics} role="group" aria-label="Key metrics">
+                <MetricBlockDesktop labelDesktop={spine.slot1.labelDesktop} value={spine.slot1.value} />
+                <MetricBlockDesktop labelDesktop={spine.slot2.labelDesktop} value={spine.slot2.value} />
+                <MetricBlockDesktop labelDesktop={spine.slot3.labelDesktop} value={spine.slot3.value} />
+              </div>
+              <div className={styles.actionsCluster}>
+                <ModelAppHeaderBackButton href={back} />
+                {actions}
+              </div>
+            </div>
 
-          <div
-            style={{
-              justifySelf: "center",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minWidth: 0,
-              width: "100%",
-              paddingInline: "0.15rem",
-            }}
-          >
-            {short && short !== titleDesktop ? (
-              <>
-                <span className={`${styles.titleBase} ${styles.titleFull}`}>{titleDesktop}</span>
-                <span className={`${styles.titleBase} ${styles.titleCompact}`}>{short}</span>
-              </>
-            ) : (
-              <span className={`${styles.titleBase} ${styles.titleSingle}`}>{titleDesktop}</span>
-            )}
+            <div className={styles.spineMobile}>
+              <div className={styles.spineMobileTop}>
+                <div className={styles.spineMobileLeft}>
+                  <a href={home} className={styles.logoLink} aria-label="Capital Bridge home">
+                    <img
+                      src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
+                      alt=""
+                      width={200}
+                      height={40}
+                      decoding="async"
+                      className={styles.logoImgSm}
+                    />
+                  </a>
+                  <span className={styles.titleMobileOnly}>{short ?? titleDesktop}</span>
+                </div>
+                <div className={styles.actionsCluster}>
+                  <ModelAppHeaderBackButton href={back} />
+                  {actions}
+                </div>
+              </div>
+              <div className={styles.spineMobileGrid} role="group" aria-label="Key metrics">
+                <MetricBlockMobile labelMobile={spine.slot1.labelMobile} value={spine.slot1.value} />
+                <MetricBlockMobile labelMobile={spine.slot2.labelMobile} value={spine.slot2.value} />
+                <MetricBlockMobile labelMobile={spine.slot3.labelMobile} value={spine.slot3.value} />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className={styles.wrap}>
+            <a href={home} className={styles.logoLinkLegacy}>
+              <img
+                src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
+                alt="Capital Bridge — Strength Behind Every Structure"
+                width={200}
+                height={40}
+                decoding="async"
+                fetchPriority="high"
+                style={{
+                  height: "clamp(14px, 3.8vw, 24px)",
+                  width: "auto",
+                  maxWidth: "min(28vw, 128px)",
+                  objectFit: "contain",
+                  objectPosition: "left center",
+                }}
+              />
+            </a>
+            <div className={styles.titleCenter}>
+              {short && short !== titleDesktop ? (
+                <>
+                  <span className={`${styles.titleBase} ${styles.titleFull}`}>{titleDesktop}</span>
+                  <span className={`${styles.titleBase} ${styles.titleCompact}`}>{short}</span>
+                </>
+              ) : (
+                <span className={`${styles.titleBase} ${styles.titleSingle}`}>{titleDesktop}</span>
+              )}
+            </div>
+            <div className={styles.actionsCluster}>
+              <ModelAppHeaderBackButton href={back} />
+              {actions}
+            </div>
           </div>
-
-          <div className={styles.actionsCluster}>
-            <ModelAppHeaderBackButton href={back} />
-            {actions}
-          </div>
-        </div>
+        )}
       </header>
-      <div className={styles.spacer} aria-hidden />
+      <div
+        className={`${styles.spacer} ${hasSpine ? styles.spacerWithSpine : ""}`}
+        aria-hidden
+      />
     </>
   );
 }

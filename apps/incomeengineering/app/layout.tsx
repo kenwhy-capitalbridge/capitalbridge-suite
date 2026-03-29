@@ -5,7 +5,7 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
-import { LionWatermarkShell, ModelAppHeader } from "@cb/ui";
+import { LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
@@ -50,21 +50,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <LionWatermarkShell>
           <ModelSaveHandlersProvider>
-            <ModelAppHeader
-              titleDesktop="INCOME ENGINEERING MODEL"
-              titleMobile="INCOME ENG"
-              actions={
-                user ? (
-                  <ModelHeaderSaveRestore
-                    userId={user.id}
-                    serverCanSave={canSave}
-                    initialSessionId={initialSessionId}
-                    logTag="[income-engineering]"
-                  />
-                ) : null
-              }
-            />
-            {children}
+            <ModelMetricSpineProvider>
+              <ModelAppHeader
+                titleDesktop="INCOME ENGINEERING MODEL"
+                titleMobile="Income Engine"
+                actions={
+                  user ? (
+                    <ModelHeaderSaveRestore
+                      userId={user.id}
+                      serverCanSave={canSave}
+                      initialSessionId={initialSessionId}
+                      logTag="[income-engineering]"
+                    />
+                  ) : null
+                }
+              />
+              {children}
+            </ModelMetricSpineProvider>
           </ModelSaveHandlersProvider>
         </LionWatermarkShell>
       </body>

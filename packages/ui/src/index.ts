@@ -12,3 +12,9 @@ export {
 } from "./brandPaths";
 export { LionWatermarkBackdrop } from "./LionWatermarkBackdrop";
 export { LionWatermarkShell } from "./LionWatermarkShell";
+export {
+  ModelMetricSpineProvider,
+  useModelMetricSpine,
+  type ModelMetricSpinePayload,
+  type ModelMetricSpineSlot,
+} from "./modelMetricSpineContext";

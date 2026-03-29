@@ -12,17 +12,30 @@
   padding-top: env(safe-area-inset-top);
 }
 
+.fixedWithSpine {
+  border-bottom-color: rgba(255, 204, 106, 0.28);
+}
+
 .spacer {
   height: calc(52px + 1px + env(safe-area-inset-top));
   flex-shrink: 0;
 }
 
-@media (max-width: 640px) {
+.spacerWithSpine {
+  height: calc(56px + 1px + env(safe-area-inset-top));
+}
+
+@media (max-width: 767px) {
   .spacer {
     height: calc(48px + 1px + env(safe-area-inset-top));
   }
+
+  .spacerWithSpine {
+    height: calc(104px + 1px + env(safe-area-inset-top));
+  }
 }
 
+/* ——— Legacy layout (Forever / no metric provider) ——— */
 .wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -33,6 +46,23 @@
   margin: 0 auto;
   padding: 0.35rem 1rem;
   box-sizing: border-box;
+}
+
+.logoLinkLegacy {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.titleCenter {
+  justify-self: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  padding-inline: 0.15rem;
 }
 
 .titleBase {
@@ -53,13 +83,6 @@
   font-size: 0.72rem;
 }
 
-@media (max-width: 640px) {
-  .titleSingle {
-    font-size: 0.5rem;
-    letter-spacing: 0.08em;
-  }
-}
-
 .titleFull {
   font-size: 0.72rem;
 }
@@ -71,6 +94,18 @@
 }
 
 @media (max-width: 640px) {
+  .wrap {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 0.35rem;
+    padding: 0.25rem 0.5rem;
+    min-height: 48px;
+  }
+
+  .titleSingle {
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
   .titleFull {
     display: none;
   }
@@ -82,14 +117,140 @@
   }
 }
 
+/* ——— Metric spine: desktop (≥768px) ——— */
+.spineDesktop {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 56px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.3rem 1rem 0.4rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .spineDesktop {
+    display: flex;
+  }
+}
+
+.spineDesktopLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logoImg {
+  height: clamp(16px, 2.2vw, 22px);
+  width: auto;
+  max-width: min(22vw, 110px);
+  object-fit: contain;
+  object-position: left center;
+}
+
+.titleCluster {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.titleDesk {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-align: left;
+  line-height: 1.15;
+}
+
+.titleDeskShort {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .titleDesk {
+    display: none;
+  }
+
+  .titleDeskShort {
+    display: block;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-align: left;
+    color: rgba(255, 204, 106, 0.95);
+    font-family: ui-serif, "Roboto Serif", Georgia, serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 28vw;
+  }
+}
+
+.spineDesktopMetrics {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(32px, 3.5vw, 48px);
+  flex: 1;
+  min-width: 0;
+  padding-inline: 0.25rem;
+}
+
+.metricBlockDesktop {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;
+  max-width: 34%;
+}
+
+.metricLabelDesktop {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 204, 106, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.metricValueDesktop {
+  font-size: clamp(14px, 1.05vw, 16px);
+  line-height: 1.2;
+  font-weight: 700;
+  color: #f6f5f1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
 .actionsCluster {
   justify-self: end;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .back {
@@ -101,7 +262,7 @@
   color: rgba(13, 58, 29, 0.95);
   background-color: rgba(255, 204, 106, 0.92);
   border: 1px solid rgba(255, 204, 106, 0.55);
-  border-radius: 4px;
+  border-radius: 3px;
   white-space: nowrap;
   text-decoration: none;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
@@ -120,17 +281,115 @@
   border-color: #0d3a1d;
 }
 
-@media (max-width: 640px) {
-  .wrap {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    column-gap: 0.35rem;
-    padding: 0.25rem 0.5rem;
-    min-height: 48px;
+@media (max-width: 767px) {
+  .actionsCluster {
+    gap: 0.28rem;
   }
 
   .back {
-    padding: 0.28rem 0.52rem;
-    font-size: 0.54rem;
+    padding: 0.26rem 0.48rem;
+    font-size: 0.52rem;
     letter-spacing: 0.07em;
+    border-radius: 3px;
   }
+}
+
+/* ——— Metric spine: mobile (<768px) ——— */
+.spineMobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.28rem 0.5rem 0.4rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .spineMobile {
+    display: none;
+  }
+}
+
+.spineMobileTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-height: 40px;
+}
+
+.spineMobileLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.logoImgSm {
+  height: 14px;
+  width: auto;
+  max-width: 72px;
+  object-fit: contain;
+  object-position: left center;
+  flex-shrink: 0;
+}
+
+.titleMobileOnly {
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 204, 106, 0.95);
+  font-family: ui-serif, "Roboto Serif", Georgia, serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.spineMobileGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem 0.75rem;
+  align-items: start;
+  padding: 0.15rem 0 0.1rem;
+  border-top: 1px solid rgba(255, 204, 106, 0.15);
+}
+
+.metricBlockMobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.12rem;
+  min-width: 0;
+  padding: 0.2rem 0.15rem;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 204, 106, 0.22);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.metricValueMobile {
+  font-size: 13px;
+  line-height: 1.15;
+  font-weight: 700;
+  color: #f6f5f1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricLabelMobile {
+  font-size: 10px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 204, 106, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
