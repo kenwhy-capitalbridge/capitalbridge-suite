@@ -253,44 +253,9 @@
   flex-shrink: 0;
 }
 
-.back {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(13, 58, 29, 0.95);
-  background-color: rgba(255, 204, 106, 0.92);
-  border: 1px solid rgba(255, 204, 106, 0.55);
-  border-radius: 3px;
-  white-space: nowrap;
-  text-decoration: none;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  font-family: inherit;
-  line-height: 1.2;
-}
-
-.back:hover {
-  background-color: #0d3a1d;
-  color: #f6f5f1;
-  border-color: #0d3a1d;
-}
-
 @media (max-width: 767px) {
   .actionsCluster {
     gap: 0.28rem;
-  }
-
-  .back {
-    padding: 0.26rem 0.48rem;
-    font-size: 0.52rem;
-    letter-spacing: 0.07em;
-    border-radius: 3px;
   }
 }
 

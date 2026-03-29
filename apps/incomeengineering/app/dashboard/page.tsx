@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
-import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { IncomeEngineeringDashboardClient } from "./IncomeEngineeringDashboardClient";
 
@@ -50,7 +50,10 @@ export default async function IncomeEngineeringDashboard() {
     .limit(1)
     .maybeSingle();
 
-  if (!membership) redirect(`${LOGIN_APP_URL}/pricing?message=membership_required`);
+  if (!membership)
+    redirect(
+      withPricingReturnModel(`${LOGIN_APP_URL}/pricing?message=membership_required`, "incomeengineering"),
+    );
 
   const { data: plan } = await supabase
     .schema("public")

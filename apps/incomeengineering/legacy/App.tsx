@@ -314,6 +314,7 @@ const AppInner = forwardRef<
                 target={targetCapital}
                 gap={gapAmount}
                 progress={progressPercent}
+                pricingReturnModel="incomeengineering"
               />
             </div>
           </section>

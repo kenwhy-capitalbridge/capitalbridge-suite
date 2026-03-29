@@ -19,6 +19,20 @@
   --green: var(--cb-green);
   --gold: var(--cb-gold);
   --offwhite: var(--cb-cream);
+  /** Platform / login / model-app headers — gold fill + outline (LOGOUT / BACK / LOGIN parity). */
+  --pf-chrome-pad-y: 0.35rem;
+  --pf-chrome-pad-x: 0.75rem;
+  --pf-chrome-font: 0.65rem;
+  --pf-header-auth-size: 26px;
+  --pf-chrome-pad-x-inline: 0.65rem;
+}
+
+@media (max-width: 639px) {
+  :root {
+    --pf-chrome-font: clamp(0.5rem, 2.35vw, 0.65rem);
+    --pf-header-auth-size: clamp(22px, 6.5vw, 26px);
+    --pf-chrome-pad-x-inline: clamp(0.42rem, 2vw, 0.65rem);
+  }
 }
 
 html,
@@ -155,4 +169,197 @@ a {
 .cb-gold-outline-cta:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------------
+   Header chrome — matches platform.thecapitalbridge.com LOGOUT (pf-chrome-gold-btn).
+   Use on <button> or <a>. Pair with .pf-chrome-gold-btn--header-inline in sticky bars.
+   --------------------------------------------------------------------------- */
+
+@keyframes pf-header-avatar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pf-header-avatar-spin {
+  animation: pf-header-avatar-spin 0.7s linear infinite;
+}
+
+.pf-chrome-gold-btn {
+  padding: var(--pf-chrome-pad-y) var(--pf-chrome-pad-x);
+  font-family: var(--cb-font-sans);
+  font-size: var(--pf-chrome-font);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 204, 106, 0.55);
+  background-color: rgba(255, 204, 106, 0.92);
+  color: rgba(13, 58, 29, 0.95);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.15s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.pf-chrome-gold-btn:hover:not(:disabled) {
+  background-color: var(--cb-green);
+  color: var(--cb-gold);
+  border-color: var(--cb-gold);
+  box-shadow: 0 4px 12px rgba(255, 204, 106, 0.25);
+  transform: translateY(-1px);
+}
+
+.pf-chrome-gold-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.pf-chrome-gold-btn:focus-visible {
+  outline: 2px solid var(--cb-gold);
+  outline-offset: 2px;
+}
+
+.pf-chrome-gold-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.pf-chrome-gold-btn.pf-chrome-gold-btn--trial-muted,
+.pf-chrome-gold-btn.pf-chrome-gold-btn--trial-muted:hover,
+.pf-chrome-gold-btn.pf-chrome-gold-btn--trial-muted:active {
+  background: rgba(48, 56, 48, 0.98);
+  color: rgba(170, 176, 170, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+  transform: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Header row: compact height next to profile avatar (platform auth cluster). */
+.pf-chrome-gold-btn.pf-chrome-gold-btn--header-inline {
+  min-height: 0;
+  height: var(--pf-header-auth-size);
+  max-height: var(--pf-header-auth-size);
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: var(--pf-chrome-pad-x-inline);
+  padding-right: var(--pf-chrome-pad-x-inline);
+  align-self: center;
+}
+
+.pf-header-profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pf-header-auth-size);
+  height: var(--pf-header-auth-size);
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(13, 58, 29, 0.95);
+  background-color: rgba(255, 204, 106, 0.92);
+  border: 2px solid rgba(255, 204, 106, 0.55);
+  text-decoration: none;
+  line-height: 1;
+  cursor: pointer;
+  font-family: var(--cb-font-sans);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pf-header-profile-avatar:hover {
+  background-color: var(--cb-green);
+  color: var(--cb-gold);
+  border-color: var(--cb-gold);
+  box-shadow: 0 4px 12px rgba(255, 204, 106, 0.25);
+  transform: translateY(-1px);
+}
+
+.pf-header-profile-avatar:focus-visible {
+  background-color: var(--cb-green);
+  color: var(--cb-gold);
+  border-color: var(--cb-gold);
+  box-shadow: 0 4px 12px rgba(255, 204, 106, 0.25);
+  transform: translateY(-1px);
+  outline: 2px solid var(--cb-gold);
+  outline-offset: 2px;
+}
+
+.pf-header-profile-avatar:active {
+  transform: scale(0.98);
+}
+
+.pf-chrome-outline-btn {
+  padding: var(--pf-chrome-pad-y) var(--pf-chrome-pad-x);
+  font-family: var(--cb-font-sans);
+  font-size: var(--pf-chrome-font);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 204, 106, 0.55);
+  background-color: transparent;
+  color: rgba(255, 204, 106, 0.95);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-chrome-outline-btn:hover:not(:disabled) {
+  background-color: var(--cb-green);
+  color: var(--cb-cream);
+  border-color: var(--cb-green);
+}
+
+.pf-chrome-outline-btn:focus-visible {
+  outline: 2px solid var(--cb-gold);
+  outline-offset: 2px;
+}
+
+.pf-chrome-outline-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  pointer-events: none;
+}
+
+@media (max-width: 639px) {
+  .pf-chrome-outline-btn {
+    min-height: 0;
+    height: var(--pf-header-auth-size);
+    max-height: var(--pf-header-auth-size);
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: var(--pf-chrome-pad-x-inline);
+    padding-right: var(--pf-chrome-pad-x-inline);
+    align-self: center;
+  }
 }

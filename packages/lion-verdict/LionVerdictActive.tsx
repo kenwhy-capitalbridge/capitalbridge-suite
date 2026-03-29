@@ -13,6 +13,7 @@ import {
   type LionVerdictMemory,
 } from "./getLionVerdict";
 import type { Tier } from "./copy";
+import type { PricingReturnModelSlug } from "@cb/shared/urls";
 
 export type LionVerdictActiveProps = {
   user: LionAccessUser | null | undefined;
@@ -33,6 +34,7 @@ export type LionVerdictActiveProps = {
   globalHistory?: GlobalHistory;
   className?: string;
   onCopyComputed?: (copy: GetLionVerdictOutput | null) => void;
+  pricingReturnModel?: PricingReturnModelSlug;
 };
 
 export function LionVerdictActive({
@@ -52,6 +54,7 @@ export function LionVerdictActive({
   globalHistory,
   className,
   onCopyComputed,
+  pricingReturnModel,
 }: LionVerdictActiveProps) {
   const hasAccess = canAccessLion(user);
   const historyRef = useRef<{ headline: HistoryEntry[]; guidance: HistoryEntry[] }>({
@@ -125,7 +128,12 @@ export function LionVerdictActive({
 
   if (!hasAccess) {
     return (
-      <LionVerdictLocked tierLabel={tier} score={score} headline={copy.headline} />
+      <LionVerdictLocked
+        tierLabel={tier}
+        score={score}
+        headline={copy.headline}
+        pricingReturnModel={pricingReturnModel}
+      />
     );
   }
 

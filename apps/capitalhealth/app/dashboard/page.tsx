@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
-import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
 import { CapitalHealthDashboardClient } from "./CapitalHealthDashboardClient";
@@ -51,7 +51,10 @@ export default async function CapitalHealthDashboard() {
     .limit(1)
     .maybeSingle();
 
-  if (!membership) redirect(`${LOGIN_APP_URL}/pricing?message=membership_required`);
+  if (!membership)
+    redirect(
+      withPricingReturnModel(`${LOGIN_APP_URL}/pricing?message=membership_required`, "capitalhealth"),
+    );
 
   const { data: plan } = await supabase
     .schema("public")

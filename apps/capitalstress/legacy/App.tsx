@@ -34,7 +34,7 @@ import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictAct
 import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
-import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { useModelMetricSpine } from "@cb/ui";
 
 const CURRENCIES = [
@@ -1843,9 +1843,10 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 target={targetCapital}
                 gap={gapAmount}
                 progress={progressPercent}
+                pricingReturnModel="capitalstress"
               />
             ) : (
-              <LionVerdictLocked tierLabel={lionTierLabel} score={lionScore} />
+              <LionVerdictLocked tierLabel={lionTierLabel} score={lionScore} pricingReturnModel="capitalstress" />
             )}
           </div>
           </div>

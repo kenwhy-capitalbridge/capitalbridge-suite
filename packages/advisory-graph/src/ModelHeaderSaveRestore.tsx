@@ -7,18 +7,6 @@ import { useModelSaveHandlers } from "./ModelSaveHandlersContext";
 const LIMIT = 20;
 const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
 
-const headerActionButtonStyle: CSSProperties = {
-  padding: "clamp(0.28rem, 0.6vw, 0.35rem) clamp(0.52rem, 1.2vw, 0.75rem)",
-  fontSize: "clamp(0.54rem, 2.1vw, 0.65rem)",
-  fontWeight: 700,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  fontFamily: "inherit",
-  lineHeight: 1.2,
-  borderRadius: 4,
-  whiteSpace: "nowrap",
-};
-
 function formatTimestamp(iso: string): string {
   try {
     return new Date(iso).toLocaleString(undefined, {
@@ -250,24 +238,11 @@ export function ModelHeaderSaveRestore({
         type="button"
         onClick={handleSave}
         disabled={saveBlocked}
-        onMouseEnter={(e) => {
-          if (saveBlocked) return;
-          Object.assign(e.currentTarget.style, saveGoldHoverStyle);
-        }}
-        onMouseLeave={(e) => {
-          if (saveBlocked) {
-            Object.assign(e.currentTarget.style, saveMutedStyle);
-            return;
-          }
-          Object.assign(e.currentTarget.style, saveActiveStyle);
-        }}
-        style={{
-          ...headerActionButtonStyle,
-          ...(saveBlocked ? saveMutedStyle : saveActiveStyle),
-          cursor: saveBlocked ? (trialLocked ? "not-allowed" : "wait") : "pointer",
-          opacity: trialLocked ? 0.6 : 1,
-          transition: "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease",
-        }}
+        className={
+          trialLocked
+            ? "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline pf-chrome-gold-btn--trial-muted shrink-0"
+            : "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline shrink-0"
+        }
         title={
           trialLocked
             ? "Trial plan: Save Report is available on paid plans."

@@ -1,6 +1,10 @@
 "use client";
 
-import { LOGIN_APP_URL } from "@cb/shared/urls";
+import {
+  LOGIN_APP_URL,
+  PRICING_RETURN_MODEL_QUERY,
+  type PricingReturnModelSlug,
+} from "@cb/shared/urls";
 import { LionVerdictMark } from "./LionVerdictMark";
 import {
   LION_VERDICT_HEADLINE,
@@ -26,15 +30,20 @@ type LionVerdictLockedProps = {
   score?: number;
   /** Defaults to login app `/pricing` (subscribe / upgrade). */
   unlockHref?: string;
+  /** When set and `unlockHref` is omitted, pricing link includes `?model=` for login header BACK. */
+  pricingReturnModel?: PricingReturnModelSlug;
   headline?: string;
 };
 
 const LD = "\u201C";
 const RD = "\u201D";
 
-function defaultUnlockHref(): string {
+function defaultUnlockHref(pricingReturnModel?: PricingReturnModelSlug): string {
   const base = LOGIN_APP_URL.replace(/\/+$/, "");
-  return `${base}/pricing`;
+  const path = `${base}/pricing`;
+  return pricingReturnModel
+    ? `${path}?${PRICING_RETURN_MODEL_QUERY}=${pricingReturnModel}`
+    : path;
 }
 
 export function LionVerdictLocked({
@@ -42,9 +51,10 @@ export function LionVerdictLocked({
   tierLabel = "TRIAL",
   score,
   unlockHref,
+  pricingReturnModel,
   headline,
 }: LionVerdictLockedProps) {
-  const href = unlockHref ?? defaultUnlockHref();
+  const href = unlockHref ?? defaultUnlockHref(pricingReturnModel);
   const displayHeadline = headline || "Unlock your full Lion's Verdict";
 
   return (

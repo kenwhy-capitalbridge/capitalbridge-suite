@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
-import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { ForeverDashboardClient } from "./ForeverDashboardClient";
 
@@ -41,7 +41,10 @@ export default async function ForeverDashboard() {
     .limit(1)
     .maybeSingle();
 
-  if (!membership) redirect(`${LOGIN_APP_URL}/pricing?message=membership_required`);
+  if (!membership)
+    redirect(
+      withPricingReturnModel(`${LOGIN_APP_URL}/pricing?message=membership_required`, "forever"),
+    );
 
   const { data: plan } = await supabase
     .schema("public")

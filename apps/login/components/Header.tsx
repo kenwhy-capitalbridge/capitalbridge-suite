@@ -1,28 +1,37 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { PLATFORM_APP_URL } from "@cb/shared/urls";
+import { Suspense } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  PLATFORM_APP_URL,
+  PRICING_RETURN_MODEL_QUERY,
+  pricingReturnModelDashboardUrl,
+} from "@cb/shared/urls";
 
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
 
 const platformProfileHref = `${PLATFORM_APP_URL.replace(/\/+$/, "")}/profile`;
 
-/** Gold chrome: same min height & type scale; hover → green bg + cream text */
-const cbHeaderGoldButtonClass =
-  "inline-flex h-9 min-h-[36px] shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#FFCC6A]/85 bg-[#FFCC6A]/92 px-3 py-0 text-[10px] font-bold uppercase leading-none tracking-[0.12em] text-[#0D3A1D] shadow-sm transition-colors duration-150 hover:border-[#0D3A1D] hover:bg-[#0D3A1D] hover:text-[#F6F5F1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFCC6A] sm:h-9 sm:px-4 sm:text-xs";
+/** Gold header actions — same as platform LOGOUT (`packages/ui/cb-model-base.css` `.pf-chrome-gold-btn`). */
+const headerGoldBtnClass = "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline shrink-0";
 
 const cbHeaderTextLinkClass =
   "whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-[#FFCC6A] underline-offset-2 transition-colors hover:text-[#F6F5F1] sm:text-xs";
 
-export default function Header() {
-  const pathname = usePathname();
+function HeaderChrome({
+  pathname,
+  pricingBackHref,
+}: {
+  pathname: string | null;
+  pricingBackHref: string | null;
+}) {
   const isPricing = pathname === "/pricing";
   const isPlansBrowse = pathname === "/plans";
   const isCheckout = pathname === "/checkout";
-  /** 3-column grid: logo | title | actions */
   const pricingStyleGrid = isPricing || isPlansBrowse;
-  const showLoginCluster = isPricing || isCheckout;
+  const showPricingModelBack = Boolean(isPricing && pricingBackHref);
+  const showLoginCluster = (isPricing && !showPricingModelBack) || isCheckout;
 
   const logoClassName = pricingStyleGrid
     ? "relative flex min-w-0 max-w-[34%] shrink items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none sm:h-9"
@@ -53,11 +62,19 @@ export default function Header() {
           />
         </a>
 
-        {pricingStyleGrid && (
+        {pricingStyleGrid && !showPricingModelBack ? (
           <span className="pointer-events-none whitespace-nowrap text-center font-serif text-[7px] font-semibold uppercase leading-none tracking-[0.05em] text-[#FFCC6A] min-[360px]:text-[8px] min-[400px]:text-[9px] sm:text-lg sm:leading-normal sm:tracking-normal">
             {isPlansBrowse ? "AVAILABLE PLANS" : "SELECT PLAN"}
           </span>
-        )}
+        ) : null}
+
+        {showPricingModelBack && pricingBackHref ? (
+          <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 justify-self-end overflow-visible sm:gap-2">
+            <a href={pricingBackHref} className={headerGoldBtnClass}>
+              BACK
+            </a>
+          </div>
+        ) : null}
 
         {showLoginCluster && !isPlansBrowse ? (
           <div
@@ -67,7 +84,7 @@ export default function Header() {
                 : "flex max-w-[52%] shrink-0 flex-nowrap items-center justify-end gap-1.5 overflow-visible text-[#FFCC6A] sm:max-w-none sm:gap-2"
             }
           >
-            <a href="/access" className={cbHeaderGoldButtonClass}>
+            <a href="/access" className={headerGoldBtnClass}>
               LOGIN
             </a>
             <span className="shrink-0 text-[#FFCC6A]/70 max-[380px]:text-[9px] sm:text-xs" aria-hidden>
@@ -81,7 +98,7 @@ export default function Header() {
 
         {isPlansBrowse ? (
           <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 justify-self-end overflow-visible sm:gap-2">
-            <a href={platformProfileHref} className={cbHeaderGoldButtonClass}>
+            <a href={platformProfileHref} className={headerGoldBtnClass}>
               BACK
             </a>
             <span className="shrink-0 text-[#FFCC6A]/70 max-[380px]:text-[9px] sm:text-xs" aria-hidden>
@@ -93,7 +110,7 @@ export default function Header() {
           </div>
         ) : null}
 
-        {!showLoginCluster && !isPlansBrowse ? (
+        {!showLoginCluster && !isPlansBrowse && !showPricingModelBack ? (
           <div className="flex max-w-[52%] shrink-0 items-center text-[#FFCC6A] sm:max-w-none">
             <a href={MARKETING_URL} className={`${cbHeaderTextLinkClass} normal-case sm:uppercase`}>
               <span className="sm:hidden">← Exit</span>
@@ -103,5 +120,27 @@ export default function Header() {
         ) : null}
       </div>
     </header>
+  );
+}
+
+function HeaderWithSearchParams() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const raw = searchParams.get(PRICING_RETURN_MODEL_QUERY);
+  const pricingBackHref =
+    pathname === "/pricing" && raw ? pricingReturnModelDashboardUrl(raw) : null;
+  return <HeaderChrome pathname={pathname} pricingBackHref={pricingBackHref} />;
+}
+
+function HeaderFallback() {
+  const pathname = usePathname();
+  return <HeaderChrome pathname={pathname} pricingBackHref={null} />;
+}
+
+export default function Header() {
+  return (
+    <Suspense fallback={<HeaderFallback />}>
+      <HeaderWithSearchParams />
+    </Suspense>
   );
 }

@@ -575,6 +575,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
                   target={foreverLionTargetCapital}
                   progress={foreverLionProgressPercent}
                   onCopyComputed={setLionCopyPayload}
+                  pricingReturnModel="forever"
                 />
               </div>
             </div>

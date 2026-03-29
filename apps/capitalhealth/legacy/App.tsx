@@ -1542,6 +1542,7 @@ const CalculatorScreen = forwardRef<
               target={targetCapital}
               gap={gapAmount}
               progress={progressPercent}
+              pricingReturnModel="capitalhealth"
             />
           </div>
         </section>

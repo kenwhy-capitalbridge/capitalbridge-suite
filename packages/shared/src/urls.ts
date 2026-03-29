@@ -37,6 +37,61 @@ export const MARKETING_SITE_URL = envUrl(
   "https://thecapitalbridge.com",
 );
 
+/** Query key on login `/pricing` — allowlisted slug selects which model app dashboard BACK uses. */
+export const PRICING_RETURN_MODEL_QUERY = "model" as const;
+
+export type PricingReturnModelSlug =
+  | "forever"
+  | "incomeengineering"
+  | "capitalhealth"
+  | "capitalstress";
+
+const PRICING_MODEL_DEFAULT_ORIGINS: Record<PricingReturnModelSlug, string> = {
+  forever: "https://forever.thecapitalbridge.com",
+  incomeengineering: "https://incomeengineering.thecapitalbridge.com",
+  capitalhealth: "https://capitalhealth.thecapitalbridge.com",
+  capitalstress: "https://capitalstress.thecapitalbridge.com",
+};
+
+export function isPricingReturnModelSlug(value: string): value is PricingReturnModelSlug {
+  return (
+    value === "forever" ||
+    value === "incomeengineering" ||
+    value === "capitalhealth" ||
+    value === "capitalstress"
+  );
+}
+
+/** Resolved `/dashboard` URL for a model slug, or `null` if slug is not allowlisted. */
+export function pricingReturnModelDashboardUrl(slug: string): string | null {
+  if (!isPricingReturnModelSlug(slug)) return null;
+  const env =
+    slug === "forever"
+      ? process.env.NEXT_PUBLIC_FOREVER_APP_URL
+      : slug === "incomeengineering"
+        ? process.env.NEXT_PUBLIC_INCOME_ENGINEERING_APP_URL
+        : slug === "capitalhealth"
+          ? process.env.NEXT_PUBLIC_CAPITAL_HEALTH_APP_URL
+          : process.env.NEXT_PUBLIC_CAPITAL_STRESS_APP_URL;
+  const base = envUrl(env, PRICING_MODEL_DEFAULT_ORIGINS[slug]).replace(/\/+$/, "");
+  return `${base}/dashboard`;
+}
+
+/** Merge `model=` into a login-app pricing URL (absolute or relative), preserving other query params. */
+export function withPricingReturnModel(
+  pricingUrl: string,
+  slug: PricingReturnModelSlug,
+): string {
+  try {
+    const u = new URL(pricingUrl);
+    u.searchParams.set(PRICING_RETURN_MODEL_QUERY, slug);
+    return u.toString();
+  } catch {
+    const sep = pricingUrl.includes("?") ? "&" : "?";
+    return `${pricingUrl}${sep}${PRICING_RETURN_MODEL_QUERY}=${slug}`;
+  }
+}
+
 /** After platform logout: stay on platform with scroll-to-text (Framework area). */
 export function platformPostLogoutUrl(): string {
   const base = PLATFORM_APP_URL.replace(/\/+$/, "");
