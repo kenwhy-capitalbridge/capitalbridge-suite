@@ -45,7 +45,13 @@
 }
 
 .spacerWithSpine {
-  height: calc(60px + 1px + env(safe-area-inset-top));
+  height: calc(64px + 1px + env(safe-area-inset-top));
+}
+
+@media (min-width: 768px) {
+  .spacerWithSpine {
+    height: calc(68px + 1px + env(safe-area-inset-top));
+  }
 }
 
 @media (max-width: 767px) {
@@ -53,15 +59,15 @@
     height: calc(48px + 1px + env(safe-area-inset-top));
   }
 
-  /* Mobile metric row can wrap; min-height avoids overlap with fixed header. */
+  /* Mobile metric strip (equal-height row) can exceed ~120px; keep body below fixed header. */
   .spacerWithSpine {
-    min-height: calc(120px + 1px + env(safe-area-inset-top));
+    min-height: calc(138px + 1px + env(safe-area-inset-top));
     height: auto;
     padding-bottom: 0.25rem;
   }
 }
 
-/* ——— Legacy layout (Forever / no metric provider) ——— */
+/* ——— Legacy layout (no metric spine) ——— */
 .wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -238,10 +244,10 @@
 .spineDesktop {
   display: none;
   align-items: center;
-  min-height: 60px;
+  min-height: 64px;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0.35rem clamp(0.65rem, 1.8vw, 1.1rem) 0.4rem;
+  padding: 0.4rem clamp(0.65rem, 1.8vw, 1.1rem) 0.45rem;
   box-sizing: border-box;
   column-gap: clamp(0.5rem, 1.5vw, 1rem);
   row-gap: 0.35rem;
@@ -328,26 +334,30 @@
   }
 }
 
+/* Three equal columns; stretch row height; gap separates (no card chrome). */
 .spineDesktopMetrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: center;
-  justify-items: center;
-  gap: clamp(0.35rem, 1.4vw, 0.85rem);
+  align-items: stretch;
+  justify-items: stretch;
+  column-gap: clamp(0.55rem, 2vw, 1.35rem);
+  row-gap: 0;
   min-width: 0;
-  padding-inline: clamp(0.15rem, 1vw, 0.45rem);
+  padding-inline: clamp(0.2rem, 1.2vw, 0.55rem);
 }
 
 .metricBlockDesktop {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.15rem;
+  display: grid;
+  grid-template-rows: auto minmax(1.85rem, 1fr);
+  align-items: stretch;
+  justify-items: center;
+  text-align: center;
   min-width: 0;
+  min-height: 0;
   width: 100%;
   max-width: 100%;
-  text-align: center;
+  padding: 0.12rem clamp(0.12rem, 0.9vw, 0.4rem) 0.2rem;
+  box-sizing: border-box;
 }
 
 .metricLabelDesktop {
@@ -362,18 +372,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  padding-bottom: 0.14rem;
 }
 
 .metricValueDesktop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.22rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: var(--model-header-fs);
   line-height: var(--model-header-lh);
   font-weight: 700;
   color: #f6f5f1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
   font-variant-numeric: tabular-nums;
 }
 
@@ -475,41 +493,55 @@
   min-width: 0;
 }
 
+/* One strip: equal columns, shared row height, fluid column gaps (no borders / cards). */
 .spineMobileGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.35rem 0.75rem;
-  align-items: start;
-  padding: 0.15rem 0 0.1rem;
+  align-items: stretch;
+  column-gap: clamp(0.4rem, 2.5vw, 1rem);
+  row-gap: 0;
+  padding: 0.38rem clamp(0.25rem, 2vw, 0.55rem) 0.48rem;
   border-top: 1px solid rgba(255, 204, 106, 0.15);
 }
 
 .metricBlockMobile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-rows: auto minmax(2.35rem, 1fr);
+  align-items: stretch;
+  justify-items: center;
   text-align: center;
-  gap: 0.1rem;
   min-width: 0;
-  padding: 0.2rem 0.15rem;
-  border-radius: 5px;
-  border: 1px solid rgba(255, 204, 106, 0.22);
-  background: rgba(0, 0, 0, 0.12);
+  min-height: 4.75rem;
+  height: 100%;
+  padding: 0.2rem 0.1rem;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .metricValueMobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
   font-size: var(--model-header-fs);
   line-height: var(--model-header-lh);
   font-weight: 700;
   color: #f6f5f1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
   font-variant-numeric: tabular-nums;
 }
 
 .metricLabelMobile {
+  flex-shrink: 0;
   font-size: var(--model-header-fs);
   line-height: var(--model-header-lh);
   font-weight: 600;
@@ -520,4 +552,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  padding-bottom: 0.12rem;
 }

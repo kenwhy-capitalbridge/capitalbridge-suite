@@ -6,7 +6,7 @@ import {
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
 import { platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
-import { LionWatermarkShell, ModelAppHeader } from "@cb/ui";
+import { LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ForeverCalculatorProvider } from "./ForeverCalculatorProvider";
 import "./globals.css";
@@ -56,22 +56,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <LionWatermarkShell>
           <ForeverCalculatorProvider>
-            <ModelAppHeader
-              titleDesktop="FOREVER INCOME"
-              titleMobile="FOREVER INC."
-              backHref={foreverBackToPlatformHref}
-              actions={
-                user ? (
-                  <ModelHeaderSaveRestore
-                    userId={user.id}
-                    serverCanSave={canSave}
-                    initialSessionId={initialSessionId}
-                    logTag="[forever]"
-                  />
-                ) : null
-              }
-            />
-            {children}
+            <ModelMetricSpineProvider>
+              <ModelAppHeader
+                titleDesktop="FOREVER INCOME"
+                titleMobile="FOREVER INC."
+                backHref={foreverBackToPlatformHref}
+                actions={
+                  user ? (
+                    <ModelHeaderSaveRestore
+                      userId={user.id}
+                      serverCanSave={canSave}
+                      initialSessionId={initialSessionId}
+                      logTag="[forever]"
+                    />
+                  ) : null
+                }
+              />
+              {children}
+            </ModelMetricSpineProvider>
           </ForeverCalculatorProvider>
         </LionWatermarkShell>
       </body>

@@ -1,7 +1,7 @@
 //Forever Income Model
 "use client";
 
-import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle } from "react";
+import React, { useEffect, useLayoutEffect, useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import {
   Info,
@@ -36,7 +36,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import { buildForeverStrategicWealthPdf } from "./foreverPdfBuild";
 import { loadForeverGreenBrandLogosForPdf } from "./foreverPdfLogos";
-import { ModelReportDownloadFooter } from "@cb/ui";
+import { ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -157,6 +157,28 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
       propertyTimeHorizon,
     ],
   );
+
+  const { setSpine } = useModelMetricSpine();
+  useLayoutEffect(() => {
+    setSpine({
+      slot1: {
+        labelDesktop: "Target Capital",
+        labelMobile: "Target",
+        value: results.isSustainable ? formatCurrency(results.capitalNeeded, currency) : "∞",
+      },
+      slot2: {
+        labelDesktop: "Total Assets",
+        labelMobile: "Assets",
+        value: formatCurrency(results.currentAssets, currency),
+      },
+      slot3: {
+        labelDesktop: "Horizon",
+        labelMobile: "Horizon",
+        value: results.runway,
+      },
+    });
+    return () => setSpine(null);
+  }, [setSpine, results, currency]);
 
   const foreverLionInput = useMemo(() => {
     const runwayInfo = parseForeverRunway(results.runway);
