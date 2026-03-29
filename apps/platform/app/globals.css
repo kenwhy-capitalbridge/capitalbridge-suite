@@ -1,3 +1,6 @@
+@import "@cb/ui/cb-model-base.css";
+
+/* Legacy aliases (cb-model-base defines --cb-*; .cb-* rules below use these names) */
 :root {
   --green: #0d3a1d;
   --gold: #ffcc6a;
@@ -19,15 +22,7 @@
   box-sizing: border-box;
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-  background-color: var(--green);
-  color: var(--offwhite);
-}
-
+/* Typography: font-family, font-size, line-height on html/body come from cb-model-base.css */
 body {
   min-height: 100vh;
 }
@@ -184,12 +179,12 @@ a {
 }
 
 .cb-section-subtitle {
-  font-size: clamp(0.8rem, 1.85vw, 0.94rem);
+  font-size: var(--cb-body-font-size);
   color: rgba(246, 245, 241, 0.8);
   text-align: center;
   max-width: 640px;
   margin: 0 auto 2rem;
-  line-height: 1.5;
+  line-height: var(--cb-body-line-height);
 }
 
 .cb-flow-wrap {
@@ -304,7 +299,7 @@ a {
 }
 
 .cb-system-header-label {
-  font-size: 0.625rem;
+  font-size: var(--cb-body-font-size);
   font-weight: 600;
   color: var(--gold);
   letter-spacing: 0.2em;
@@ -313,7 +308,7 @@ a {
 }
 
 .cb-system-header-desc {
-  font-size: 0.7rem;
+  font-size: var(--cb-body-font-size);
   color: rgba(246, 245, 241, 0.7);
   letter-spacing: 0.02em;
 }
@@ -380,7 +375,7 @@ a {
 }
 
 .cb-module-meta {
-  font-size: 0.625rem;
+  font-size: var(--cb-body-font-size);
   font-weight: 500;
   color: var(--muted-gold);
   letter-spacing: 0.14em;
@@ -415,7 +410,7 @@ a {
 }
 
 .cb-module-engine-label {
-  font-size: 0.5625rem;
+  font-size: var(--cb-body-font-size);
   font-weight: 600;
   color: rgba(255, 204, 106, 0.7);
   letter-spacing: 0.12em;
@@ -434,9 +429,9 @@ a {
 }
 
 .cb-module-why {
-  font-size: 0.78rem;
+  font-size: var(--cb-body-font-size);
   color: rgba(246, 245, 241, 0.8);
-  line-height: 1.5;
+  line-height: var(--cb-body-line-height);
   margin-bottom: 0.75rem;
   font-style: italic;
 }
@@ -449,15 +444,15 @@ a {
 }
 
 .cb-module-desc {
-  font-size: 0.84rem;
+  font-size: var(--cb-body-font-size);
   color: var(--offwhite);
-  line-height: 1.6;
+  line-height: var(--cb-body-line-height);
   margin-bottom: 1rem;
   flex-grow: 1;
 }
 
 .cb-module-label {
-  font-size: 0.75rem;
+  font-size: var(--cb-body-font-size);
   color: var(--offwhite);
   margin-bottom: 0.65rem;
 }
@@ -476,10 +471,9 @@ a {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  /* 25% smaller than base .cb-btn (0.72rem) — launch model labels */
-  font-size: calc(0.72rem * 0.75);
+  font-size: var(--cb-body-font-size);
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: var(--cb-body-line-height);
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: normal;
@@ -492,7 +486,7 @@ a {
   justify-content: center;
   background: var(--gold);
   color: var(--green);
-  font-size: 0.72rem;
+  font-size: var(--cb-body-font-size);
   font-weight: 700;
   text-align: center;
   padding: 0.65rem 0.85rem;
@@ -517,6 +511,11 @@ a {
 }
 
 @media (max-width: 768px) {
+  /* Uppercase / meta labels: ~0.75–0.8rem, never below 12px, cap at 0.8rem */
+  html {
+    --cb-mobile-label-fs: min(0.8rem, max(12px, 0.775rem));
+  }
+
   .cb-framework {
     padding: 1.25rem 0.75rem 2rem;
     padding-left: max(0.75rem, env(safe-area-inset-left));
@@ -525,13 +524,31 @@ a {
   .cb-hero {
     padding: 1.75rem 0.75rem 2rem;
   }
+
+  .cb-platform-label {
+    font-size: var(--cb-mobile-label-fs);
+  }
+
+  .cb-hero-descriptor {
+    font-size: var(--cb-mobile-label-fs);
+  }
+
+  .cb-section-subtitle {
+    font-size: var(--cb-mobile-label-fs);
+  }
+
+  .cb-system-header-label,
+  .cb-system-header-desc {
+    font-size: var(--cb-mobile-label-fs);
+  }
+
   .cb-flow-wrap {
     border-top-color: rgba(201, 164, 90, 0.35);
     border-bottom-color: rgba(201, 164, 90, 0.35);
     padding: 0.75rem 0 0.5rem;
   }
   .cb-flow-cell {
-    font-size: 0.8rem;
+    font-size: var(--cb-mobile-label-fs);
     line-height: 1.2;
     margin: 0;
   }
@@ -578,37 +595,41 @@ a {
     flex: 0 0 82%;
     min-width: 82%;
     max-width: 82%;
-    min-height: min(78vh, 620px);
+    /* Equal height with siblings (align-items: stretch on .cb-modules); height:auto overrides desktop height:100% */
+    height: auto;
+    min-height: 0;
+    align-self: stretch;
     scroll-snap-align: center;
     scroll-snap-stop: always;
   }
   .cb-module-body {
     padding: 0.875rem 1rem 1rem;
+    flex-grow: 1;
+    min-height: 0;
   }
   .cb-module h2 {
     font-size: 0.92rem;
     letter-spacing: 0.035em;
   }
   .cb-module-why {
-    font-size: 0.7rem;
+    font-size: var(--cb-body-font-size);
     margin-bottom: 0.5rem;
   }
   .cb-module-desc {
-    font-size: 0.78rem;
+    font-size: var(--cb-body-font-size);
+    flex-grow: 0;
   }
   .cb-module-meta,
-  .cb-module-engine-label {
-    font-size: 0.52rem;
-  }
+  .cb-module-engine-label,
   .cb-module-label {
-    font-size: 0.7rem;
+    font-size: var(--cb-mobile-label-fs);
   }
   .cb-btn {
     padding: 0.52rem 0.55rem;
-    font-size: clamp(0.58rem, 3.15vw, 0.66rem);
+    font-size: var(--cb-body-font-size);
     letter-spacing: 0.045em;
     white-space: normal;
-    line-height: 1.28;
+    line-height: var(--cb-body-line-height);
     word-break: break-word;
     hyphens: auto;
     min-height: 44px;
@@ -621,16 +642,15 @@ a {
     text-align: center;
   }
 
-  /* Launch model CTAs: stay on one line on narrow phones */
+  /* Launch model CTAs: same body font size as desktop; keep touch-friendly min height */
   .cb-module-buttons .cb-btn,
   .cb-module-buttons a.cb-btn,
   .cb-module-buttons button.cb-btn {
     padding: 0.38rem 0.28rem;
-    /* 25% smaller than prior launch CTA clamp */
-    font-size: clamp(0.34rem, calc(1.39vw + 0.21rem), 0.47rem);
+    font-size: var(--cb-body-font-size);
     letter-spacing: 0.02em;
     white-space: nowrap;
-    line-height: 1.15;
+    line-height: var(--cb-body-line-height);
     min-height: 2.35rem;
     overflow: hidden;
     text-overflow: ellipsis;
