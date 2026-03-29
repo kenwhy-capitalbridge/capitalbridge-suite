@@ -57,12 +57,6 @@ a {
   pointer-events: none;
 }
 
-@keyframes cb-platform-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .cb-loading-ring {
   display: inline-block;
   width: 14px;
@@ -70,7 +64,7 @@ a {
   border: 2px solid rgba(13, 58, 29, 0.2);
   border-top-color: var(--green);
   border-radius: 50%;
-  animation: cb-platform-spin 0.75s linear infinite;
+  animation: cb-ui-spinner-rotate 0.75s linear infinite;
   flex-shrink: 0;
 }
 
@@ -79,11 +73,6 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-}
-
-.cb-framework-launch-spin {
-  flex-shrink: 0;
-  animation: cb-platform-spin 0.75s linear infinite;
 }
 
 .cb-hero {

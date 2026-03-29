@@ -88,7 +88,7 @@ export function PaymentGate({ userId, plan }: { userId: string; plan?: string | 
               border: "2px solid rgba(255,204,106,0.25)",
               borderTopColor: "rgba(255,204,106,0.95)",
               borderRadius: "50%",
-              animation: "cb-platform-spin 0.75s linear infinite",
+              animation: "cb-ui-spinner-rotate 0.75s linear infinite",
             }}
           />
           Redirecting to secure payment…

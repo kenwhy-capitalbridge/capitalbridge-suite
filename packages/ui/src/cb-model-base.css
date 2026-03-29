@@ -35,6 +35,22 @@
   }
 }
 
+/* Shared spinners — CSS keyframes (works on mobile; not dependent on Tailwind `animate-spin`). */
+@keyframes cb-ui-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cb-ui-icon-spin {
+  flex-shrink: 0;
+  animation: cb-ui-spinner-rotate 0.75s linear infinite;
+}
+
+.cb-auth-ring-spin {
+  animation: cb-ui-spinner-rotate 0.75s linear infinite;
+}
+
 html,
 body {
   margin: 0;
@@ -176,14 +192,9 @@ a {
    Use on <button> or <a>. Pair with .pf-chrome-gold-btn--header-inline in sticky bars.
    --------------------------------------------------------------------------- */
 
-@keyframes pf-header-avatar-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .pf-header-avatar-spin {
-  animation: pf-header-avatar-spin 0.7s linear infinite;
+  flex-shrink: 0;
+  animation: cb-ui-spinner-rotate 0.75s linear infinite;
 }
 
 .pf-chrome-gold-btn {
@@ -361,5 +372,13 @@ a {
     padding-left: var(--pf-chrome-pad-x-inline);
     padding-right: var(--pf-chrome-pad-x-inline);
     align-self: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-ui-icon-spin,
+  .cb-auth-ring-spin,
+  .pf-header-avatar-spin {
+    animation-duration: 1.25s;
   }
 }

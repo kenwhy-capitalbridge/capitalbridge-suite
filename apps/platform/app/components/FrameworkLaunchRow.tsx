@@ -37,7 +37,7 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
             {active ? (
               <span className="cb-launch-btn-inner">
                 <Loader2
-                  className="cb-framework-launch-spin"
+                  className="cb-ui-icon-spin"
                   size={16}
                   strokeWidth={2.25}
                   aria-hidden

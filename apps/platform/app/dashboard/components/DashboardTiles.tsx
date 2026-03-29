@@ -162,7 +162,7 @@ export function DashboardTiles() {
               >
                 {tileBusy ? (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <Loader2 size={18} strokeWidth={2.25} aria-hidden className="cb-framework-launch-spin" />
+                    <Loader2 size={18} strokeWidth={2.25} aria-hidden className="cb-ui-icon-spin" />
                     Loading…
                   </span>
                 ) : (

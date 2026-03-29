@@ -450,7 +450,7 @@ function PaymentReturnContent() {
           {initialLoadSlow ? (
             <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
               <span
-                className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
+                className="inline-block h-5 w-5 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin"
                 aria-hidden
               />
             </div>
@@ -489,7 +489,7 @@ function PaymentReturnContent() {
             {statusActionSlow ? (
               <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
                 <span
-                  className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
+                  className="inline-block h-5 w-5 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin"
                   aria-hidden
                 />
               </div>
@@ -601,7 +601,7 @@ function PaymentReturnContent() {
             {statusActionSlow ? (
               <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
                 <span
-                  className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
+                  className="inline-block h-5 w-5 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin"
                   aria-hidden
                 />
               </div>

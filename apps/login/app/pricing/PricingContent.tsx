@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 
 const OUTCOME_PREVIEW_BOXES = [
   {
@@ -330,7 +331,14 @@ function PlanCard({
             disabled={!!loadingPlan}
             className="cb-btn-primary w-full shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] disabled:opacity-60"
           >
-            {loadingPlan === plan.plan ? "Redirecting…" : plan.cta}
+            {loadingPlan === plan.plan ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                Redirecting…
+              </span>
+            ) : (
+              plan.cta
+            )}
           </button>
         ) : isLoggedIn ? (
           <button
@@ -339,7 +347,14 @@ function PlanCard({
             disabled={!!loadingPlan}
             className="cb-btn-primary w-full shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] disabled:opacity-60"
           >
-            {loadingPlan === "trial" ? "Redirecting…" : plan.cta}
+            {loadingPlan === "trial" ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                Redirecting…
+              </span>
+            ) : (
+              plan.cta
+            )}
           </button>
         ) : (
           <Link

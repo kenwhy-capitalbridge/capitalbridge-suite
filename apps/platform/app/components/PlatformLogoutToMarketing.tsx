@@ -68,10 +68,9 @@ export function PlatformLogoutToMarketing({
         pointerEvents: pending ? "none" : "auto",
       }}
     >
-      <style>{`@keyframes cbSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       {pending ? (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <Loader2 size={14} style={{ animation: "cbSpin 0.8s linear infinite" }} />
+        <span className="inline-flex items-center gap-1.5">
+          <Loader2 size={14} className="cb-ui-icon-spin" aria-hidden />
           SIGNING OUT…
         </span>
       ) : (

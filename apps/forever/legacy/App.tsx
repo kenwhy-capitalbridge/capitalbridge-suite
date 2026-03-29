@@ -549,7 +549,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
                       : 'flex items-center justify-center gap-2 rounded-xl border border-gray-700 bg-gray-800 py-3 px-6 text-sm font-bold text-gray-500 cursor-not-allowed shadow-none'
                   }
                 >
-                  {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Download className="w-4 h-4" /> Download Report</>}
+                  {isGenerating ? <><Loader2 className="h-4 w-4 cb-ui-icon-spin" aria-hidden /> Generating...</> : <><Download className="w-4 h-4" /> Download Report</>}
                 </button>
               </div>
               <p className="mt-3 text-center text-[10px] text-white font-medium italic px-4 leading-normal">

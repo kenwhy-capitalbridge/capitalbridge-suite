@@ -62,9 +62,9 @@ function HeaderChrome({
           />
         </a>
 
-        {pricingStyleGrid && !showPricingModelBack ? (
-          <span className="pointer-events-none whitespace-nowrap text-center font-serif text-[7px] font-semibold uppercase leading-none tracking-[0.05em] text-[#FFCC6A] min-[360px]:text-[8px] min-[400px]:text-[9px] sm:text-lg sm:leading-normal sm:tracking-normal">
-            {isPlansBrowse ? "AVAILABLE PLANS" : "SELECT PLAN"}
+        {pricingStyleGrid ? (
+          <span className="pointer-events-none justify-self-center whitespace-nowrap text-center font-serif text-[7px] font-semibold uppercase leading-none tracking-[0.05em] text-[#FFCC6A] min-[360px]:text-[8px] min-[400px]:text-[9px] sm:text-lg sm:leading-normal sm:tracking-normal">
+            {isPlansBrowse ? "AVAILABLE PLANS" : "SELECT PLANS"}
           </span>
         ) : null}
 

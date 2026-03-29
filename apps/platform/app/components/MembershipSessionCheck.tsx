@@ -232,7 +232,7 @@ export function MembershipSessionCheck({ initialSafeMode = false }: MembershipSe
             <span className="inline-flex items-center gap-2.5">
               {showSpinner ? (
                 <span
-                  className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-cb-green/25 border-t-cb-green"
+                  className="inline-block h-4 w-4 shrink-0 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin"
                   aria-hidden
                 />
               ) : null}
