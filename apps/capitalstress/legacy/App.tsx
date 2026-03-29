@@ -1869,22 +1869,24 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
         </section>
       </main>
-      <div className="fixed bottom-6 left-4 right-4 z-[9998] no-print flex max-w-[min(100%,22rem)] flex-col items-stretch gap-2 drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] md:bottom-10 md:left-10 md:right-auto md:items-start">
-        {needsSimulationRefresh && !isRunning ? (
-          <p className="px-0.5 text-center text-xs leading-snug text-[#FFCC6A]/90 md:text-left md:text-sm">
-            Inputs changed — run simulation so the header and results match your settings.
-          </p>
-        ) : null}
-        <button
-          type="button"
-          onClick={runCalculation}
-          disabled={isRunning}
-          className={`cb-gold-primary-cta !rounded-sm flex w-full flex-col items-center gap-0.5 py-3 px-4 font-black uppercase tracking-tight text-xs md:w-auto md:px-5 md:text-sm disabled:opacity-60 ${
-            needsSimulationRefresh && !isRunning ? 'stress-run-simulation-cta--urgent' : ''
-          }`}
-        >
-          {isRunning ? 'Running…' : 'Run Simulation'}
-        </button>
+      <div className="fixed bottom-6 left-4 right-4 z-[9998] no-print flex justify-center drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] md:inset-x-auto md:bottom-10 md:left-10 md:justify-start">
+        <div className="flex w-full max-w-[min(100%,20rem)] flex-col items-stretch gap-2 sm:max-w-[min(100%,22rem)] md:w-[min(22rem,calc(100vw-2.75rem))]">
+          {needsSimulationRefresh && !isRunning ? (
+            <p className="w-full max-w-full text-balance text-center text-[10px] leading-snug text-[#FFCC6A]/90 sm:text-xs md:text-[11px] md:leading-snug">
+              Inputs changed — run simulation so the header and results match your settings.
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={runCalculation}
+            disabled={isRunning}
+            className={`cb-gold-primary-cta !rounded-sm flex w-full max-w-full flex-col items-center gap-0.5 py-3 px-4 font-black uppercase tracking-tight text-xs md:px-5 md:text-sm disabled:opacity-60 ${
+              needsSimulationRefresh && !isRunning ? 'stress-run-simulation-cta--urgent' : ''
+            }`}
+          >
+            {isRunning ? 'Running…' : 'Run Simulation'}
+          </button>
+        </div>
       </div>
       </div>
       </div>
