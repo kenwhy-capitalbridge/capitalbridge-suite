@@ -120,15 +120,10 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
             <div className={styles.spineMobile}>
               <div className={styles.spineMobileTop}>
                 <div className={styles.spineMobileLeft}>
-                  <a href={home} className={styles.logoLink} aria-label="Capital Bridge home">
-                    <img
-                      src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
-                      alt=""
-                      width={200}
-                      height={40}
-                      decoding="async"
-                      className={styles.logoImgSm}
-                    />
+                  <a href={home} className={styles.brandWordmarkLink} aria-label="Capital Bridge home">
+                    <span className={styles.brandWordmark} aria-hidden>
+                      Capital Bridge
+                    </span>
                   </a>
                   <span className={styles.titleMobileOnly}>{short ?? titleDesktop}</span>
                 </div>
@@ -146,22 +141,19 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions }:
           </>
         ) : (
           <div className={styles.wrap}>
-            <a href={home} className={styles.logoLinkLegacy}>
+            <a href={home} className={styles.logoLinkLegacy} aria-label="Capital Bridge home">
               <img
                 src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
-                alt="Capital Bridge — Strength Behind Every Structure"
+                alt=""
                 width={200}
                 height={40}
                 decoding="async"
                 fetchPriority="high"
-                style={{
-                  height: "clamp(14px, 3.8vw, 24px)",
-                  width: "auto",
-                  maxWidth: "min(28vw, 128px)",
-                  objectFit: "contain",
-                  objectPosition: "left center",
-                }}
+                className={styles.logoImgLegacy}
               />
+              <span className={styles.brandWordmarkLegacy} aria-hidden>
+                Capital Bridge
+              </span>
             </a>
             <div className={styles.titleCenter}>
               {short && short !== titleDesktop ? (

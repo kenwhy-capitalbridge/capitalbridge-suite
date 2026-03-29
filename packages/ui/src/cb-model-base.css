@@ -78,6 +78,40 @@
   pointer-events: none;
 }
 
+/**
+ * Marketing home link: show gold wordmark on small viewports instead of the logo image.
+ * Add class `cb-header-chrome-home` on the wrapping `<a>`; image uses `cb-header-chrome-logo`.
+ */
+.cb-header-chrome-home {
+  min-width: 0;
+}
+
+.cb-header-chrome-brand-mobile {
+  display: none;
+  font-family: var(--cb-font-serif);
+  font-size: var(--cb-header-logo-h);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: clamp(0.04em, 0.35vw, 0.1em);
+  text-transform: uppercase;
+  color: #ffcc6a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(42vw, 10.5rem);
+}
+
+/* Match model-app header: mobile spine / narrow chrome below 768px. */
+@media (max-width: 767px) {
+  .cb-header-chrome-home .cb-header-chrome-logo {
+    display: none;
+  }
+
+  .cb-header-chrome-home .cb-header-chrome-brand-mobile {
+    display: block;
+  }
+}
+
 html,
 body {
   margin: 0;

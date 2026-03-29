@@ -46,16 +46,23 @@ function HeaderChrome({
             : "mx-auto flex min-h-11 max-w-6xl items-center justify-between gap-1 px-2 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
         }
       >
-        <a href={MARKETING_URL} className={logoClassName}>
+        <a
+          href={MARKETING_URL}
+          className={`cb-header-chrome-home ${logoClassName}`}
+          aria-label="Capital Bridge home"
+        >
           <img
             src="/brand/CapitalBridgeLogo_Gold.svg"
-            alt="Capital Bridge — Strength Behind Every Structure"
+            alt=""
             width={200}
             height={40}
             className="cb-header-chrome-logo max-w-full"
             fetchPriority="high"
             decoding="async"
           />
+          <span className="cb-header-chrome-brand-mobile" aria-hidden>
+            Capital Bridge
+          </span>
         </a>
 
         {pricingStyleGrid ? (

@@ -63,6 +63,8 @@ export async function PlatformFrameworkHeader({
         >
           <a
             href={home}
+            className="cb-header-chrome-home"
+            aria-label="Capital Bridge home"
             style={{
               justifySelf: "start",
               display: "flex",
@@ -73,12 +75,15 @@ export async function PlatformFrameworkHeader({
             <img
               className="cb-header-chrome-logo"
               src="/brand/CapitalBridgeLogo_Gold.svg"
-              alt="Capital Bridge — Strength Behind Every Structure"
+              alt=""
               width={200}
               height={40}
               fetchPriority="high"
               decoding="async"
             />
+            <span className="cb-header-chrome-brand-mobile" aria-hidden>
+              Capital Bridge
+            </span>
           </a>
 
           <span className="cb-header-chrome-title">Framework</span>
@@ -148,6 +153,8 @@ export async function PlatformFrameworkHeader({
       >
         <a
           href={home}
+          className="cb-header-chrome-home"
+          aria-label="Capital Bridge home"
           style={{
             justifySelf: "start",
             display: "flex",
@@ -158,12 +165,15 @@ export async function PlatformFrameworkHeader({
           <img
             className="cb-header-chrome-logo"
             src="/brand/CapitalBridgeLogo_Gold.svg"
-            alt="Capital Bridge — Strength Behind Every Structure"
+            alt=""
             width={200}
             height={40}
             fetchPriority="high"
             decoding="async"
           />
+          <span className="cb-header-chrome-brand-mobile" aria-hidden>
+            Capital Bridge
+          </span>
         </a>
 
         <span className="cb-header-chrome-title">{centerTitle}</span>

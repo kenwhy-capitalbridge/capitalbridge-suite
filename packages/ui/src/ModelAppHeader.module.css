@@ -58,6 +58,27 @@
   min-width: 0;
 }
 
+.logoImgLegacy {
+  height: var(--cb-header-logo-h);
+  width: auto;
+  max-width: min(28vw, 128px);
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+}
+
+.brandWordmarkLegacy {
+  display: none;
+  font-size: var(--cb-header-logo-h);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: clamp(0.04em, 0.35vw, 0.1em);
+  text-transform: uppercase;
+  color: #ffcc6a;
+  font-family: ui-serif, "Roboto Serif", Georgia, serif;
+  white-space: nowrap;
+}
+
 .titleCenter {
   justify-self: center;
   display: flex;
@@ -91,6 +112,16 @@
 .titleCompact {
   display: none;
   letter-spacing: clamp(0.06em, 0.5vw, 0.14em);
+}
+
+@media (max-width: 767px) {
+  .logoImgLegacy {
+    display: none;
+  }
+
+  .brandWordmarkLegacy {
+    display: block;
+  }
 }
 
 @media (max-width: 640px) {
@@ -154,7 +185,7 @@
 }
 
 .logoImg {
-  height: var(--model-header-logo-h);
+  height: var(--cb-header-logo-h);
   width: auto;
   max-width: min(20vw, 104px);
   object-fit: contain;
@@ -299,25 +330,29 @@
   flex: 1;
 }
 
-/* More room for title + metrics row on small screens. */
-@media (max-width: 767px) {
-  .spineMobileLeft .logoLink {
-    display: none;
-  }
+.brandWordmarkLink {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
 
-.logoImgSm {
-  height: 14px;
-  width: auto;
-  max-width: 72px;
-  object-fit: contain;
-  object-position: left center;
-  flex-shrink: 0;
+.brandWordmark {
+  font-size: var(--cb-header-logo-h);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: clamp(0.04em, 0.35vw, 0.1em);
+  text-transform: uppercase;
+  color: #ffcc6a;
+  font-family: ui-serif, "Roboto Serif", Georgia, serif;
+  white-space: nowrap;
 }
 
 .titleMobileOnly {
   font-size: var(--cb-header-logo-h);
-  line-height: 1.05;
+  line-height: 1;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
