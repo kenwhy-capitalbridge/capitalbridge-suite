@@ -14,6 +14,8 @@
   --pf-header-auth-size: 26px;
   --muted-gold: #9a814a;
   --divider-gold-subtle: rgba(201, 164, 90, 0.5);
+  /* Module launch CTAs (Forever / Income Engineering / …) — smaller than body copy */
+  --cb-launch-model-btn-fs: clamp(0.62rem, 1.05vw, 0.74rem);
 }
 
 *,
@@ -126,7 +128,7 @@ a {
 }
 
 .cb-platform-label {
-  font-size: 0.625rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--gold);
   letter-spacing: 0.2em;
@@ -136,7 +138,7 @@ a {
 
 .cb-hero h1 {
   font-family: var(--font-cb-framework), ui-serif, Georgia, serif;
-  font-size: clamp(1.45rem, 4vw, 2.05rem);
+  font-size: clamp(1.65rem, 4.8vw, 2.35rem);
   font-weight: 700;
   color: var(--offwhite);
   margin: 0 0 1rem;
@@ -144,7 +146,7 @@ a {
 }
 
 .cb-hero-desc {
-  font-size: clamp(0.84rem, 1.85vw, 0.98rem);
+  font-size: clamp(0.98rem, 2.15vw, 1.14rem);
   color: rgba(246, 245, 241, 0.85);
   max-width: 560px;
   margin: 0 auto 0.5rem;
@@ -152,7 +154,7 @@ a {
 }
 
 .cb-hero-descriptor {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: rgba(246, 245, 241, 0.55);
   margin: 0;
 }
@@ -170,7 +172,7 @@ a {
 
 .cb-section-title {
   font-family: var(--font-cb-framework), ui-serif, Georgia, serif;
-  font-size: clamp(1.2rem, 3.4vw, 1.85rem);
+  font-size: clamp(1.38rem, 3.85vw, 2.05rem);
   font-weight: 700;
   color: var(--offwhite);
   text-align: center;
@@ -179,7 +181,7 @@ a {
 }
 
 .cb-section-subtitle {
-  font-size: var(--cb-body-font-size);
+  font-size: clamp(1.06rem, 2.25vw, 1.2rem);
   color: rgba(246, 245, 241, 0.8);
   text-align: center;
   max-width: 640px;
@@ -202,7 +204,7 @@ a {
 }
 
 .cb-flow-cell {
-  font-size: clamp(0.8rem, 1.85vw, 0.95rem);
+  font-size: clamp(0.94rem, 2.05vw, 1.08rem);
   font-weight: 500;
   color: var(--gold);
   letter-spacing: 0.03em;
@@ -299,7 +301,7 @@ a {
 }
 
 .cb-system-header-label {
-  font-size: var(--cb-body-font-size);
+  font-size: clamp(1.05rem, 2.1vw, 1.18rem);
   font-weight: 600;
   color: var(--gold);
   letter-spacing: 0.2em;
@@ -308,7 +310,7 @@ a {
 }
 
 .cb-system-header-desc {
-  font-size: var(--cb-body-font-size);
+  font-size: clamp(1.05rem, 2.1vw, 1.18rem);
   color: rgba(246, 245, 241, 0.7);
   letter-spacing: 0.02em;
 }
@@ -471,9 +473,9 @@ a {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  font-size: var(--cb-body-font-size);
+  font-size: var(--cb-launch-model-btn-fs);
   white-space: nowrap;
-  line-height: var(--cb-body-line-height);
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: normal;
@@ -511,9 +513,11 @@ a {
 }
 
 @media (max-width: 768px) {
-  /* Uppercase / meta labels: ~0.75–0.8rem, never below 12px, cap at 0.8rem */
+  /* Framework hero/flow/system labels on small screens — larger than prior 0.8rem cap, floor 13px */
   html {
-    --cb-mobile-label-fs: min(0.8rem, max(12px, 0.775rem));
+    --cb-mobile-label-fs: min(1rem, max(13px, 0.9rem));
+    /* Launch model CTAs: smaller than body on phones, floor ~10px */
+    --cb-launch-model-btn-fs: max(10px, min(0.64rem, 2.75vw));
   }
 
   .cb-framework {
@@ -533,22 +537,12 @@ a {
     font-size: var(--cb-mobile-label-fs);
   }
 
-  .cb-section-subtitle {
-    font-size: var(--cb-mobile-label-fs);
-  }
-
-  .cb-system-header-label,
-  .cb-system-header-desc {
-    font-size: var(--cb-mobile-label-fs);
-  }
-
   .cb-flow-wrap {
     border-top-color: rgba(201, 164, 90, 0.35);
     border-bottom-color: rgba(201, 164, 90, 0.35);
     padding: 0.75rem 0 0.5rem;
   }
   .cb-flow-cell {
-    font-size: var(--cb-mobile-label-fs);
     line-height: 1.2;
     margin: 0;
   }
@@ -642,15 +636,15 @@ a {
     text-align: center;
   }
 
-  /* Launch model CTAs: same body font size as desktop; keep touch-friendly min height */
+  /* Launch model CTAs: reduced fs via --cb-launch-model-btn-fs; keep touch-friendly min height */
   .cb-module-buttons .cb-btn,
   .cb-module-buttons a.cb-btn,
   .cb-module-buttons button.cb-btn {
     padding: 0.38rem 0.28rem;
-    font-size: var(--cb-body-font-size);
+    font-size: var(--cb-launch-model-btn-fs);
     letter-spacing: 0.02em;
     white-space: nowrap;
-    line-height: var(--cb-body-line-height);
+    line-height: 1.25;
     min-height: 2.35rem;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -673,7 +667,7 @@ a {
   animation: pf-header-avatar-spin 0.7s linear infinite;
 }
 
-/* Framework header: gold fill → hover green + cream */
+/* Framework header: gold fill → hover matches .cb-btn (green + gold outline + glow) */
 .pf-chrome-gold-btn {
   padding: var(--pf-chrome-pad-y) var(--pf-chrome-pad-x);
   font-size: var(--pf-chrome-font);
@@ -681,12 +675,18 @@ a {
   line-height: 1;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 204, 106, 0.55);
+  border-radius: 8px;
+  border: 2px solid rgba(255, 204, 106, 0.55);
   background-color: rgba(255, 204, 106, 0.92);
   color: rgba(13, 58, 29, 0.95);
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.15s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   white-space: nowrap;
   box-sizing: border-box;
   min-height: 36px;
@@ -697,8 +697,14 @@ a {
 
 .pf-chrome-gold-btn:hover:not(:disabled) {
   background-color: var(--green);
-  color: var(--offwhite);
-  border-color: var(--green);
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(255, 204, 106, 0.25);
+  transform: translateY(-1px);
+}
+
+.pf-chrome-gold-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 /* Header cluster: profile circle + LOGOUT — chained selector beats .pf-chrome-gold-btn min-height */
@@ -727,9 +733,38 @@ a {
   letter-spacing: 0.06em;
   color: rgba(13, 58, 29, 0.95);
   background-color: rgba(255, 204, 106, 0.92);
-  border: 1px solid rgba(255, 204, 106, 0.55);
+  border: 2px solid rgba(255, 204, 106, 0.55);
   text-decoration: none;
   line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pf-header-profile-avatar:hover {
+  background-color: var(--green);
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(255, 204, 106, 0.25);
+  transform: translateY(-1px);
+}
+
+.pf-header-profile-avatar:focus-visible {
+  background-color: var(--green);
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(255, 204, 106, 0.25);
+  transform: translateY(-1px);
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.pf-header-profile-avatar:active {
+  transform: scale(0.98);
 }
 
 .pf-chrome-outline-btn {
