@@ -55,14 +55,16 @@ export function ModelReportDownloadFooter({
 
   return (
     <footer
-      className={`no-print mt-12 w-full border-t border-[#FFCC6A]/30 px-4 pb-14 pt-8 text-center sm:mt-14 sm:pb-16 sm:pt-10 lg:mt-16 lg:pb-24 ${className}`.trim()}
+      className={`no-print mt-14 w-full border-t border-[#FFCC6A]/30 px-4 pb-16 pt-10 text-center sm:mt-16 sm:pb-20 sm:pt-12 lg:mt-20 lg:pb-28 lg:pt-14 ${className}`.trim()}
     >
       <p className="mx-auto max-w-2xl text-xs font-light leading-relaxed text-[#E8E6E0]/90 md:text-sm">
         {DISCLAIMER}
       </p>
-      <p className="mx-auto mt-6 max-w-xl text-sm font-bold text-[#FFCC6A] md:text-base">{RECORDS_LINE}</p>
-      {statusSlot ? <div className="mt-4">{statusSlot}</div> : null}
-      <div className="mt-6 flex justify-center px-2">
+      <p className="mx-auto mt-8 max-w-xl text-sm font-bold text-[#FFCC6A] sm:mt-10 md:text-base">
+        {RECORDS_LINE}
+      </p>
+      {statusSlot ? <div className="mt-6 sm:mt-8">{statusSlot}</div> : null}
+      <div className="mt-10 flex justify-center px-2 sm:mt-12">
         <button type="button" onClick={onDownload} disabled={disabled} className={btnClass}>
           {buttonLeading ?? <PrinterGlyph className="h-4 w-4 shrink-0" />}
           {buttonLabel}

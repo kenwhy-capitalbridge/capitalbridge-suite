@@ -51,10 +51,10 @@ function MetricBlockMobile({
 }) {
   return (
     <div className={styles.metricBlockMobile}>
-      <div className={styles.metricValueMobile}>{value}</div>
       <div className={styles.metricLabelMobile} title={labelMobile}>
         {labelMobile}
       </div>
+      <div className={styles.metricValueMobile}>{value}</div>
     </div>
   );
 }

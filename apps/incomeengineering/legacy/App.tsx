@@ -166,14 +166,14 @@ const AppInner = forwardRef<
         labelDesktop: 'Net Position',
         labelMobile: 'Position',
         value: (
-          <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-1">
+          <span className="inline-flex min-w-0 max-w-full flex-wrap items-center justify-center gap-1">
             <span
               className={`shrink-0 font-bold tabular-nums ${spineIsSurplus ? 'text-[#11B981]' : 'text-[#DD524C]'}`}
             >
               {spineDeficitSurplusLabel} {spineCoveragePct.toFixed(1)}%
             </span>
             <span
-              className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 font-bold uppercase tracking-wider ${spineStatusChipStyles}`}
+              className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider md:text-xs ${spineStatusChipStyles}`}
             >
               {spineStatusLabel}
             </span>
@@ -182,7 +182,7 @@ const AppInner = forwardRef<
       },
       slot2: {
         labelDesktop: 'Net Monthly Income',
-        labelMobile: 'Net',
+        labelMobile: 'Monthly',
         value: spineNetMonthly,
       },
       slot3: {

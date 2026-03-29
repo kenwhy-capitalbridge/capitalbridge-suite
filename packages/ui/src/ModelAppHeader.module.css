@@ -53,8 +53,11 @@
     height: calc(48px + 1px + env(safe-area-inset-top));
   }
 
+  /* Mobile metric row can wrap; min-height avoids overlap with fixed header. */
   .spacerWithSpine {
-    height: calc(104px + 1px + env(safe-area-inset-top));
+    min-height: calc(120px + 1px + env(safe-area-inset-top));
+    height: auto;
+    padding-bottom: 0.25rem;
   }
 }
 

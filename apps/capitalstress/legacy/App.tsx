@@ -629,7 +629,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               <>
       {!canUseStressModel && (
         <div
-          className="fixed inset-0 z-[10050] flex flex-col items-center justify-start pt-[max(5.5rem,env(safe-area-inset-top,0px)+4.5rem)] sm:pt-28 px-3 sm:px-6 pointer-events-none"
+          className="fixed inset-0 z-[10050] flex flex-col items-center justify-center px-3 py-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:px-6 pointer-events-none"
           aria-live="polite"
         >
           <div className="pointer-events-auto w-full max-w-md rounded-lg border-2 border-[#FFCC6A] bg-[#0D3A1D]/95 px-4 py-3.5 shadow-[0_12px_48px_rgba(0,0,0,0.55)] backdrop-blur-sm">
@@ -641,7 +641,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
               You can scroll and read how the engine is laid out, but inputs, simulation runs, and exports stay locked. Upgrade to a paid plan to use this model fully.
             </p>
             <a
-              href={`${LOGIN_APP_URL.replace(/\/+$/, "")}/pricing`}
+              href={withPricingReturnModel(`${LOGIN_APP_URL.replace(/\/+$/, "")}/pricing`, "capitalstress")}
               className="cb-gold-primary-cta w-full !rounded-md py-2.5 text-sm font-bold uppercase tracking-wide"
             >
               View paid plans
