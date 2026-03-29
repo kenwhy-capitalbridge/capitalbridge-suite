@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 import { PricingContent } from "../pricing/PricingContent";
 
 /** Same plans UI as /pricing; header uses BACK → platform profile (see Header.tsx). */
@@ -8,6 +9,9 @@ export default function PlansBrowsePage() {
       fallback={
         <main className="cb-auth-main bg-[#0D3A1D]">
           <p className="text-cb-cream/80">Loading…</p>
+          <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+            <ButtonSpinner className="h-6 w-6 border-cb-cream/35 border-t-cb-cream sm:h-7 sm:w-7" />
+          </div>
         </main>
       }
     >

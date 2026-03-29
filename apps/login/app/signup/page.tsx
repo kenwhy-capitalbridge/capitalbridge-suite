@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 
 /**
  * Payment-first: no frontend signup. Redirect to pricing (or checkout with plan).
@@ -27,6 +28,9 @@ function SignupRedirect() {
         <p className="cb-card-subtitle" style={{ marginTop: "0.5rem" }}>
           Taking you to the pricing page. No account is created until after payment.
         </p>
+        <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+          <ButtonSpinner className="h-6 w-6 border-cb-green/25 border-t-cb-green sm:h-7 sm:w-7" />
+        </div>
       </div>
     </main>
   );
@@ -39,6 +43,9 @@ export default function SignupPage() {
         <main className="cb-auth-main">
           <div className="cb-card">
             <h1 className="cb-card-title">Redirecting…</h1>
+            <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+              <ButtonSpinner className="h-6 w-6 border-cb-green/25 border-t-cb-green sm:h-7 sm:w-7" />
+            </div>
           </div>
         </main>
       }

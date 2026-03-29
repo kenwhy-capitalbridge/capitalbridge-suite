@@ -405,6 +405,9 @@ export default function CheckoutPage() {
           <div className="cb-card mx-auto w-full max-w-md text-center">
             <h1 className="font-serif text-lg font-semibold text-cb-green sm:text-xl">Checkout</h1>
             <p className="mt-3 text-sm text-cb-green/80 sm:text-base">Loading…</p>
+            <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+              <ButtonSpinner className="h-6 w-6 border-cb-green/25 border-t-cb-green sm:h-7 sm:w-7" />
+            </div>
           </div>
         </main>
       }

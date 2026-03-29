@@ -209,6 +209,9 @@ export default function ForgotPasswordPage() {
         <main className="cb-auth-main">
           <div className="cb-card max-w-md text-center">
             <h1 className="cb-card-title">Loading…</h1>
+            <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+              <ButtonSpinner className="h-6 w-6 border-cb-green/25 border-t-cb-green sm:h-7 sm:w-7" />
+            </div>
           </div>
         </main>
       }

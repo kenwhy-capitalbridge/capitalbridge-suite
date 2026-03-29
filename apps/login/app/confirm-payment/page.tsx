@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 
 /**
  * Payment-first: redirect to checkout (enter email, create billing session, then Billplz).
@@ -29,14 +30,19 @@ function ConfirmPaymentContent() {
 
 export default function ConfirmPaymentPage() {
   return (
-    <Suspense fallback={
-      <main className="cb-auth-main">
-        <div className="cb-card">
-          <h1 className="cb-card-title">Preparing your payment</h1>
-          <p style={{ marginTop: "1rem", opacity: 0.9 }}>Loading…</p>
-        </div>
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="cb-auth-main">
+          <div className="cb-card">
+            <h1 className="cb-card-title">Preparing your payment</h1>
+            <p style={{ marginTop: "1rem", opacity: 0.9 }}>Loading…</p>
+            <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+              <ButtonSpinner className="h-6 w-6 border-cb-green/25 border-t-cb-green sm:h-7 sm:w-7" />
+            </div>
+          </div>
+        </main>
+      }
+    >
       <ConfirmPaymentContent />
     </Suspense>
   );

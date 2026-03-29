@@ -34,12 +34,8 @@ function HeaderChrome({
   const showLoginCluster = (isPricing && !showPricingModelBack) || isCheckout;
 
   const logoClassName = pricingStyleGrid
-    ? "relative flex min-w-0 max-w-[34%] shrink items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none sm:h-9"
-    : "relative flex min-w-0 max-w-[42%] shrink items-center sm:max-w-none sm:h-9";
-
-  const logoImageClassName = pricingStyleGrid
-    ? "h-[15px] w-auto max-w-full object-contain object-left min-[400px]:h-4 sm:h-9"
-    : "h-4 w-auto max-w-full object-contain object-left sm:h-9";
+    ? "relative flex min-w-0 max-w-[34%] shrink items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none"
+    : "relative flex min-w-0 max-w-[42%] shrink items-center sm:max-w-none";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#FFCC6A]/20 bg-[#0D3A1D] pt-[env(safe-area-inset-top)]">
@@ -56,14 +52,14 @@ function HeaderChrome({
             alt="Capital Bridge — Strength Behind Every Structure"
             width={200}
             height={40}
-            className={logoImageClassName}
+            className="cb-header-chrome-logo max-w-full"
             fetchPriority="high"
             decoding="async"
           />
         </a>
 
         {pricingStyleGrid ? (
-          <span className="pointer-events-none justify-self-center whitespace-nowrap text-center font-serif text-[7px] font-semibold uppercase leading-none tracking-[0.05em] text-[#FFCC6A] min-[360px]:text-[8px] min-[400px]:text-[9px] sm:text-lg sm:leading-normal sm:tracking-normal">
+          <span className="cb-header-chrome-title justify-self-center min-w-0 max-w-full truncate">
             {isPlansBrowse ? "AVAILABLE PLANS" : "SELECT PLANS"}
           </span>
         ) : null}

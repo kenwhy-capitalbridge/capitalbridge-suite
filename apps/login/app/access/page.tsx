@@ -253,7 +253,6 @@ function AccessInner() {
   const [cooldownTick, setCooldownTick] = useState(0);
   const [resendBusy, setResendBusy] = useState(false);
   const [visibilityStamp, setVisibilityStamp] = useState(0);
-  const [loadingSlow, setLoadingSlow] = useState(false);
   const [resendSentEmail, setResendSentEmail] = useState<string | null>(null);
   const [loginLockUntilMs, setLoginLockUntilMs] = useState<number | null>(null);
   const [resendLockUntilMs, setResendLockUntilMs] = useState<number | null>(null);
@@ -364,18 +363,6 @@ function AccessInner() {
       setShowConfirmPassword(false);
     }
     if (view !== "login") setShowLoginPassword(false);
-  }, [view]);
-
-  useEffect(() => {
-    if (view !== "loading") {
-      setLoadingSlow(false);
-      return;
-    }
-    const t = window.setTimeout(() => setLoadingSlow(true), 1000);
-    return () => {
-      window.clearTimeout(t);
-      setLoadingSlow(false);
-    };
   }, [view]);
 
   const sendAccessEmail = useCallback(
@@ -916,14 +903,12 @@ function AccessInner() {
         />
         <main className="cb-auth-main bg-cb-green">
           <p className="text-sm text-white sm:text-base">One moment…</p>
-          {loadingSlow ? (
-            <div className="mt-4 flex justify-center" role="status" aria-busy="true">
-              <span
-                className="inline-block h-5 w-5 rounded-full border-2 border-white/30 border-t-white cb-auth-ring-spin"
-                aria-hidden
-              />
-            </div>
-          ) : null}
+          <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+            <span
+              className="inline-block h-6 w-6 rounded-full border-2 border-white/30 border-t-white cb-auth-ring-spin sm:h-7 sm:w-7"
+              aria-hidden
+            />
+          </div>
         </main>
       </div>
     );
@@ -1487,6 +1472,12 @@ export default function AccessPage() {
       fallback={
         <main className="cb-auth-main bg-cb-green">
           <p className="text-sm text-white/90">Loading…</p>
+          <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+            <span
+              className="inline-block h-6 w-6 rounded-full border-2 border-white/30 border-t-white cb-auth-ring-spin sm:h-7 sm:w-7"
+              aria-hidden
+            />
+          </div>
         </main>
       }
     >

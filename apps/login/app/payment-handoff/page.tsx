@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
@@ -322,6 +323,9 @@ export default function PaymentHandoffPage() {
           <div className="cb-card max-w-md text-center">
             <h1 className="cb-card-title">Securing your access…</h1>
             <p className="cb-card-subtitle mt-2">Loading…</p>
+            <div className="mt-4 flex justify-center" role="status" aria-busy="true">
+              <ButtonSpinner className="h-6 w-6 border-cb-green/25 border-t-cb-green sm:h-7 sm:w-7" />
+            </div>
           </div>
         </main>
       }

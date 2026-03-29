@@ -114,8 +114,7 @@ function PaymentReturnContent() {
   const [cooldownTick, setCooldownTick] = useState(0);
   const [accessLinkAck, setAccessLinkAck] = useState(false);
   const [showEmailFallbackLine, setShowEmailFallbackLine] = useState(false);
-  const [initialLoadSlow, setInitialLoadSlow] = useState(false);
-  const [statusActionSlow, setStatusActionSlow] = useState(false);
+  const [statusCheckInFlight, setStatusCheckInFlight] = useState(false);
 
   const resendCooldownSec = useMemo(() => {
     if (!resendCooldownEndsAt) return 0;
@@ -150,18 +149,6 @@ function PaymentReturnContent() {
     const t = window.setTimeout(() => setShowEmailFallbackLine(true), 12500);
     return () => clearTimeout(t);
   }, [accessLinkAck]);
-
-  useEffect(() => {
-    if (!loading) {
-      setInitialLoadSlow(false);
-      return;
-    }
-    const t = window.setTimeout(() => setInitialLoadSlow(true), 1000);
-    return () => {
-      clearTimeout(t);
-      setInitialLoadSlow(false);
-    };
-  }, [loading]);
 
   useEffect(() => {
     if (billId) persistBillplzBillId(billId);
@@ -357,8 +344,7 @@ function PaymentReturnContent() {
 
   const handleCheckStatusAgain = useCallback(() => {
     setProcessingWaitHint(false);
-    setStatusActionSlow(false);
-    const slowT = window.setTimeout(() => setStatusActionSlow(true), 1000);
+    setStatusCheckInFlight(true);
     void (async () => {
       try {
         const data = await fetchStatusOnce();
@@ -368,20 +354,20 @@ function PaymentReturnContent() {
           setProcessingWaitHint(true);
         }
       } finally {
-        window.clearTimeout(slowT);
-        setStatusActionSlow(false);
+        setStatusCheckInFlight(false);
       }
     })();
   }, [fetchStatusOnce]);
 
   const runFetchStatusWithSlow = useCallback(() => {
-    setStatusActionSlow(false);
-    const slowT = window.setTimeout(() => setStatusActionSlow(true), 1000);
+    setStatusCheckInFlight(true);
     void fetchStatusOnce().finally(() => {
-      window.clearTimeout(slowT);
-      setStatusActionSlow(false);
+      setStatusCheckInFlight(false);
     });
   }, [fetchStatusOnce]);
+
+  const showProcessingSpinner =
+    (onboardMode === "processing" && !processingWaitHint) || statusCheckInFlight;
 
   /** Ready phase: display email from finalData only (never localStorage). */
   const readyActions = (
@@ -447,14 +433,12 @@ function PaymentReturnContent() {
         <div className={cardClass}>
           <h1 className={titleClass}>One moment</h1>
           <p className={bodyClass}>We&apos;re loading your payment details.</p>
-          {initialLoadSlow ? (
-            <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
-              <span
-                className="inline-block h-5 w-5 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin"
-                aria-hidden
-              />
-            </div>
-          ) : null}
+          <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
+            <span
+              className="inline-block h-6 w-6 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin sm:h-7 sm:w-7"
+              aria-hidden
+            />
+          </div>
         </div>
       </main>
     );
@@ -486,10 +470,10 @@ function PaymentReturnContent() {
           <div className={cardClass}>
             <h1 className={titleClass}>Payment Received</h1>
             <p className={bodyClass}>{COPY_PAYMENT_PREPARING}</p>
-            {statusActionSlow ? (
+            {showProcessingSpinner ? (
               <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
                 <span
-                  className="inline-block h-5 w-5 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin"
+                  className="inline-block h-6 w-6 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin sm:h-7 sm:w-7"
                   aria-hidden
                 />
               </div>
@@ -598,10 +582,10 @@ function PaymentReturnContent() {
         )}
         {!deliveryEmail && (
           <>
-            {statusActionSlow ? (
+            {statusCheckInFlight ? (
               <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
                 <span
-                  className="inline-block h-5 w-5 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin"
+                  className="inline-block h-6 w-6 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin sm:h-7 sm:w-7"
                   aria-hidden
                 />
               </div>
@@ -632,6 +616,12 @@ export default function PaymentReturnPage() {
           <div className={cardClass}>
             <h1 className={titleClass}>One moment</h1>
             <p className={bodyClass}>Loading…</p>
+            <div className={`${bodyClass} mt-3 flex justify-center`} role="status" aria-busy="true">
+              <span
+                className="inline-block h-6 w-6 rounded-full border-2 border-cb-green/25 border-t-cb-green cb-auth-ring-spin sm:h-7 sm:w-7"
+                aria-hidden
+              />
+            </div>
           </div>
         </main>
       }

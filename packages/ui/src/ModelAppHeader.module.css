@@ -13,8 +13,6 @@
   /* One rhythm for metric labels, values, and header chrome (matches --pf-chrome-font). */
   --model-header-fs: var(--pf-chrome-font, 0.65rem);
   --model-header-lh: 1.22;
-  /* Model title (serif): match logo bounding height — same clamp as .logoImg */
-  --model-header-logo-h: clamp(17px, 2.1vw, 22px);
 }
 
 .fixedWithSpine {
@@ -84,18 +82,15 @@
   text-overflow: ellipsis;
 }
 
-.titleSingle {
-  font-size: 0.72rem;
-}
-
-.titleFull {
-  font-size: 0.72rem;
+.titleSingle,
+.titleFull,
+.titleCompact {
+  font-size: var(--cb-header-logo-h);
 }
 
 .titleCompact {
   display: none;
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
+  letter-spacing: clamp(0.06em, 0.5vw, 0.14em);
 }
 
 @media (max-width: 640px) {
@@ -107,8 +102,7 @@
   }
 
   .titleSingle {
-    font-size: 0.5rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
   }
 
   .titleFull {
@@ -117,8 +111,7 @@
 
   .titleCompact {
     display: block;
-    font-size: 0.5rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
   }
 }
 
@@ -193,7 +186,7 @@
 
   .titleDeskShort {
     display: block;
-    font-size: var(--model-header-logo-h);
+    font-size: var(--cb-header-logo-h);
     letter-spacing: 0.08em;
     line-height: 1;
     text-align: left;
@@ -323,7 +316,7 @@
 }
 
 .titleMobileOnly {
-  font-size: var(--model-header-logo-h);
+  font-size: var(--cb-header-logo-h);
   line-height: 1.05;
   font-weight: 700;
   letter-spacing: 0.08em;

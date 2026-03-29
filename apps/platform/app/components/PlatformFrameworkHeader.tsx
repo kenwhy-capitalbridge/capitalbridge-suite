@@ -71,36 +71,17 @@ export async function PlatformFrameworkHeader({
             }}
           >
             <img
+              className="cb-header-chrome-logo"
               src="/brand/CapitalBridgeLogo_Gold.svg"
               alt="Capital Bridge — Strength Behind Every Structure"
               width={200}
               height={40}
               fetchPriority="high"
               decoding="async"
-              style={{
-                height: "clamp(18px, 4.2vw, 28px)",
-                width: "auto",
-                maxWidth: "min(34vw, 170px)",
-                objectFit: "contain",
-                objectPosition: "left center",
-              }}
             />
           </a>
 
-          <span
-            style={{
-              fontSize: "clamp(0.52rem, 1.9vw, 0.72rem)",
-              fontWeight: 700,
-              letterSpacing: "clamp(0.08em, 0.7vw, 0.2em)",
-              textTransform: "uppercase",
-              color: "rgba(255, 204, 106, 0.95)",
-              fontFamily: 'ui-serif, "Roboto Serif", Georgia, serif',
-              textAlign: "center",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Framework
-          </span>
+          <span className="cb-header-chrome-title">Framework</span>
 
           <PlatformLoginButton href="/login" />
         </div>
@@ -175,36 +156,17 @@ export async function PlatformFrameworkHeader({
           }}
         >
           <img
+            className="cb-header-chrome-logo"
             src="/brand/CapitalBridgeLogo_Gold.svg"
             alt="Capital Bridge — Strength Behind Every Structure"
             width={200}
             height={40}
             fetchPriority="high"
             decoding="async"
-            style={{
-              height: "clamp(18px, 4.2vw, 28px)",
-              width: "auto",
-              maxWidth: "min(34vw, 170px)",
-              objectFit: "contain",
-              objectPosition: "left center",
-            }}
           />
         </a>
 
-        <span
-          style={{
-            fontSize: "clamp(0.52rem, 1.9vw, 0.72rem)",
-            fontWeight: 700,
-            letterSpacing: "clamp(0.08em, 0.7vw, 0.2em)",
-            textTransform: "uppercase",
-            color: "rgba(255, 204, 106, 0.95)",
-            fontFamily: 'ui-serif, "Roboto Serif", Georgia, serif',
-            textAlign: "center",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {centerTitle}
-        </span>
+        <span className="cb-header-chrome-title">{centerTitle}</span>
 
         <PlatformHeaderAuthCluster initials={initials} />
       </div>
