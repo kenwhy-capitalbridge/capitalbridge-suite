@@ -328,9 +328,9 @@ const AppInner = forwardRef<
             <button
               type="button"
               onClick={handlePrintReport}
-              className="cb-gold-outline-cta w-full min-h-[48px] !rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC6A]/50 touch-manipulation"
+              className="pf-chrome-gold-btn pf-chrome-gold-btn--report touch-manipulation no-print"
             >
-              <Printer className="h-5 w-5 shrink-0" aria-hidden />
+              <Printer className="h-4 w-4 shrink-0" aria-hidden />
               Print or Save Report
             </button>
           </div>

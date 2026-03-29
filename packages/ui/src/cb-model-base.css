@@ -274,6 +274,29 @@ a {
   align-self: center;
 }
 
+/* Print / save / download report — same gold chrome + hover lift as header LOGOUT; scales with --pf-chrome-font on small screens. */
+.pf-chrome-gold-btn.pf-chrome-gold-btn--report {
+  width: 100%;
+  max-width: min(100%, 28rem);
+  margin-inline: auto;
+  min-height: clamp(2.2rem, 10.5vw, 2.5rem);
+  height: auto;
+  max-height: none;
+  gap: 0.45rem;
+  padding-top: max(var(--pf-chrome-pad-y), 0.38rem);
+  padding-bottom: max(var(--pf-chrome-pad-y), 0.38rem);
+  padding-left: max(var(--pf-chrome-pad-x), 0.8rem);
+  padding-right: max(var(--pf-chrome-pad-x), 0.8rem);
+}
+
+@media (min-width: 640px) {
+  .pf-chrome-gold-btn.pf-chrome-gold-btn--report.pf-chrome-gold-btn--report-sm-auto {
+    width: auto;
+    max-width: none;
+    margin-inline: unset;
+  }
+}
+
 .pf-header-profile-avatar {
   display: inline-flex;
   align-items: center;

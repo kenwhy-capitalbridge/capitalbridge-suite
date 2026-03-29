@@ -541,15 +541,26 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
             <div className="mt-8 md:mt-12 lg:mt-14 relative z-10">
               <div className="flex justify-center">
                 <button
+                  type="button"
                   onClick={handleDownloadPDF}
                   disabled={!results.isSustainable || isGenerating}
                   className={
-                    results.isSustainable && !isGenerating
-                      ? 'cb-gold-primary-cta py-3 px-6'
-                      : 'flex items-center justify-center gap-2 rounded-xl border border-gray-700 bg-gray-800 py-3 px-6 text-sm font-bold text-gray-500 cursor-not-allowed shadow-none'
+                    results.isSustainable
+                      ? "pf-chrome-gold-btn pf-chrome-gold-btn--report"
+                      : "mx-auto flex min-h-[2.5rem] w-full max-w-[min(100%,28rem)] cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-bold text-gray-500 shadow-none"
                   }
                 >
-                  {isGenerating ? <><Loader2 className="h-4 w-4 cb-ui-icon-spin" aria-hidden /> Generating...</> : <><Download className="w-4 h-4" /> Download Report</>}
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 cb-ui-icon-spin" aria-hidden />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 shrink-0" aria-hidden />
+                      Download Report
+                    </>
+                  )}
                 </button>
               </div>
               <p className="mt-3 text-center text-[10px] text-white font-medium italic px-4 leading-normal">

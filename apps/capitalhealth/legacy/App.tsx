@@ -1567,9 +1567,9 @@ const CalculatorScreen = forwardRef<
             type="button"
               onClick={handlePrintOrSaveReport}
               disabled={reportGenerating}
-              className="cb-gold-outline-cta w-full sm:w-auto !rounded-lg !py-3 !px-6 !text-sm !font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="pf-chrome-gold-btn pf-chrome-gold-btn--report pf-chrome-gold-btn--report-sm-auto"
           >
-              <Printer className="h-4 w-4 flex-shrink-0" aria-hidden />
+              <Printer className="h-4 w-4 shrink-0" aria-hidden />
               {reportGenerating ? 'Generating…' : 'Print or Save Report'}
           </button>
         </div>
