@@ -8,7 +8,7 @@
   --pf-chrome-pad-x: 0.75rem;
   --pf-chrome-font: 0.65rem;
   /** Framework header: profile circle + LOGOUT (must match pixel-perfect). */
-  --pf-header-auth-size: 36px;
+  --pf-header-auth-size: 26px;
   --muted-gold: #9a814a;
   --divider-gold-subtle: rgba(201, 164, 90, 0.5);
 }
@@ -699,7 +699,7 @@ a {
   box-sizing: border-box;
   flex-shrink: 0;
   border-radius: 9999px;
-  font-size: 0.72rem;
+  font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: rgba(13, 58, 29, 0.95);

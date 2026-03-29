@@ -45,7 +45,7 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
         {isPending ? (
           <Loader2
             className="pf-header-avatar-spin"
-            size={16}
+            size={12}
             strokeWidth={2.5}
             aria-hidden
           />

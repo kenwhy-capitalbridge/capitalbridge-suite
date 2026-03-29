@@ -61,7 +61,7 @@ export function PlatformLogoutToMarketing({
       style={{
         ...(inline ? {} : { justifySelf: "end" }),
         ...(inline && pending
-          ? { height: "auto", minHeight: "var(--pf-header-auth-size, 36px)" }
+          ? { height: "auto", minHeight: "var(--pf-header-auth-size, 26px)" }
           : {}),
         cursor: pending ? "wait" : "pointer",
         opacity: pending ? 0.6 : 1,
