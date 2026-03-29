@@ -476,6 +476,8 @@ a {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  /* 25% smaller than base .cb-btn (0.72rem) — launch model labels */
+  font-size: calc(0.72rem * 0.75);
   white-space: nowrap;
   line-height: 1.2;
   overflow: hidden;
@@ -624,7 +626,8 @@ a {
   .cb-module-buttons a.cb-btn,
   .cb-module-buttons button.cb-btn {
     padding: 0.38rem 0.28rem;
-    font-size: clamp(0.45rem, 1.85vw + 0.28rem, 0.62rem);
+    /* 25% smaller than prior launch CTA clamp */
+    font-size: clamp(0.34rem, calc(1.39vw + 0.21rem), 0.47rem);
     letter-spacing: 0.02em;
     white-space: nowrap;
     line-height: 1.15;
