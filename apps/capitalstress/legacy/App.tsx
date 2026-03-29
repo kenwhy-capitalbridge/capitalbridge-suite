@@ -1869,9 +1869,11 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
         </section>
       </main>
-      <div className="fixed bottom-6 left-4 right-4 z-[9998] no-print mx-auto flex w-full max-w-[min(100%,22rem)] flex-col items-stretch gap-2 drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] md:bottom-10 md:left-10 md:right-auto md:mx-0 md:w-[min(22rem,calc(100vw-5rem))]">
+      <div
+        className="fixed bottom-5 left-3 z-[9998] no-print flex w-[min(10.25rem,calc(100vw-1.5rem))] max-w-full flex-col items-stretch gap-1.5 drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] sm:bottom-6 sm:left-4 sm:w-[min(11rem,calc(100vw-2rem))] sm:gap-2 md:bottom-10 md:left-10 md:w-[clamp(10.75rem,14vw,12.35rem)]"
+      >
         {needsSimulationRefresh && !isRunning ? (
-          <p className="min-w-0 w-full max-w-full break-words px-0.5 text-center text-[0.65rem] leading-snug text-[#FFCC6A]/90 sm:text-xs md:text-[13px] md:leading-snug">
+          <p className="min-w-0 w-full max-w-full break-words px-0.5 text-center text-[0.58rem] leading-snug text-[#FFCC6A]/90 sm:text-[0.62rem] md:text-[11px] md:leading-snug lg:text-xs">
             Inputs changed — run simulation so the header and results match your settings.
           </p>
         ) : null}
@@ -1879,7 +1881,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           type="button"
           onClick={runCalculation}
           disabled={isRunning}
-          className={`cb-gold-primary-cta !rounded-sm flex w-full flex-col items-center gap-0.5 py-3 px-4 font-black uppercase tracking-tight text-xs md:px-5 md:text-sm disabled:opacity-60 ${
+          className={`cb-gold-primary-cta !rounded-sm flex w-full flex-col items-center gap-0 !py-2 !px-2 !text-[0.62rem] !font-black uppercase !tracking-tight !leading-tight sm:!px-2.5 sm:!text-[0.65rem] md:!py-2.5 md:!px-3.5 md:!text-[0.7rem] lg:!px-4 lg:!text-xs disabled:opacity-60 ${
             needsSimulationRefresh && !isRunning ? 'stress-run-simulation-cta--urgent' : ''
           }`}
         >
