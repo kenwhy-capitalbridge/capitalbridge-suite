@@ -5,6 +5,7 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./legacy/**/*.{js,ts,jsx,tsx,mdx}",
     "../../packages/lion-verdict/**/*.{js,ts,jsx,tsx}",
+    "../../packages/ui/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {

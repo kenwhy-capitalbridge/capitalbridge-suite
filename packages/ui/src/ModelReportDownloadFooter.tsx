@@ -59,8 +59,8 @@ export function ModelReportDownloadFooter({
       className={`no-print mt-20 w-full max-w-none px-4 pb-20 text-center sm:mt-24 sm:pb-28 lg:mt-32 lg:pb-36 ${className}`.trim()}
     >
       {/* Line of space above the gold rule (margin above footer can collapse with prior section). */}
-      <div className="h-5 w-full shrink-0 sm:h-6" aria-hidden />
-      <div className="w-full border-t border-[#FFCC6A]/30 pt-12 sm:pt-14 lg:pt-16">
+      <div className="cb-model-report-footer-spacer-above-rule" aria-hidden />
+      <div className="cb-model-report-footer-gold-block">
         <p className="mx-auto max-w-2xl text-xs font-light leading-relaxed text-[#E8E6E0]/90 md:text-sm">
           {DISCLAIMER}
         </p>
