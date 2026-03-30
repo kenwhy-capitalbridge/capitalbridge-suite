@@ -941,7 +941,12 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           {/* CAPITAL DIAGNOSIS — introduction (horizontal flow on desktop, stacked on mobile) */}
           <div>
             <h2 className="text-sm md:text-lg font-bold uppercase tracking-wide mb-2 md:mb-4 serif-font text-[#FFCC6A]">CAPITAL DIAGNOSIS</h2>
-            <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] mb-4 md:mb-6">This system evaluates the strength of your capital structure using three core indicators:</p>
+            <p className="text-xs sm:text-[9px] md:text-xs text-[#F6F5F1] mb-4 md:mb-6">
+              This system evaluates the strength of your capital structure using three core indicators:{' '}
+              <span className="serif-font font-bold uppercase tracking-wide text-[#FFCC6A]">
+                Based on {mcResult.simulationCount.toLocaleString()} DATA POINTS ANALYSED
+              </span>
+            </p>
             <div className="flex flex-col items-center text-center md:flex-row md:items-start md:justify-between md:text-left gap-3 md:gap-1 mb-4 md:mb-6">
               <div className="flex-1 min-w-0 w-full md:w-auto">
                 <p className="text-xs sm:text-[9px] md:text-sm font-bold uppercase tracking-wide text-[#FFCC6A] mb-0.5">Resilience Score</p>
