@@ -5,7 +5,7 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
-import { LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
+import { CbLegalSiteFooter, LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
@@ -51,22 +51,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
-              <ModelAppHeader
-                titleDesktop="INCOME ENGINEERING"
-                titleMobile="INCOME ENGINE"
-                compactTitle
-                actions={
-                  user ? (
-                    <ModelHeaderSaveRestore
-                      userId={user.id}
-                      serverCanSave={canSave}
-                      initialSessionId={initialSessionId}
-                      logTag="[income-engineering]"
-                    />
-                  ) : null
-                }
-              />
-              {children}
+              <div className="flex min-h-screen flex-col">
+                <ModelAppHeader
+                  titleDesktop="INCOME ENGINEERING"
+                  titleMobile="INCOME ENGINE"
+                  compactTitle
+                  actions={
+                    user ? (
+                      <ModelHeaderSaveRestore
+                        userId={user.id}
+                        serverCanSave={canSave}
+                        initialSessionId={initialSessionId}
+                        logTag="[income-engineering]"
+                      />
+                    ) : null
+                  }
+                />
+                <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+                <CbLegalSiteFooter />
+              </div>
             </ModelMetricSpineProvider>
           </ModelSaveHandlersProvider>
         </LionWatermarkShell>

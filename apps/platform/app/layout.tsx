@@ -10,6 +10,7 @@ const cbFrameworkFont = Tinos({
   display: "swap",
   variable: "--font-cb-framework",
 });
+import { CbLegalSiteFooter } from "@cb/ui";
 import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
 
@@ -42,9 +43,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={cbFrameworkFont.variable}>
-      <body>
+      <body className="flex min-h-screen flex-col">
         <MembershipSessionCheck initialSafeMode={initialSafeMode} />
-        {children}
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        <CbLegalSiteFooter />
       </body>
     </html>
   );

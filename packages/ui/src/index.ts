@@ -27,3 +27,4 @@ export { ChromeSpinnerGlyph, type ChromeSpinnerGlyphProps } from "./ChromeSpinne
 export { ChromePendingNavLink } from "./ChromePendingNavLink";
 export { ReportPrintChrome } from "./ReportPrintChrome";
 export { stampAllPdfPagesWithAudit } from "./stampPdfAuditMeta";
+export { CbLegalSiteFooter, type CbLegalSiteFooterProps } from "./CbLegalSiteFooter";

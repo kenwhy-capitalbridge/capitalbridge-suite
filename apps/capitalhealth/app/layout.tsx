@@ -5,7 +5,7 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
-import { LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
+import { CbLegalSiteFooter, LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
@@ -47,21 +47,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
-              <ModelAppHeader
-                titleDesktop="CAPITAL HEALTH"
-                titleMobile="CAP. HEALTH"
-                actions={
-                  user ? (
-                    <ModelHeaderSaveRestore
-                      userId={user.id}
-                      serverCanSave={canSave}
-                      initialSessionId={initialSessionId}
-                      logTag="[capital-health]"
-                    />
-                  ) : null
-                }
-              />
-              {children}
+              <div className="flex min-h-screen flex-col">
+                <ModelAppHeader
+                  titleDesktop="CAPITAL HEALTH"
+                  titleMobile="CAP. HEALTH"
+                  actions={
+                    user ? (
+                      <ModelHeaderSaveRestore
+                        userId={user.id}
+                        serverCanSave={canSave}
+                        initialSessionId={initialSessionId}
+                        logTag="[capital-health]"
+                      />
+                    ) : null
+                  }
+                />
+                <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+                <CbLegalSiteFooter />
+              </div>
             </ModelMetricSpineProvider>
           </ModelSaveHandlersProvider>
         </LionWatermarkShell>

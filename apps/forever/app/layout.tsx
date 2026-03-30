@@ -6,7 +6,7 @@ import {
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
 import { platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
-import { LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
+import { CbLegalSiteFooter, LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ForeverCalculatorProvider } from "./ForeverCalculatorProvider";
 import "./globals.css";
@@ -57,22 +57,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ForeverCalculatorProvider>
             <ModelMetricSpineProvider>
-              <ModelAppHeader
-                titleDesktop="FOREVER INCOME"
-                titleMobile="FOREVER INC."
-                backHref={foreverBackToPlatformHref}
-                actions={
-                  user ? (
-                    <ModelHeaderSaveRestore
-                      userId={user.id}
-                      serverCanSave={canSave}
-                      initialSessionId={initialSessionId}
-                      logTag="[forever]"
-                    />
-                  ) : null
-                }
-              />
-              {children}
+              <div className="flex min-h-screen flex-col">
+                <ModelAppHeader
+                  titleDesktop="FOREVER INCOME"
+                  titleMobile="FOREVER INC."
+                  backHref={foreverBackToPlatformHref}
+                  actions={
+                    user ? (
+                      <ModelHeaderSaveRestore
+                        userId={user.id}
+                        serverCanSave={canSave}
+                        initialSessionId={initialSessionId}
+                        logTag="[forever]"
+                      />
+                    ) : null
+                  }
+                />
+                <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+                <CbLegalSiteFooter />
+              </div>
             </ModelMetricSpineProvider>
           </ForeverCalculatorProvider>
         </LionWatermarkShell>
