@@ -1,26 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { ChromeSpinnerGlyph } from "@cb/ui";
 import { deriveEntitlements, type Persona } from "./platformAccess";
 import { useModelSaveHandlers } from "./ModelSaveHandlersContext";
 
 const LIMIT = 20;
 const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
-
-function SaveSpinnerIcon() {
-  return (
-    <span className="cb-ui-icon-spin-wrap inline-flex h-[14px] w-[14px]" aria-hidden>
-      <svg className="h-full w-full" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
-    </span>
-  );
-}
 
 function formatTimestamp(iso: string): string {
   try {
@@ -253,11 +239,14 @@ export function ModelHeaderSaveRestore({
         type="button"
         onClick={handleSave}
         disabled={saveBlocked}
+        aria-busy={saveStatus === "saving"}
+        aria-label={saveStatus === "saving" ? "Saving snapshot" : undefined}
         className={
           trialLocked
             ? "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline pf-chrome-gold-btn--trial-muted shrink-0"
             : "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline shrink-0"
         }
+        style={trialLocked ? undefined : { minWidth: "3.5rem", justifyContent: "center" }}
         title={
           trialLocked
             ? "Trial plan: Save Report is available on paid plans."
@@ -267,10 +256,7 @@ export function ModelHeaderSaveRestore({
         {trialLocked ? (
           "Save"
         ) : saveStatus === "saving" ? (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <SaveSpinnerIcon />
-            Saving…
-          </span>
+          <ChromeSpinnerGlyph sizePx={14} />
         ) : saveStatus === "ok" ? (
           "Saved"
         ) : (

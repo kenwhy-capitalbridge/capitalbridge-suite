@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "@cb/shared": "*",
-    "@cb/supabase": "*"
+    "@cb/supabase": "*",
+    "@cb/ui": "*"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2",

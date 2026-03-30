@@ -162,15 +162,16 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
+            gap: busy ? 0 : 6,
             boxSizing: "border-box",
             transition: "background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+            ...(busy ? { minWidth: "12rem" } : {}),
           }}
         >
           {busy ? (
             <>
-              <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
-              Sending…
+              <ChromeSpinnerGlyph sizePx={14} />
+              <span className="cb-visually-hidden">Sending email change request</span>
             </>
           ) : (
             "Request email change"

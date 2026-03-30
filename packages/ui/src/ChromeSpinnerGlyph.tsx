@@ -1,7 +1,25 @@
+export type ChromeSpinnerGlyphProps = {
+  className?: string;
+  /** Box size in px — always set inline so spinners stay sized when Tailwind omits `@cb/ui` / `@cb/advisory-graph` from `content`. Default 14. */
+  sizePx?: number;
+};
+
 /** Inline spinner — rotation runs on the wrapper (see `cb-ui-icon-spin-wrap` in `cb-model-base.css`). */
-export function ChromeSpinnerGlyph({ className = "h-3.5 w-3.5" }: { className?: string }) {
+export function ChromeSpinnerGlyph({ className = "", sizePx = 14 }: ChromeSpinnerGlyphProps) {
   return (
-    <span className={`cb-ui-icon-spin-wrap ${className}`} aria-hidden>
+    <span
+      className={`cb-ui-icon-spin-wrap ${className}`.trim()}
+      style={{
+        width: sizePx,
+        height: sizePx,
+        minWidth: sizePx,
+        minHeight: sizePx,
+        maxWidth: sizePx,
+        maxHeight: sizePx,
+        boxSizing: "border-box",
+      }}
+      aria-hidden
+    >
       <svg className="h-full w-full" viewBox="0 0 24 24" fill="none">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
         <path

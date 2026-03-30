@@ -161,9 +161,9 @@ export function DashboardTiles() {
                 }}
               >
                 {tileBusy ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <ChromeSpinnerGlyph className="h-[18px] w-[18px]" />
-                    Loading…
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 0 }}>
+                    <ChromeSpinnerGlyph sizePx={18} />
+                    <span className="cb-visually-hidden">Loading</span>
                   </span>
                 ) : (
                   tile.label

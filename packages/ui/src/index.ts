@@ -23,5 +23,5 @@ export {
   MODEL_REPORT_DOWNLOAD_CTA_LABEL,
   type ModelReportDownloadFooterProps,
 } from "./ModelReportDownloadFooter";
-export { ChromeSpinnerGlyph } from "./ChromeSpinnerGlyph";
+export { ChromeSpinnerGlyph, type ChromeSpinnerGlyphProps } from "./ChromeSpinnerGlyph";
 export { ChromePendingNavLink } from "./ChromePendingNavLink";

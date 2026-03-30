@@ -45,9 +45,9 @@ export function NavAssignButton({
       onClick={onClick}
     >
       {pending ? (
-        <span className="inline-flex items-center justify-center gap-2">
+        <span className="inline-flex items-center justify-center gap-0">
           <ButtonSpinner className={spinnerClassName} />
-          {loadingLabel ?? children}
+          <span className="cb-visually-hidden">{loadingLabel ?? children}</span>
         </span>
       ) : (
         children

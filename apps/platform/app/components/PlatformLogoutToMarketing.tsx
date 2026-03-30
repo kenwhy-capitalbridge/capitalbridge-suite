@@ -61,18 +61,24 @@ export function PlatformLogoutToMarketing({
       style={{
         ...(inline ? {} : { justifySelf: "end" }),
         ...(inline && pending
-          ? { height: "auto", minHeight: "var(--pf-header-auth-size, 26px)" }
+          ? {
+              height: "auto",
+              minHeight: "var(--pf-header-auth-size, 26px)",
+              minWidth: "4.25rem",
+              justifyContent: "center",
+            }
           : {}),
+        ...(!inline && pending ? { minWidth: "4.25rem", justifyContent: "center" } : {}),
         cursor: pending ? "wait" : "pointer",
         opacity: pending ? 0.6 : 1,
         pointerEvents: pending ? "none" : "auto",
       }}
     >
       {pending ? (
-        <span className="inline-flex items-center gap-1.5">
-          <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
-          SIGNING OUT…
-        </span>
+        <>
+          <ChromeSpinnerGlyph sizePx={14} />
+          <span className="cb-visually-hidden">SIGNING OUT</span>
+        </>
       ) : (
         "LOGOUT"
       )}

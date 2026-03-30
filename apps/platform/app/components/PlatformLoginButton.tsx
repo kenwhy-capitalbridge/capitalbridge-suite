@@ -24,13 +24,14 @@ export function PlatformLoginButton({ href }: { href: string }) {
         justifySelf: "end",
         opacity: pending ? 0.6 : 1,
         pointerEvents: pending ? "none" : "auto",
+        ...(pending ? { minWidth: "3.5rem", justifyContent: "center" } : {}),
       }}
     >
       {pending ? (
-        <span className="inline-flex items-center gap-1.5">
-          <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
-          LOGIN…
-        </span>
+        <>
+          <ChromeSpinnerGlyph sizePx={14} />
+          <span className="cb-visually-hidden">LOGIN</span>
+        </>
       ) : (
         "LOGIN"
       )}

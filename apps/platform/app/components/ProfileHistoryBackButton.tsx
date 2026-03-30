@@ -21,6 +21,7 @@ export function ProfileHistoryBackButton() {
         style={{
           cursor: isPending ? "wait" : "pointer",
           opacity: isPending ? 0.88 : 1,
+          ...(isPending ? { minWidth: "3.5rem", justifyContent: "center" } : {}),
         }}
         onClick={() => {
           startTransition(() => {
@@ -29,10 +30,10 @@ export function ProfileHistoryBackButton() {
         }}
       >
         {isPending ? (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
-            Loading…
-          </span>
+          <>
+            <ChromeSpinnerGlyph sizePx={14} />
+            <span className="cb-visually-hidden">BACK</span>
+          </>
         ) : (
           "BACK"
         )}

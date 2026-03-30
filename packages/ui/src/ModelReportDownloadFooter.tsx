@@ -53,6 +53,14 @@ export function ModelReportDownloadFooter({
     buttonClassName?.trim() ??
     "pf-chrome-gold-btn pf-chrome-gold-btn--report touch-manipulation disabled:opacity-60";
 
+  const pendingVisual = Boolean(disabled && buttonLeading);
+  const pendingAriaLabel =
+    pendingVisual && typeof buttonLabel === "string" && buttonLabel.trim().length > 0
+      ? buttonLabel
+      : pendingVisual
+        ? MODEL_REPORT_DOWNLOAD_CTA_LABEL + " — loading"
+        : undefined;
+
   return (
     <footer
       data-cb-model-report-footer
@@ -69,16 +77,23 @@ export function ModelReportDownloadFooter({
         </p>
         {statusSlot ? <div className="mt-3 sm:mt-4">{statusSlot}</div> : null}
         <div className="mt-3 flex justify-center px-2 sm:mt-4">
-          <button
-            type="button"
-            onClick={onDownload}
-            disabled={disabled}
-            aria-busy={Boolean(disabled && buttonLeading)}
-            className={btnClass}
-          >
-            {buttonLeading ?? <PrinterGlyph className="h-4 w-4 shrink-0" />}
-            {buttonLabel}
-          </button>
+        <button
+          type="button"
+          onClick={onDownload}
+          disabled={disabled}
+          aria-busy={pendingVisual}
+          aria-label={pendingAriaLabel}
+          className={btnClass}
+        >
+          {pendingVisual ? (
+            buttonLeading
+          ) : (
+            <>
+              {buttonLeading ?? <PrinterGlyph className="h-4 w-4 shrink-0" />}
+              {buttonLabel}
+            </>
+          )}
+        </button>
         </div>
       </div>
     </footer>

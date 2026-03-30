@@ -36,8 +36,8 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
           >
             {active ? (
               <span className="cb-launch-btn-inner">
-                <ChromeSpinnerGlyph className="h-4 w-4" />
-                Loading…
+                <ChromeSpinnerGlyph sizePx={16} />
+                <span className="cb-visually-hidden">Loading</span>
               </span>
             ) : (
               b.label

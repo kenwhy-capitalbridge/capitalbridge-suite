@@ -42,7 +42,7 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
           opacity: isPending ? 0.92 : 1,
         }}
       >
-        {isPending ? <ChromeSpinnerGlyph className="h-3 w-3" /> : initials}
+        {isPending ? <ChromeSpinnerGlyph sizePx={12} /> : initials}
       </Link>
       <PlatformLogoutToMarketing inline />
     </div>

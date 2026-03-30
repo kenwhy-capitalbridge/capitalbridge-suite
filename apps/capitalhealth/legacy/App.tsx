@@ -37,7 +37,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
-import { ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
+import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
 
 /** Coloured rectangular risk badge: label only (e.g. Critical). Institutional, no tier numbers. */
 function RiskTierBadge({ tier, label }: { tier: number; label: string }) {
@@ -1551,7 +1551,7 @@ const CalculatorScreen = forwardRef<
           disabled={reportGenerating}
           buttonLabel={reportGenerating ? "Generating…" : undefined}
           buttonLeading={
-            reportGenerating ? <ChromeSpinnerGlyph className="h-4 w-4 shrink-0" /> : undefined
+            reportGenerating ? <ChromeSpinnerGlyph sizePx={16} /> : undefined
           }
           buttonClassName="pf-chrome-gold-btn pf-chrome-gold-btn--report pf-chrome-gold-btn--report-sm-auto touch-manipulation disabled:opacity-60"
           statusSlot={

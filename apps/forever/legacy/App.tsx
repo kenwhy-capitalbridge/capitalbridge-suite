@@ -591,7 +591,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
           disabled={!results.isSustainable || isGenerating}
           buttonLabel={isGenerating ? "Generating…" : undefined}
           buttonLeading={
-            isGenerating ? <ChromeSpinnerGlyph className="h-4 w-4 shrink-0" /> : undefined
+            isGenerating ? <ChromeSpinnerGlyph sizePx={16} /> : undefined
           }
           buttonClassName={
             results.isSustainable

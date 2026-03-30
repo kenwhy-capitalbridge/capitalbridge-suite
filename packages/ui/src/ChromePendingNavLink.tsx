@@ -46,7 +46,14 @@ export function ChromePendingNavLink({
 
   const mergedStyle: CSSProperties = {
     ...style,
-    ...(pending ? { pointerEvents: "none", opacity: 0.9 } : {}),
+    ...(pending
+      ? {
+          pointerEvents: "none",
+          opacity: 0.9,
+          justifyContent: "center",
+          minWidth: "3.15rem",
+        }
+      : {}),
   };
 
   return (
@@ -59,10 +66,10 @@ export function ChromePendingNavLink({
       style={mergedStyle}
     >
       {pending ? (
-        <span className="inline-flex items-center justify-center gap-1.5">
-          <ChromeSpinnerGlyph />
-          {children}
-        </span>
+        <>
+          <ChromeSpinnerGlyph sizePx={14} />
+          <span className="cb-visually-hidden">{children}</span>
+        </>
       ) : (
         children
       )}

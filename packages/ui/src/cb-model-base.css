@@ -61,6 +61,20 @@
   flex-shrink: 0;
   transform-origin: center;
   animation: cb-ui-spinner-rotate 0.75s linear infinite;
+  overflow: hidden;
+}
+
+/** Screen-reader-only label when a control shows spinner-only pending UI. */
+.cb-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .cb-auth-ring-spin {
