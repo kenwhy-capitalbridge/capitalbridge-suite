@@ -180,9 +180,9 @@ function ForgotPasswordInner() {
             aria-busy={loading}
           >
             {loading ? (
-              <span className="inline-flex items-center justify-center gap-2">
+              <span className="inline-flex items-center justify-center gap-0">
                 <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                {forgotPasswordActionLabel(0, loading)}
+                <span className="cb-visually-hidden">{forgotPasswordActionLabel(0, loading)}</span>
               </span>
             ) : (
               forgotPasswordActionLabel(0, loading)

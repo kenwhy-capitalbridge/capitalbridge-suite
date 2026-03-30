@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { isSupabaseConfigured, recoverySupabase, supabase } from "@/lib/supabaseClient";
+import { ButtonSpinner } from "@/components/ButtonSpinner";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import {
   ACCESS_SUPPORT_ALERT_HINT,
@@ -150,8 +151,16 @@ export function RegisteredEmailChangeForm({
         className="cb-btn-primary mt-4 w-full font-semibold disabled:opacity-50 sm:mt-5"
         onClick={() => void submit()}
         disabled={busy}
+        aria-busy={busy}
       >
-        {busy ? "Updating…" : "Update Email"}
+        {busy ? (
+          <span className="inline-flex items-center justify-center gap-0">
+            <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+            <span className="cb-visually-hidden">Updating…</span>
+          </span>
+        ) : (
+          "Update Email"
+        )}
       </button>
       {message && (
         <p className="mt-3 rounded-lg bg-cb-green/10 px-3 py-2 text-center text-sm font-medium text-cb-green">

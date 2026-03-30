@@ -21,7 +21,14 @@ export function ProfileHistoryBackButton() {
         style={{
           cursor: isPending ? "wait" : "pointer",
           opacity: isPending ? 0.88 : 1,
-          ...(isPending ? { minWidth: "3.5rem", justifyContent: "center" } : {}),
+          position: "relative",
+          ...(isPending
+            ? {
+                minWidth: "4.5rem",
+                justifyContent: "center",
+                alignItems: "center",
+              }
+            : {}),
         }}
         onClick={() => {
           startTransition(() => {

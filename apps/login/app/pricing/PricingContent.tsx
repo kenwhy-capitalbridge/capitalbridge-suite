@@ -329,12 +329,13 @@ function PlanCard({
             type="button"
             onClick={() => onPay(plan.plan!)}
             disabled={!!loadingPlan}
+            aria-busy={loadingPlan === plan.plan}
             className="cb-btn-primary w-full shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] disabled:opacity-60"
           >
             {loadingPlan === plan.plan ? (
-              <span className="inline-flex items-center justify-center gap-2">
+              <span className="inline-flex items-center justify-center gap-0">
                 <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                Redirecting…
+                <span className="cb-visually-hidden">Redirecting…</span>
               </span>
             ) : (
               plan.cta
@@ -345,12 +346,13 @@ function PlanCard({
             type="button"
             onClick={() => onPay("trial")}
             disabled={!!loadingPlan}
+            aria-busy={loadingPlan === "trial"}
             className="cb-btn-primary w-full shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)] disabled:opacity-60"
           >
             {loadingPlan === "trial" ? (
-              <span className="inline-flex items-center justify-center gap-2">
+              <span className="inline-flex items-center justify-center gap-0">
                 <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                Redirecting…
+                <span className="cb-visually-hidden">Redirecting…</span>
               </span>
             ) : (
               plan.cta

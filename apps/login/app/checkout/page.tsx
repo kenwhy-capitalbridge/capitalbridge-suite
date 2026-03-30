@@ -354,9 +354,9 @@ function CheckoutContent() {
             aria-busy={loading}
           >
             {loading ? (
-              <span className="inline-flex items-center justify-center gap-2">
+              <span className="inline-flex items-center justify-center gap-0">
                 <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                Securing your access…
+                <span className="cb-visually-hidden">Securing your access…</span>
               </span>
             ) : (
               "Continue to Payment"
@@ -377,9 +377,9 @@ function CheckoutContent() {
           }}
         >
           {loginExistingPending ? (
-            <span className="inline-flex items-center justify-center gap-2">
+            <span className="inline-flex items-center justify-center gap-0">
               <ButtonSpinner className="border-cb-green/25 border-t-cb-green" />
-              Loading…
+              <span className="cb-visually-hidden">Loading…</span>
             </span>
           ) : (
             "Log into An Existing Account"

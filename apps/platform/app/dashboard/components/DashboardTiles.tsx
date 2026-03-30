@@ -145,9 +145,11 @@ export function DashboardTiles() {
                 aria-busy={tileBusy}
                 onClick={() => navigateTo(href)}
                 style={{
-                  display: "block",
+                  display: tileBusy ? "flex" : "block",
+                  alignItems: tileBusy ? "center" : undefined,
+                  justifyContent: tileBusy ? "center" : undefined,
                   width: "100%",
-                  textAlign: "left",
+                  textAlign: tileBusy ? "center" : "left",
                   padding: "1rem 1.25rem",
                   border: "1px solid rgba(255,204,106,0.35)",
                   borderRadius: 8,

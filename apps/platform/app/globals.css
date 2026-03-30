@@ -1,5 +1,12 @@
 @import "@cb/ui/cb-model-base.css";
 
+/* Belt-and-suspenders: keyframes for border spinners / PaymentGate (import order is fine; duplicate is valid). */
+@keyframes cb-ui-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Legacy aliases (cb-model-base defines --cb-*; .cb-* rules below use these names) */
 :root {
   --green: #0d3a1d;
@@ -73,6 +80,8 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  width: 100%;
+  min-height: 1.25em;
 }
 
 .cb-hero {
@@ -497,6 +506,15 @@ a {
   transform: scale(0.98);
 }
 
+.cb-btn:disabled,
+.cb-module-buttons button.cb-btn:disabled,
+.cb-module-buttons a.cb-btn:disabled {
+  cursor: wait;
+  opacity: 0.88;
+  pointer-events: none;
+  transform: none !important;
+}
+
 @media (max-width: 768px) {
   /* Framework hero/flow/system labels on small screens — larger than prior 0.8rem cap, floor 13px */
   html {
@@ -647,6 +665,12 @@ a {
   min-height: 38px;
   padding-top: 0.3rem;
   padding-bottom: 0.3rem;
+  position: relative;
+}
+
+.profile-page-back-btn.pf-chrome-gold-btn[aria-busy="true"] {
+  min-width: 4.5rem;
+  justify-content: center;
 }
 
 /* Profile → View Available Plans: solid gold default; hover = gold border + gold text + glow */
@@ -669,6 +693,9 @@ a {
   opacity: 0.88;
   cursor: wait;
   pointer-events: none;
+  transform: none !important;
+  justify-content: center;
+  align-items: center;
 }
 
 .cb-profile-plans-link:disabled:hover {

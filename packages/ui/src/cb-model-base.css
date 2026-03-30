@@ -257,8 +257,10 @@ a {
 
 .cb-gold-primary-cta:disabled {
   opacity: 0.55;
-  cursor: not-allowed;
+  cursor: wait;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: none !important;
+  pointer-events: none;
 }
 
 /**
@@ -366,6 +368,8 @@ a {
   opacity: 0.6;
   cursor: wait;
   pointer-events: none;
+  /* Clear hover/active translate so pending spinners stay centred (WebKit). */
+  transform: none !important;
 }
 
 .pf-chrome-gold-btn.pf-chrome-gold-btn--trial-muted,
@@ -505,6 +509,7 @@ a {
   opacity: 0.6;
   cursor: wait;
   pointer-events: none;
+  transform: none !important;
 }
 
 @media (max-width: 639px) {

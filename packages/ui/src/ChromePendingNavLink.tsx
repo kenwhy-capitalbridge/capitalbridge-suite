@@ -51,7 +51,9 @@ export function ChromePendingNavLink({
           pointerEvents: "none",
           opacity: 0.9,
           justifyContent: "center",
+          alignItems: "center",
           minWidth: "3.15rem",
+          transform: "none",
         }
       : {}),
   };

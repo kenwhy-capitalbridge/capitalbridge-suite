@@ -941,9 +941,9 @@ function AccessInner() {
               aria-busy={alreadySignOutBusy}
             >
               {alreadySignOutBusy ? (
-                <span className="inline-flex items-center justify-center gap-2">
+                <span className="inline-flex items-center justify-center gap-0">
                   <ButtonSpinner className="border-cb-green/25 border-t-cb-green" />
-                  Logging out…
+                  <span className="cb-visually-hidden">Logging out…</span>
                 </span>
               ) : (
                 "Logout"
@@ -1078,9 +1078,11 @@ function AccessInner() {
                     aria-busy={resendBusy}
                   >
                     {resendBusy ? (
-                      <span className="inline-flex items-center justify-center gap-2">
+                      <span className="inline-flex items-center justify-center gap-0">
                         <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                        {accessEmailResendButtonLabel(resendCooldownSec, resendBusy)}
+                        <span className="cb-visually-hidden">
+                          {accessEmailResendButtonLabel(resendCooldownSec, resendBusy)}
+                        </span>
                       </span>
                     ) : resendCooldownSec > 0 ? (
                       accessEmailResendButtonLabel(resendCooldownSec, resendBusy)
@@ -1162,9 +1164,9 @@ function AccessInner() {
                     aria-busy={busy}
                   >
                     {busy ? (
-                      <span className="inline-flex items-center justify-center gap-2">
+                      <span className="inline-flex items-center justify-center gap-0">
                         <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                        {PASSWORD_BUTTON_LOADING}
+                        <span className="cb-visually-hidden">{PASSWORD_BUTTON_LOADING}</span>
                       </span>
                     ) : (
                       PASSWORD_BUTTON
@@ -1214,9 +1216,9 @@ function AccessInner() {
                     onClick={() => void handleSignOutToSwitchAccount()}
                   >
                     {switchAccountSignOutBusy ? (
-                      <span className="inline-flex items-center justify-center gap-2">
+                      <span className="inline-flex items-center justify-center gap-0">
                         <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                        Signing out…
+                        <span className="cb-visually-hidden">Signing out…</span>
                       </span>
                     ) : (
                       "Sign out of the other account and continue"
@@ -1276,9 +1278,9 @@ function AccessInner() {
                       aria-busy={busy}
                     >
                       {busy ? (
-                        <span className="inline-flex items-center justify-center gap-2">
+                        <span className="inline-flex items-center justify-center gap-0">
                           <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                          Continuing…
+                          <span className="cb-visually-hidden">Continuing…</span>
                         </span>
                       ) : (
                         "Log out other session and continue"
@@ -1353,9 +1355,9 @@ function AccessInner() {
                 aria-busy={busy}
               >
                 {busy ? (
-                  <span className="inline-flex items-center justify-center gap-2">
+                  <span className="inline-flex items-center justify-center gap-0">
                     <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
-                    Signing in…
+                    <span className="cb-visually-hidden">Signing in…</span>
                   </span>
                 ) : (
                   "Login"
