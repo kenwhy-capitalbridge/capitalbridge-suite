@@ -267,7 +267,7 @@ export function ModelHeaderSaveRestore({
       </button>
 
       <select
-        aria-label="Load saved snapshot (up to 20 newest)"
+        aria-label="Rolling saves (up to 20 newest)"
         value={selectValue}
         disabled={loadingList || trialLocked}
         onChange={async (e) => {
@@ -292,7 +292,7 @@ export function ModelHeaderSaveRestore({
         }}
         title={trialLocked ? "Trial plan: loading server saves is disabled." : undefined}
       >
-        <option value="">{loadingList ? "…" : items.length === 0 ? "No saves" : "Load…"}</option>
+        <option value="">{loadingList ? "…" : items.length === 0 ? "No saves" : "Rolling Saves (20)"}</option>
         {items.map((item) => (
           <option key={item.id} value={item.id}>
             {formatTimestamp(item.created_at)} · {relativeTime(item.created_at)}
