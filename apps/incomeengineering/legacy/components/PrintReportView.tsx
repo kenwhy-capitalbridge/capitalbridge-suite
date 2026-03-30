@@ -492,7 +492,12 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         </section>
 
         {lionAccessEnabled && lionReport ? (
-        <section style={sectionBlock}>
+        <div
+          className="lion-section"
+          data-cb-lion-print-wrap
+          style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+        >
+        <section className="lion-verdict" style={sectionBlock}>
           <h2 style={lionVerdictSectionHeading}>THE LION&apos;S VERDICT</h2>
           <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700, color: '#0D3A1D' }}>
             Lion score: {lionReport.verdict.score} / 100 · {formatLionPublicStatusLabel(lionReport.verdict.status)}
@@ -536,11 +541,20 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
             ))}
           </ul>
-          <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.55 }}>{lionReport.do_nothing_outcome}</p>
+          <p className="lion-do-nothing" style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.55 }}>
+            {lionReport.do_nothing_outcome}
+          </p>
           <p style={{ margin: 0, fontSize: '13px', fontStyle: 'italic', fontWeight: 300, color: '#0D3A1D' }}>{lionReport.closing_line}</p>
         </section>
+        </div>
       ) : (
-        <LionVerdictLocked />
+        <div
+          className="lion-section lion-verdict"
+          data-cb-lion-print-wrap
+          style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+        >
+          <LionVerdictLocked />
+        </div>
       )}
 
         <section style={sectionBlock}>

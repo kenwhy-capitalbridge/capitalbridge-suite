@@ -31,11 +31,13 @@
     "docs:sample-pdf-capital-health": "node node_modules/tsx/dist/cli.mjs apps/capitalhealth/scripts/render-sample-pdf-for-docs.ts",
     "docs:playwright-browsers": "playwright install chromium",
     "docs:sample-pdfs": "node node_modules/tsx/dist/cli.mjs scripts/render-all-sample-pdfs.ts",
+    "generate:pdf": "node node_modules/tsx/dist/cli.mjs scripts/generate-pdf.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "e2e:storage": "node e2e/scripts/create-storage-state.cjs"
   },
   "devDependencies": {
+    "@cb/pdf": "*",
     "@playwright/test": "^1.51.1",
     "playwright": "^1.51.1",
     "tsx": "^4.19.2",

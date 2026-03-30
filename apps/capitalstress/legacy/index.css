@@ -96,7 +96,7 @@ button {
   }
   @page {
     size: A4;
-    margin: 18mm 20mm 22mm;
+    margin: 12mm;
   }
   .print-report-root {
     background: #fff !important;
@@ -116,6 +116,26 @@ button {
   .print-keep-with-next {
     page-break-after: avoid;
   }
+  [data-cb-lion-print-wrap] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .lion-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .lion-verdict {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .lion-do-nothing {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+
   .print-journey-table thead {
     display: table-header-group;
   }

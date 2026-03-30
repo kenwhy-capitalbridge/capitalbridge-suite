@@ -3,7 +3,12 @@
  * Rendered only when printing; not the live UI. White background, section flow, no repeated header.
  */
 
-import React from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import {
+  beginReportReadyCycle,
+  completeReportReadyCycle,
+  subscribeReportReadyOnPrint,
+} from '@cb/pdf';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
 import { CB_FONT_SERIF } from '@cb/shared/typography';
@@ -137,6 +142,91 @@ export function PrintReport(props: PrintReportProps) {
       : 'Suggested focus: reducing withdrawals, improving return efficiency, or extending the investment horizon where possible.';
 
   const stressFrameworkIntro = advisoryFrameworkPdfIntro('risk_resilience_stress');
+
+  const printReadyTokenRef = useRef(0);
+
+  const printStableKey = useMemo(
+    () =>
+      [
+        mcResult.capitalResilienceScore,
+        mcResult.tier,
+        mcResult.simulatedAverage,
+        mcResult.percentile5,
+        mcResult.maxDrawdownPctAvg,
+        investment,
+        withdrawal,
+        years,
+        confidence,
+        lowerPct,
+        upperPct,
+        effectiveInflation,
+        depletionLabel,
+        healthStatus,
+        fragilityIndex,
+        fiTier,
+        lionVerdictOutput?.score0to100 ?? 'none',
+        lionVerdictOutput?.ifYouDoNothing ?? '',
+        verdict?.opening ?? '',
+        keyTakeaways.join('\n'),
+        recommendedAdjustments.join('\n'),
+        microSignals.map((m) => m.text).join('\n'),
+        medianPathYearly.length,
+        medianPathYearly[0],
+        medianPathYearly[medianPathYearly.length - 1] ?? '',
+        stressScenarioResults?.length ?? 0,
+        adjustmentResults?.reduceWithdrawal?.capitalResilienceScore ?? '',
+      ].join('|'),
+    [
+      mcResult,
+      investment,
+      withdrawal,
+      years,
+      confidence,
+      lowerPct,
+      upperPct,
+      effectiveInflation,
+      depletionLabel,
+      healthStatus,
+      fragilityIndex,
+      fiTier,
+      lionVerdictOutput,
+      verdict,
+      keyTakeaways,
+      recommendedAdjustments,
+      microSignals,
+      medianPathYearly,
+      stressScenarioResults,
+      adjustmentResults,
+    ],
+  );
+
+  useLayoutEffect(() => {
+    printReadyTokenRef.current = beginReportReadyCycle();
+  }, [printStableKey]);
+
+  const scheduleReportReady = useCallback(() => {
+    void completeReportReadyCycle(printReadyTokenRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(print)').matches) {
+      scheduleReportReady();
+    }
+  }, [printStableKey, scheduleReportReady]);
+
+  useEffect(() => {
+    return subscribeReportReadyOnPrint(scheduleReportReady);
+  }, [scheduleReportReady]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (typeof window !== 'undefined' && window.matchMedia('(print)').matches) {
+        scheduleReportReady();
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [scheduleReportReady]);
 
   return (
     <div id="print-report" className="print-report-root">
@@ -885,6 +975,12 @@ export function PrintReport(props: PrintReportProps) {
           ))}
         </ul>
 
+        <div
+          className="lion-section"
+          data-cb-lion-print-wrap
+          style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+        >
+        <div className="lion-verdict">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           THE LION&apos;S VERDICT
         </h2>
@@ -941,7 +1037,10 @@ export function PrintReport(props: PrintReportProps) {
                     <li key={i}>{s}</li>
                   ))}
                 </ul>
-                <p style={{ fontSize: '9pt', fontStyle: 'italic', color: PRINT_ACCENT, lineHeight: 1.45 }}>
+                <p
+                  className="lion-do-nothing"
+                  style={{ fontSize: '9pt', fontStyle: 'italic', color: PRINT_ACCENT, lineHeight: 1.45 }}
+                >
                   If you do nothing: {lionVerdictOutput.ifYouDoNothing}
                 </p>
               </div>
@@ -953,6 +1052,8 @@ export function PrintReport(props: PrintReportProps) {
             </div>
           </>
         )}
+        </div>
+        </div>
       </div>
 
       {/* Final page: Disclosure only */}

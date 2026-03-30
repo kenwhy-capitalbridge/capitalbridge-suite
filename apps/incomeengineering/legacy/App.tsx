@@ -1,6 +1,19 @@
 "use client";
 
-import React, { useMemo, useRef, forwardRef, useImperativeHandle, useLayoutEffect } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useLayoutEffect,
+  useEffect,
+  useCallback,
+} from 'react';
+import {
+  beginReportReadyCycle,
+  completeReportReadyCycle,
+  subscribeReportReadyOnPrint,
+} from '@cb/pdf';
 import './index.css';
 import { CalculatorStoreProvider, useCalculatorStoreInternals } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
@@ -204,6 +217,67 @@ const AppInner = forwardRef<
   ]);
 
   const reportRef = useRef<HTMLDivElement>(null);
+  const reportReadyTokenRef = useRef(0);
+
+  const reportStableKey = useMemo(
+    () =>
+      [
+        lionAccessEnabled,
+        props.reportClientDisplayName,
+        currency,
+        monthlyExpenses,
+        JSON.stringify(incomeRows),
+        JSON.stringify(loansFromAssets),
+        JSON.stringify(investmentBuckets),
+        JSON.stringify(assetUnlocks),
+        result.medianCoverage,
+        result.worstMonthCoverage,
+        result.summary.sustainabilityStatus,
+      ].join('|'),
+    [
+      lionAccessEnabled,
+      props.reportClientDisplayName,
+      currency,
+      monthlyExpenses,
+      incomeRows,
+      loansFromAssets,
+      investmentBuckets,
+      assetUnlocks,
+      result.medianCoverage,
+      result.worstMonthCoverage,
+      result.summary.sustainabilityStatus,
+    ]
+  );
+
+  useLayoutEffect(() => {
+    reportReadyTokenRef.current = beginReportReadyCycle();
+  }, [reportStableKey]);
+
+  const scheduleReportReady = useCallback(() => {
+    void completeReportReadyCycle(reportReadyTokenRef.current);
+  }, []);
+
+  /** Re-run when inputs change while already in print (browser print preview / Playwright). */
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(print)').matches) {
+      scheduleReportReady();
+    }
+  }, [reportStableKey, scheduleReportReady]);
+
+  useEffect(() => {
+    return subscribeReportReadyOnPrint(scheduleReportReady);
+  }, [scheduleReportReady]);
+
+  /** Playwright calls `emulateMedia({ print })` then `resize`; matchMedia may not emit `change` in all cases. */
+  useEffect(() => {
+    const onResize = () => {
+      if (typeof window !== 'undefined' && window.matchMedia('(print)').matches) {
+        scheduleReportReady();
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [scheduleReportReady]);
 
   const handlePrintReport = async () => {
     const el = reportRef.current;
@@ -360,12 +434,16 @@ const AppInner = forwardRef<
 
 const App = forwardRef<
   IncomeEngineeringAppHandle,
-  { lionAccessUser?: LionAccessUser; reportClientDisplayName?: string }
+  {
+    lionAccessUser?: LionAccessUser;
+    reportClientDisplayName?: string;
+    initialHydratePayload?: unknown;
+  }
 >(function App(props, ref) {
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
   const reportClientDisplayName = props.reportClientDisplayName ?? 'Client';
   return (
-    <CalculatorStoreProvider>
+    <CalculatorStoreProvider initialHydratePayload={props.initialHydratePayload}>
       <AppInner ref={ref} lionAccessUser={lionAccessUser} reportClientDisplayName={reportClientDisplayName} />
     </CalculatorStoreProvider>
   );

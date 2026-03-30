@@ -103,4 +103,24 @@ textarea:focus-visible {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  [data-cb-lion-print-wrap] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Lion's Verdict — keep narrative + “If you do nothing” intact across pages */
+  .lion-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .lion-verdict {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .lion-do-nothing {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    orphans: 3;
+    widows: 3;
+  }
 }

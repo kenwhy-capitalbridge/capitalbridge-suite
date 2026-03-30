@@ -36,6 +36,22 @@
     page-break-after: avoid;
   }
 
+  /* Lion's Verdict blocks — avoid splitting headline, lists, and “If you do nothing” */
+  .lion-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .lion-verdict {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .lion-do-nothing {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+
   .cb-report-table-head {
     display: table-header-group;
   }

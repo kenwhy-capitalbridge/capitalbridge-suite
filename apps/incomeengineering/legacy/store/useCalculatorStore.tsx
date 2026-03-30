@@ -234,8 +234,20 @@ export interface CalculatorStore extends CalculatorState {
 
 const StoreContext = createContext<{ state: CalculatorState; dispatch: React.Dispatch<Action> } | null>(null);
 
-export function CalculatorStoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+function hydrateInitialState(payload: unknown | undefined): CalculatorState {
+  if (payload == null) return initialState;
+  return mergeHydratedState(initialState, payload);
+}
+
+export function CalculatorStoreProvider({
+  children,
+  initialHydratePayload,
+}: {
+  children: React.ReactNode;
+  /** Optional snapshot (e.g. `/docs/sample-report` PDF fixture) applied before first paint. */
+  initialHydratePayload?: unknown;
+}) {
+  const [state, dispatch] = useReducer(reducer, initialHydratePayload, hydrateInitialState);
   const value = useMemo(() => ({ state, dispatch }), [state]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

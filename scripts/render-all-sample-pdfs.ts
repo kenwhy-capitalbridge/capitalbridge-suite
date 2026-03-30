@@ -1,9 +1,12 @@
 /**
- * Regenerates all design-review PDFs under docs/samples/.
- * Run from repo root: npx tsx scripts/render-all-sample-pdfs.ts
+ * Regenerates design-review PDFs under docs/samples/ via real app URLs + Playwright `page.goto`.
  *
- * HTML→PDF steps use Playwright (`playwright` package). Install browsers if needed:
- *   npx playwright install chromium
+ * Income Engineering + Capital Stress require dev servers (sample routes `/docs/sample-report`):
+ *   npm run dev -w @cb/incomeengineering
+ *   npm run dev -w @cb/capitalstress
+ *
+ * Run from repo root: npx tsx scripts/render-all-sample-pdfs.ts
+ * Browsers: npx playwright install chromium
  */
 
 import { spawnSync } from "node:child_process";
@@ -12,11 +15,12 @@ import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+/** Pilot-first (STEP A): Playwright URL samples before programmatic PDF apps. */
 const steps: { label: string; script: string }[] = [
-  { label: "Capital Health", script: "apps/capitalhealth/scripts/render-sample-pdf-for-docs.ts" },
-  { label: "Forever Income", script: "apps/forever/scripts/render-sample-pdf-for-docs.ts" },
-  { label: "Capital Stress", script: "apps/capitalstress/scripts/render-sample-pdf-for-docs.ts" },
-  { label: "Income Engineering", script: "apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts" },
+  { label: "Income Engineering (Playwright URL)", script: "apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts" },
+  { label: "Capital Stress (Playwright URL)", script: "apps/capitalstress/scripts/render-sample-pdf-for-docs.ts" },
+  { label: "Capital Health (jsPDF)", script: "apps/capitalhealth/scripts/render-sample-pdf-for-docs.ts" },
+  { label: "Forever Income (jsPDF)", script: "apps/forever/scripts/render-sample-pdf-for-docs.ts" },
 ];
 
 for (const { label, script } of steps) {
