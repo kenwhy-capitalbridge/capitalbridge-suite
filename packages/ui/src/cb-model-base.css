@@ -77,23 +77,26 @@
   object-position: left center;
 }
 
-/** Center title: same nominal size as `.cb-header-chrome-logo` height. */
+/** Center title: scales down on narrow viewports so it clears logo + actions. */
 .cb-header-chrome-title {
   margin: 0;
+  padding-inline: 0.2rem;
   font-family: var(--cb-font-serif);
-  font-size: var(--cb-header-logo-h);
-  line-height: 1;
+  font-size: clamp(12px, 2.2vw, var(--cb-header-logo-h));
+  line-height: 1.08;
   font-weight: 700;
-  letter-spacing: clamp(0.06em, 0.5vw, 0.14em);
+  letter-spacing: clamp(0.05em, 0.45vw, 0.14em);
   text-transform: uppercase;
   color: rgba(255, 204, 106, 0.95);
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: min(56vw, 22rem);
   pointer-events: none;
 }
 
 /**
- * Marketing home link: on small viewports hide wide logo, show lion mark (`lionhead_Gold.svg` in `public/brand/`).
+ * Marketing home link: on tablet/mobile hide wide logo, show lion (`lionhead_Gold.svg` in `public/brand/`).
  * Add class `cb-header-chrome-home` on the wrapping `<a>`; full logo uses `cb-header-chrome-logo`.
  */
 .cb-header-chrome-home {
@@ -110,8 +113,8 @@
   object-position: center;
 }
 
-/* Match model-app header: mobile spine / narrow chrome below 768px. */
-@media (max-width: 767px) {
+/* Wordmark → lion at ≤1023px: platform, login, marketing home links. */
+@media (max-width: 1023px) {
   .cb-header-chrome-home .cb-header-chrome-logo {
     display: none;
   }
@@ -164,10 +167,23 @@ a {
  * Defined here (not only Tailwind) because model-app Tailwind `content` historically
  * omitted `packages/ui`, so `pt-*` / `border-t` on this component were never generated.
  */
+/** ~1 line break above the gold rule (see .cb-model-report-footer margin). */
 .cb-model-report-footer-spacer-above-rule {
-  height: clamp(1rem, 2.8vw, 1.5rem);
+  height: clamp(0.2rem, 0.65vw, 0.45rem);
   width: 100%;
   flex-shrink: 0;
+}
+
+/** End-of-calculator footer: tight rhythm above rule; padding works without Tailwind purging. */
+.cb-model-report-footer {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin-top: clamp(0.65rem, 1.85vw, 1.15rem);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: clamp(3.5rem, 9vw, 5.75rem);
+  text-align: center;
 }
 
 .cb-model-report-footer-gold-block {

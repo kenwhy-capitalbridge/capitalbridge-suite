@@ -14,7 +14,7 @@
   --model-header-fs: var(--pf-chrome-font, 0.65rem);
   --model-header-lh: 1.22;
   /* Metric-spine mobile row: short page title, readable, may wrap (no ellipsis). */
-  --cb-model-mobile-title-fs: clamp(15px, 4vw, 21px);
+  --cb-model-mobile-title-fs: clamp(13px, 3.5vw, 19px);
 }
 
 .fixedWithSpine {
@@ -24,8 +24,8 @@
 /* Optional: smaller page title next to logo (e.g. Income Engineering). */
 .headerTitleCompact .titleDesk,
 .headerTitleCompact .titleDeskShort {
-  font-size: clamp(13px, 1.55vw, 17px);
-  letter-spacing: 0.08em;
+  font-size: clamp(11px, 1.18vw, 15px);
+  letter-spacing: 0.07em;
 }
 
 .headerTitleCompact .titleDesk {
@@ -137,9 +137,9 @@
 }
 
 .titleLegacyDesk {
-  font-size: var(--cb-header-logo-h);
+  font-size: clamp(11px, 1.1vw, calc(var(--cb-header-logo-h) * 0.95));
   line-height: 1.12;
-  letter-spacing: 0.12em;
+  letter-spacing: clamp(0.07em, 0.35vw, 0.12em);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -181,6 +181,19 @@
   align-items: center;
   justify-content: flex-end;
   min-width: 0;
+}
+
+/* Tablet: wordmark → lion; keep desktop 3-column grid. */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .logoLinkLegacy {
+    display: none;
+  }
+
+  .legacyLionMobileLink {
+    display: flex;
+    grid-column: 1;
+    justify-self: start;
+  }
 }
 
 @media (max-width: 767px) {
@@ -268,7 +281,7 @@
 .spineDesktopLeft {
   display: flex;
   align-items: center;
-  gap: clamp(0.35rem, 1vw, 0.6rem);
+  gap: clamp(0.45rem, 1.1vw, 0.85rem);
   min-width: 0;
 }
 
@@ -279,12 +292,33 @@
   flex-shrink: 0;
 }
 
-.logoImg {
+.logoWordmark {
   height: var(--cb-header-logo-h);
   width: auto;
-  max-width: min(20vw, 104px);
+  max-width: min(18vw, 100px);
   object-fit: contain;
   object-position: left center;
+  display: block;
+}
+
+.logoLionNarrow {
+  display: none;
+  height: var(--cb-header-logo-h);
+  width: auto;
+  max-height: 26px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  object-position: center;
+}
+
+@media (max-width: 1023px) {
+  .logoWordmark {
+    display: none;
+  }
+
+  .logoLionNarrow {
+    display: block;
+  }
 }
 
 .titleCluster {
@@ -297,15 +331,15 @@
 }
 
 .titleDesk {
-  font-size: var(--cb-header-logo-h);
-  letter-spacing: 0.1em;
+  font-size: clamp(11px, 1.05vw, 16px);
+  letter-spacing: 0.08em;
   text-align: left;
-  line-height: 1.1;
+  line-height: 1.12;
   align-self: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: min(46vw, 18rem);
+  max-width: min(38vw, 15rem);
 }
 
 .titleDeskShort {
@@ -319,7 +353,7 @@
 
   .titleDeskShort {
     display: block;
-    font-size: var(--cb-header-logo-h);
+    font-size: clamp(11px, 1.15vw, 15px);
     letter-spacing: 0.07em;
     line-height: 1.12;
     text-align: left;
@@ -329,7 +363,7 @@
     text-transform: uppercase;
     white-space: normal;
     overflow-wrap: break-word;
-    max-width: min(48vw, 15rem);
+    max-width: min(42vw, 14rem);
     align-self: center;
   }
 }

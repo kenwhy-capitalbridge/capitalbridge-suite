@@ -95,7 +95,15 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
                     height={40}
                     decoding="async"
                     fetchPriority="high"
-                    className={styles.logoImg}
+                    className={styles.logoWordmark}
+                  />
+                  <img
+                    src={BRAND_LIONHEAD_GOLD}
+                    alt=""
+                    width={32}
+                    height={32}
+                    decoding="async"
+                    className={styles.logoLionNarrow}
                   />
                 </a>
                 <div className={styles.titleCluster}>
