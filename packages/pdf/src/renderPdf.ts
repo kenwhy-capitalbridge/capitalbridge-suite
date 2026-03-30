@@ -33,8 +33,14 @@ async function waitForFonts(page: import("playwright").Page): Promise<void> {
 }
 
 /**
- * Deterministic capture: network idle → **print media** → `document.fonts.ready` →
- * optional __REPORT_READY__ → **`document.fonts.ready` again** → `page.pdf`.
+ * STEP 1 pipeline (deterministic, UI-parity):
+ * 1. `goto` — `waitUntil: "networkidle"`
+ * 2. `emulateMedia({ media: "print" })` + `resize` — required before `__REPORT_READY__` for apps whose
+ *    print report lives under `@media print` / `#print-report` (otherwise layout never stabilises).
+ * 3. `document.fonts.ready`
+ * 4. `window.__REPORT_READY__ === true` (optional; on by default)
+ * 5. `document.fonts.ready` again after ready
+ * 6. `page.pdf` — `printBackground`, `preferCSSPageSize` (honour `@page` from CSS), A4 fallback
  */
 export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
   const timeoutMs = options.timeoutMs ?? 120_000;
@@ -68,6 +74,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       path: options.outputPath,
       format: options.format ?? "A4",
       printBackground: true,
+      preferCSSPageSize: true,
       margin: {
         top: DEFAULT_MARGIN_MM,
         right: DEFAULT_MARGIN_MM,

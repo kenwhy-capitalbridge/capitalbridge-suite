@@ -10,7 +10,7 @@ Legacy programmatic PDFs (e.g. some sample scripts) are exceptions until migrate
 
 | Item | Status |
 |------|--------|
-| Shared module `@cb/pdf` | `renderPdf` in `@cb/pdf/render`: `page.goto`, print media, `document.fonts.ready`, `__REPORT_READY__`, `page.pdf` |
+| Shared module `@cb/pdf` | `renderPdf` in `@cb/pdf/render`: `page.goto` (`networkidle`), print media, `document.fonts.ready`, `__REPORT_READY__`, `page.pdf` with `printBackground: true`, **`preferCSSPageSize: true`** (honours `@page` in CSS), URL-only (no `setContent`) |
 | Client signal | `@cb/pdf` → `beginReportReadyCycle` / `completeReportReadyCycle` / print `resize` hooks |
 | **Pilot: Income Engineering** | `/docs/sample-report` + `apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts` → `renderPdf({ url })` |
 | Capital Stress | Same pattern: `/docs/sample-report` + URL script |
