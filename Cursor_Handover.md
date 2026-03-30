@@ -1,45 +1,66 @@
 # Cursor handover
 
-**Generated:** 2026-03-27 19:50 UTC  
-**For:** New chat session (prior thread too long / laggy)
+**Generated:** 2026-03-28 (session close)  
+**For:** New chat session / continuity
 
 ---
 
-## PASTE CONTEXT AND SUMMARY HERE
+## Locked restore point
 
-### Where we left off
+| | |
+|---|---|
+| **Tag** | `restore-point-2026-03-28` |
+| **Commit** | `eee0b61` — *fix(ui): center ChromeSpinnerGlyph and restore reliable rotation* |
+| **Full SHA** | `eee0b61e52b2b275176d903f66a50432c06d3aa0` |
 
-1. **Git / deploy:** `main` was **clean** and **already pushed** (`git push` → *Everything up-to-date*). Latest tip on `origin/main` was **`9bc6023`** (*fix: trial Income Eng crash, Back URL fallback, LionVerdict progress*). Vercel should build from `main`; if stale, redeploy from dashboard.
-2. **Agreed next work (user order):**  
-   - **Phase A — UI/UX** (do this first).  
-   - **Phase B — PDF** after UI: align PDF with **Capital Bridge Advisory Framework** flow/template (three pillars: *Evaluate Sustainability → Engineer Capital → Stress Test Resilience*; modules Forever / Income Engineering, Capital Health, Capital Stress). Reference asset: `assets/Capital_Bridge_Framework-725bc425-8030-4e01-8f8a-1c34e767cf0e.png` (also under `.cursor/projects/.../assets/`).
-3. **Lion’s Verdict (trial vs paid):** `packages/lion-verdict/access.ts` — `canAccessLion(user)` is true only if `isPaid` or `hasActiveTrialUpgrade`. **Trial** → **`LionVerdictLocked`** (headers, tier label, teaser copy, “hidden analysis” bullets, unlock CTA — **not** personalized `getLionVerdict` / `LionVerdictActive` body). **Paid** (or active trial upgrade) → **`LionVerdictActive`** + copy panel. **Capital Health / Stress** also use plan entitlements (`canSeeVerdict`, etc.) for some score labeling vs generic labels.
-4. **Known follow-up (optional):** `LionVerdictLocked` unlock control is `type="button"` with **no** `onClick`/href unless wired elsewhere — product may want a real link to pricing/subscribe.
+**Return to this state:**
 
-### Recent fixes already on `main` (context only)
+```bash
+git fetch origin
+git checkout restore-point-2026-03-28
+# or: git checkout eee0b61
+```
 
-- Trial **Income Engineering** print path: avoid using `lionReport` when null (conditional / upgrade message).
-- **Back** to platform: `packages/shared/src/urls.ts` — `envUrl` treats empty `NEXT_PUBLIC_PLATFORM_APP_URL` as unset (fallback behavior).
-- **Capital Health / Stress dashboards:** pass `lionAccessUser` into legacy app (fixed `ReferenceError`).
-- **`LionVerdictActive`:** destructure / props including `progress`; related TS fixes in `getLionVerdict`.
+**Create the tag locally** (if you clone fresh and the tag is missing):
 
-### Useful paths
+```bash
+git tag -a restore-point-2026-03-28 eee0b61 -m "Restore: spinner UX + layout fixes locked"
+```
 
-- Lion: `packages/lion-verdict/` (`access.ts`, `LionVerdictLocked.tsx`, `LionVerdictActive.tsx`, `getLionVerdict.ts`, `copy.ts`)
-- Apps: `apps/*/legacy/App.tsx`, dashboard clients under `apps/capitalhealth/app/dashboard/`, `apps/capitalstress/...`
-- Shared URLs: `packages/shared/src/urls.ts`
-- Other handover notes may exist: `gpthandover.md`, `Cursor-handover.txt`
+The tag should exist on **`origin`** after push from this session. *(This tag name was moved from an older snapshot to **`eee0b61`** so it reflects the spinner / pending-button UX work; if you need the prior pointer, use commit **`228250a`.)*
 
-### Assumptions
+---
 
-- Context above matches repo state unless the user has new local commits.
-- If `origin/main` has moved, verify latest SHA and Vercel deployment.
+## Where we left off
+
+1. **Git / deploy:** `main` at **`eee0b61`**; pending-button UX and **ChromeSpinnerGlyph** layout/animation work are merged and intended to be on **`origin/main`**. Vercel builds from `main` unless overridden.
+
+2. **UI/UX — pending controls (done in this arc):** Consistent pattern: **click → label hidden → spinner only inside control → disabled while loading**. Applied across platform (header, profile, dashboard tiles), login/auth flows, `@cb/ui` chrome, Capital Stress run CTA, advisory save button, etc.
+
+3. **ChromeSpinnerGlyph:** Rotation uses **CSS keyframes** on `.cb-spinner-glyph-spin` (not SMIL). Shared wrapper **`.cb-pending-btn-inner`** (in `cb-model-base.css`) centers the glyph when paired with `.cb-visually-hidden` text. Header grid uses **`minmax(4.5rem, 1fr)`** on the right column so LOGIN/auth does not collapse. **`ChromePendingNavLink`** uses `display: inline-flex` when pending.
+
+4. **Agreed next work (from earlier plan — confirm with user):**  
+   - **Phase A — UI/UX:** further polish only if needed.  
+   - **Phase B — PDF:** align PDF with **Capital Bridge Advisory Framework** (three pillars; modules Forever / Income Engineering, Capital Health, Capital Stress). Reference: `assets/Capital_Bridge_Framework-725bc425-8030-4e01-8f8a-1c34e767cf0e.png`.
+
+5. **Lion’s Verdict (trial vs paid):** `packages/lion-verdict/access.ts` — `canAccessLion(user)` is true only if `isPaid` or `hasActiveTrialUpgrade`. **Trial** → **`LionVerdictLocked`**; **paid** (or active trial upgrade) → **`LionVerdictActive`** + copy panel. Capital Health / Stress use plan entitlements for some score labeling.
+
+6. **Known follow-up (optional):** `LionVerdictLocked` unlock control may still need a real pricing/subscribe link if product wants it.
+
+---
+
+## Useful paths
+
+- Spinner / chrome: `packages/ui/src/ChromeSpinnerGlyph.tsx`, `ChromePendingNavLink.tsx`, `cb-model-base.css` (`.cb-pending-btn-inner`, `.cb-spinner-glyph-spin`)
+- Platform: `apps/platform/app/components/` (login, logout, profile, `PlatformFrameworkHeader.tsx`)
+- Login: `apps/login/` (auth buttons use `ButtonSpinner` + `cb-visually-hidden` where aligned)
+- Lion: `packages/lion-verdict/`
+- Other notes: `gpthandover.md`
 
 ---
 
 ## Your role (next assistant)
 
-- **Pick up** at **Phase A: UI/UX**; defer **PDF framework alignment** until after UI unless the user redirects.
-- **No long recap** of Lion access rules unless the user asks.
-- **Be concise and action-oriented.** If requirements for UI or PDF are ambiguous, **ask targeted questions** instead of guessing.
-- **No response required** from the assistant until the user gives further instructions (user preference for how the new session should start).
+- **Verify** `origin/main` (or the tag) matches expectations before large changes.
+- **Be concise and action-oriented.** Ask targeted questions if PDF or UI scope is unclear.
+- **No response required** until the user gives further instructions (user preference for how a new session may start).
