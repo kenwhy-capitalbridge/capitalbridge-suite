@@ -589,13 +589,35 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         ) : null}
       </section>
 
-      <p style={{ fontSize: '12px', color: '#4a5568', marginTop: '20px' }}>
-        This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.
-      </p>
-
-      <p style={{ fontSize: '13px', fontWeight: 700, color: '#0D3A1D', marginTop: '14px', padding: '14px 16px', background: 'linear-gradient(135deg, #E8F5E9 0%, #f0fdf4 100%)', borderLeft: '4px solid #FFCC6A', borderRadius: '6px', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-        Please save or print a copy for your records.
-      </p>
+      <div
+        style={{
+          marginTop: '20px',
+          borderTop: '1px solid rgba(255, 204, 106, 0.45)',
+          paddingTop: '12px',
+          textAlign: 'center',
+        }}
+      >
+        <p style={{ fontSize: '12px', color: '#4a5568', margin: 0, lineHeight: 1.55 }}>
+          This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.
+        </p>
+        <p
+          style={{
+            fontSize: '13px',
+            fontWeight: 700,
+            color: '#0D3A1D',
+            marginTop: '0.65em',
+            marginBottom: 0,
+            padding: '14px 16px',
+            background: 'linear-gradient(135deg, #E8F5E9 0%, #f0fdf4 100%)',
+            borderLeft: '4px solid #FFCC6A',
+            borderRadius: '6px',
+            breakInside: 'avoid',
+            pageBreakInside: 'avoid',
+          }}
+        >
+          Please save or print a copy for your records.
+        </p>
+      </div>
       </div>
     </div>
   );

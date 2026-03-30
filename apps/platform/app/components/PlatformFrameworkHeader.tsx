@@ -2,6 +2,7 @@ import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
 import { PlatformLoginButton } from "./PlatformLoginButton";
 import { PlatformHeaderAuthCluster } from "./PlatformHeaderAuthCluster";
+import { PlatformMarketingHomeLink } from "./PlatformMarketingHomeLink";
 import { initialsFromFirstLastOrFallback } from "../../lib/profileInitials";
 
 function marketingHomeUrl(): string {
@@ -156,35 +157,7 @@ export async function PlatformFrameworkHeader({
           boxSizing: "border-box",
         }}
       >
-        <a
-          href={home}
-          className="cb-header-chrome-home"
-          aria-label="Capital Bridge home"
-          style={{
-            justifySelf: "start",
-            display: "flex",
-            alignItems: "center",
-            minWidth: 0,
-          }}
-        >
-          <img
-            className="cb-header-chrome-logo"
-            src="/brand/CapitalBridgeLogo_Gold.svg"
-            alt=""
-            width={200}
-            height={40}
-            fetchPriority="high"
-            decoding="async"
-          />
-          <img
-            className="cb-header-chrome-lion-mobile"
-            src="/brand/lionhead_Gold.svg"
-            alt=""
-            width={32}
-            height={32}
-            decoding="async"
-          />
-        </a>
+        <PlatformMarketingHomeLink href={home} />
 
         <span className="cb-header-chrome-title">{centerTitle}</span>
 

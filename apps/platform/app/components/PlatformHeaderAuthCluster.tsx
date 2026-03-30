@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { ChromeSpinnerGlyph } from "@cb/ui";
 import { PlatformLogoutToMarketing } from "./PlatformLogoutToMarketing";
 
 export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
@@ -42,16 +42,7 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
           opacity: isPending ? 0.92 : 1,
         }}
       >
-        {isPending ? (
-          <Loader2
-            className="pf-header-avatar-spin"
-            size={12}
-            strokeWidth={2.5}
-            aria-hidden
-          />
-        ) : (
-          initials
-        )}
+        {isPending ? <ChromeSpinnerGlyph className="h-3 w-3" /> : initials}
       </Link>
       <PlatformLogoutToMarketing inline />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { ChromeSpinnerGlyph } from "./ChromeSpinnerGlyph";
 
 function allowDefaultBrowserNavigation(e: MouseEvent<HTMLAnchorElement>): boolean {
@@ -23,11 +23,13 @@ export function ChromePendingNavLink({
   className,
   children,
   ariaLabel,
+  style,
 }: {
   href: string;
   className: string;
   children: ReactNode;
   ariaLabel?: string;
+  style?: CSSProperties;
 }) {
   const [pending, setPending] = useState(false);
 
@@ -42,6 +44,11 @@ export function ChromePendingNavLink({
     [href, pending]
   );
 
+  const mergedStyle: CSSProperties = {
+    ...style,
+    ...(pending ? { pointerEvents: "none", opacity: 0.9 } : {}),
+  };
+
   return (
     <a
       href={href}
@@ -49,10 +56,7 @@ export function ChromePendingNavLink({
       aria-label={ariaLabel}
       aria-busy={pending}
       onClick={onClick}
-      style={{
-        pointerEvents: pending ? "none" : undefined,
-        opacity: pending ? 0.9 : undefined,
-      }}
+      style={mergedStyle}
     >
       {pending ? (
         <span className="inline-flex items-center justify-center gap-1.5">

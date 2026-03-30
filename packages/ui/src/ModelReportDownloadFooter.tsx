@@ -56,26 +56,30 @@ export function ModelReportDownloadFooter({
   return (
     <footer
       data-cb-model-report-footer
-      className={`no-print mt-20 w-full max-w-none border-t border-[#FFCC6A]/30 px-4 pb-20 pt-14 text-center sm:mt-24 sm:pb-28 sm:pt-16 lg:mt-32 lg:pb-36 lg:pt-20 ${className}`.trim()}
+      className={`no-print mt-20 w-full max-w-none px-4 pb-20 text-center sm:mt-24 sm:pb-28 lg:mt-32 lg:pb-36 ${className}`.trim()}
     >
-      <p className="mx-auto max-w-2xl text-xs font-light leading-relaxed text-[#E8E6E0]/90 md:text-sm">
-        {DISCLAIMER}
-      </p>
-      <p className="mx-auto mt-10 max-w-xl text-sm font-bold text-[#FFCC6A] sm:mt-12 md:mt-14 md:text-base lg:mt-16">
-        {RECORDS_LINE}
-      </p>
-      {statusSlot ? <div className="mt-8 sm:mt-10 lg:mt-12">{statusSlot}</div> : null}
-      <div className="mt-12 flex justify-center px-2 sm:mt-14 lg:mt-16">
-        <button
-          type="button"
-          onClick={onDownload}
-          disabled={disabled}
-          aria-busy={Boolean(disabled && buttonLeading)}
-          className={btnClass}
-        >
-          {buttonLeading ?? <PrinterGlyph className="h-4 w-4 shrink-0" />}
-          {buttonLabel}
-        </button>
+      {/* Line of space above the gold rule (margin above footer can collapse with prior section). */}
+      <div className="h-5 w-full shrink-0 sm:h-6" aria-hidden />
+      <div className="w-full border-t border-[#FFCC6A]/30 pt-5 sm:pt-6 lg:pt-6">
+        <p className="mx-auto max-w-2xl text-xs font-light leading-relaxed text-[#E8E6E0]/90 md:text-sm">
+          {DISCLAIMER}
+        </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm font-bold text-[#FFCC6A] md:text-base">
+          {RECORDS_LINE}
+        </p>
+        {statusSlot ? <div className="mt-3 sm:mt-4">{statusSlot}</div> : null}
+        <div className="mt-3 flex justify-center px-2 sm:mt-4">
+          <button
+            type="button"
+            onClick={onDownload}
+            disabled={disabled}
+            aria-busy={Boolean(disabled && buttonLeading)}
+            className={btnClass}
+          >
+            {buttonLeading ?? <PrinterGlyph className="h-4 w-4 shrink-0" />}
+            {buttonLabel}
+          </button>
+        </div>
       </div>
     </footer>
   );

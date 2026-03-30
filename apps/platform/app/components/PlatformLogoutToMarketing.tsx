@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { createAppBrowserClient } from "@cb/supabase/browser";
-import { Loader2 } from "lucide-react";
+import { ChromeSpinnerGlyph } from "@cb/ui";
 import { platformPostLogoutUrl } from "@cb/shared/urls";
 
 /**
@@ -70,7 +70,7 @@ export function PlatformLogoutToMarketing({
     >
       {pending ? (
         <span className="inline-flex items-center gap-1.5">
-          <Loader2 size={14} className="cb-ui-icon-spin" aria-hidden />
+          <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
           SIGNING OUT…
         </span>
       ) : (

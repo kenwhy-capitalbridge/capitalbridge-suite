@@ -961,7 +961,7 @@ export function PrintReport(props: PrintReportProps) {
           style={{
             borderTop: '1px solid rgba(255, 204, 106, 0.45)',
             marginTop: '2em',
-            paddingTop: '1.25em',
+            paddingTop: '0.65em',
             textAlign: 'center',
           }}
         >
@@ -969,7 +969,7 @@ export function PrintReport(props: PrintReportProps) {
             This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future
             performance.
           </p>
-          <p style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, marginTop: '1em' }}>
+          <p style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, marginTop: '0.55em', lineHeight: 1.45 }}>
             Please save or print a copy for your records.
           </p>
         </div>

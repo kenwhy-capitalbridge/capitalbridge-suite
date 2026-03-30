@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ChromeSpinnerGlyph } from "@cb/ui";
 
 export function ProfileHistoryBackButton() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export function ProfileHistoryBackButton() {
       >
         {isPending ? (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Loader2 size={14} className="pf-header-avatar-spin" aria-hidden />
+            <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
             Loading…
           </span>
         ) : (

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { MARKETING_SITE_URL, platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
+import { ChromePendingNavLink } from "./ChromePendingNavLink";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
 import { BRAND_CAPITAL_BRIDGE_LOGO_GOLD, BRAND_LIONHEAD_GOLD } from "./brandPaths";
 import { useModelMetricSpine } from "./modelMetricSpineContext";
@@ -121,7 +122,7 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
 
             <div className={styles.spineMobile}>
               <div className={styles.spineMobileTop}>
-                <a href={home} className={styles.spineMobileLionLink} aria-label="Capital Bridge home">
+                <ChromePendingNavLink href={home} className={styles.spineMobileLionLink} ariaLabel="Capital Bridge home">
                   <img
                     src={BRAND_LIONHEAD_GOLD}
                     alt=""
@@ -130,7 +131,7 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
                     decoding="async"
                     className={styles.spineMobileLion}
                   />
-                </a>
+                </ChromePendingNavLink>
                 <div className={styles.spineMobileBackSlot}>
                   <ModelAppHeaderBackButton href={back} />
                 </div>
@@ -148,7 +149,7 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
           </>
         ) : (
           <div className={styles.wrap}>
-            <a href={home} className={styles.logoLinkLegacy} aria-label="Capital Bridge home">
+            <ChromePendingNavLink href={home} className={styles.logoLinkLegacy} ariaLabel="Capital Bridge home">
               <img
                 src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
                 alt=""
@@ -158,10 +159,10 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
                 fetchPriority="high"
                 className={styles.logoImgLegacy}
               />
-            </a>
-            <a href={home} className={styles.legacyLionMobileLink} aria-label="Capital Bridge home">
+            </ChromePendingNavLink>
+            <ChromePendingNavLink href={home} className={styles.legacyLionMobileLink} ariaLabel="Capital Bridge home">
               <img src={BRAND_LIONHEAD_GOLD} alt="" width={32} height={32} decoding="async" className={styles.legacyLionMobileImg} />
-            </a>
+            </ChromePendingNavLink>
             <div className={styles.titleCenter}>
               <span className={`${styles.titleBase} ${styles.titleLegacyDesk}`}>{titleDesktop}</span>
               <span className={`${styles.titleBase} ${styles.titleLegacyMobile}`}>{short ?? titleDesktop}</span>
