@@ -731,7 +731,12 @@ const CalculatorScreen = forwardRef<
         </div>
       )}
 
-      <main id="calculator-panel" className="mx-auto w-full max-w-5xl px-3 sm:px-4 pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
+      <main
+        id="calculator-panel"
+        className="mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-[clamp(0.65rem,1.8vw,1.1rem)] pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14"
+        role="tabpanel"
+        aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}
+      >
         {/* Mode selector */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-2 sm:p-4 text-white text-center sm:text-left mt-4 sm:mt-6">
           <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2 sm:mb-3">
@@ -1446,7 +1451,7 @@ const CalculatorScreen = forwardRef<
           </div>
 
           {/* Capital Stress Test */}
-          <div className="mx-auto mt-10 sm:mt-14 md:mt-16 w-full max-w-5xl pt-8 sm:pt-10 md:pt-14 mb-5 sm:mb-8 text-center">
+          <div className="mx-auto mt-10 w-full max-w-full sm:mt-14 md:mt-16 pt-8 sm:pt-10 md:pt-14 mb-5 sm:mb-8 text-center">
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center justify-center gap-2">
                 <img src="/brand/lionhead_Gold.svg" alt="" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
@@ -1472,10 +1477,10 @@ const CalculatorScreen = forwardRef<
             </div>
             {stressTestExpanded ? (
               <>
-                <div className="mx-auto mt-4 max-w-5xl border-t border-[#FFCC6A]/25" aria-hidden />
+                <div className="mx-auto mt-4 w-full max-w-full border-t border-[#FFCC6A]/25" aria-hidden />
                 <div
                   data-capital-health-stress-grid
-                  className="mx-auto mt-4 grid w-full max-w-5xl grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3 md:items-stretch"
+                  className="mx-auto mt-4 grid w-full max-w-full grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3 md:items-stretch"
                 >
                   {stressTestScenarios.map((s) => (
                     <div
