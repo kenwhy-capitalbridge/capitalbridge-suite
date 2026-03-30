@@ -313,7 +313,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               textTransform: 'uppercase',
             }}
           >
-            Capital Engineering Model — Report
+            Income Engineering Model — Report
           </h1>
           <p style={{ fontSize: '11px', color: '#0D3A1D', marginTop: '4px', marginBottom: 0 }}>
             Income Sustainability Analysis

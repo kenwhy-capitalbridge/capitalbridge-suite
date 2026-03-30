@@ -10,7 +10,7 @@ export type AdvisoryReportStage =
   | "risk_resilience_stress";
 
 const JOURNEY =
-  "We look at your money in three simple steps: (1) Can it last at the lifestyle you want? (2) Is your overall setup strong and balanced? (3) If markets fall or life changes, how might you cope?";
+  "The Capital Bridge Advisory Framework has three pillars — Evaluate Sustainability, Engineer Capital, and Stress Test Resilience. In plain terms: (1) Can your money last at the lifestyle you want? (2) Is your overall setup strong and balanced? (3) If markets fall or life changes, how might you cope?";
 
 const STAGE: Record<
   AdvisoryReportStage,

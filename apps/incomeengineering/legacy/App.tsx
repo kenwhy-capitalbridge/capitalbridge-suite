@@ -208,6 +208,13 @@ const AppInner = forwardRef<
   const handlePrintReport = async () => {
     const el = reportRef.current;
     if (!el) return;
+    try {
+      if (typeof document !== 'undefined' && document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+    } catch {
+      /* ignore */
+    }
     const margin = 12; // mm white space around content
     const pageWidth = 210;
     const pageHeight = 297;
@@ -223,6 +230,8 @@ const AppInner = forwardRef<
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        windowWidth: partEl.scrollWidth,
+        windowHeight: partEl.scrollHeight,
       });
       const imgWidthMm = contentWidth;
       const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
@@ -256,7 +265,7 @@ const AppInner = forwardRef<
         doc.addPage();
         await addPartToPdf(doc, part2);
       }
-      doc.save('Capital-Engineering-Model-Report.pdf');
+      doc.save('Income-Engineering-Model-Report.pdf');
     } catch (err) {
       console.error('PDF generation failed:', err);
     }

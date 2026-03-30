@@ -31,10 +31,10 @@ export const HeaderSimple: React.FC = () => (
       </div>
       <div className="flex justify-center">
         <span className="text-[10px] font-medium uppercase tracking-wide text-white sm:hidden">
-          Capital Engineering
+          Income Engineering
         </span>
         <span className="hidden text-[10px] font-medium uppercase tracking-wide text-white sm:inline sm:text-xs">
-          Capital Engineering Model
+          Income Engineering Model
         </span>
       </div>
       <div className="flex justify-end">
