@@ -71,7 +71,6 @@ const INDIVIDUAL_PLANS = [
     includes: [
       "Full advisory dashboard",
       "Forever Income Model",
-      "Capital Engineering",
       "Income Engineering Model",
       "Income Assessment",
       "Stress Test Income & Capital Resilience",
@@ -98,7 +97,6 @@ const INDIVIDUAL_PLANS = [
     includes: [
       "Full advisory dashboard",
       "Forever Income Model",
-      "Capital Engineering",
       "Income Engineering Model",
       "Income Assessment",
       "Stress Test Income & Capital Resilience",
@@ -126,7 +124,6 @@ const ADVISOR_PLANS = [
     includes: [
       "Full advisory dashboard",
       "Forever Income Model",
-      "Capital Engineering",
       "Income Engineering Model",
       "Income Assessment",
       "Stress Test Income & Capital Resilience",
@@ -155,7 +152,6 @@ const ADVISOR_PLANS = [
     includes: [
       "Full advisory dashboard",
       "Forever Income Model",
-      "Capital Engineering",
       "Income Engineering Model",
       "Income Assessment",
       "Stress Test Income & Capital Resilience",
@@ -466,7 +462,7 @@ export function PricingContent() {
             </div>
             <div className="flex h-full flex-col rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-4 text-center sm:px-6 sm:py-5">
               <h3 className="font-serif text-[0.9375rem] font-semibold leading-snug text-cb-gold sm:text-lg sm:leading-normal">
-                Capital Engineering
+                Income Engineering Model
               </h3>
               <p className="mt-2 flex-1 text-sm text-cb-cream/80">
                 Analyzes how capital sources, withdrawals, and investment growth
