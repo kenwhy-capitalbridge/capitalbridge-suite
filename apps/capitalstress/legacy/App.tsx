@@ -278,6 +278,18 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     capitalAdjustmentSimulator: true,
   });
   const toggleSection = (key: keyof typeof collapsedSections) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleExpandAllSections = useCallback(() => {
+    setCollapsedSections((prev) => {
+      const allExpanded = !Object.values(prev).some(Boolean);
+      return {
+        structuralStabilityMap: allExpanded,
+        capitalOutcomeDist: allExpanded,
+        capitalStressRadar: allExpanded,
+        furtherStressTest: allExpanded,
+        capitalAdjustmentSimulator: allExpanded,
+      };
+    });
+  }, []);
   useEffect(() => {
     const check = () => setIsMobileView(typeof window !== 'undefined' && window.innerWidth < 768);
     check();
@@ -1135,6 +1147,18 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
 
           <div className="border-t border-[#FFCC6A]/40 my-0" aria-hidden="true" />
 
+          {mcResult && depletionBarOutput != null && (
+            <div className="flex justify-end no-print pt-2 pb-1">
+              <button
+                type="button"
+                onClick={toggleExpandAllSections}
+                className="rounded border border-[#FFCC6A]/60 bg-transparent text-[#FFCC6A]/90 py-1.5 px-3 sm:py-2 sm:px-4 text-xs sm:text-sm font-bold uppercase tracking-wide hover:bg-[#FFCC6A]/10 transition-colors"
+              >
+                {Object.values(collapsedSections).some(Boolean) ? 'EXPAND ALL' : 'COLLAPSE ALL'}
+              </button>
+            </div>
+          )}
+
           {/* Structural Stability Map: 2-axis (Depletion Pressure × Fragility Index), 4 zones */}
           {depletionBarOutput != null && (() => {
             const returnRange = upperPct - lowerPct;
@@ -1833,16 +1857,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             <div className="flex justify-end no-print">
               <button
                 type="button"
-                onClick={() => {
-                  const allExpanded = !Object.values(collapsedSections).some(Boolean);
-                  setCollapsedSections({
-                    structuralStabilityMap: allExpanded,
-                    capitalOutcomeDist: allExpanded,
-                    capitalStressRadar: allExpanded,
-                    furtherStressTest: allExpanded,
-                    capitalAdjustmentSimulator: allExpanded,
-                  });
-                }}
+                onClick={toggleExpandAllSections}
                 className="rounded border border-[#FFCC6A]/60 text-[#FFCC6A]/90 py-1.5 px-3 text-sm md:text-xs font-bold uppercase tracking-wide hover:bg-[#FFCC6A]/10 transition-colors"
               >
                 {Object.values(collapsedSections).some(Boolean) ? 'EXPAND ALL' : 'COLLAPSE ALL'}
