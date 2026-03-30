@@ -2,6 +2,8 @@
  * Regenerates all design-review PDFs under docs/samples/.
  * Run from repo root: npx tsx scripts/render-all-sample-pdfs.ts
  *
+ * HTML→PDF steps use Playwright (`playwright` package). Install browsers if needed:
+ *   npx playwright install chromium
  */
 
 import { spawnSync } from "node:child_process";

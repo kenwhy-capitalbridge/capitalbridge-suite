@@ -1,15 +1,15 @@
 /**
  * Renders the Capital Stress print report to docs/samples/capital-stress-report.pdf via Playwright.
- * Requires: npm i at repo root (Puppeteer bundles Chromium).
+ * Requires: npm i at repo root (playwright install chromium if needed: npx playwright install chromium).
  * Run from repo root: npx tsx apps/capitalstress/scripts/render-sample-pdf-for-docs.ts
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import puppeteer from "puppeteer";
 import type { LionStressAdvisoryInputs } from "@cb/advisory-graph/lionsVerdict";
 import { PrintReport } from "../legacy/PrintReport";
 import type { DepletionBarOutput } from "../legacy/DepletionBarContext";
@@ -213,11 +213,11 @@ async function main() {
   const outPath = join(repoRoot, "docs", "samples", "capital-stress-report.pdf");
   mkdirSync(dirname(outPath), { recursive: true });
 
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
-    await page.emulateMediaType("print");
+    await page.emulateMedia({ media: "print" });
     await page.pdf({
       path: outPath,
       format: "A4",

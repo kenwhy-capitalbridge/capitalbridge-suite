@@ -29,6 +29,7 @@
     "lion:check-copy": "node ./scripts/sync-lion-copy.mjs --check",
     "brand:sync": "node ./scripts/sync-brand-assets.mjs",
     "docs:sample-pdf-capital-health": "node node_modules/tsx/dist/cli.mjs apps/capitalhealth/scripts/render-sample-pdf-for-docs.ts",
+    "docs:playwright-browsers": "playwright install chromium",
     "docs:sample-pdfs": "node node_modules/tsx/dist/cli.mjs scripts/render-all-sample-pdfs.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -36,7 +37,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
-    "puppeteer": "^24.2.0",
+    "playwright": "^1.51.1",
     "tsx": "^4.19.2",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",

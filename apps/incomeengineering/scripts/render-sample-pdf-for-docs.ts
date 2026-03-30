@@ -1,15 +1,15 @@
 /**
  * Renders Income Engineering PrintReportView to docs/samples/income-engineering-report.pdf via Playwright.
- * Requires: npm i at repo root (Puppeteer bundles Chromium).
+ * Requires: npm i at repo root (playwright install chromium if needed: npx playwright install chromium).
  * Run from repo root: npx tsx apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts
  */
 
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import puppeteer from "puppeteer";
 import { getDefaultInvestmentBuckets } from "../legacy/config/investmentCategories";
 import type { CurrencyCode } from "../legacy/config/currency";
 import { PrintReportView } from "../legacy/components/PrintReportView";
@@ -88,11 +88,11 @@ async function main() {
   const outPath = join(repoRoot, "docs", "samples", "income-engineering-report.pdf");
   mkdirSync(dirname(outPath), { recursive: true });
 
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
-    await page.emulateMediaType("print");
+    await page.emulateMedia({ media: "print" });
     await page.pdf({
       path: outPath,
       format: "A4",
