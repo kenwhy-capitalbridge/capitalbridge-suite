@@ -52,7 +52,7 @@ export async function PlatformFrameworkHeader({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+            gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
             alignItems: "center",
             columnGap: "0.5rem",
             minHeight: 48,
@@ -147,7 +147,7 @@ export async function PlatformFrameworkHeader({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+          gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
           alignItems: "center",
           columnGap: "0.5rem",
           minHeight: 48,

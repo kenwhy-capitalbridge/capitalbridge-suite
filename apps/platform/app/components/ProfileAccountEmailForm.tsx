@@ -169,10 +169,10 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
           }}
         >
           {busy ? (
-            <>
+            <span className="cb-pending-btn-inner">
               <ChromeSpinnerGlyph sizePx={14} />
               <span className="cb-visually-hidden">Sending email change request</span>
-            </>
+            </span>
           ) : (
             "Request email change"
           )}

@@ -28,10 +28,10 @@ export function PlatformLoginButton({ href }: { href: string }) {
       }}
     >
       {pending ? (
-        <>
+        <span className="cb-pending-btn-inner">
           <ChromeSpinnerGlyph sizePx={14} />
           <span className="cb-visually-hidden">LOGIN</span>
-        </>
+        </span>
       ) : (
         "LOGIN"
       )}

@@ -61,7 +61,37 @@
   flex-shrink: 0;
   transform-origin: center;
   animation: cb-ui-spinner-rotate 0.75s linear infinite;
-  overflow: hidden;
+  overflow: visible;
+}
+
+/**
+ * ChromeSpinnerGlyph — rotate the graphic via CSS (reliable vs SMIL in WebKit).
+ * `will-change` keeps the spinner smooth inside transformed header chrome.
+ */
+.cb-spinner-glyph-spin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transform-origin: 50% 50%;
+  animation: cb-ui-spinner-rotate 0.75s linear infinite;
+  line-height: 0;
+  overflow: visible;
+}
+
+/**
+ * Wrap spinner + `.cb-visually-hidden` so the glyph stays centred in flex buttons/links
+ * (sr-only text is absolutely positioned and does not affect flex layout).
+ */
+.cb-pending-btn-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  min-height: 1em;
+  position: relative;
+  box-sizing: border-box;
 }
 
 /** Screen-reader-only label when a control shows spinner-only pending UI. */
@@ -261,6 +291,10 @@ a {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transform: none !important;
   pointer-events: none;
+  position: relative;
+  overflow: visible;
+  align-items: center;
+  justify-content: center;
 }
 
 /**
@@ -370,6 +404,10 @@ a {
   pointer-events: none;
   /* Clear hover/active translate so pending spinners stay centred (WebKit). */
   transform: none !important;
+  position: relative;
+  overflow: visible;
+  align-items: center;
+  justify-content: center;
 }
 
 .pf-chrome-gold-btn.pf-chrome-gold-btn--trial-muted,
@@ -472,6 +510,13 @@ a {
   transform: scale(0.98);
 }
 
+.pf-header-profile-avatar[aria-busy="true"] {
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+  transform: none !important;
+}
+
 .pf-chrome-outline-btn {
   padding: var(--pf-chrome-pad-y) var(--pf-chrome-pad-x);
   font-family: var(--cb-font-sans);
@@ -510,6 +555,10 @@ a {
   cursor: wait;
   pointer-events: none;
   transform: none !important;
+  position: relative;
+  overflow: visible;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 639px) {
@@ -528,6 +577,7 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .cb-ui-icon-spin,
   .cb-ui-icon-spin-wrap,
+  .cb-spinner-glyph-spin,
   .cb-auth-ring-spin,
   .pf-header-avatar-spin {
     animation-duration: 1.25s;

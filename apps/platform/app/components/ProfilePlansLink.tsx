@@ -25,10 +25,10 @@ export function ProfilePlansLink({ href }: Props) {
       className="cb-profile-plans-link inline-flex min-h-[50px] w-full max-w-full items-center justify-center px-4 py-2.5 text-[clamp(0.7rem,2vw,0.8rem)] font-bold uppercase tracking-[0.08em] transition-all duration-200 sm:w-auto"
     >
       {pending ? (
-        <>
+        <span className="cb-pending-btn-inner">
           <ChromeSpinnerGlyph sizePx={18} />
           <span className="cb-visually-hidden">View Available Plans</span>
-        </>
+        </span>
       ) : (
         "View Available Plans"
       )}

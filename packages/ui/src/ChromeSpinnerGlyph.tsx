@@ -5,14 +5,14 @@ export type ChromeSpinnerGlyphProps = {
 };
 
 /**
- * Inline spinner: rotation uses SVG SMIL (`animateTransform`) so it still runs when parent
- * chrome uses CSS `transform` transitions (hover/active) — those can break `animation` on
- * descendants in WebKit. Size is inline so it never depends on Tailwind.
+ * Inline spinner: rotation uses CSS keyframes on an inner wrapper (`cb-spinner-glyph-spin`) so it
+ * animates reliably in WebKit; SMIL on SVG was static in some builds. Size is inline so it never
+ * depends on Tailwind.
  */
 export function ChromeSpinnerGlyph({ className = "", sizePx = 14 }: ChromeSpinnerGlyphProps) {
   return (
     <span
-      className={className.trim()}
+      className={["cb-spinner-glyph", className.trim()].filter(Boolean).join(" ")}
       style={{
         width: sizePx,
         height: sizePx,
@@ -28,27 +28,29 @@ export function ChromeSpinnerGlyph({ className = "", sizePx = 14 }: ChromeSpinne
         lineHeight: 0,
         verticalAlign: "middle",
         color: "inherit",
+        overflow: "visible",
       }}
       aria-hidden
     >
-      <svg
-        width={sizePx}
-        height={sizePx}
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden
-        focusable="false"
+      <span
+        className="cb-spinner-glyph-spin"
+        style={{
+          width: sizePx,
+          height: sizePx,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <g style={{ transformOrigin: "12px 12px" }}>
-          <animateTransform
-            attributeName="transform"
-            attributeType="XML"
-            type="rotate"
-            from="0 12 12"
-            to="360 12 12"
-            dur="0.75s"
-            repeatCount="indefinite"
-          />
+        <svg
+          width={sizePx}
+          height={sizePx}
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden
+          focusable="false"
+          style={{ display: "block", flexShrink: 0 }}
+        >
           <circle
             cx="12"
             cy="12"
@@ -63,8 +65,8 @@ export function ChromeSpinnerGlyph({ className = "", sizePx = 14 }: ChromeSpinne
             opacity={0.75}
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           />
-        </g>
-      </svg>
+        </svg>
+      </span>
     </span>
   );
 }

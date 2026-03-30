@@ -1862,7 +1862,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           }`}
         >
           {isRunning ? (
-            <span className="inline-flex items-center justify-center gap-0 text-[#0D3A1D]">
+            <span className="cb-pending-btn-inner w-full text-[#0D3A1D]">
               <ChromeSpinnerGlyph sizePx={16} />
               <span className="cb-visually-hidden">Running simulation</span>
             </span>

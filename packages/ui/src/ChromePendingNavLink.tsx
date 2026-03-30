@@ -48,12 +48,15 @@ export function ChromePendingNavLink({
     ...style,
     ...(pending
       ? {
+          display: "inline-flex",
           pointerEvents: "none",
           opacity: 0.9,
           justifyContent: "center",
           alignItems: "center",
           minWidth: "3.15rem",
           transform: "none",
+          position: "relative",
+          overflow: "visible",
         }
       : {}),
   };
@@ -68,10 +71,10 @@ export function ChromePendingNavLink({
       style={mergedStyle}
     >
       {pending ? (
-        <>
+        <span className="cb-pending-btn-inner">
           <ChromeSpinnerGlyph sizePx={14} />
           <span className="cb-visually-hidden">{children}</span>
-        </>
+        </span>
       ) : (
         children
       )}

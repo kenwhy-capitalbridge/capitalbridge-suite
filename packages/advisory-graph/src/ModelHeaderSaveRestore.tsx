@@ -256,7 +256,9 @@ export function ModelHeaderSaveRestore({
         {trialLocked ? (
           "Save"
         ) : saveStatus === "saving" ? (
-          <ChromeSpinnerGlyph sizePx={14} />
+          <span className="cb-pending-btn-inner">
+            <ChromeSpinnerGlyph sizePx={14} />
+          </span>
         ) : saveStatus === "ok" ? (
           "Saved"
         ) : (

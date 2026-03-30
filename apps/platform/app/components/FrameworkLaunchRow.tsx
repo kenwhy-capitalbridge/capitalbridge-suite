@@ -35,7 +35,7 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
             onClick={() => onGo(b.href)}
           >
             {active ? (
-              <span className="cb-launch-btn-inner">
+              <span className="cb-pending-btn-inner cb-launch-btn-inner">
                 <ChromeSpinnerGlyph sizePx={16} />
                 <span className="cb-visually-hidden">Loading</span>
               </span>

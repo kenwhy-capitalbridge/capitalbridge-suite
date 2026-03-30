@@ -37,10 +37,10 @@ export function ProfileHistoryBackButton() {
         }}
       >
         {isPending ? (
-          <>
+          <span className="cb-pending-btn-inner">
             <ChromeSpinnerGlyph sizePx={14} />
             <span className="cb-visually-hidden">BACK</span>
-          </>
+          </span>
         ) : (
           "BACK"
         )}

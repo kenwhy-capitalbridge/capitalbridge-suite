@@ -163,7 +163,7 @@ export function DashboardTiles() {
                 }}
               >
                 {tileBusy ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 0 }}>
+                  <span className="cb-pending-btn-inner">
                     <ChromeSpinnerGlyph sizePx={18} />
                     <span className="cb-visually-hidden">Loading</span>
                   </span>

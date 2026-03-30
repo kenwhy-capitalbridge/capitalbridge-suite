@@ -75,12 +75,8 @@ a {
   flex-shrink: 0;
 }
 
+/* Launch tiles: extra min-height on top of shared `.cb-pending-btn-inner` from cb-model-base */
 .cb-launch-btn-inner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
   min-height: 1.25em;
 }
 
@@ -696,6 +692,8 @@ a {
   transform: none !important;
   justify-content: center;
   align-items: center;
+  position: relative;
+  overflow: visible;
 }
 
 .cb-profile-plans-link:disabled:hover {
@@ -733,6 +731,11 @@ a {
   flex-wrap: wrap;
   align-items: center;
   gap: clamp(0.5rem, 2vw, 0.75rem);
+}
+
+.profile-page-email-submit[aria-busy="true"] {
+  position: relative;
+  overflow: visible;
 }
 
 @media (max-width: 480px) {

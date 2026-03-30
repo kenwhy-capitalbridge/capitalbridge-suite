@@ -75,10 +75,10 @@ export function PlatformLogoutToMarketing({
       }}
     >
       {pending ? (
-        <>
+        <span className="cb-pending-btn-inner">
           <ChromeSpinnerGlyph sizePx={14} />
           <span className="cb-visually-hidden">SIGNING OUT</span>
-        </>
+        </span>
       ) : (
         "LOGOUT"
       )}
