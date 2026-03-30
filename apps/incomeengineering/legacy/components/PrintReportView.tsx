@@ -593,7 +593,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         style={{
           marginTop: '20px',
           borderTop: '1px solid rgba(255, 204, 106, 0.45)',
-          paddingTop: '18px',
+          paddingTop: '28px',
           textAlign: 'center',
         }}
       >

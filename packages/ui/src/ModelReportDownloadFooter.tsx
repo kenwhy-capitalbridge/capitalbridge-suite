@@ -60,7 +60,7 @@ export function ModelReportDownloadFooter({
     >
       {/* Line of space above the gold rule (margin above footer can collapse with prior section). */}
       <div className="h-5 w-full shrink-0 sm:h-6" aria-hidden />
-      <div className="w-full border-t border-[#FFCC6A]/30 pt-8 sm:pt-9 lg:pt-10">
+      <div className="w-full border-t border-[#FFCC6A]/30 pt-12 sm:pt-14 lg:pt-16">
         <p className="mx-auto max-w-2xl text-xs font-light leading-relaxed text-[#E8E6E0]/90 md:text-sm">
           {DISCLAIMER}
         </p>
