@@ -720,7 +720,7 @@ const CalculatorScreen = forwardRef<
 
   return (
     <TapToRevealProvider>
-    <div className="cb-body min-h-screen bg-transparent text-[#F6F5F1] overflow-x-hidden">
+    <div className="cb-body min-h-screen w-full min-w-0 max-w-full bg-transparent text-[#F6F5F1] overflow-x-hidden">
       {/* Toast */}
       {toast && (
         <div
@@ -733,7 +733,7 @@ const CalculatorScreen = forwardRef<
 
       <main
         id="calculator-panel"
-        className="mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-[clamp(0.65rem,1.8vw,1.1rem)] pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14"
+        className="box-border w-full min-w-0 pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14"
         role="tabpanel"
         aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}
       >

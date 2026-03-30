@@ -30,7 +30,7 @@ export function CapitalHealthDashboardClient({
   }, [setHandlers]);
 
   return (
-    <main>
+    <main className="min-w-0 w-full">
       <LegacyApp
         ref={appRef}
         canSeeVerdict={canSeeVerdict}

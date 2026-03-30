@@ -62,7 +62,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     ) : null
                   }
                 />
-                <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                  {/* Same 1280px column + horizontal rhythm as ModelAppHeader inner grid */}
+                  <div className="mx-auto box-border flex min-h-0 min-w-0 w-full max-w-[1280px] flex-1 flex-col px-3 sm:px-4 md:px-[clamp(0.65rem,1.8vw,1.1rem)]">
+                    {children}
+                  </div>
+                </div>
                 <CbLegalSiteFooter />
               </div>
             </ModelMetricSpineProvider>
