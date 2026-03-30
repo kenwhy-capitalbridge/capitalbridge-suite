@@ -55,7 +55,8 @@ export function ModelReportDownloadFooter({
 
   return (
     <footer
-      className={`no-print mt-16 w-full border-t border-[#FFCC6A]/30 px-4 pb-20 pt-14 text-center sm:mt-20 sm:pb-28 sm:pt-16 lg:mt-24 lg:pb-36 lg:pt-20 ${className}`.trim()}
+      data-cb-model-report-footer
+      className={`no-print mt-20 w-full max-w-none border-t border-[#FFCC6A]/30 px-4 pb-20 pt-14 text-center sm:mt-24 sm:pb-28 sm:pt-16 lg:mt-32 lg:pb-36 lg:pt-20 ${className}`.trim()}
     >
       <p className="mx-auto max-w-2xl text-xs font-light leading-relaxed text-[#E8E6E0]/90 md:text-sm">
         {DISCLAIMER}

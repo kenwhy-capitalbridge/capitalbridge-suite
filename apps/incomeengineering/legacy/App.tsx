@@ -296,7 +296,10 @@ const AppInner = forwardRef<
             />
           </section>
 
-          <section aria-label="The Lion's Verdict" className="mt-8 min-[641px]:mt-12 min-[1025px]:mt-16 min-[1441px]:mt-20">
+          <section
+            aria-label="The Lion's Verdict"
+            className="mt-8 min-[641px]:mt-12 min-[1025px]:mt-16 min-[1441px]:mt-20 pb-1 min-[641px]:pb-2"
+          >
             <div className="mx-auto max-w-3xl">
               <LionVerdictActive
                 user={props.lionAccessUser}

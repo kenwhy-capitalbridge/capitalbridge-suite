@@ -561,31 +561,29 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
             </div>
 
           </div>
-          <div className="mt-10 md:mt-14 lg:mt-16 px-6 md:px-10 pb-8 md:pb-12">
-            <div className="mx-auto max-w-3xl">
-              <div className="bg-[#00160f] border border-[#FFCC6A]/20 rounded-3xl p-6 md:p-8 lg:p-10 shadow-2xl space-y-5 md:space-y-7 text-sm text-gray-200">
-                <LionVerdictActive
-                  user={lionAccessUser}
-                  userId={lionSeedUserId}
-                  reportType="forever_income"
-                  tier={foreverLionTier}
-                  confidenceScore={foreverLionConfidenceScore}
-                  surplusRatio={surplusRatio}
-                  riskTolerance={foreverLionRiskTolerance}
-                  score={foreverLionScore}
-                  horizon={foreverLionHorizonYears}
-                  horizonLabel={foreverLionHorizonLabel}
-                  gap={foreverLionGap}
-                  target={foreverLionTargetCapital}
-                  progress={foreverLionProgressPercent}
-                  onCopyComputed={setLionCopyPayload}
-                  pricingReturnModel="forever"
-                />
-              </div>
+          <div className="mt-10 md:mt-14 lg:mt-16 px-6 md:px-10 pb-2 md:pb-4">
+            <div className="mx-auto max-w-3xl text-sm text-gray-200">
+              <LionVerdictActive
+                user={lionAccessUser}
+                userId={lionSeedUserId}
+                reportType="forever_income"
+                tier={foreverLionTier}
+                confidenceScore={foreverLionConfidenceScore}
+                surplusRatio={surplusRatio}
+                riskTolerance={foreverLionRiskTolerance}
+                score={foreverLionScore}
+                horizon={foreverLionHorizonYears}
+                horizonLabel={foreverLionHorizonLabel}
+                gap={foreverLionGap}
+                target={foreverLionTargetCapital}
+                progress={foreverLionProgressPercent}
+                onCopyComputed={setLionCopyPayload}
+                pricingReturnModel="forever"
+              />
             </div>
           </div>
 
-          <div className="px-6 md:px-10">
+          <div className="w-full px-6 md:px-10">
             <ModelReportDownloadFooter
               onDownload={() => void handleDownloadPDF()}
               disabled={!results.isSustainable || isGenerating}

@@ -1524,7 +1524,7 @@ const CalculatorScreen = forwardRef<
 
         <section
           id="lions-verdict"
-          className="mt-4 sm:mt-6"
+          className="mt-4 pb-1 sm:mt-6 sm:pb-2"
           aria-labelledby="lions-verdict-heading"
         >
           <div className="mx-auto max-w-3xl">

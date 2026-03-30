@@ -1814,14 +1814,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             </div>
           )}
 
-          {/* 15. The Lion's Verdict — final card */}
-          <div
-            className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl"
-            style={{ opacity: canSeeVerdict ? 1 : 0.55 }}
-          >
-            <h2 className="text-sm md:text-lg font-bold mb-4 font-serif text-[#FFCC6A] uppercase tracking-wide">
-              THE LION&apos;S VERDICT
-            </h2>
+          {/* 15. The Lion's Verdict — panel chrome from LionCopyPanel / LionVerdictLocked only; footer sits on page below */}
+          <div className="mx-auto w-full max-w-3xl" style={{ opacity: canSeeVerdict ? 1 : 0.55 }}>
             {showLionActive ? (
               <LionVerdictActive
                 user={lionAccessUser}
