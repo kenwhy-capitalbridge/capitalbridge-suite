@@ -66,7 +66,13 @@ export function ModelReportDownloadFooter({
       </p>
       {statusSlot ? <div className="mt-8 sm:mt-10 lg:mt-12">{statusSlot}</div> : null}
       <div className="mt-12 flex justify-center px-2 sm:mt-14 lg:mt-16">
-        <button type="button" onClick={onDownload} disabled={disabled} className={btnClass}>
+        <button
+          type="button"
+          onClick={onDownload}
+          disabled={disabled}
+          aria-busy={Boolean(disabled && buttonLeading)}
+          className={btnClass}
+        >
           {buttonLeading ?? <PrinterGlyph className="h-4 w-4 shrink-0" />}
           {buttonLabel}
         </button>

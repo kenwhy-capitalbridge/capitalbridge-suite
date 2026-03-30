@@ -7,6 +7,7 @@ import {
   PRICING_RETURN_MODEL_QUERY,
   pricingReturnModelDashboardUrl,
 } from "@cb/shared/urls";
+import { ChromePendingNavLink } from "@cb/ui";
 
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
@@ -92,9 +93,9 @@ function HeaderChrome({
                 : "flex max-w-[52%] shrink-0 flex-nowrap items-center justify-end gap-1.5 overflow-visible text-[#FFCC6A] sm:max-w-none sm:gap-2"
             }
           >
-            <a href="/access" className={headerGoldBtnClass}>
+            <ChromePendingNavLink href="/access" className={headerGoldBtnClass}>
               LOGIN
-            </a>
+            </ChromePendingNavLink>
             <span className="shrink-0 text-[#FFCC6A]/70 max-[380px]:text-[9px] sm:text-xs" aria-hidden>
               |
             </span>
@@ -106,9 +107,9 @@ function HeaderChrome({
 
         {isPlansBrowse ? (
           <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 justify-self-end overflow-visible sm:gap-2">
-            <a href={platformProfileHref} className={headerGoldBtnClass}>
+            <ChromePendingNavLink href={platformProfileHref} className={headerGoldBtnClass}>
               BACK
-            </a>
+            </ChromePendingNavLink>
             <span className="shrink-0 text-[#FFCC6A]/70 max-[380px]:text-[9px] sm:text-xs" aria-hidden>
               |
             </span>

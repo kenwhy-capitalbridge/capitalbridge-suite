@@ -561,45 +561,46 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
             </div>
 
           </div>
-          <div className="mt-10 md:mt-14 lg:mt-16 px-6 md:px-10 pb-2 md:pb-4">
-            <div className="mx-auto max-w-3xl text-sm text-gray-200">
-              <LionVerdictActive
-                user={lionAccessUser}
-                userId={lionSeedUserId}
-                reportType="forever_income"
-                tier={foreverLionTier}
-                confidenceScore={foreverLionConfidenceScore}
-                surplusRatio={surplusRatio}
-                riskTolerance={foreverLionRiskTolerance}
-                score={foreverLionScore}
-                horizon={foreverLionHorizonYears}
-                horizonLabel={foreverLionHorizonLabel}
-                gap={foreverLionGap}
-                target={foreverLionTargetCapital}
-                progress={foreverLionProgressPercent}
-                onCopyComputed={setLionCopyPayload}
-                pricingReturnModel="forever"
-              />
-            </div>
-          </div>
-
-          <div className="w-full px-6 md:px-10">
-            <ModelReportDownloadFooter
-              onDownload={() => void handleDownloadPDF()}
-              disabled={!results.isSustainable || isGenerating}
-              buttonLabel={isGenerating ? "Generating…" : undefined}
-              buttonLeading={
-                isGenerating ? <Loader2 className="h-4 w-4 shrink-0 cb-ui-icon-spin" aria-hidden /> : undefined
-              }
-              buttonClassName={
-                results.isSustainable
-                  ? undefined
-                  : "mx-auto flex min-h-[2.5rem] w-full max-w-[min(100%,28rem)] cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-bold text-gray-500 shadow-none"
-              }
-            />
-          </div>
         </div>
       </main>
+
+      <div className="mt-10 w-full max-w-[900px] px-3 sm:px-5 lg:px-10 md:mt-14 lg:mt-16 pb-2 md:pb-4">
+        <div className="mx-auto max-w-3xl text-sm text-gray-200">
+          <LionVerdictActive
+            user={lionAccessUser}
+            userId={lionSeedUserId}
+            reportType="forever_income"
+            tier={foreverLionTier}
+            confidenceScore={foreverLionConfidenceScore}
+            surplusRatio={surplusRatio}
+            riskTolerance={foreverLionRiskTolerance}
+            score={foreverLionScore}
+            horizon={foreverLionHorizonYears}
+            horizonLabel={foreverLionHorizonLabel}
+            gap={foreverLionGap}
+            target={foreverLionTargetCapital}
+            progress={foreverLionProgressPercent}
+            onCopyComputed={setLionCopyPayload}
+            pricingReturnModel="forever"
+          />
+        </div>
+      </div>
+
+      <div className="w-full max-w-[900px] px-3 sm:px-5 lg:px-10">
+        <ModelReportDownloadFooter
+          onDownload={() => void handleDownloadPDF()}
+          disabled={!results.isSustainable || isGenerating}
+          buttonLabel={isGenerating ? "Generating…" : undefined}
+          buttonLeading={
+            isGenerating ? <Loader2 className="h-4 w-4 shrink-0 cb-ui-icon-spin" aria-hidden /> : undefined
+          }
+          buttonClassName={
+            results.isSustainable
+              ? undefined
+              : "mx-auto flex min-h-[2.5rem] w-full max-w-[min(100%,28rem)] cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-bold text-gray-500 shadow-none"
+          }
+        />
+      </div>
     </div>
   );
 });

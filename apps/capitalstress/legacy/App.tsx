@@ -35,7 +35,7 @@ import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLoc
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
-import { ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
+import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -1856,11 +1856,19 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           type="button"
           onClick={runCalculation}
           disabled={isRunning}
+          aria-busy={isRunning}
           className={`cb-gold-primary-cta !rounded-sm flex w-full flex-col items-center gap-0 !py-2 !px-2 !text-[0.62rem] !font-black uppercase !tracking-tight !leading-tight sm:!px-2.5 sm:!text-[0.65rem] md:!py-2.5 md:!px-3.5 md:!text-[0.7rem] lg:!px-4 lg:!text-xs disabled:opacity-60 ${
             needsSimulationRefresh && !isRunning ? 'stress-run-simulation-cta--urgent' : ''
           }`}
         >
-          {isRunning ? 'Running…' : 'Run Simulation'}
+          {isRunning ? (
+            <span className="inline-flex items-center justify-center gap-2 text-[#0D3A1D]">
+              <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
+              Running…
+            </span>
+          ) : (
+            'Run Simulation'
+          )}
         </button>
       </div>
       </div>

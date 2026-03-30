@@ -1,16 +1,19 @@
+"use client";
+
 /**
  * Full navigation to the advisory platform (not client-side routing).
- * Using a real link avoids any ambiguity with auth flows and supports open-in-new-tab.
- * Styling: `.pf-chrome-gold-btn` from `@cb/ui/cb-model-base.css` (platform LOGOUT parity).
+ * Shows a spinner after click until the next page loads.
  */
+import { ChromePendingNavLink } from "./ChromePendingNavLink";
+
 export function ModelAppHeaderBackButton({ href }: { href: string }) {
   return (
-    <a
+    <ChromePendingNavLink
       href={href}
       className="pf-chrome-gold-btn pf-chrome-gold-btn--header-inline shrink-0"
-      aria-label="Back to Capital Bridge platform"
+      ariaLabel="Back to Capital Bridge platform"
     >
       BACK
-    </a>
+    </ChromePendingNavLink>
   );
 }
