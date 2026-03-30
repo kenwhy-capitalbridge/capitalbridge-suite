@@ -277,7 +277,6 @@ const CalculatorScreen = forwardRef<
   const [history, setHistory] = useState<CalculatorInputs[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [reportGenerating, setReportGenerating] = useState(false);
-  const [reportReady, setReportReady] = useState(false);
   const [currentAge, setCurrentAge] = useState<number | null>(35);
   const [stressTestExpanded, setStressTestExpanded] = useState(false);
   const [stressPulseOn, setStressPulseOn] = useState(true);
@@ -652,7 +651,6 @@ const CalculatorScreen = forwardRef<
 
   const handlePrintOrSaveReport = useCallback(async () => {
     setReportGenerating(true);
-    setReportReady(false);
     try {
       const chartPoints = chartData.map(({ month, nominal }) => ({ month, nominal }));
       await exportCapitalHealthReport({
@@ -663,7 +661,6 @@ const CalculatorScreen = forwardRef<
         includeLionsVerdict: lionAccessEnabled,
         reportClientDisplayName,
       });
-      setReportReady(true);
     } finally {
       setReportGenerating(false);
     }
@@ -1555,18 +1552,11 @@ const CalculatorScreen = forwardRef<
           }
           buttonClassName="pf-chrome-gold-btn pf-chrome-gold-btn--report pf-chrome-gold-btn--report-sm-auto touch-manipulation disabled:opacity-60"
           statusSlot={
-            <>
-              {reportGenerating ? (
-                <p className="text-[#FFCC6A] font-medium" role="status">
-                  Generating AI Financial Diagnostic...
-                </p>
-              ) : null}
-              {reportReady && !reportGenerating ? (
-                <p className="text-[#55B685] font-medium" role="status">
-                  AI-Generated Capital Diagnostic Ready
-                </p>
-              ) : null}
-            </>
+            reportGenerating ? (
+              <p className="text-[#FFCC6A] font-medium" role="status">
+                Generating AI Financial Diagnostic...
+              </p>
+            ) : null
           }
         />
       </main>
