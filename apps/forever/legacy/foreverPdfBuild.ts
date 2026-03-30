@@ -156,9 +156,8 @@ export interface ForeverStrategicWealthPdfContext {
   results: ForeverPdfCalculation;
   foreverLionReport: LionVerdictClientReport;
   includeLionsVerdict: boolean;
-  /** Rasterized PNG data URLs from green brand SVGs (lion + wordmark). */
-  logoLionPngDataUrl: string | null;
-  logoWordmarkPngDataUrl: string | null;
+  /** Rasterized full lockup (green on light) from `Full_CapitalBridge_Green.svg`. */
+  logoFullLockupPngDataUrl: string | null;
   /** First + last name for the cover when available. */
   reportClientDisplayName?: string;
 }
@@ -182,8 +181,7 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
     results,
     foreverLionReport,
     includeLionsVerdict,
-    logoLionPngDataUrl,
-    logoWordmarkPngDataUrl,
+    logoFullLockupPngDataUrl,
     reportClientDisplayName = "Client",
   } = ctx;
 
@@ -215,28 +213,18 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, pageWidth, PAGE_H_MM, "F");
 
-  /** Matches `CapitalBridgeLogo_Green.svg` viewBox width / height so the raster is not cropped when scaled. */
-  const WORDMARK_VIEWBOX_RATIO = 568.703125 / 114.5;
-  const lionMm = 11;
-  const wordH = 14;
-  const wordW = wordH * WORDMARK_VIEWBOX_RATIO;
   const logoRowTop = pos.y;
-  if (logoLionPngDataUrl) {
+  const fullLogoWmm = 58;
+  const fullLogoHmm = 12;
+  if (logoFullLockupPngDataUrl) {
     try {
-      doc.addImage(logoLionPngDataUrl, "PNG", margin, logoRowTop, lionMm, lionMm);
+      doc.addImage(logoFullLockupPngDataUrl, "PNG", margin, logoRowTop, fullLogoWmm, fullLogoHmm);
     } catch {
       /* optional */
     }
   }
-  if (logoWordmarkPngDataUrl) {
-    try {
-      doc.addImage(logoWordmarkPngDataUrl, "PNG", margin + lionMm + 3, logoRowTop, wordW, wordH);
-    } catch {
-      /* optional */
-    }
-  }
-  const hadBrandRow = !!(logoLionPngDataUrl || logoWordmarkPngDataUrl);
-  pos.y = logoRowTop + (hadBrandRow ? Math.max(lionMm, wordH) : 2) + 5;
+  const hadBrandRow = !!logoFullLockupPngDataUrl;
+  pos.y = logoRowTop + (hadBrandRow ? fullLogoHmm : 2) + 5;
 
   const baseAnnualLifestyle = expenseType === ExpenseType.ANNUAL ? expense : expense * 12;
 

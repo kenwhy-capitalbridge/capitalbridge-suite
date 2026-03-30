@@ -361,7 +361,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
     setIsGenerating(true);
 
     try {
-      const { lionPngDataUrl, wordmarkPngDataUrl } = await loadForeverGreenBrandLogosForPdf();
+      const { fullLockupPngDataUrl } = await loadForeverGreenBrandLogosForPdf();
 
       const audit = createReportAuditMeta({
         modelCode: "FOREVER",
@@ -382,8 +382,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
         results,
         foreverLionReport,
         includeLionsVerdict: lionAccessEnabled,
-        logoLionPngDataUrl: lionPngDataUrl,
-        logoWordmarkPngDataUrl: wordmarkPngDataUrl,
+        logoFullLockupPngDataUrl: fullLockupPngDataUrl,
         reportClientDisplayName,
       });
 

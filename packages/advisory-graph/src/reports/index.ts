@@ -39,7 +39,12 @@ export {
   REPORT_TYPE,
 } from './tokens';
 
-export { getCapitalBridgeReportLogoSrc } from './lionReportLogo';
+export {
+  getCapitalBridgeReportFullGreenSrc,
+  getCapitalBridgeReportLionGreenSrc,
+  getCapitalBridgeReportLogoSrc,
+  getCapitalBridgeReportWordmarkGreenSrc,
+} from './lionReportLogo';
 export type { ReportBrandMarkProps } from './ReportBrandMark';
 export { ReportBrandMark } from './ReportBrandMark';
 export type { ReportInteriorHeaderProps } from './ReportInteriorHeader';

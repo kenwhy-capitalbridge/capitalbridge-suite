@@ -292,31 +292,42 @@
   flex-shrink: 0;
 }
 
-.logoWordmark {
-  height: var(--cb-header-logo-h);
-  width: auto;
-  max-width: min(18vw, 100px);
-  object-fit: contain;
-  object-position: left center;
-  display: block;
-}
-
-.logoLionNarrow {
+/* ≥1024px: full lockup; 768–1023px (tablet desktop bar): lion only — matches brand matrix. */
+.logoFullWide {
   display: none;
   height: var(--cb-header-logo-h);
   width: auto;
-  max-height: 26px;
+  max-width: min(42vw, 220px);
+  object-fit: contain;
+  object-position: left center;
+}
+
+.logoLionTablet {
+  display: none;
+  height: var(--cb-header-logo-h);
+  width: auto;
+  max-height: 28px;
   aspect-ratio: 1;
   object-fit: contain;
   object-position: center;
 }
 
-@media (max-width: 1023px) {
-  .logoWordmark {
+@media (min-width: 1024px) {
+  .logoFullWide {
+    display: block;
+  }
+
+  .logoLionTablet {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .logoFullWide {
     display: none;
   }
 
-  .logoLionNarrow {
+  .logoLionTablet {
     display: block;
   }
 }

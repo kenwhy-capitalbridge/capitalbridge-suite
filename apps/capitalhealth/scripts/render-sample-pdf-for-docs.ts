@@ -13,8 +13,6 @@ import { CURRENCIES, PRESETS, type CalculatorInputs } from "../legacy/calculator
 import { buildCalculatorResults } from "../legacy/src/hooks/buildCalculatorResults";
 import { generateReportBlob } from "../legacy/CapitalGrowthReport";
 
-const WORDMARK_RASTER_W = Math.ceil((90 * 568.703125) / 114.5);
-
 async function svgFileToPngDataUrl(absPath: string, width: number, height: number): Promise<string | null> {
   try {
     const buf = await sharp(readFileSync(absPath))
@@ -52,10 +50,11 @@ async function main() {
   const repoRoot = join(scriptDir, "..", "..", "..");
   const uiAssets = join(repoRoot, "packages", "ui", "src", "assets");
 
-  const [brandLionPngDataUrl, brandWordmarkPngDataUrl] = await Promise.all([
-    svgFileToPngDataUrl(join(uiAssets, "lionhead_Green.svg"), 128, 128),
-    svgFileToPngDataUrl(join(uiAssets, "CapitalBridgeLogo_Green.svg"), WORDMARK_RASTER_W, 90),
-  ]);
+  const brandFullLockupPngDataUrl = await svgFileToPngDataUrl(
+    join(uiAssets, "Full_CapitalBridge_Green.svg"),
+    360,
+    72,
+  );
 
   const result = buildCalculatorResults(sampleInputs);
   const snaps = result.monthlySnapshots;
@@ -67,8 +66,7 @@ async function main() {
   const blob = await generateReportBlob(sampleInputs, result, {
     chartData,
     currentAge: 55,
-    brandLionPngDataUrl,
-    brandWordmarkPngDataUrl,
+    brandFullLockupPngDataUrl,
   });
   const buf = Buffer.from(await blob.arrayBuffer());
 

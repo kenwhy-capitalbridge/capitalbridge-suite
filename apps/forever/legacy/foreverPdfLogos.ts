@@ -3,9 +3,8 @@
  * Browser: fetch /brand/*.svg (from `npm run brand:sync`), draw to canvas.
  */
 
-/** Raster size for cover logos. Wordmark matches SVG viewBox ratio (~568.7×114.5) so raster is not cropped. */
-const LION_RASTER_PX = 128;
-const WORDMARK_RASTER_PX = { w: Math.ceil((90 * 568.703125) / 114.5), h: 90 };
+/** Full lockup (lion + wordmark) on light PDF cover — wide raster preserves legibility. */
+const FULL_LOCKUP_RASTER_PX = { w: 360, h: 72 };
 
 async function rasterizeSvgUrlToPngDataUrl(
   svgUrl: string,
@@ -41,17 +40,16 @@ async function rasterizeSvgUrlToPngDataUrl(
   }
 }
 
-/** Load green lion + wordmark as PNG data URLs for the Forever PDF cover row. */
+/** Load green full lockup as PNG for the Forever PDF cover (light background). */
 export async function loadForeverGreenBrandLogosForPdf(): Promise<{
-  lionPngDataUrl: string | null;
-  wordmarkPngDataUrl: string | null;
+  fullLockupPngDataUrl: string | null;
 }> {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const lionUrl = `${origin}/brand/lionhead_Green.svg`;
-  const wordUrl = `${origin}/brand/CapitalBridgeLogo_Green.svg`;
-  const [lionPngDataUrl, wordmarkPngDataUrl] = await Promise.all([
-    rasterizeSvgUrlToPngDataUrl(lionUrl, LION_RASTER_PX, LION_RASTER_PX),
-    rasterizeSvgUrlToPngDataUrl(wordUrl, WORDMARK_RASTER_PX.w, WORDMARK_RASTER_PX.h),
-  ]);
-  return { lionPngDataUrl, wordmarkPngDataUrl };
+  const fullUrl = `${origin}/brand/Full_CapitalBridge_Green.svg`;
+  const fullLockupPngDataUrl = await rasterizeSvgUrlToPngDataUrl(
+    fullUrl,
+    FULL_LOCKUP_RASTER_PX.w,
+    FULL_LOCKUP_RASTER_PX.h,
+  );
+  return { fullLockupPngDataUrl };
 }

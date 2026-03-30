@@ -19,9 +19,6 @@ const scriptDir = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = join(scriptDir, "..", "..", "..");
 const uiAssets = join(repoRoot, "packages", "ui", "src", "assets");
 
-/** Wordmark SVG viewBox is wider than 4:1; default sharp `resize` uses `cover` and crops the sides. */
-const WORDMARK_RASTER_W = Math.ceil((90 * 568.703125) / 114.5);
-
 async function svgFileToPngDataUrl(absPath: string, width: number, height: number): Promise<string | null> {
   try {
     const buf = await sharp(readFileSync(absPath))
@@ -68,10 +65,11 @@ async function main() {
     formatCurrency: (n) => formatCurrency(n, currency),
   });
 
-  const [logoLionPngDataUrl, logoWordmarkPngDataUrl] = await Promise.all([
-    svgFileToPngDataUrl(join(uiAssets, "lionhead_Green.svg"), 128, 128),
-    svgFileToPngDataUrl(join(uiAssets, "CapitalBridgeLogo_Green.svg"), WORDMARK_RASTER_W, 90),
-  ]);
+  const logoFullLockupPngDataUrl = await svgFileToPngDataUrl(
+    join(uiAssets, "Full_CapitalBridge_Green.svg"),
+    360,
+    72,
+  );
 
   const doc = buildForeverStrategicWealthPdf({
     currency,
@@ -79,8 +77,7 @@ async function main() {
     results,
     foreverLionReport,
     includeLionsVerdict: true,
-    logoLionPngDataUrl,
-    logoWordmarkPngDataUrl,
+    logoFullLockupPngDataUrl,
     reportClientDisplayName: "Sample Client",
   });
 

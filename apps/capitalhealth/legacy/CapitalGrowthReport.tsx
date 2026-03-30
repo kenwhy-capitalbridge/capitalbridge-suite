@@ -43,8 +43,7 @@ import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
 import { createReportAuditMeta, CB_REPORT_LEGAL_NOTICE, type ReportAuditMeta } from '@cb/shared/reportTraceability';
 import {
-  CB_REPORT_BRAND_LION_GREEN_PATH,
-  CB_REPORT_BRAND_WORDMARK_GREEN_PATH,
+  CB_REPORT_BRAND_FULL_GREEN_PATH,
   CB_REPORT_FIRM_ADDRESS_LINES,
   CB_REPORT_FOOTER_RESERVE_PT,
   CB_REPORT_FRAME_BORDER_PT,
@@ -461,6 +460,7 @@ interface ReportProps {
   result: ReportResult;
   baseUrl?: string;
   /** Raster brand marks (e.g. PNG data URLs) when `baseUrl` is unavailable (Node sample PDF). */
+  brandFullLockupPngDataUrl?: string | null;
   brandLionPngDataUrl?: string | null;
   brandWordmarkPngDataUrl?: string | null;
   chartData?: ChartPoint[];
@@ -610,6 +610,7 @@ export function CapitalGrowthReport({
   inputs,
   result,
   baseUrl,
+  brandFullLockupPngDataUrl,
   brandLionPngDataUrl,
   brandWordmarkPngDataUrl,
   chartData = [],
@@ -681,7 +682,12 @@ export function CapitalGrowthReport({
       <ReportPage pageNumber={1} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.headerRow, PDF_BREAK_INSIDE_AVOID]}>
             <View style={styles.headerLeft}>
-              {brandLionPngDataUrl && brandWordmarkPngDataUrl ? (
+              {brandFullLockupPngDataUrl ? (
+                <Image
+                  src={brandFullLockupPngDataUrl}
+                  style={{ width: 220, height: 44, objectFit: 'contain' }}
+                />
+              ) : brandLionPngDataUrl && brandWordmarkPngDataUrl ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Image
                     src={brandLionPngDataUrl}
@@ -693,16 +699,10 @@ export function CapitalGrowthReport({
                   />
                 </View>
               ) : baseUrl ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image
-                    src={`${baseUrl}${CB_REPORT_BRAND_LION_GREEN_PATH}`}
-                    style={{ height: 44, width: 44, marginRight: 6, objectFit: 'contain' }}
-                  />
-                  <Image
-                    src={`${baseUrl}${CB_REPORT_BRAND_WORDMARK_GREEN_PATH}`}
-                    style={{ width: 148, height: 40, objectFit: 'contain' }}
-                  />
-                </View>
+                <Image
+                  src={`${baseUrl}${CB_REPORT_BRAND_FULL_GREEN_PATH}`}
+                  style={{ width: 220, height: 44, objectFit: 'contain' }}
+                />
               ) : (
                 <Text style={{ fontSize: 11, fontWeight: 'bold', color: GREEN }}>Capital Bridge</Text>
               )}
@@ -1030,6 +1030,7 @@ export async function generateReportBlob(
   result: ReportResult,
   options?: {
     baseUrl?: string;
+    brandFullLockupPngDataUrl?: string | null;
     brandLionPngDataUrl?: string | null;
     brandWordmarkPngDataUrl?: string | null;
     chartData?: ChartPoint[];
@@ -1041,6 +1042,7 @@ export async function generateReportBlob(
   }
 ): Promise<Blob> {
   const baseUrl = options?.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined);
+  const brandFullLockupPngDataUrl = options?.brandFullLockupPngDataUrl;
   const brandLionPngDataUrl = options?.brandLionPngDataUrl;
   const brandWordmarkPngDataUrl = options?.brandWordmarkPngDataUrl;
   const chartData = options?.chartData ?? [];
@@ -1058,6 +1060,7 @@ export async function generateReportBlob(
       inputs={inputs}
       result={result}
       baseUrl={baseUrl}
+      brandFullLockupPngDataUrl={brandFullLockupPngDataUrl}
       brandLionPngDataUrl={brandLionPngDataUrl}
       brandWordmarkPngDataUrl={brandWordmarkPngDataUrl}
       chartData={chartData}

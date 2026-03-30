@@ -1,4 +1,4 @@
-import { getCapitalBridgeReportLogoSrc } from './lionReportLogo';
+import { getCapitalBridgeReportFullGreenSrc } from './lionReportLogo';
 import { REPORT_BRAND_TAGLINE } from './tokens';
 
 export type ReportBrandMarkProps = {
@@ -13,8 +13,8 @@ export type ReportBrandMarkProps = {
  * Official Capital Bridge lion logo for print/PDF and on-screen report shells.
  * Print-friendly: single colour on white, explicit dimensions, descriptive alt text.
  */
-export function ReportBrandMark({ maxWidthPx = 320, logoSrc, className = '' }: ReportBrandMarkProps) {
-  const src = logoSrc ?? getCapitalBridgeReportLogoSrc();
+export function ReportBrandMark({ maxWidthPx = 280, logoSrc, className = '' }: ReportBrandMarkProps) {
+  const src = logoSrc ?? getCapitalBridgeReportFullGreenSrc();
   if (!src) return null;
 
   return (

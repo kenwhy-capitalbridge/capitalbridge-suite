@@ -1,4 +1,4 @@
-import { getCapitalBridgeReportLogoSrc } from './lionReportLogo';
+import { getCapitalBridgeReportLionGreenSrc } from './lionReportLogo';
 import { REPORT_BORDER, REPORT_BRAND_TAGLINE } from './tokens';
 
 export type ReportInteriorHeaderProps = {
@@ -12,7 +12,7 @@ export type ReportInteriorHeaderProps = {
  * Compact header for inner report pages (repeat after page breaks where needed).
  */
 export function ReportInteriorHeader({ logoSrc, logoHeightPx = 40, className = '' }: ReportInteriorHeaderProps) {
-  const src = logoSrc ?? getCapitalBridgeReportLogoSrc();
+  const src = logoSrc ?? getCapitalBridgeReportLionGreenSrc();
   if (!src) return null;
 
   return (

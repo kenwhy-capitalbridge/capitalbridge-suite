@@ -286,7 +286,7 @@ const CalculatorScreen = forwardRef<
     if (willExpand) {
       setStressPulseOn(false);
       setTimeout(() => {
-        document.querySelector('.stress-test-cards')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('[data-capital-health-stress-grid]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 120);
     }
   };
@@ -731,7 +731,7 @@ const CalculatorScreen = forwardRef<
         </div>
       )}
 
-      <main id="calculator-panel" className="max-w-4xl mx-auto px-3 sm:px-4 pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
+      <main id="calculator-panel" className="mx-auto w-full max-w-5xl px-3 sm:px-4 pt-6 sm:pt-8 md:pt-10 pb-5 sm:pb-8 md:pb-10 space-y-5 sm:space-y-6 md:space-y-10 lg:space-y-14" role="tabpanel" aria-labelledby={inputs.mode === 'growth' ? 'mode-growth' : 'mode-withdrawal'}>
         {/* Mode selector */}
         <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-2 sm:p-4 text-white text-center sm:text-left mt-4 sm:mt-6">
           <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2 sm:mb-3">
@@ -1446,69 +1446,76 @@ const CalculatorScreen = forwardRef<
           </div>
 
           {/* Capital Stress Test */}
-          <div className="capital-stress-section mt-10 sm:mt-14 md:mt-16 pt-8 sm:pt-10 md:pt-14 mb-5 sm:mb-8 text-center sm:text-left">
-            <div className="stress-section-header">
-              <div className="stress-title-row">
+          <div className="mx-auto mt-10 sm:mt-14 md:mt-16 w-full max-w-5xl pt-8 sm:pt-10 md:pt-14 mb-5 sm:mb-8 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center justify-center gap-2">
                 <img src="/brand/lionhead_Gold.svg" alt="" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
-                <span className="stress-title text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A]">CAPITAL STRESS TEST</span>
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A]">
+                  CAPITAL STRESS TEST
+                </span>
               </div>
-              <p className="stress-description text-[9px] sm:text-xs text-white/70">
+              <p className="max-w-md text-[9px] sm:text-xs text-[#F6F5F1]/80">
                 Evaluate your structure across different market return scenarios.
               </p>
               <button
                 type="button"
                 onClick={handleToggleStressTest}
-                className={`stress-toggle-btn${stressPulseOn ? ' pulse-on-load' : ''}`}
+                className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border-2 border-[#FFCC6A] bg-black/15 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-[#FFCC6A] shadow-[0_0_12px_rgba(255,204,106,0.12)] transition-colors duration-150 hover:border-[#FFCC6A] hover:bg-[#1a4d32] hover:text-[#FFCC6A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D3A1D] sm:px-5 sm:text-sm ${stressPulseOn ? 'motion-safe:animate-pulse' : ''}`}
                 aria-expanded={stressTestExpanded}
                 aria-label={stressTestExpanded ? 'Hide Stress Test' : 'Show Stress Test'}
               >
-                <span className="toggle-label">
-                  {stressTestExpanded ? 'Hide Stress Test' : 'Show Stress Test'}
-                </span>
-                <span className={`toggle-icon${stressTestExpanded ? ' expanded' : ''}`} aria-hidden>
+                <span>{stressTestExpanded ? 'Hide Stress Test' : 'Show Stress Test'}</span>
+                <span className="tabular-nums" aria-hidden>
                   {stressTestExpanded ? '–' : '+'}
                 </span>
               </button>
             </div>
-            {stressTestExpanded && (
+            {stressTestExpanded ? (
               <>
-                <div className="capital-stress-divider" aria-hidden />
-                <div className="stress-test-cards scenario-cards-grid mt-2">
-                  {stressTestScenarios.map((s) => {
-                    const scenarioClass = s.label === 'Bear Market' ? 'bear-card' : s.label === 'Base Case' ? 'base-card' : 'bull-card';
-                    return (
+                <div className="mx-auto mt-4 max-w-5xl border-t border-[#FFCC6A]/25" aria-hidden />
+                <div
+                  data-capital-health-stress-grid
+                  className="mx-auto mt-4 grid w-full max-w-5xl grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3 md:items-stretch"
+                >
+                  {stressTestScenarios.map((s) => (
                     <div
                       key={s.label}
-                      className={`scenario-card ${scenarioClass} rounded-lg bg-[#F0F7F0] border border-[#0D3A1D] min-w-0`}
+                      className="flex min-h-0 flex-1 flex-col rounded-lg border border-[#0D3A1D] bg-[#F0F7F0] p-3 text-left text-[#0D3A1D] shadow-sm sm:p-4"
                     >
-                      <div className="scenario-header">
-                        <div className="scenario-title">{s.label}</div>
-                        <div className="scenario-label">{s.relationshipLabel}</div>
-                        <div className="scenario-return">Return: {formatNum(s.returnPct, 1)}%</div>
-                      </div>
-                      <div className="scenario-body">
+                      <div className="mb-3 min-h-0 flex-1 space-y-1.5">
+                        <div className="text-sm font-bold leading-tight text-[#0D3A1D]">{s.label}</div>
+                        <div className="text-xs font-semibold text-[#0D3A1D]/90">{s.relationshipLabel}</div>
+                        <div className="text-xs text-[#0D3A1D]/95">
+                          Return: {formatNum(s.returnPct, 1)}%
+                        </div>
                         {inputs.mode === 'withdrawal' ? (
-                          <>
-                            <div className="runway-label">Capital Survival Age</div>
-                            <div className="runway-value">
+                          <div className="pt-2">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-[#0D3A1D]/75">
+                              Capital survival age
+                            </div>
+                            <div className="text-base font-bold text-[#0D3A1D]">
                               {s.runwayYears != null ? formatRunwayFromDecimalYears(s.runwayYears) : 'Forever'}
                             </div>
-                          </>
+                          </div>
                         ) : (
-                          <>
-                            <div className="runway-label">Ending Capital</div>
-                            <div className="runway-value">{formatCurrencyCompactDisplay(s.endingCapital)}</div>
-                          </>
+                          <div className="pt-2">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-[#0D3A1D]/75">
+                              Ending capital
+                            </div>
+                            <div className="text-base font-bold text-[#0D3A1D]">
+                              {formatCurrencyCompactDisplay(s.endingCapital)}
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <div className="scenario-footer">
+                      <div className="mt-auto border-t border-[#0D3A1D]/15 pt-2">
                         <RiskTierBadge tier={s.tier} label={s.tierLabel} />
                       </div>
                     </div>
-                  );})}
+                  ))}
                 </div>
               </>
-            )}
+            ) : null}
           </div>
 
           {result.bufferBreachMonths > 0 && (

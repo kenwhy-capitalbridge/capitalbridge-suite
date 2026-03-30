@@ -21,6 +21,7 @@ export const CB_REPORT_FOOTER_RESERVE_PT = 32;
 /** Public URLs when `baseUrl` is the app origin (e.g. https://app.example or http://localhost:3004). */
 export const CB_REPORT_BRAND_LION_GREEN_PATH = "/brand/lionhead_Green.svg";
 export const CB_REPORT_BRAND_WORDMARK_GREEN_PATH = "/brand/CapitalBridgeLogo_Green.svg";
+export const CB_REPORT_BRAND_FULL_GREEN_PATH = "/brand/Full_CapitalBridge_Green.svg";
 
 export const CB_REPORT_FIRM_ADDRESS_LINES = [
   "CAPITAL BRIDGE",

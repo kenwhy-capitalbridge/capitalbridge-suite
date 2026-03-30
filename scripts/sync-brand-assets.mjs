@@ -15,6 +15,8 @@ const files = [
   "CapitalBridgeLogo_Green.svg",
   "lionhead_Gold.svg",
   "lionhead_Green.svg",
+  "Full_CapitalBridge_Gold.svg",
+  "Full_CapitalBridge_Green.svg",
 ];
 const apps = [
   "forever",

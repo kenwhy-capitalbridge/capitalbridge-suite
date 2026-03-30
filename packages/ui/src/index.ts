@@ -7,6 +7,8 @@ export { CapitalBridgeLogoText, type CapitalBridgeLogoTextProps } from "./Capita
 export {
   BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
   BRAND_CAPITAL_BRIDGE_LOGO_GREEN,
+  BRAND_FULL_CAPITAL_BRIDGE_GOLD,
+  BRAND_FULL_CAPITAL_BRIDGE_GREEN,
   BRAND_LIONHEAD_GOLD,
   BRAND_LIONHEAD_GREEN,
 } from "./brandPaths";
