@@ -119,8 +119,16 @@ function ForgotPasswordInner() {
             className={`${btnPrimary} mt-8`}
             disabled={loading || cooldown > 0 || !isSupabaseConfigured}
             onClick={() => void handleResendFromSuccess()}
+            aria-busy={loading}
           >
-            {forgotPasswordActionLabel(cooldown, loading)}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-0">
+                <ButtonSpinner className="border-cb-green/35 border-t-cb-green" />
+                <span className="cb-visually-hidden">{forgotPasswordActionLabel(cooldown, loading)}</span>
+              </span>
+            ) : (
+              forgotPasswordActionLabel(cooldown, loading)
+            )}
           </button>
           <NavAssignButton href="/access" className="cb-btn-quiet mt-4" loadingLabel="Loading…">
             {ACCESS_PRIMARY_CTA}
