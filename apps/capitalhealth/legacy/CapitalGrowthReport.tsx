@@ -41,6 +41,7 @@ import { APP_NAME } from './src/lib/capitalHealthCopy';
 import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
+import { createReportAuditMeta, CB_REPORT_LEGAL_NOTICE, type ReportAuditMeta } from '@cb/shared/reportTraceability';
 import {
   CB_REPORT_BRAND_LION_GREEN_PATH,
   CB_REPORT_BRAND_WORDMARK_GREEN_PATH,
@@ -380,10 +381,12 @@ export interface ChartPoint {
 function ReportPage({
   pageNumber,
   totalPages,
+  audit,
   children,
 }: {
   pageNumber: number;
   totalPages: number;
+  audit: ReportAuditMeta;
   children: React.ReactNode;
 }) {
   const frameW = PAGE_W_PT - 2 * REPORT_PAGE_OUTER;
@@ -408,38 +411,46 @@ function ReportPage({
           paddingTop: 20,
           paddingLeft: CB_REPORT_FRAME_PADDING_PT,
           paddingRight: CB_REPORT_FRAME_PADDING_PT,
-          paddingBottom: CB_REPORT_FOOTER_RESERVE_PT,
+          paddingBottom: CB_REPORT_FOOTER_RESERVE_PT + 42,
           position: 'relative',
           flexDirection: 'column',
         }}
       >
-        <Text
+        <View
           style={{
             position: 'absolute',
             top: 8,
             left: CB_REPORT_FRAME_PADDING_PT,
             right: CB_REPORT_FRAME_PADDING_PT,
-            fontSize: 8,
-            color: '#4a6b52',
-            paddingRight: 8,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
           }}
         >
-          Capital Bridge — Client Advisory Report
-        </Text>
+          <Text style={{ fontSize: 8, color: '#4a6b52', paddingRight: 8 }}>Capital Bridge — Client Advisory Report</Text>
+          <View style={{ alignItems: 'flex-end', maxWidth: '52%' }}>
+            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>Report ID: {audit.reportId}</Text>
+            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>{audit.generatedAtLabel}</Text>
+            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>Version: {audit.versionLabel}</Text>
+            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>{audit.modelDisplayName}</Text>
+          </View>
+        </View>
         <View style={{ flexGrow: 1, flexShrink: 0, marginTop: 14, minHeight: 0 }}>{children}</View>
-        <Text
+        <View
           style={{
             position: 'absolute',
-            bottom: 10,
+            bottom: 8,
             left: CB_REPORT_FRAME_PADDING_PT,
             right: CB_REPORT_FRAME_PADDING_PT,
-            fontSize: 9,
-            color: '#4a6b52',
-            textAlign: 'center',
           }}
         >
-          Page {pageNumber} of {totalPages}
-        </Text>
+          <Text style={{ fontSize: 4.8, color: '#6b7280', textAlign: 'justify', lineHeight: 1.15, marginBottom: 6 }}>
+            {CB_REPORT_LEGAL_NOTICE}
+          </Text>
+          <Text style={{ fontSize: 9, color: '#4a6b52', textAlign: 'center' }}>
+            Page {pageNumber} of {totalPages}
+          </Text>
+        </View>
       </View>
     </Page>
   );
@@ -459,6 +470,7 @@ interface ReportProps {
   includeLionsVerdict?: boolean;
   /** Shown on the cover (first + last from profile when available). */
   reportClientDisplayName?: string;
+  reportAudit: ReportAuditMeta;
 }
 
 function durationPhrase(result: SimulationResult): string {
@@ -604,6 +616,7 @@ export function CapitalGrowthReport({
   currentAge,
   includeLionsVerdict = true,
   reportClientDisplayName = 'Client',
+  reportAudit,
 }: ReportProps) {
   const symbol = inputs.currency.symbol;
   const formatCurrency = (val: number) => `${symbol} ${formatNum(val)}`;
@@ -665,7 +678,7 @@ export function CapitalGrowthReport({
   return (
     <Document>
       {/* Page 1: Executive Summary */}
-      <ReportPage pageNumber={1} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={1} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.headerRow, PDF_BREAK_INSIDE_AVOID]}>
             <View style={styles.headerLeft}>
               {brandLionPngDataUrl && brandWordmarkPngDataUrl ? (
@@ -746,7 +759,7 @@ export function CapitalGrowthReport({
       </ReportPage>
 
       {/* Page 2: Capital Structure Diagnosis, Structural Confidence, Capital Health Summary */}
-      <ReportPage pageNumber={2} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={2} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
             <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
@@ -794,7 +807,7 @@ export function CapitalGrowthReport({
       </ReportPage>
 
       {/* Page 3: Structure Overview, Capital Projection Chart */}
-      <ReportPage pageNumber={3} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={3} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURE OVERVIEW</Text>
             <Text style={styles.bodyText}>Desired Monthly Income {formatCurrency(inputs.targetMonthlyIncome)}</Text>
@@ -823,7 +836,7 @@ export function CapitalGrowthReport({
       </ReportPage>
 
       {/* Page 4: Model Assumptions */}
-      <ReportPage pageNumber={4} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={4} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTIONS</Text>
             <View style={styles.row}>
@@ -847,7 +860,7 @@ export function CapitalGrowthReport({
       </ReportPage>
 
       {/* Page 5: Key Outcomes, Outcome Optimiser */}
-      <ReportPage pageNumber={5} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={5} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>KEY OUTCOMES</Text>
             <View style={[styles.row, { marginBottom: 4 }]}>
@@ -885,7 +898,7 @@ export function CapitalGrowthReport({
       </ReportPage>
 
       {/* Page 6: Stress Test, Capital Protection Warning, optional Lion's Verdict */}
-      <ReportPage pageNumber={6} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={6} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRESS TEST</Text>
             <View style={[styles.stressTable, PDF_BREAK_INSIDE_AVOID]}>
@@ -941,7 +954,7 @@ export function CapitalGrowthReport({
       </ReportPage>
 
       {/* Page 7: Advisory Action Plan, Primary Structural Adjustment, Model Assumption Transparency, Advisor Notes */}
-      <ReportPage pageNumber={7} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={7} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>ADVISORY ACTION PLAN</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Recommended Next Steps</Text>
@@ -984,7 +997,7 @@ export function CapitalGrowthReport({
       </ReportPage>
 
       {/* Page 8: System Overview, Client Meeting Summary, Footer */}
-      <ReportPage pageNumber={8} totalPages={TOTAL_PAGES}>
+      <ReportPage pageNumber={8} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL BRIDGE SYSTEM OVERVIEW</Text>
             <Text style={styles.bodyText}>Capital Bridge functions as a financial modelling and diagnostic platform designed to evaluate capital sustainability and income resilience.</Text>
@@ -1023,6 +1036,8 @@ export async function generateReportBlob(
     currentAge?: number;
     includeLionsVerdict?: boolean;
     reportClientDisplayName?: string;
+    /** When omitted (e.g. sample scripts), a fresh audit row is created and versioned. */
+    reportAudit?: ReportAuditMeta;
   }
 ): Promise<Blob> {
   const baseUrl = options?.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined);
@@ -1032,6 +1047,12 @@ export async function generateReportBlob(
   const currentAge = options?.currentAge;
   const includeLionsVerdict = options?.includeLionsVerdict ?? true;
   const reportClientDisplayName = options?.reportClientDisplayName;
+  const reportAudit =
+    options?.reportAudit ??
+    createReportAuditMeta({
+      modelCode: 'HEALTH',
+      userDisplayName: reportClientDisplayName ?? 'Client',
+    });
   const doc = (
     <CapitalGrowthReport
       inputs={inputs}
@@ -1043,6 +1064,7 @@ export async function generateReportBlob(
       currentAge={currentAge}
       includeLionsVerdict={includeLionsVerdict}
       reportClientDisplayName={reportClientDisplayName}
+      reportAudit={reportAudit}
     />
   );
   return pdf(doc).toBlob();

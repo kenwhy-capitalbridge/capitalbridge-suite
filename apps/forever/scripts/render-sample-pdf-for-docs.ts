@@ -7,6 +7,8 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildLionVerdictClientReportFromForever, parseForeverRunway } from "@cb/advisory-graph/lionsVerdict";
+import { createReportAuditMeta } from "@cb/shared/reportTraceability";
+import { stampAllPdfPagesWithAudit } from "@cb/ui";
 import sharp from "sharp";
 import { ExpenseType } from "../legacy/types";
 import { buildForeverStrategicWealthPdf } from "../legacy/foreverPdfBuild";
@@ -81,6 +83,13 @@ async function main() {
     logoWordmarkPngDataUrl,
     reportClientDisplayName: "Sample Client",
   });
+
+  const audit = createReportAuditMeta({
+    modelCode: "FOREVER",
+    userDisplayName: "SampleClient",
+    now: new Date("2026-03-28T12:00:00.000Z"),
+  });
+  stampAllPdfPagesWithAudit(doc, audit);
 
   const outPath = join(repoRoot, "docs", "samples", "forever-income-report.pdf");
   mkdirSync(dirname(outPath), { recursive: true });

@@ -5,8 +5,15 @@ import {
 } from '@cb/advisory-graph/lionsVerdict';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
+import type { ReportAuditMeta } from '@cb/shared/reportTraceability';
 import { CB_FONT_SERIF } from '@cb/shared/typography';
-import { LionVerdictLocked } from "../../../../packages/lion-verdict/LionVerdictLocked";
+import type { Tier } from '../../../../packages/lion-verdict/copy';
+import { getLionVerdict, mapPersona } from '../../../../packages/lion-verdict/getLionVerdict';
+import { buildPaidLionSectionModel } from '../../../../packages/lion-verdict/lionVerdictSectionModel';
+import {
+  SYSTEM_INSIGHT_LIMITED_LINES,
+  SYSTEM_INSIGHT_LIMITED_TITLE,
+} from '../../../../packages/lion-verdict/systemInsightCopy';
 import { formatCurrency } from '../utils/format';
 import type { CurrencyCode } from '../config/currency';
 import type { SummaryKPIs } from '../types/calculator';
@@ -149,6 +156,23 @@ function getOptimisationContent(
   };
 }
 
+function PrintStageLabel({ children }: { children: React.ReactNode }) {
+  return <p className="cb-print-stage-label">{children}</p>;
+}
+
+function ChartCalloutsIe({ what, why }: { what: string; why: string }) {
+  return (
+    <>
+      <p className="cb-chart-what">
+        <strong style={{ color: '#8B6914' }}>What this shows:</strong> {what}
+      </p>
+      <p className="cb-chart-why">
+        <strong style={{ color: '#8B6914' }}>Why this matters:</strong> {why}
+      </p>
+    </>
+  );
+}
+
 interface PrintReportViewProps {
   summary: SummaryKPIs;
   currency: CurrencyCode;
@@ -163,6 +187,8 @@ interface PrintReportViewProps {
   worstMonthCoverage: number;
   lionAccessEnabled: boolean;
   reportClientDisplayName?: string;
+  /** Present after a download is requested; echoed on the cover for the captured PDF. */
+  auditMeta?: ReportAuditMeta | null;
 }
 
 const sectionHeading: React.CSSProperties = {
@@ -174,6 +200,7 @@ const sectionHeading: React.CSSProperties = {
   marginBottom: '10px',
   paddingBottom: '6px',
   borderBottom: '1px solid #FFCC6A',
+  lineHeight: 1.35,
 };
 
 const lionVerdictSectionHeading: React.CSSProperties = {
@@ -198,7 +225,7 @@ const reportBoxStyle: React.CSSProperties = {
   paddingBottom: '36px',
   color: '#1a1a1a',
   fontSize: '14px',
-  lineHeight: 1.5,
+  lineHeight: 1.58,
   border: '3px solid #FFCC6A',
   borderRadius: '16px',
   background: '#fff',
@@ -227,6 +254,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   worstMonthCoverage,
   lionAccessEnabled,
   reportClientDisplayName = 'Client',
+  auditMeta = null,
 }) => {
   const totalIncome = summary.monthlyIncome + summary.estimatedMonthlyInvestmentIncome;
   const totalExpenses = summary.monthlyExpenses + summary.monthlyLoanRepayments;
@@ -277,6 +305,24 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     currency,
   ]);
 
+  const lionPaidCopyIe = useMemo(() => {
+    if (!lionAccessEnabled || !lionReport) return null;
+    const tier = lionReport.verdict.status as Tier;
+    const surplusRatio = totalExpenses > 0 ? totalIncome / totalExpenses : 1;
+    return getLionVerdict({
+      userId: `ie-print:${reportClientDisplayName}`,
+      reportType: 'income_engineering_print',
+      tier,
+      persona: mapPersona({ riskTolerance: 0.5, surplusRatio }),
+      confidenceScore: 0.5,
+    });
+  }, [lionAccessEnabled, lionReport, reportClientDisplayName, totalIncome, totalExpenses]);
+
+  const paidIeSectionModel =
+    lionAccessEnabled && lionPaidCopyIe && lionReport
+      ? buildPaidLionSectionModel(lionPaidCopyIe, lionReport.verdict.status as Tier)
+      : null;
+
   const incomeFrameworkIntro = useMemo(
     () => advisoryFrameworkPdfIntro('sustainability_income'),
     [],
@@ -296,9 +342,10 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   };
 
   return (
-    <div className="print-report" style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div className="print-report print-report-root" style={{ maxWidth: '800px', margin: '0 auto' }}>
       {/* Part 1: through Monthly Income (page break after this in PDF) */}
       <div data-pdf-part="1" style={reportBoxStyle}>
+        <PrintStageLabel>Cover Page</PrintStageLabel>
         <div style={{ textAlign: 'center', marginBottom: '28px', paddingBottom: '20px', borderBottom: '2px solid #FFCC6A' }}>
           <p style={{ fontSize: '10px', fontWeight: 600, color: '#0D3A1D', letterSpacing: '0.15em', margin: 0, textTransform: 'uppercase' }}>
             Capital Bridge Advisory Framework
@@ -324,8 +371,15 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           <p style={{ fontSize: '12px', color: '#0D3A1D', opacity: 0.85, marginTop: '6px', marginBottom: 0 }}>
             Report generated: {reportGeneratedAtLabel}
           </p>
+          {auditMeta ? (
+            <p style={{ fontSize: '10px', color: '#6b7280', marginTop: '10px', marginBottom: 0, lineHeight: 1.45 }}>
+              Report ID: {auditMeta.reportId} · {auditMeta.generatedAtLabel} · {auditMeta.versionLabel} ·{' '}
+              {auditMeta.modelDisplayName}
+            </p>
+          ) : null}
         </div>
 
+        <PrintStageLabel>System Context</PrintStageLabel>
         <div
           style={{
             marginBottom: '24px',
@@ -358,20 +412,21 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: 0 }}>{incomeFrameworkIntro.body}</p>
         </div>
 
-        <section style={sectionBlock}>
+        <section className="section" style={sectionBlock}>
+          <PrintStageLabel>Input Summary</PrintStageLabel>
           <h2 style={sectionHeading}>Your model inputs</h2>
           <p style={{ margin: 0, fontSize: '12px', color: '#4b5563', lineHeight: 1.55 }}>
             Values in the following sections match what you entered in the calculator (expectations, income, loans from unlocking capital, each unlock line, and investment buckets).
           </p>
         </section>
 
-        <section style={sectionBlock}>
+        <section className="section" style={sectionBlock}>
           <h2 style={sectionHeading}>Expectations</h2>
           <p style={{ margin: '0 0 4px', color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Currency:</strong> {currency}</p>
           <p style={{ margin: 0, color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Desired monthly expenses:</strong> {formatCurrency(monthlyExpenses, currency)}</p>
         </section>
 
-        <section style={sectionBlock}>
+        <section className="section" style={sectionBlock}>
           <h2 style={sectionHeading}>Monthly income</h2>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <tbody>
@@ -389,7 +444,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           </table>
         </section>
 
-        <section style={sectionBlock}>
+        <section className="section" style={sectionBlock}>
           <h2 style={sectionHeading}>Loan repayments (from unlocking capital)</h2>
           {loans.length > 0 ? (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -416,7 +471,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           )}
         </section>
 
-        <section style={sectionBlock}>
+        <section className="section" style={sectionBlock}>
           <h2 style={sectionHeading}>Unlocking capital</h2>
           {assetUnlocks.length > 0 ? (
             <div>
@@ -481,9 +536,14 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           </table>
         </section>
 
-        <section style={sectionBlock}>
+        <section className="section chart-block" style={sectionBlock}>
+          <PrintStageLabel>Visual Analysis</PrintStageLabel>
           <h2 style={sectionHeading}>Coverage (from your inputs)</h2>
-          <p style={{ margin: 0, fontSize: '12px', color: '#2d3748', lineHeight: 1.55 }}>
+          <ChartCalloutsIe
+            what="Median and weakest-month coverage versus your total monthly outflows, from the income and assumptions you entered."
+            why="These two figures show whether the plan holds in a typical month and where stress first appears when months diverge."
+          />
+          <p style={{ margin: 0, fontSize: '12px', color: '#2d3748', lineHeight: 1.58 }}>
             Median monthly coverage: <strong style={{ color: '#0D3A1D' }}>{(medianCoverage * 100).toFixed(1)}%</strong>
             {' · '}
             Weakest month: <strong style={{ color: '#0D3A1D' }}>{(worstMonthCoverage * 100).toFixed(1)}%</strong>
@@ -491,60 +551,43 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           </p>
         </section>
 
-        {lionAccessEnabled && lionReport ? (
+        {lionAccessEnabled && paidIeSectionModel && lionPaidCopyIe && lionReport ? (
         <div
-          className="lion-section"
+          className="lion-section lion-verdict-one-page"
           data-cb-lion-print-wrap
           style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
         >
-        <section className="lion-verdict" style={sectionBlock}>
+        <section className="section lion-verdict" style={sectionBlock}>
           <h2 style={lionVerdictSectionHeading}>THE LION&apos;S VERDICT</h2>
-          <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700, color: '#0D3A1D' }}>
+          <p style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 700, color: '#0D3A1D' }}>
             Lion score: {lionReport.verdict.score} / 100 · {formatLionPublicStatusLabel(lionReport.verdict.status)}
           </p>
           <p
             style={{
-              margin: '0 0 14px',
+              margin: '0 0 12px',
               color: '#2d3748',
-              lineHeight: 1.55,
+              lineHeight: 1.45,
               fontFamily: CB_FONT_SERIF,
               fontStyle: 'italic',
               fontWeight: 700,
-              textTransform: 'capitalize',
             }}
           >
-            {lionReport.verdict.summary}
+            &ldquo;{lionPaidCopyIe.headline}&rdquo;
           </p>
-          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>Strengths</h3>
-          <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-            {lionReport.strengths.map((s, i) => (
-              <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+          {paidIeSectionModel.narrative.map(({ label, text }) => (
+            <div key={label} style={{ marginBottom: '10px' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>{label}</h3>
+              <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>{text}</p>
+            </div>
+          ))}
+          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>Options</h3>
+          <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>
+            {paidIeSectionModel.options.map((line) => (
+              <li key={line} style={{ marginBottom: '4px' }}>{line}</li>
             ))}
           </ul>
-          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>Risks</h3>
-          <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-            {lionReport.risks.map((s, i) => (
-              <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
-            ))}
-          </ul>
-          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>Strategic options</h3>
-          <ol style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-            {lionReport.strategic_options.map((o, i) => (
-              <li key={i} style={{ marginBottom: '6px' }}>
-                <strong>{o.type}:</strong> {o.action} — {o.impact}
-              </li>
-            ))}
-          </ol>
-          <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px' }}>Priority actions</h3>
-          <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5 }}>
-            {lionReport.priority_actions.map((s, i) => (
-              <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
-            ))}
-          </ul>
-          <p className="lion-do-nothing" style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.55 }}>
-            {lionReport.do_nothing_outcome}
-          </p>
-          <p style={{ margin: 0, fontSize: '13px', fontStyle: 'italic', fontWeight: 300, color: '#0D3A1D' }}>{lionReport.closing_line}</p>
+          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>Decision boundary</h3>
+          <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.55, fontSize: '12px' }}>{paidIeSectionModel.decisionBoundary}</p>
         </section>
         </div>
       ) : (
@@ -553,11 +596,22 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           data-cb-lion-print-wrap
           style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
         >
-          <LionVerdictLocked />
+          <section style={sectionBlock}>
+            <h2 style={{ ...lionVerdictSectionHeading, marginBottom: '12px' }}>{SYSTEM_INSIGHT_LIMITED_TITLE}</h2>
+            <ul style={{ margin: 0, paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55, fontSize: '12px' }}>
+              {SYSTEM_INSIGHT_LIMITED_LINES.map((line) => (
+                <li key={line} style={{ marginBottom: '8px' }}>{line}</li>
+              ))}
+            </ul>
+            <p style={{ margin: '12px 0 0', fontSize: '11px', color: '#6b7280', lineHeight: 1.45 }}>
+              Educational planning only — not a promise of outcomes.
+            </p>
+          </section>
         </div>
       )}
 
-        <section style={sectionBlock}>
+        <section className="section key-outcomes" style={sectionBlock}>
+          <PrintStageLabel>Key Outcomes</PrintStageLabel>
           <h2 style={sectionHeading}>Status</h2>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <tbody>
@@ -572,7 +626,8 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
 
       {/* Part 2: optimisation + disclaimers (inputs and Lion live in part 1) */}
       <div data-pdf-part="2" style={reportBoxPart2Style}>
-      <section style={sectionBlock}>
+      <section className="section" style={sectionBlock}>
+        <PrintStageLabel>Strategic Interpretation</PrintStageLabel>
         <h2 style={sectionHeading}>{optSectionTitle}</h2>
         <span
           style={{
@@ -591,8 +646,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         >
           {statusLabel}
         </span>
-        <p style={{ marginBottom: '12px', color: '#2d3748' }}>{optSummary}</p>
-        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px' }}>{optSubheading}</h3>
+        <p style={{ marginBottom: '12px', color: '#2d3748', lineHeight: 1.58 }}>{optSummary}</p>
+        <PrintStageLabel>Next Steps</PrintStageLabel>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px', lineHeight: 1.35 }}>{optSubheading}</h3>
         <ol style={{ margin: 0, paddingLeft: '20px', color: '#2d3748' }}>
           {suggestions.map((s, i) => (
             <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
@@ -611,7 +667,8 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           textAlign: 'center',
         }}
       >
-        <p style={{ fontSize: '12px', color: '#4a5568', margin: 0, lineHeight: 1.55 }}>
+        <PrintStageLabel>Closing</PrintStageLabel>
+        <p style={{ fontSize: '12px', color: '#4a5568', margin: 0, lineHeight: 1.62 }}>
           This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.
         </p>
         <p

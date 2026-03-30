@@ -71,6 +71,7 @@ export default async function CapitalStressDashboard() {
 
   return (
     <CapitalStressDashboardClient
+      advisoryUserId={user.id}
       canUseStressModel={ent.canUseStressModel}
       canSeeVerdict={ent.canSeeVerdict}
       lionAccessUser={lionAccessUser}

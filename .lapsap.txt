@@ -1,0 +1,134 @@
+Green=#0D3A1D
+White=#F6F5F1
+Gold=#FFCC6A
+Black=#2B2B2B
+
+
+STRONG=#55B685, FONT COLOR=#FFFFFF
+STABLE=#8FCF7A, FONT COLOR=#0D3A1DFRAGILE=#F3AF56, FONT COLOR=#0D3A1D
+AT RISK=#CFCBBF, FONT COLOR=#0D3A1D
+NOT SUSTAINABLE=#CD5B52, FONT COLOR=#FFFFFF
+
+
+
+x`If you want, I can next:
+👉 rewrite your /access UI logic cleanly
+👉 or give you exact component-level copy + states
+Right now you’re 90% there. This last 10% is what users actually feel.
+
+
+
+
+When you’re ready, next move:
+👉 we optimise your pricing page psychology (that’s where real revenue jumps happen)
+
+
+
+If you want next:
+👉 I can help you design a v2 “Fix Email” flow that actually works without breaking anything
+
+
+This now covers:
+your original flow
+removal of legacy complexity
+login correctness
+and real-world behaviour (multi-device + session control)
+When Cursor finishes this, we should do one final pass to ensure:
+👉 session invalidation is actually enforced server-side (that part is where most teams slip).
+
+
+BODY FONT TYPE & SIZE: 
+14px when the root font size is 16px)
+Reduce label font size to 0.75rem–0.8rem on mobile. Do not go below 12px equivalent.
+
+
+
+In XXX, change all body font type and size to inherits from the global html, body rule in packages/ui/src/cb-model-base.css via globals.css:
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--cb-font-sans);
+  ...
+}
+
+with:
+
+--cb-font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+--cb-font-serif: "Roboto Serif", Georgia, "Noto Serif", "Times New Roman", serif;
+
+
+------------------------
+
+Capital Bridge Suite — Monorepo summary (for developers)
+What it is
+capitalbridge-suite is an npm workspaces monorepo (apps/*, packages/*) for the Capital Bridge product: auth + billing on login.*, main advisory hub on platform.*, specialised model apps on their own subdomains, optional API app on api.*, and Supabase as DB + Auth. Deployments are multiple Vercel projects, one per app, same Git repo.
+
+Folder map
+Path	Role
+apps/login	Next.js: pricing, signup, login, checkout, payment return, forgot/reset password, API routes under /api/* (proxies + webhooks). Domain: login.thecapitalbridge.com.
+apps/platform	Next.js: advisory dashboard at / (membership gate), /login redirect to login app. Domain: platform.thecapitalbridge.com.
+apps/api	Next.js API routes: billing authority (/billing/*), Billplz webhook, confirm-payment, request-bill. Domain: api.thecapitalbridge.com.
+apps/capitalstress, capitalhealth, incomeengineering, forever	Next.js “tool” apps; each has dashboard, uses shared Supabase + login redirect.
+packages/db-types	TypeScript Database types for Supabase public tables used in code (not a full introspected schema).
+packages/supabase	Browser / server / service_role Supabase clients.
+packages/advisory-graph	Persona, entitlements, plan helpers, shared graph utilities.
+packages/shared	Shared constants (e.g. LOGIN_APP_URL).
+packages/auth, packages/membership, packages/ui	Auth/session/membership helpers and UI stub.
+supabase/migrations	SQL migrations (plans, billing_sessions, payments, RPCs, RLS, etc.).
+docs/	Extra docs (e.g. live test mode).
+Root README.md and ARCHITECTURE.md describe flows; VERCEL_MONOREPO.md + VERCEL-SETUP.md cover Vercel + env.
+
+Supabase schema (conceptual)
+Source of truth for money + access is Postgres public (plus auth.users).
+
+Object	Purpose
+plans	Catalog: slug (trial, monthly, quarterly/sku names), price_cents, duration_days, is_trial.
+profiles	id = auth user; email, trial_use_count, payment_status, pending_plan.
+memberships	user_id, plan_id, status (pending → active/expired/…), dates, billing_session_id, expiry columns.
+payments	billplz_bill_id (idempotency), membership_id, optional user_id/plan_id, amounts, provider, raw_webhook.
+billing_sessions	Payment-first checkout: email, plan_id, user_id (pre-created user), bill_id, status (pending / bill_created / paid), membership_id.
+pending_bills	Alternate payment-first path before session model.
+active_memberships	View (read-only): one logical row per user with plan (slug), start_date, end_date — used by platform (and similar) to decide access.
+billing_events	Audit / debug events (webhook, payment, etc.).
+payment_events	Events tied to billing_session_id.
+Relationships (high level)
+
+auth.users ↔ profiles.id, memberships.user_id, payments.user_id.
+plans.id ↔ memberships.plan_id, billing_sessions.plan_id, payments.plan_id.
+billing_sessions ↔ memberships.billing_session_id, payments (via bill id / session, depending on flow).
+payments.membership_id ↔ memberships.id after activation.
+RPCs (important)
+
+activate_membership — manual/admin style (creates/links payment in some migrations).
+activate_membership_for_billplz — Billplz path: assumes payments row exists for billplz_bill_id, creates/updates membership, links payment; idempotent when membership_id already set.
+Apply whatever migrations exist in supabase/migrations so prod matches code.
+Vercel
+One Vercel project per app; each uses Root Directory apps/<name> (see VERCEL_MONOREPO.md).
+installCommand often cd ../.. && npm install so workspace packages resolve.
+Env: each app needs NEXT_PUBLIC_SUPABASE_*; login/api need Billplz, SUPABASE_SERVICE_ROLE_KEY where server creates users or calls webhooks; API_APP_URL / NEXT_PUBLIC_API_BASE_URL for proxies.
+Cookies: configure .thecapitalbridge.com where needed so subdomains share session.
+User-visible outputs (login app screens)
+Route (login app)	What the user sees
+/	Home / entry.
+/pricing	Plan cards / marketing pricing.
+/checkout?plan=…	Email + name → pre-creates Auth user (pending) → redirect Billplz.
+/payment-return	Return from Billplz; may trigger confirm-payment fallback.
+/payment-handoff	Handoff UX around payment URL.
+/confirm-payment	Confirm step in older flow.
+/login	Sign in; redirect to platform after success.
+/signup	Sign-up UI.
+/forgot-password	Request reset email.
+/reset-password	Set password from recovery link (Supabase email); then redirect toward platform.
+Platform (apps/platform): / = dashboard (welcome, tiles or placeholder); /login sends users to login app; middleware enforces auth for /.
+
+Model apps: each has /dashboard (and similar); unauthenticated users redirect to login.thecapitalbridge.com with redirectTo.
+
+Request flows (two big patterns)
+Logged-in billing (/billing/create on API): pending membership + payment, Billplz, webhook updates payment and activates membership.
+Payment-first (/billing/request-bill): Auth user + billing_sessions + Billplz; API webhook (or login forward) runs payment insert + activate_membership_for_billplz, profile active, recover email for set-password.
+For the developer you’re onboarding
+Give them: this repo layout, Supabase migrations as schema source, packages/db-types as partial TS mirror, Vercel multi-project table, and “login = UX + many /api proxies; api = billing + webhooks” (even if README still mentions older patterns in places). Tell them to align env and BILLPLZ_CALLBACK_URL with api.../billing/billplz-webhook and Supabase Auth redirect URLs for /reset-password.
+
+Note: root README.md still says all APIs run on the login app; in current code many billing endpoints live on apps/api with login proxying (e.g. /api/bill/request). Treat ARCHITECTURE.md + actual apps/*/app routes as the checklist, and update docs when you standardise.

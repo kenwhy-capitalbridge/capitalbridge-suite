@@ -1,18 +1,81 @@
-/* Advisory reports — import in each model app layout or global CSS.
-   Screen: hide root by default; apps toggle with #print-report or .cb-report-root rules. */
+/* Advisory reports — import in model app layout or globals.
+   STEP 2: print structure, spacing, typography — no data/logic changes in consuming apps. */
 
 @media print {
-  .cb-report-root {
+  .cb-report-root,
+  .print-report-root {
     background: #fff !important;
     color: #0d3a1d !important;
     font-size: 11pt;
-    line-height: 1.45;
+    line-height: 1.55;
+  }
+
+  .print-report-root p,
+  .cb-report-root p {
+    line-height: 1.62;
   }
 
   .cb-report-brand-mark img,
   .cb-report-interior-header img {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  /* Break control (STEP 2) */
+  .section,
+  .cb-report-section,
+  .chart-block,
+  .key-outcomes {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-section.section,
+  .print-section.cb-print-section {
+    margin-bottom: 24px;
+  }
+
+  .print-section + .print-section,
+  .section + .section {
+    margin-top: 24px;
+  }
+
+  /* Headings: reduce orphan headers, keep with following content */
+  .print-report-root h1,
+  .print-report-root h2,
+  .print-report-root h3,
+  .cb-report-root h1,
+  .cb-report-root h2,
+  .cb-report-root h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .cb-chart-what,
+  .cb-chart-why {
+    font-size: 9.5pt;
+    line-height: 1.55;
+    margin: 0 0 0.35em;
+    color: #0d3a1d;
+    max-width: 48em;
+  }
+
+  .cb-chart-why {
+    margin-bottom: 0.65em;
+  }
+
+  .cb-print-stage-label {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ffcc6a;
+    margin: 0 0 0.85em;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(13, 58, 29, 0.2);
+    break-after: avoid;
   }
 
   .cb-report-section {
@@ -23,20 +86,26 @@
     page-break-before: always;
   }
 
-  .cb-report-chart-wrap {
+  .cb-report-chart-wrap,
+  .print-chart-wrap.chart-block {
     page-break-inside: avoid;
+    break-inside: avoid;
   }
 
-  /* Optional: attach to executive summary block so it starts a clean following page */
   .cb-report-executive-summary--page-break-after {
     page-break-after: always;
   }
 
-  .cb-report-keep-with-next {
+  .cb-report-keep-with-next,
+  .print-keep-with-next {
     page-break-after: avoid;
   }
 
-  /* Lion's Verdict blocks — avoid splitting headline, lists, and “If you do nothing” */
+  .lion-verdict-one-page {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .lion-section {
     break-inside: avoid;
     page-break-inside: avoid;
@@ -52,12 +121,52 @@
     widows: 3;
   }
 
-  .cb-report-table-head {
+  .cb-report-table-head,
+  .print-journey-table thead {
     display: table-header-group;
   }
 
+  /* Room for fixed print header + legal footer */
   @page {
     size: A4;
-    margin: 18mm 20mm 22mm;
+    margin: 20mm 12mm 32mm 12mm;
+  }
+
+  .cb-report-print-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 10000;
+    width: 52%;
+    max-width: 14cm;
+    padding: 3mm 12mm 2mm 4mm;
+    box-sizing: border-box;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 7.5pt;
+    line-height: 1.35;
+    color: #0d3a1d;
+    text-align: right;
+  }
+
+  .cb-report-print-header-inner > div {
+    margin: 0;
+    padding: 0;
+  }
+
+  .cb-report-print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    padding: 2mm 12mm 3mm;
+    box-sizing: border-box;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 5.5pt;
+    line-height: 1.25;
+    color: #374151;
+    text-align: justify;
+    background: #fff;
+    border-top: 0.5pt solid rgba(13, 58, 29, 0.12);
   }
 }

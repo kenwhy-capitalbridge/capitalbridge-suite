@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { REPORT_BORDER } from './tokens';
+import { REPORT_ACCENT, REPORT_BORDER, REPORT_TEXT } from './tokens';
 
 export type ReportKpiGridProps = {
   children: ReactNode;

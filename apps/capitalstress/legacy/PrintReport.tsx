@@ -23,6 +23,19 @@ import {
 } from '@cb/advisory-graph/lionsVerdict';
 import type { VerdictNarrative } from './services/advisory_engine';
 import { getDepletionBarOutput } from './services/mathUtils';
+import type { Tier } from '../../../packages/lion-verdict/copy';
+import { getLionVerdict, mapPersona } from '../../../packages/lion-verdict/getLionVerdict';
+import { buildPaidLionSectionModel } from '../../../packages/lion-verdict/lionVerdictSectionModel';
+import {
+  SYSTEM_INSIGHT_LIMITED_LINES,
+  SYSTEM_INSIGHT_LIMITED_TITLE,
+} from '../../../packages/lion-verdict/systemInsightCopy';
+import type { ReportAuditMeta } from '@cb/shared/reportTraceability';
+import { ReportPrintChrome } from '@cb/ui';
+import {
+  CapitalTimelinePrintSection,
+  type CapitalTimelinePrintPayload,
+} from '@cb/advisory-graph/reports';
 
 type CapitalHealthStatus = 'Strong' | 'Stable' | 'Watchful' | 'Needs Attention' | 'Critical';
 type FragilityIndexTier = 'FORTIFIED' | 'Highly Robust' | 'Stable' | 'Fragile' | 'Critical';
@@ -60,11 +73,35 @@ export interface PrintReportProps {
   microSignals: { type: 'warn' | 'ok'; text: string }[];
   medianPathYearly: number[];
   reportClientDisplayName?: string;
+  /** When false, print omits full Lion Verdict narrative and engine lists (trial). */
+  lionAccessEnabled?: boolean;
+  /** Set immediately before `window.print()` for traceability header/footer. */
+  auditMeta?: ReportAuditMeta | null;
+  /** Optional progression page — only passed when prior saved reports exist. */
+  capitalTimelinePrintPayload?: CapitalTimelinePrintPayload | null;
 }
 
 const PRINT_TEXT = '#0D3A1D';
 const PRINT_ACCENT = '#FFCC6A';
 const PRINT_BORDER = 'rgba(13, 58, 29, 0.2)';
+
+function PrintStageLabel({ children }: { children: React.ReactNode }) {
+  return <p className="cb-print-stage-label">{children}</p>;
+}
+
+/** Static chart callouts — layout/UX only; does not change model data. */
+function ChartCallouts({ what, why }: { what: string; why: string }) {
+  return (
+    <>
+      <p className="cb-chart-what">
+        <strong style={{ color: PRINT_ACCENT }}>What this shows:</strong> {what}
+      </p>
+      <p className="cb-chart-why">
+        <strong style={{ color: PRINT_ACCENT }}>Why this matters:</strong> {why}
+      </p>
+    </>
+  );
+}
 
 export function PrintReport(props: PrintReportProps) {
   const {
@@ -94,6 +131,9 @@ export function PrintReport(props: PrintReportProps) {
     microSignals,
     medianPathYearly,
     reportClientDisplayName = 'Client',
+    lionAccessEnabled = true,
+    auditMeta = null,
+    capitalTimelinePrintPayload = null,
   } = props;
 
   const depletionLabel = depletionBarOutput?.pillLabel ?? '—';
@@ -111,9 +151,37 @@ export function PrintReport(props: PrintReportProps) {
       maximumDrawdownPct: mcResult.maxDrawdownPctAvg,
       worstCaseOutcome: mcResult.percentile5,
     } satisfies LionStressAdvisoryInputs);
-  const lionPublicLabelPrint = formatLionPublicStatusLabel(
-    lionPublicStatusFromScore0to100(lionScorePrint, lionStrongEligibilityFromStressInputs(bandStressInputs)),
+  const lionTierPrint = lionPublicStatusFromScore0to100(
+    lionScorePrint,
+    lionStrongEligibilityFromStressInputs(bandStressInputs),
   );
+  const lionPublicLabelPrint = formatLionPublicStatusLabel(lionTierPrint);
+
+  const lionPaidCopyPrint = useMemo(() => {
+    if (!lionAccessEnabled) return null;
+    const surplusRatio = investment > 0 ? mcResult.simulatedAverage / investment : 1;
+    const riskTolerance = Math.min(1, Math.max(0, lionScorePrint / 100));
+    return getLionVerdict({
+      userId: `stress-print:${reportClientDisplayName}`,
+      reportType: 'capital_stress_print',
+      tier: lionTierPrint as Tier,
+      persona: mapPersona({ riskTolerance, surplusRatio }),
+      confidenceScore: 0.5,
+    });
+  }, [
+    lionAccessEnabled,
+    reportClientDisplayName,
+    lionTierPrint,
+    lionScorePrint,
+    investment,
+    mcResult.simulatedAverage,
+  ]);
+
+  const paidStressSectionModel =
+    lionAccessEnabled && lionPaidCopyPrint
+      ? buildPaidLionSectionModel(lionPaidCopyPrint, lionTierPrint as Tier)
+      : null;
+
   const preparedForCover = reportPreparedForLine(reportClientDisplayName);
   const reportGeneratedAt = formatReportGeneratedAtLabel();
 
@@ -167,6 +235,9 @@ export function PrintReport(props: PrintReportProps) {
         lionVerdictOutput?.score0to100 ?? 'none',
         lionVerdictOutput?.ifYouDoNothing ?? '',
         verdict?.opening ?? '',
+        lionAccessEnabled,
+        lionPaidCopyPrint?.headline ?? '',
+        auditMeta?.reportId ?? '',
         keyTakeaways.join('\n'),
         recommendedAdjustments.join('\n'),
         microSignals.map((m) => m.text).join('\n'),
@@ -175,6 +246,7 @@ export function PrintReport(props: PrintReportProps) {
         medianPathYearly[medianPathYearly.length - 1] ?? '',
         stressScenarioResults?.length ?? 0,
         adjustmentResults?.reduceWithdrawal?.capitalResilienceScore ?? '',
+        capitalTimelinePrintPayload?.points.map((p) => `${p.t}:${p.y}`).join(',') ?? '',
       ].join('|'),
     [
       mcResult,
@@ -191,12 +263,16 @@ export function PrintReport(props: PrintReportProps) {
       fiTier,
       lionVerdictOutput,
       verdict,
+      lionAccessEnabled,
+      lionPaidCopyPrint,
+      auditMeta,
       keyTakeaways,
       recommendedAdjustments,
       microSignals,
       medianPathYearly,
       stressScenarioResults,
       adjustmentResults,
+      capitalTimelinePrintPayload,
     ],
   );
 
@@ -230,8 +306,10 @@ export function PrintReport(props: PrintReportProps) {
 
   return (
     <div id="print-report" className="print-report-root">
+      {auditMeta ? <ReportPrintChrome audit={auditMeta} /> : null}
       {/* Page 1: Cover */}
-      <div className="print-section" style={{ padding: '2em 0', minHeight: '80vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+      <div className="print-section section cb-print-cover" style={{ padding: '2em 0', minHeight: '80vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+        <PrintStageLabel>Cover Page</PrintStageLabel>
         <h1 style={{ fontFamily: CB_FONT_SERIF, fontSize: '28pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.25em' }}>
           Capital Stress Model
         </h1>
@@ -240,6 +318,7 @@ export function PrintReport(props: PrintReportProps) {
         <p style={{ fontSize: '11pt', color: PRINT_TEXT }}>Generated by: Capital Bridge</p>
         <p style={{ fontSize: '11pt', color: PRINT_TEXT, marginTop: '1em' }}>Report generated: {reportGeneratedAt}</p>
         <div style={{ maxWidth: '38em', margin: '2em auto 0', padding: '0 1.25em', textAlign: 'left' }}>
+          <PrintStageLabel>System Context</PrintStageLabel>
           <p
             style={{
               fontSize: '9pt',
@@ -263,7 +342,8 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Page 2: Executive Summary */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before key-outcomes">
+        <PrintStageLabel>Key Outcomes</PrintStageLabel>
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '18pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '1em', borderBottom: `2px solid ${PRINT_ACCENT}`, paddingBottom: '0.25em' }}>
           Executive Summary
         </h2>
@@ -287,6 +367,7 @@ export function PrintReport(props: PrintReportProps) {
           </div>
         </div>
         <div style={{ marginTop: '1em' }}>
+          <PrintStageLabel>Strategic Interpretation</PrintStageLabel>
           <h3 style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.5em' }}>Overall Assessment</h3>
           <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.5 }}>{overallAssessment}</p>
           <h3 style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, marginTop: '1em', marginBottom: '0.5em' }}>Primary Risk Drivers</h3>
@@ -308,7 +389,8 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Page 3: Scenario Summary (one-time header metrics) + Capital Diagnosis */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
+        <PrintStageLabel>Input Summary</PrintStageLabel>
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Scenario Summary
         </h2>
@@ -321,6 +403,7 @@ export function PrintReport(props: PrintReportProps) {
           <div><strong style={{ color: PRINT_ACCENT }}>Withdrawal</strong><br />{formatCurrency(withdrawal)}</div>
         </div>
 
+        <PrintStageLabel>Visual Analysis</PrintStageLabel>
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Capital Diagnosis
         </h2>
@@ -333,7 +416,7 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Capital Structure Health + Depletion + Structural Stability Map */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.75em', textTransform: 'uppercase' }}>
           Capital Structure Health
         </h2>
@@ -350,10 +433,14 @@ export function PrintReport(props: PrintReportProps) {
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginTop: '1em', marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Structural Stability Map
         </h2>
+        <ChartCallouts
+          what="Your position on withdrawal pressure versus market sensitivity."
+          why="See whether pressure is driven more by cash burn or by volatile assumptions before reading detailed charts."
+        />
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.75em' }}>
           Horizontal axis: Depletion Pressure (left = lower withdrawal pressure, right = heavier withdrawal pressure). Vertical axis: Fragility Index (lower = stronger structural resilience, upper = higher market sensitivity).
         </p>
-        <div className="print-chart-wrap" style={{ minHeight: 320 }}>
+        <div className="print-chart-wrap chart-block" style={{ minHeight: 320 }}>
           {(() => {
             const mapDepletion = depletionBarOutput ?? getDepletionBarOutput(mcResult.depletionPressurePct);
             const pressure = mapDepletion.pressure;
@@ -410,7 +497,7 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Possible Capital Outcomes + Durability Curve */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Simulated Average Outcome
         </h2>
@@ -430,8 +517,12 @@ export function PrintReport(props: PrintReportProps) {
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Capital Durability Curve
         </h2>
+        <ChartCallouts
+          what="Median capital path with percentile bands over the model horizon."
+          why="Shows how wide outcomes can spread while withdrawals and returns interact over time."
+        />
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em' }}>Shows how capital may evolve over time under market conditions and withdrawals. Median trajectory with 25th–75th percentile band (and optional 5th–95th band) illustrates how outcomes diverge over the horizon.</p>
-        <div className="print-chart-wrap" style={{ minHeight: 200 }}>
+        <div className="print-chart-wrap chart-block" style={{ minHeight: 200 }}>
           {mcResult.yearlyPercentileBands.length > 0 && (() => {
             const bands = mcResult.yearlyPercentileBands;
             const maxVal = Math.max(...bands.map(b => b.p95), investment * 1.2, 1);
@@ -490,10 +581,14 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Outcome Probability Distribution */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Capital Outcome Probability Distribution
         </h2>
+        <ChartCallouts
+          what="How often simulations finish in each ending-capital range."
+          why="Reveals whether outcomes cluster tightly or carry meaningful downside mass in the left tail."
+        />
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>
           Histogram of <strong>ending capital</strong> after {years} year{years !== 1 ? 's' : ''} across {mcResult.simulationCount.toLocaleString()} simulated paths. Each bar is one capital range; height shows how many scenarios finished in that range. The <strong style={{ color: PRINT_ACCENT }}>gold</strong> bar marks the bucket that contains the <strong>median (typical)</strong> outcome.
         </p>
@@ -547,7 +642,7 @@ export function PrintReport(props: PrintReportProps) {
                   <span>0</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="print-chart-wrap" style={{ height: 168 }}>
+                  <div className="print-chart-wrap chart-block" style={{ height: 168 }}>
                     <svg viewBox="0 0 100 78" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', display: 'block' }} aria-label="Capital outcome distribution">
                       <line x1="0" y1={plotBase} x2="100" y2={plotBase} stroke={PRINT_ACCENT} strokeWidth="0.45" strokeOpacity={0.85} />
                       <line x1="0" y1={plotTop} x2="0" y2={plotBase} stroke={PRINT_ACCENT} strokeWidth="0.45" strokeOpacity={0.85} />
@@ -622,12 +717,16 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Capital Stress Timeline + Capital Breakpoint Indicator */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Capital Stress Timeline
         </h2>
+        <ChartCallouts
+          what="Year-by-year probability of depletion versus structural stress."
+          why="Shows when simulated stress tends to appear later in the horizon, not only at the end."
+        />
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.75em' }}>Two metrics by year: probability of full capital depletion (balance ≤ 0) and probability of structural capital stress (capital below 50% of initial). Shows when stress begins to emerge over the horizon.</p>
-        <div className="print-chart-wrap" style={{ minHeight: 240 }}>
+        <div className="print-chart-wrap chart-block" style={{ minHeight: 240 }}>
           {mcResult.depletionRateByYear && mcResult.depletionRateByYear.length > 0 && (() => {
             const depletionData = mcResult.depletionRateByYear;
             const stressData = mcResult.structuralStressRateByYear ?? depletionData.map(() => 0);
@@ -733,7 +832,7 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Projected Capital vs Starting + Simulated Capital Journey */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Projected Capital vs Starting Capital
         </h2>
@@ -744,8 +843,12 @@ export function PrintReport(props: PrintReportProps) {
         <h2 className="print-keep-with-next" style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Simulated Capital Journey
         </h2>
+        <ChartCallouts
+          what="Median-year account balances along the modelled path."
+          why="Gives a concrete year-by-year trajectory to pair with the statistical charts above."
+        />
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.75em' }}>Typical market path (median outcomes). Rows stop when capital reaches zero.</p>
-        <div className="print-journey-table" style={{ overflow: 'auto' }}>
+        <div className="print-journey-table chart-block" style={{ overflow: 'auto' }}>
           <table style={{ width: '100%', fontSize: '10pt', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: `2px solid ${PRINT_BORDER}` }}>
@@ -802,7 +905,7 @@ export function PrintReport(props: PrintReportProps) {
         ].filter((s): s is typeof s & { result: MonteCarloResult } => s.result != null);
         const withDelta = scenarios.map(s => ({ ...s, delta: stressScoreToDisplay0to100(s.result.capitalResilienceScore) - baseLion })).sort((a, b) => b.delta - a.delta);
         return (
-          <div className="print-section print-page-break-before">
+          <div className="print-section section print-page-break-before">
             <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
               Biggest Impact Improvements
             </h2>
@@ -847,12 +950,16 @@ export function PrintReport(props: PrintReportProps) {
       })()}
 
       {/* Capital Stress Radar */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Capital Stress Radar
         </h2>
+        <ChartCallouts
+          what="Relative sensitivity scores across five structural risk drivers."
+          why="Highlights which levers (returns, withdrawals, inflation, volatility, drawdown) dominate vulnerability."
+        />
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.75em' }}>Sensitivity to key risk drivers. Higher scores indicate greater vulnerability.</p>
-        <div className="print-chart-wrap" style={{ maxWidth: 280, margin: '0 auto' }}>
+        <div className="print-chart-wrap chart-block" style={{ maxWidth: 280, margin: '0 auto' }}>
           {(() => {
             const returnRange = upperPct - lowerPct;
             const returnSens = Math.min(100, Math.max(0, (returnRange - 5) * 10));
@@ -909,13 +1016,17 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Further Structural Stress Test */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Further Structural Stress Test
         </h2>
+        <ChartCallouts
+          what="Ending capital and depletion pressure under stressed assumption rows."
+          why="Shows directional impact when specific stresses hit returns, withdrawals, or inflation."
+        />
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.75em' }}>How the capital structure responds when key assumptions deteriorate.</p>
         {stressScenarioResults && stressScenarioResults.length > 0 ? (
-          <div className="print-chart-wrap" style={{ overflow: 'auto' }}>
+          <div className="print-chart-wrap chart-block" style={{ overflow: 'auto' }}>
             <table style={{ width: '100%', fontSize: '10pt', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${PRINT_BORDER}` }}>
@@ -956,7 +1067,8 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Key Takeaways + Recommended Adjustments + Lion's Verdict */}
-      <div className="print-section print-page-break-before">
+      <div className="print-section section print-page-break-before">
+        <PrintStageLabel>Next Steps</PrintStageLabel>
         <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
           Key Takeaways
         </h2>
@@ -980,84 +1092,119 @@ export function PrintReport(props: PrintReportProps) {
           data-cb-lion-print-wrap
           style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
         >
-        <div className="lion-verdict">
-        <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
-          THE LION&apos;S VERDICT
-        </h2>
-        {verdict && (
+        <div className="lion-verdict lion-verdict-one-page">
+        {lionAccessEnabled && paidStressSectionModel && lionPaidCopyPrint ? (
           <>
+            <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
+              THE LION&apos;S VERDICT
+            </h2>
+            <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.65em' }}>
+              Lion score: {lionScorePrint} / 100 · {lionPublicLabelPrint}
+            </p>
             <p
               style={{
-                fontSize: '12pt',
+                fontSize: '11pt',
                 fontWeight: 700,
                 fontStyle: 'italic',
+                fontFamily: CB_FONT_SERIF,
                 color: PRINT_TEXT,
-                marginBottom: '0.75em',
-                textTransform: 'capitalize',
+                marginBottom: '0.65em',
+                lineHeight: 1.45,
               }}
             >
-              &ldquo;{verdict.opening}&rdquo;
+              &ldquo;{lionPaidCopyPrint.headline}&rdquo;
             </p>
-            <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.interpretation}</p>
-            <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.outcomeSummary}</p>
-            <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.riskExplanation}</p>
-            <p style={{ fontSize: '10pt', fontWeight: 600, color: PRINT_ACCENT, marginBottom: '0.5em', lineHeight: 1.5 }}>{verdict.advisoryRecommendation}</p>
-            {lionVerdictOutput ? (
-              <div style={{ marginBottom: '0.75em', paddingTop: '0.5em', borderTop: `1px solid ${PRINT_BORDER}` }}>
-                <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em' }}>
-                  Lion score: {lionVerdictOutput.score0to100} / 100 ·{' '}
-                  {formatLionPublicStatusLabel(
-                    lionPublicStatusFromScore0to100(
-                      lionVerdictOutput.score0to100,
-                      lionStrongEligibilityFromStressInputs(bandStressInputs),
-                    ),
-                  )}
-                </p>
-                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Strategic options</p>
-                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
-                  {lionVerdictOutput.strategicOptions.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
-                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Capital unlock</p>
-                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
-                  {lionVerdictOutput.capitalUnlockGuidance.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
-                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Scenario actions</p>
-                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
-                  {lionVerdictOutput.scenarioActions.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
-                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_ACCENT, textTransform: 'uppercase', marginBottom: '0.25em' }}>Priority actions</p>
-                <ul style={{ fontSize: '9pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.5em', lineHeight: 1.45 }}>
-                  {lionVerdictOutput.priorityActions.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
+            {paidStressSectionModel.narrative.map(({ label, text }) => (
+              <div key={label} style={{ marginBottom: '0.55em' }}>
                 <p
-                  className="lion-do-nothing"
-                  style={{ fontSize: '9pt', fontStyle: 'italic', color: PRINT_ACCENT, lineHeight: 1.45 }}
+                  style={{
+                    fontSize: '9pt',
+                    fontWeight: 700,
+                    color: PRINT_ACCENT,
+                    textTransform: 'uppercase',
+                    marginBottom: '0.2em',
+                    letterSpacing: '0.06em',
+                  }}
                 >
-                  If you do nothing: {lionVerdictOutput.ifYouDoNothing}
+                  {label}
                 </p>
+                <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>{text}</p>
               </div>
-            ) : null}
+            ))}
+            <p
+              style={{
+                fontSize: '9pt',
+                fontWeight: 700,
+                color: PRINT_ACCENT,
+                textTransform: 'uppercase',
+                marginBottom: '0.25em',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Options
+            </p>
+            <ul style={{ fontSize: '10pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.55em', lineHeight: 1.45 }}>
+              {paidStressSectionModel.options.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+            <div style={{ marginBottom: '0.5em', padding: '0.5em 0', borderTop: `1px solid ${PRINT_BORDER}` }}>
+              <p
+                style={{
+                  fontSize: '9pt',
+                  fontWeight: 700,
+                  color: PRINT_ACCENT,
+                  textTransform: 'uppercase',
+                  marginBottom: '0.25em',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                Decision boundary
+              </p>
+              <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>
+                {paidStressSectionModel.decisionBoundary}
+              </p>
+            </div>
             <div style={{ marginTop: '0.5em' }}>
               {microSignals.map((s, i) => (
-                <p key={i} style={{ fontSize: '10pt', color: PRINT_TEXT }}>{s.type === 'warn' ? '⚠' : '✓'} {s.text}</p>
+                <p key={i} style={{ fontSize: '10pt', color: PRINT_TEXT }}>
+                  {s.type === 'warn' ? '⚠' : '✓'} {s.text}
+                </p>
               ))}
             </div>
           </>
-        )}
+        ) : !lionAccessEnabled ? (
+          <>
+            <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
+              {SYSTEM_INSIGHT_LIMITED_TITLE}
+            </h2>
+            <ul style={{ fontSize: '10pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.75em', lineHeight: 1.5 }}>
+              {SYSTEM_INSIGHT_LIMITED_LINES.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+            <p style={{ fontSize: '9pt', color: PRINT_TEXT, lineHeight: 1.45, margin: 0 }}>
+              Educational planning only — not a promise of outcomes.
+            </p>
+          </>
+        ) : null}
         </div>
         </div>
       </div>
 
+      {capitalTimelinePrintPayload ? (
+        <CapitalTimelinePrintSection
+          payload={capitalTimelinePrintPayload}
+          fontSerif={CB_FONT_SERIF}
+          textColor={PRINT_TEXT}
+          accentColor={PRINT_ACCENT}
+          borderColor={PRINT_BORDER}
+        />
+      ) : null}
+
       {/* Final page: Disclosure only */}
-      <div className="print-disclosure-page print-section">
+      <div className="print-disclosure-page print-section section">
+        <PrintStageLabel>Closing</PrintStageLabel>
         <div
           style={{
             borderTop: '1px solid rgba(255, 204, 106, 0.45)',

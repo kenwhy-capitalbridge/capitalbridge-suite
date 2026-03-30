@@ -35,7 +35,8 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import { buildForeverStrategicWealthPdf } from "./foreverPdfBuild";
 import { loadForeverGreenBrandLogosForPdf } from "./foreverPdfLogos";
-import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
+import { createReportAuditMeta } from "@cb/shared/reportTraceability";
+import { ChromeSpinnerGlyph, ModelReportDownloadFooter, stampAllPdfPagesWithAudit, useModelMetricSpine } from "@cb/ui";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -362,6 +363,10 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
     try {
       const { lionPngDataUrl, wordmarkPngDataUrl } = await loadForeverGreenBrandLogosForPdf();
 
+      const audit = createReportAuditMeta({
+        modelCode: "FOREVER",
+        userDisplayName: reportClientDisplayName ?? "Client",
+      });
       const doc = buildForeverStrategicWealthPdf({
         currency,
         expenseType,
@@ -382,7 +387,8 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
         reportClientDisplayName,
       });
 
-      doc.save(`Capital-Bridge-Strategic-Wealth-Diagnostic-${new Date().getTime()}.pdf`);
+      stampAllPdfPagesWithAudit(doc, audit);
+      doc.save(audit.filename);
     } catch (error) {
       console.error("PDF Generation Error:", error);
     } finally {

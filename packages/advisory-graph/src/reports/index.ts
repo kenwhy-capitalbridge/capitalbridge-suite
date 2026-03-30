@@ -69,3 +69,24 @@ export type { ReportDisclosureProps } from './ReportDisclosure';
 export { ReportDisclosure } from './ReportDisclosure';
 export type { ReportChartSlotProps } from './ReportChartSlot';
 export { ReportChartSlot } from './ReportChartSlot';
+
+export {
+  buildCapitalTimelinePrintPayload,
+  capitalTrajectoryFromYValues,
+  CAPITAL_TIMELINE_SCOPE_NOTE,
+  formatCapitalTrajectoryLabel,
+  latestChangePlainEnglish,
+} from './capitalTimeline';
+export type {
+  CapitalTimelinePoint,
+  CapitalTimelinePrintPayload,
+  CapitalTimelineTrajectory,
+} from './capitalTimeline';
+export {
+  CapitalTimelinePrintSection,
+} from './CapitalTimelinePrintSection';
+export type { CapitalTimelinePrintSectionProps } from './CapitalTimelinePrintSection';
+export {
+  extractStressDisplayScoreFromSavedResults,
+  extractStressResilienceTechnicalFromResults,
+} from './stressSavedReportMetric';

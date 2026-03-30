@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { LionCopyPanel } from "./LionCopyPanel";
-import { LionVerdictLocked } from "./LionVerdictLocked";
+import { SystemInsightLimited } from "./SystemInsightLimited";
 import { canAccessLion, type LionAccessUser } from "./access";
 import {
   getLionVerdict,
@@ -45,11 +45,6 @@ export function LionVerdictActive({
   confidenceScore,
   surplusRatio,
   score,
-  horizon,
-  gap,
-  target,
-  horizonLabel,
-  progress,
   riskTolerance,
   globalHistory,
   className,
@@ -127,67 +122,10 @@ export function LionVerdictActive({
   if (!copy) return null;
 
   if (!hasAccess) {
-    return (
-      <LionVerdictLocked
-        tierLabel={tier}
-        score={score}
-        headline={copy.headline}
-        pricingReturnModel={pricingReturnModel}
-      />
-    );
+    return <SystemInsightLimited pricingReturnModel={pricingReturnModel} />;
   }
 
-  const formatRmValue = (value?: number) =>
-    typeof value === 'number' && Number.isFinite(value)
-      ? value.toLocaleString('en-US', { maximumFractionDigits: 0 })
-      : '0';
-  const formattedGap = formatRmValue(gap);
-  const formattedTarget = formatRmValue(target);
-  const progressValue =
-    typeof progress === 'number' && Number.isFinite(progress) ? progress.toFixed(1) : '0';
-  const horizonNumeric =
-    typeof horizon === 'number' && Number.isFinite(horizon) ? horizon.toFixed(1) : null;
-  const horizonDescriptor = horizonNumeric ?? horizonLabel ?? (typeof horizon === 'string' ? horizon : '0');
-  const horizonWithYears = `${horizonDescriptor} years`;
-  const realityLine = 'Your current income strategy is not sustainable under present conditions.';
-  const capitalRealityLine =
-    'At this level, your plan will lead to capital depletion unless adjustments are made.';
-  const horizonLine = `Your capital is likely to last approximately ${horizonDescriptor} years at your current withdrawal.`;
-  const gapLine = `To sustain this income indefinitely, you require approximately RM ${formattedTarget}, leaving a shortfall of RM ${formattedGap}.`;
-  const progressLine = `You have currently achieved ${progressValue}% of the capital required for long-term sustainability.`;
-  const capitalDecisionLine = 'Immediate adjustment is required to restore sustainability.';
-  const doNothingLine = `If no changes are made, your capital will be depleted in approximately ${horizonDescriptor} years.`;
-
-  const fullVerdict = {
-    closingLine: copy.guidanceBullets.join(" "),
-    reality: realityLine,
-    horizon: horizonLine,
-    gap: gapLine,
-    progress: progressLine,
-    capitalReality: capitalRealityLine,
-    strategicOptions: [
-      'Reduce withdrawals',
-      'Increase capital',
-      'Improve returns',
-    ],
-    capitalDecision: capitalDecisionLine,
-    scenarioGuidance: `Under weaker market conditions, depletion is likely to occur even earlier.`,
-    actionPlan: [
-      'Adjust withdrawals immediately',
-      'Reassess capital allocation',
-      'Increase savings or contributions',
-    ],
-    doNothingOutcome: doNothingLine,
-  };
-
   return (
-    <LionCopyPanel
-      copy={copy}
-      canSeeVerdict
-      className={className}
-      tierLabel={tier}
-      score={score}
-      fullVerdict={fullVerdict}
-    />
+    <LionCopyPanel copy={copy} canSeeVerdict className={className} tier={tier} score={score} />
   );
 }

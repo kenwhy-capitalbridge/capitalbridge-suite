@@ -10,6 +10,7 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
+import { flushSync } from 'react-dom';
 import "./index.css";
 import { MonteCarloResult, StressSeverity, StressScenarioResult } from './types';
 import { runMonteCarlo, getSimulationCount, runStressScenarios, getDepletionBarOutput } from './services/mathUtils';
@@ -29,12 +30,19 @@ import {
   lionPublicStatusFromScore0to100,
   lionStrongEligibilityFromStressInputs,
 } from '@cb/advisory-graph/lionsVerdict';
+import {
+  buildCapitalTimelinePrintPayload,
+  type CapitalTimelinePoint,
+  type CapitalTimelinePrintPayload,
+} from '@cb/advisory-graph/reports';
 import { PrintReport } from './PrintReport';
+import { loadCapitalStressTimelineSavedPointsForUser } from './loadCapitalStressTimeline';
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
-import { LionVerdictLocked } from "../../../packages/lion-verdict/LionVerdictLocked";
+import { SystemInsightLimited } from "../../../packages/lion-verdict/SystemInsightLimited";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { createReportAuditMeta, type ReportAuditMeta } from "@cb/shared/reportTraceability";
 import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
 
 const CURRENCIES = [
@@ -220,6 +228,7 @@ function CapitalStressMetricSpineSync({
 }
 
 type CapitalStressAppProps = {
+  advisoryUserId?: string | null;
   canUseStressModel?: boolean;
   canSeeVerdict?: boolean;
   lionAccessUser?: LionAccessUser;
@@ -227,6 +236,7 @@ type CapitalStressAppProps = {
 };
 
 const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function App(props, ref) {
+  const advisoryUserId = props.advisoryUserId ?? null;
   const canUseStressModel = props.canUseStressModel ?? true;
   const canSeeVerdict = props.canSeeVerdict ?? true;
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
@@ -256,6 +266,10 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const [distributionTooltip, setDistributionTooltip] = useState<{ low: number; high: number; count: number; pct: number; isMedian: boolean; x: number; y: number } | null>(null);
   const [radarLabelTooltip, setRadarLabelTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [printAuditMeta, setPrintAuditMeta] = useState<ReportAuditMeta | null>(null);
+  const [stressTimelineSaved, setStressTimelineSaved] = useState<CapitalTimelinePoint[] | undefined>(
+    undefined,
+  );
   const [collapsedSections, setCollapsedSections] = useState({
     structuralStabilityMap: true,
     capitalOutcomeDist: true,
@@ -318,6 +332,30 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       currencyIndex,
     ],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await loadCapitalStressTimelineSavedPointsForUser(advisoryUserId);
+        if (!cancelled) setStressTimelineSaved(rows);
+      } catch {
+        if (!cancelled) setStressTimelineSaved([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [advisoryUserId]);
+
+  const capitalTimelinePrintPayload = useMemo((): CapitalTimelinePrintPayload | null => {
+    if (stressTimelineSaved === undefined || mcResult == null) return null;
+    return buildCapitalTimelinePrintPayload(
+      stressTimelineSaved,
+      stressScoreToDisplay0to100(mcResult.capitalResilienceScore),
+      Date.now(),
+    );
+  }, [stressTimelineSaved, mcResult]);
 
   const lastSyncedInputsKeyRef = useRef<string | null>(null);
 
@@ -474,7 +512,24 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   };
 
   const handlePrint = () => {
+    let audit!: ReportAuditMeta;
+    flushSync(() => {
+      audit = createReportAuditMeta({
+        modelCode: "STRESS",
+        userDisplayName: reportClientDisplayName,
+      });
+      setPrintAuditMeta(audit);
+    });
+    const prevTitle = typeof document !== "undefined" ? document.title : "";
+    if (typeof document !== "undefined") {
+      document.title = audit.filename.replace(/\.pdf$/i, "");
+    }
     window.print();
+    if (typeof document !== "undefined") {
+      requestAnimationFrame(() => {
+        document.title = prevTitle;
+      });
+    }
   };
 
   const depletionBarRef = useRef<DepletionBarOutput | null>(null);
@@ -1814,7 +1869,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             </div>
           )}
 
-          {/* 15. The Lion's Verdict — panel chrome from LionCopyPanel / LionVerdictLocked only; footer sits on page below */}
+          {/* 15. The Lion's Verdict — LionCopyPanel (paid) or SystemInsightLimited (trial); footer sits on page below */}
           <div className="mx-auto w-full max-w-3xl" style={{ opacity: canSeeVerdict ? 1 : 0.55 }}>
             {showLionActive ? (
               <LionVerdictActive
@@ -1834,7 +1889,10 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 pricingReturnModel="capitalstress"
               />
             ) : (
-              <LionVerdictLocked tierLabel={lionTierLabel} score={lionScore} pricingReturnModel="capitalstress" />
+              <SystemInsightLimited
+                pricingReturnModel="capitalstress"
+                preface="Run the simulation to generate the latest directional read from your inputs."
+              />
             )}
           </div>
           </div>
@@ -1896,7 +1954,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           maximumDrawdownPct: mcResult.maxDrawdownPctAvg,
           worstCaseOutcome: mcResult.percentile5,
         };
-        const lionEnginePrint = canSeeVerdict ? runLionVerdictEngineStress(advisoryInputs, formatCurrency) : null;
+        const lionEnginePrint =
+          canSeeVerdict && lionAccessEnabled ? runLionVerdictEngineStress(advisoryInputs, formatCurrency) : null;
         const verdict = lionEnginePrint ? toVerdictNarrative(lionEnginePrint) : null;
         return (
           <PrintReport
@@ -1920,12 +1979,15 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             fiTier={fiTier}
             verdict={verdict}
             lionVerdictOutput={lionEnginePrint}
+            lionAccessEnabled={lionAccessEnabled}
             stressAdvisoryInputs={canSeeVerdict && advisoryInputs ? advisoryInputs : null}
             keyTakeaways={canSeeVerdict ? getKeyTakeaways(advisoryInputs) : []}
             recommendedAdjustments={canSeeVerdict ? getRecommendedAdjustments(advisoryInputs) : []}
             microSignals={canSeeVerdict ? getMicroDiagnosticSignals(advisoryInputs) : []}
             medianPathYearly={mcResult.medianPathYearly}
             reportClientDisplayName={reportClientDisplayName}
+            auditMeta={printAuditMeta}
+            capitalTimelinePrintPayload={capitalTimelinePrintPayload}
           />
         );
       })()}

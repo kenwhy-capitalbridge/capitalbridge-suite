@@ -1,6 +1,7 @@
 "use client";
 
 import type { GetLionVerdictOutput } from "./getLionVerdict";
+import type { Tier } from "./copy";
 import { LionVerdictMark } from "./LionVerdictMark";
 import {
   LION_VERDICT_HEADLINE,
@@ -9,59 +10,45 @@ import {
   LION_VERDICT_TITLE,
 } from "./lionVerdictPanelStyles";
 import { LionVerdictScoreLine, LionVerdictStatusBadge } from "./LionVerdictStatusBadge";
-
-type FullVerdict = {
-  closingLine: string;
-  reality: string;
-  horizon: string;
-  gap: string;
-  progress: string;
-  capitalReality: string;
-  strategicOptions: string[];
-  capitalDecision: string;
-  scenarioGuidance: string;
-  actionPlan: string[];
-  doNothingOutcome: string;
-};
+import { buildPaidLionSectionModel } from "./lionVerdictSectionModel";
 
 type LionCopyPanelProps = {
   copy: GetLionVerdictOutput | null;
   canSeeVerdict: boolean;
   className?: string;
-  tierLabel?: string;
+  tier: Tier;
   score?: number;
-  fullVerdict?: FullVerdict;
 };
 
 const LD = "\u201C";
 const RD = "\u201D";
 
-export function LionCopyPanel({
-  copy,
-  canSeeVerdict,
-  className,
-  tierLabel,
-  score,
-  fullVerdict,
-}: LionCopyPanelProps) {
-  if (!canSeeVerdict || !copy || !fullVerdict) return null;
+/**
+ * Paid Lion’s Verdict — headline + library guidance + preset options/decision boundary.
+ * Kept compact for single printed page where possible.
+ */
+export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: LionCopyPanelProps) {
+  if (!canSeeVerdict || !copy) return null;
   const cleanHeadline = copy.headline?.replace(" ,", ",");
+  const sectionModel = buildPaidLionSectionModel(copy, tier);
 
   return (
-    <div className={`${LION_VERDICT_PANEL_BOX} ${className ?? ""} space-y-5`}>
-      <div className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${LION_VERDICT_HEADER_RULE}`}>
+    <div
+      className={`lion-verdict-one-page ${LION_VERDICT_PANEL_BOX} ${className ?? ""} max-h-[min(100vh,56rem)] space-y-3 overflow-y-auto sm:space-y-4 print:max-h-none print:overflow-visible`}
+    >
+      <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${LION_VERDICT_HEADER_RULE}`}>
         <div className="flex min-w-0 items-center gap-2.5">
           <LionVerdictMark className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
           <p className={LION_VERDICT_TITLE}>THE LION&apos;S VERDICT</p>
         </div>
         <div className="flex shrink-0 flex-col items-start gap-1.5 sm:items-end sm:text-right">
-          {tierLabel ? <LionVerdictStatusBadge tierLabel={tierLabel} /> : null}
+          <LionVerdictStatusBadge tierLabel={tier} />
           <LionVerdictScoreLine score={score} />
         </div>
       </div>
 
       <blockquote className="m-0 border-none p-0">
-        <p className={LION_VERDICT_HEADLINE} aria-live="polite">
+        <p className={`${LION_VERDICT_HEADLINE} !text-[clamp(0.95rem,2.5vw,1.05rem)] !leading-snug`} aria-live="polite">
           {LD}
           {cleanHeadline}
           {RD}
@@ -69,23 +56,22 @@ export function LionCopyPanel({
       </blockquote>
 
       {copy.emphasis ? (
-        <div className="rounded-xl border border-[#FFCC6A]/35 bg-[#16331f]/75 px-4 py-3 font-serif text-xs font-semibold uppercase tracking-[0.28em] text-[#F6F5F1]/90">
+        <div className="rounded-xl border border-[#FFCC6A]/35 bg-[#16331f]/75 px-3 py-2 font-serif text-[10px] font-semibold uppercase tracking-[0.24em] text-[#F6F5F1]/90 sm:px-4 sm:text-[11px] sm:tracking-[0.28em]">
           {copy.emphasis}
         </div>
       ) : null}
 
-      <div className="space-y-3 text-sm text-white/85">
-        <Section label="Where things stand" content={fullVerdict.reality} />
-        <Section label="How long the money may last" content={fullVerdict.horizon} />
-        <Section label="The gap to close" content={fullVerdict.gap} />
-        <Section label="Progress so far" content={fullVerdict.progress} />
-        <Section label="What your money can realistically do" content={fullVerdict.capitalReality} />
-        <div className="rounded-xl bg-[#122419]/85 px-4 py-3">
-          <p className="mb-2 font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">
-            Options to discuss
+      <div className="space-y-2 text-[13px] leading-snug text-white/85 sm:space-y-2.5 sm:text-sm sm:leading-relaxed">
+        {sectionModel.narrative.map(({ label, text }) => (
+          <Section key={label} label={label} content={text} />
+        ))}
+
+        <div className="rounded-xl bg-[#122419]/85 px-3 py-2.5 sm:px-4 sm:py-3">
+          <p className="mb-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.26em] text-[#FFCC6A] sm:text-[11px] sm:tracking-[0.28em]">
+            Options
           </p>
-          <ul className="list-none space-y-1.5 pl-0 text-sm leading-relaxed text-white/85">
-            {fullVerdict.strategicOptions.map((option) => (
+          <ul className="list-none space-y-1 pl-0 text-[13px] leading-snug text-white/85 sm:text-sm sm:leading-relaxed">
+            {sectionModel.options.map((option) => (
               <li key={option} className="flex gap-2">
                 <span className="text-[#FFCC6A]" aria-hidden>
                   •
@@ -95,25 +81,8 @@ export function LionCopyPanel({
             ))}
           </ul>
         </div>
-        <Section label="Decision on your money" content={fullVerdict.capitalDecision} bordered />
-        <Section label="If things change" content={fullVerdict.scenarioGuidance} bordered />
-        <div className="rounded-xl bg-[#122419]/85 px-4 py-3">
-          <p className="mb-2 font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">
-            Practical next steps
-          </p>
-          <ul className="list-none space-y-1.5 pl-0 text-sm leading-relaxed text-white/85">
-            {fullVerdict.actionPlan.map((item) => (
-              <li key={item} className="flex gap-2">
-                <span className="text-[#FFCC6A]" aria-hidden>
-                  •
-                </span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <Section label="If no changes are made" content={fullVerdict.doNothingOutcome} muted />
-        <Section label="Closing thought" content={fullVerdict.closingLine} muted />
+
+        <Section label="Decision boundary" content={sectionModel.decisionBoundary} bordered />
       </div>
     </div>
   );
@@ -123,25 +92,21 @@ function Section({
   label,
   content,
   bordered,
-  muted,
 }: {
   label: string;
   content: string;
   bordered?: boolean;
-  muted?: boolean;
 }) {
   return (
     <div
-      className={`rounded-xl px-4 py-3 ${
-        bordered
-          ? "border border-[#FFCC6A]/22 bg-[#0f2219]/85"
-          : muted
-            ? "bg-[#0a1810]/90"
-            : "bg-[#122419]/85"
+      className={`rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 ${
+        bordered ? "border border-[#FFCC6A]/22 bg-[#0f2219]/85" : "bg-[#122419]/85"
       }`}
     >
-      <p className="mb-1.5 font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FFCC6A]">{label}</p>
-      <p className="text-sm leading-relaxed text-white/88">{content}</p>
+      <p className="mb-1 font-serif text-[10px] font-semibold uppercase tracking-[0.26em] text-[#FFCC6A] sm:text-[11px] sm:tracking-[0.28em]">
+        {label}
+      </p>
+      <p className="text-[13px] leading-snug text-white/88 sm:text-sm sm:leading-relaxed">{content}</p>
     </div>
   );
 }

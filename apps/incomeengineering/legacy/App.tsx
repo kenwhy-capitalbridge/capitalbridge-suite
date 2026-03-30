@@ -3,12 +3,14 @@
 import React, {
   useMemo,
   useRef,
+  useState,
   forwardRef,
   useImperativeHandle,
   useLayoutEffect,
   useEffect,
   useCallback,
 } from 'react';
+import { flushSync } from 'react-dom';
 import {
   beginReportReadyCycle,
   completeReportReadyCycle,
@@ -17,7 +19,8 @@ import {
 import './index.css';
 import { CalculatorStoreProvider, useCalculatorStoreInternals } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
-import { ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
+import { createReportAuditMeta, type ReportAuditMeta } from '@cb/shared/reportTraceability';
+import { ModelReportDownloadFooter, stampAllPdfPagesWithAudit, useModelMetricSpine } from '@cb/ui';
 import { CurrencySelectorEmbedded } from './components/CurrencySelector';
 import { ExpensesInput } from './components/ExpensesInput';
 import { IncomeInputs } from './components/IncomeInputs';
@@ -28,11 +31,15 @@ import { WhatThisMeansBox } from './components/WhatThisMeansBox';
 import { PrintReportView } from './components/PrintReportView';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { buildLionVerdictClientReportFromIncomeEngineering } from '@cb/advisory-graph/lionsVerdict';
+import {
+  buildLionVerdictClientReportFromIncomeEngineering,
+  incomeEngineeringCoverageToLion0to100,
+  lionPublicStatusFromScore0to100,
+  lionStrongEligibilityFromIncomeEngineering,
+} from '@cb/advisory-graph/lionsVerdict';
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
-import type { Tier } from "../../../packages/lion-verdict/copy";
-import type { SustainabilityStatus, SummaryKPIs } from './types/calculator';
+import type { SummaryKPIs } from './types/calculator';
 import { formatCurrency } from './utils/format';
 
 export type IncomeEngineeringAppHandle = {
@@ -54,19 +61,6 @@ function statusLabelFromSummary(status: SummaryKPIs['sustainabilityStatus']): st
   if (status === 'red') return 'UNSUSTAINABLE';
   return 'INVALID';
 }
-
-const deriveTierFromStatus = (status: SustainabilityStatus | undefined): Tier => {
-  switch (status) {
-    case 'green':
-      return 'STABLE';
-    case 'amber':
-      return 'AT_RISK';
-    case 'red':
-      return 'NOT_SUSTAINABLE';
-    default:
-      return 'FRAGILE';
-  }
-};
 
 const AppInner = forwardRef<
   IncomeEngineeringAppHandle,
@@ -91,9 +85,7 @@ const AppInner = forwardRef<
     [currency, monthlyExpenses, incomeRows, loansFromAssets, investmentBuckets, assetUnlocks]
   );
   const lionAccessEnabled = canAccessLion(props.lionAccessUser);
-  const lionTier = deriveTierFromStatus(result.summary.sustainabilityStatus);
   const lionConfidenceScore = 0.5;
-  const lionSurplusRatio = 1;
   const lionRiskTolerance = 0.5;
   const lionSeedUserId =
     typeof window !== 'undefined' ? window.location.hostname : 'income-engineering';
@@ -149,6 +141,23 @@ const AppInner = forwardRef<
     investmentBuckets.reduce((s, b) => s + (b.allocation ?? 0), 0);
   const totalExpenses = result.summary.monthlyExpenses + result.summary.monthlyLoanRepayments;
   const totalIncome = result.summary.monthlyIncome + result.summary.estimatedMonthlyInvestmentIncome;
+  const netCashflowForLion = totalIncome - totalExpenses;
+  const lionScoreIe = incomeEngineeringCoverageToLion0to100({
+    medianCoveragePct: result.medianCoverage * 100,
+    worstMonthCoveragePct: result.worstMonthCoverage * 100,
+    sustainabilityStatus: result.summary.sustainabilityStatus,
+  });
+  const lionTier = lionPublicStatusFromScore0to100(
+    lionScoreIe,
+    lionStrongEligibilityFromIncomeEngineering({
+      monthlyNetCashflow: netCashflowForLion,
+      sustainabilityStatus: result.summary.sustainabilityStatus,
+      worstMonthCoveragePct: result.worstMonthCoverage * 100,
+      medianCoveragePct: result.medianCoverage * 100,
+    }),
+  );
+  const lionScore = lionScoreIe;
+  const lionSurplusRatio = totalExpenses > 0 ? totalIncome / totalExpenses : 1;
   const monthlyShortfall = Math.max(0, totalExpenses - totalIncome);
   const horizonYears =
     monthlyShortfall > 0 ? totalCapital / (monthlyShortfall * 12) : undefined;
@@ -156,7 +165,6 @@ const AppInner = forwardRef<
   const targetCapital = totalExpenses * 12;
   const gapAmount = Math.max(0, targetCapital - totalCapital);
   const progressPercent = targetCapital > 0 ? Math.min(100, (totalCapital / targetCapital) * 100) : 0;
-  const lionScore = lionConfidenceScore * 100;
 
   const { setSpine } = useModelMetricSpine();
   const spineNetMonthly = formatCurrency(totalIncome - totalExpenses, currency);
@@ -218,6 +226,7 @@ const AppInner = forwardRef<
 
   const reportRef = useRef<HTMLDivElement>(null);
   const reportReadyTokenRef = useRef(0);
+  const [pdfAuditMeta, setPdfAuditMeta] = useState<ReportAuditMeta | null>(null);
 
   const reportStableKey = useMemo(
     () =>
@@ -282,6 +291,14 @@ const AppInner = forwardRef<
   const handlePrintReport = async () => {
     const el = reportRef.current;
     if (!el) return;
+    let audit!: ReportAuditMeta;
+    flushSync(() => {
+      audit = createReportAuditMeta({
+        modelCode: "INCOME",
+        userDisplayName: props.reportClientDisplayName ?? "Client",
+      });
+      setPdfAuditMeta(audit);
+    });
     try {
       if (typeof document !== 'undefined' && document.fonts?.ready) {
         await document.fonts.ready;
@@ -339,7 +356,8 @@ const AppInner = forwardRef<
         doc.addPage();
         await addPartToPdf(doc, part2);
       }
-      doc.save('Income-Engineering-Model-Report.pdf');
+      stampAllPdfPagesWithAudit(doc, audit);
+      doc.save(audit.filename);
     } catch (err) {
       console.error('PDF generation failed:', err);
     }
@@ -426,6 +444,7 @@ const AppInner = forwardRef<
           worstMonthCoverage={result.worstMonthCoverage}
           lionAccessEnabled={lionAccessEnabled}
           reportClientDisplayName={props.reportClientDisplayName}
+          auditMeta={pdfAuditMeta}
         />
       </div>
     </div>

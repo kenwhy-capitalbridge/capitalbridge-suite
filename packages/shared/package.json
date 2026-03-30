@@ -10,6 +10,7 @@
     "./advisoryFramework": "./src/advisoryFramework.ts",
     "./typography": "./src/typography.ts",
     "./cbReportTemplate": "./src/cbReportTemplate.ts",
-    "./reportIdentity": "./src/reportIdentity.ts"
+    "./reportIdentity": "./src/reportIdentity.ts",
+    "./reportTraceability": "./src/reportTraceability.ts"
   }
 }

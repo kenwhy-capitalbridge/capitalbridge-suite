@@ -6,6 +6,7 @@ import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContex
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
 type Props = {
+  advisoryUserId: string;
   canUseStressModel: boolean;
   canSeeVerdict: boolean;
   lionAccessUser: LionAccessUser;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function CapitalStressDashboardClient({
+  advisoryUserId,
   canUseStressModel,
   canSeeVerdict,
   lionAccessUser,
@@ -35,6 +37,7 @@ export function CapitalStressDashboardClient({
     <main>
       <LegacyApp
         ref={appRef}
+        advisoryUserId={advisoryUserId}
         canUseStressModel={canUseStressModel}
         canSeeVerdict={canSeeVerdict}
         lionAccessUser={lionAccessUser}
