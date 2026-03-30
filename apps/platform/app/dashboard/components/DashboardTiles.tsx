@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChromeSpinnerGlyph } from "@cb/ui";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
@@ -162,7 +162,7 @@ export function DashboardTiles() {
               >
                 {tileBusy ? (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <Loader2 size={18} strokeWidth={2.25} aria-hidden className="cb-ui-icon-spin" />
+                    <ChromeSpinnerGlyph className="h-[18px] w-[18px]" />
                     Loading…
                   </span>
                 ) : (

@@ -961,7 +961,7 @@ export function PrintReport(props: PrintReportProps) {
           style={{
             borderTop: '1px solid rgba(255, 204, 106, 0.45)',
             marginTop: '2em',
-            paddingTop: '0.65em',
+            paddingTop: '0.95em',
             textAlign: 'center',
           }}
         >

@@ -46,6 +46,20 @@
 
 .cb-ui-icon-spin {
   flex-shrink: 0;
+  transform-origin: center;
+  animation: cb-ui-spinner-rotate 0.75s linear infinite;
+}
+
+/**
+ * Rotate this wrapper (not the inner `<svg>`). Some WebKit builds fail to animate
+ * `transform` on root SVG when nested in flex / link chrome — spinner looked like a static disc.
+ */
+.cb-ui-icon-spin-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transform-origin: center;
   animation: cb-ui-spinner-rotate 0.75s linear infinite;
 }
 
@@ -459,6 +473,7 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .cb-ui-icon-spin,
+  .cb-ui-icon-spin-wrap,
   .cb-auth-ring-spin,
   .pf-header-avatar-spin {
     animation-duration: 1.25s;

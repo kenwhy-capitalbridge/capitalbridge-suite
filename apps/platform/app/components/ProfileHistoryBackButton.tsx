@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChromeSpinnerGlyph } from "@cb/ui";
 
+/** Always return to platform home (avoids history loop: Profile → Plans → Back → Profile). */
 export function ProfileHistoryBackButton() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -15,16 +16,15 @@ export function ProfileHistoryBackButton() {
         disabled={isPending}
         aria-busy={isPending}
         aria-disabled={isPending}
-        aria-label="Go back to the previous page"
-        className="pf-chrome-gold-btn"
+        aria-label="Back to Capital Bridge platform home"
+        className="pf-chrome-gold-btn profile-page-back-btn"
         style={{
-          minHeight: 44,
           cursor: isPending ? "wait" : "pointer",
           opacity: isPending ? 0.88 : 1,
         }}
         onClick={() => {
           startTransition(() => {
-            router.back();
+            router.push("/");
           });
         }}
       >

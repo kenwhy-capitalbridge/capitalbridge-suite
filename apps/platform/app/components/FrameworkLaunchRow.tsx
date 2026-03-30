@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChromeSpinnerGlyph } from "@cb/ui";
 
 type LaunchItem = { href: string; label: string };
 
@@ -36,12 +36,7 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
           >
             {active ? (
               <span className="cb-launch-btn-inner">
-                <Loader2
-                  className="cb-ui-icon-spin"
-                  size={16}
-                  strokeWidth={2.25}
-                  aria-hidden
-                />
+                <ChromeSpinnerGlyph className="h-4 w-4" />
                 Loading…
               </span>
             ) : (

@@ -642,18 +642,27 @@ a {
   }
 }
 
-/* Profile → View Available Plans (gold outline; hover green + cream) */
+/* Profile BACK — ~12% shorter than prior 44px touch target */
+.profile-page-back-btn.pf-chrome-gold-btn {
+  min-height: 38px;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+/* Profile → View Available Plans: solid gold default; hover = gold border + gold text + glow */
 .cb-profile-plans-link {
   color: #0d3a1d;
   background-color: #ffcc6a;
   border: 2px solid #ffcc6a;
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: none;
 }
 
-.cb-profile-plans-link:hover {
-  background-color: #0d3a1d;
-  color: #f6f5f1;
-  border-color: #0d3a1d;
+.cb-profile-plans-link:hover:not(:disabled) {
+  background-color: transparent;
+  color: #ffcc6a;
+  border-color: #ffcc6a;
+  box-shadow: 0 6px 18px rgba(255, 204, 106, 0.38);
 }
 
 .cb-profile-plans-link:disabled {
@@ -666,6 +675,22 @@ a {
   background-color: #ffcc6a;
   color: #0d3a1d;
   border-color: #ffcc6a;
+  box-shadow: none;
+}
+
+/* Request email change — same hover treatment as plans CTA */
+.cb-profile-gold-cta-hover:hover:not(:disabled) {
+  background-color: transparent !important;
+  color: #ffcc6a !important;
+  border-color: #ffcc6a !important;
+  box-shadow: 0 6px 18px rgba(255, 204, 106, 0.38);
+}
+
+.cb-profile-gold-cta-hover:disabled:hover {
+  background-color: rgba(255, 204, 106, 0.92) !important;
+  color: rgba(13, 58, 29, 0.95) !important;
+  border-color: rgba(255, 204, 106, 0.55) !important;
+  box-shadow: none !important;
 }
 
 /* --- Profile page: fluid layout + narrow screens --- */

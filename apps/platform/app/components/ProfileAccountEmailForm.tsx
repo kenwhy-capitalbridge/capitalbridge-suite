@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChromeSpinnerGlyph } from "@cb/ui";
 import { createAppBrowserClient, isSupabaseConfigured } from "@cb/supabase/browser";
 
 const FORM_EMAIL_INVALID = "Enter a valid email address.";
@@ -144,7 +144,7 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
           onClick={() => void submit()}
           disabled={busy}
           aria-busy={busy}
-          className="profile-page-email-submit"
+          className="profile-page-email-submit cb-profile-gold-cta-hover"
           style={{
             flexShrink: 0,
             padding: "clamp(0.42rem, 1.4vw, 0.45rem) clamp(0.85rem, 2.5vw, 1.1rem)",
@@ -155,8 +155,8 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
             textTransform: "uppercase",
             color: "rgba(13, 58, 29, 0.95)",
             backgroundColor: "rgba(255, 204, 106, 0.92)",
-            border: "1px solid rgba(255, 204, 106, 0.55)",
-            borderRadius: 4,
+            border: "2px solid rgba(255, 204, 106, 0.55)",
+            borderRadius: 8,
             cursor: busy ? "wait" : "pointer",
             opacity: busy ? 0.65 : 1,
             display: "inline-flex",
@@ -164,11 +164,12 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
             justifyContent: "center",
             gap: 6,
             boxSizing: "border-box",
+            transition: "background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
           }}
         >
           {busy ? (
             <>
-              <Loader2 size={14} className="pf-header-avatar-spin" aria-hidden />
+              <ChromeSpinnerGlyph className="h-3.5 w-3.5" />
               Sending…
             </>
           ) : (

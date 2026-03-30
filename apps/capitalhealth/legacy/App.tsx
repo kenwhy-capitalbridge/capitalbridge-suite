@@ -11,7 +11,6 @@ import {
   Tooltip,
   type TooltipContentProps,
 } from 'recharts';
-import { Loader2 } from 'lucide-react';
 import {
   CURRENCIES,
   PRESETS,
@@ -1552,7 +1551,7 @@ const CalculatorScreen = forwardRef<
           disabled={reportGenerating}
           buttonLabel={reportGenerating ? "Generating…" : undefined}
           buttonLeading={
-            reportGenerating ? <Loader2 className="h-4 w-4 shrink-0 cb-ui-icon-spin" aria-hidden /> : undefined
+            reportGenerating ? <ChromeSpinnerGlyph className="h-4 w-4 shrink-0" /> : undefined
           }
           buttonClassName="pf-chrome-gold-btn pf-chrome-gold-btn--report pf-chrome-gold-btn--report-sm-auto touch-manipulation disabled:opacity-60"
           statusSlot={

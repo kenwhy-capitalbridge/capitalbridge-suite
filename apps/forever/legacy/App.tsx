@@ -16,7 +16,6 @@ import {
   Wallet,
   BarChart3,
   Home,
-  Loader2,
   Coins,
   Users,
   Timer,
@@ -36,7 +35,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import { buildForeverStrategicWealthPdf } from "./foreverPdfBuild";
 import { loadForeverGreenBrandLogosForPdf } from "./foreverPdfLogos";
-import { ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
+import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -592,7 +591,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
           disabled={!results.isSustainable || isGenerating}
           buttonLabel={isGenerating ? "Generating…" : undefined}
           buttonLeading={
-            isGenerating ? <Loader2 className="h-4 w-4 shrink-0 cb-ui-icon-spin" aria-hidden /> : undefined
+            isGenerating ? <ChromeSpinnerGlyph className="h-4 w-4 shrink-0" /> : undefined
           }
           buttonClassName={
             results.isSustainable
