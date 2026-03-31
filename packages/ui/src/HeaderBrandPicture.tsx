@@ -1,8 +1,4 @@
-import {
-  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
-  BRAND_LARGE_FULL_CAPITAL_BRIDGE_GOLD,
-  BRAND_LIONHEAD_GOLD,
-} from "./brandPaths";
+import { BRAND_LARGE_FULL_CAPITAL_BRIDGE_GOLD, BRAND_LIONHEAD_GOLD } from "./brandPaths";
 
 export type HeaderBrandPictureProps = {
   pictureClassName?: string;
@@ -12,8 +8,9 @@ export type HeaderBrandPictureProps = {
 /**
  * One `<picture>`; first matching `<source>` wins.
  *
- * **Desktop (≥768px):** Large-Full (1280+) → wordmark (1024–1279) → lion (768–1023) → …
- * **Mobile (<768px):** wordmark (400–767) → lion.
+ * **Wide desktop (≥1280px):** full gold lockup (`Large-Full_CapitalBridge_Gold.svg`).
+ * **Below that (narrow desktop, tablet, mobile):** lion head only — no standalone
+ * `CapitalBridgeLogo_Gold.svg` wordmark so the header stays compact when width is tight.
  */
 export function HeaderBrandPicture({
   pictureClassName = "",
@@ -22,18 +19,6 @@ export function HeaderBrandPicture({
   return (
     <picture className={`cb-header-chrome-picture ${pictureClassName}`.trim()}>
       <source media="(min-width: 1280px)" srcSet={BRAND_LARGE_FULL_CAPITAL_BRIDGE_GOLD} />
-      <source
-        media="(min-width: 1024px) and (max-width: 1279px)"
-        srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
-      />
-      <source
-        media="(min-width: 768px) and (max-width: 1023px)"
-        srcSet={BRAND_LIONHEAD_GOLD}
-      />
-      <source
-        media="(min-width: 400px) and (max-width: 767px)"
-        srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
-      />
       <img
         src={BRAND_LIONHEAD_GOLD}
         alt=""
