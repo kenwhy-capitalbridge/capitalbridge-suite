@@ -8,7 +8,7 @@ export type HeaderBrandPictureProps = {
 /**
  * One `<picture>`; first matching `<source>` wins.
  *
- * **Wide desktop (≥1280px):** full gold lockup (`Large-Full_CapitalBridge_Gold.svg`).
+ * **Wide desktop (≥1280px):** full gold lockup (`BiggerFont-Capital Logo Vertical Transparent.svg`).
  * **Below that (narrow desktop, tablet, mobile):** lion head only — no standalone
  * `CapitalBridgeLogo_Gold.svg` wordmark so the header stays compact when width is tight.
  */
