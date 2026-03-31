@@ -130,12 +130,13 @@
 }
 
 .cb-header-chrome-logo-full {
-  max-width: min(72cqw, 280px);
+  /* vw caps avoid cqw→0 when the inline-size container is narrower than the SVG (flex shrink / first paint). */
+  max-width: min(52vw, 280px);
   object-position: left center;
 }
 
 .cb-header-chrome-logo-wordmark {
-  max-width: min(65cqw, 240px);
+  max-width: min(46vw, 240px);
   object-position: left center;
 }
 
@@ -143,6 +144,7 @@
   aspect-ratio: 1;
   max-height: var(--cb-header-logo-h);
   max-width: var(--cb-header-logo-h);
+  min-width: calc(var(--cb-header-logo-h) * 0.85);
   object-position: center;
 }
 
@@ -173,8 +175,32 @@
   min-width: 0;
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   container-type: inline-size;
   container-name: cb-header-logo;
+}
+
+/**
+ * Legal monocopy block (login + platform + model shells) — hairline gold, soft falloff at edges.
+ */
+.cb-legal-footer-top-rule {
+  display: block;
+  height: 1px;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto 0.85rem;
+  border: 0;
+  padding: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 204, 106, 0.06) 6%,
+    rgba(255, 204, 106, 0.32) 42%,
+    rgba(255, 204, 106, 0.4) 50%,
+    rgba(255, 204, 106, 0.32) 58%,
+    rgba(255, 204, 106, 0.06) 94%,
+    transparent 100%
+  );
 }
 
 /* Default (<1024px): lion until container is wide enough for wordmark */

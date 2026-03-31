@@ -39,9 +39,10 @@ function HeaderChrome({
   const showPricingModelBack = Boolean(isPricing && pricingBackHref);
   const showLoginCluster = (isPricing && !showPricingModelBack) || isCheckout;
 
+  /** `shrink` would let this column collapse to 0 width and hide all logos in flex layouts. */
   const logoClassName = pricingStyleGrid
-    ? "relative flex min-w-0 max-w-[34%] shrink items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none"
-    : "relative flex min-w-0 max-w-[42%] shrink items-center sm:max-w-none";
+    ? "relative flex min-w-0 max-w-[34%] shrink-0 items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none"
+    : "relative flex min-w-0 max-w-[42%] shrink-0 items-center sm:max-w-none";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#FFCC6A]/20 bg-[#0D3A1D] pt-[env(safe-area-inset-top)]">
