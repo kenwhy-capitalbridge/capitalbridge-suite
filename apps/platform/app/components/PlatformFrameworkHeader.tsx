@@ -1,3 +1,4 @@
+import { BRAND_FULL_CAPITAL_BRIDGE_GOLD } from "@cb/ui";
 import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
 import { PlatformLoginButton } from "./PlatformLoginButton";
@@ -75,9 +76,9 @@ export async function PlatformFrameworkHeader({
           >
             <img
               className="cb-header-chrome-logo"
-              src="/brand/CapitalBridgeLogo_Gold.svg"
+              src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
               alt=""
-              width={200}
+              width={240}
               height={40}
               fetchPriority="high"
               decoding="async"

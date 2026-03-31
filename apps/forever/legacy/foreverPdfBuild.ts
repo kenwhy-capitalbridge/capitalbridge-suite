@@ -7,6 +7,7 @@ import type { LionVerdictClientReport } from "@cb/advisory-graph/lionsVerdict";
 import { formatLionPublicStatusLabel } from "@cb/advisory-graph/lionsVerdict";
 import { advisoryFrameworkPdfIntro } from "@cb/shared/advisoryFramework";
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from "@cb/shared/reportIdentity";
+import { CB_REPORT_LEGAL_NOTICE } from "@cb/shared/reportTraceability";
 import { jsPDF } from "jspdf";
 import type { CalculationResult } from "./types";
 import { ExpenseType } from "./types";
@@ -616,6 +617,21 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
     ensureSpace(4.2);
     doc.text(line, margin, pos.y);
     pos.y += 4.2;
+  }
+
+  pos.y += 5;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(7);
+  doc.setTextColor(90, 90, 90);
+  const legalLines = doc.splitTextToSize(CB_REPORT_LEGAL_NOTICE, maxW);
+  const legalBlock = legalLines.length * 3.6 + 4;
+  if (pos.y + legalBlock > CONTENT_BOTTOM_MM) {
+    newPage();
+  }
+  for (const line of legalLines) {
+    ensureSpace(3.6);
+    doc.text(line, margin, pos.y);
+    pos.y += 3.6;
   }
 
   return doc;

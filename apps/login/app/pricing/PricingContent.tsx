@@ -416,7 +416,7 @@ export function PricingContent() {
               The Capital Bridge Advisory Framework
             </h1>
             <div className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-cb-cream/85 sm:mt-4 sm:text-lg sm:leading-normal">
-              <p className="font-semibold text-cb-cream">
+              <p className="font-serif font-semibold text-cb-cream">
                 A Clear Path To Growing Capital And Building Income That Lasts A Lifetime
               </p>
               <p className="mt-2">
@@ -609,7 +609,7 @@ export function PricingContent() {
             <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
-                <p className="font-medium text-cb-cream">Scenario-Based Stress Testing</p>
+                <p className="font-serif font-medium text-cb-cream">Scenario-Based Stress Testing</p>
                 <p className="mt-1 text-sm text-cb-cream/75">
                   Evaluate how assets perform under multiple withdrawal and stress
                   conditions.
@@ -619,7 +619,7 @@ export function PricingContent() {
             <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
-                <p className="font-medium text-cb-cream">
+                <p className="font-serif font-medium text-cb-cream">
                   Long-Term Capital Durability Analysis
                 </p>
                 <p className="mt-1 text-sm text-cb-cream/75">
@@ -630,7 +630,7 @@ export function PricingContent() {
             <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
-                <p className="font-medium text-cb-cream">Structured Advisory Framework</p>
+                <p className="font-serif font-medium text-cb-cream">Structured Advisory Framework</p>
                 <p className="mt-1 text-sm text-cb-cream/75">
                   Translate complex financial scenarios into clear insights that help you compare opportunities, grow capital faster, and make confident decisions.
                 </p>
@@ -639,7 +639,7 @@ export function PricingContent() {
             <div className="flex gap-3 rounded-xl border border-cb-cream/20 bg-cb-cream/5 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
               <span className="text-cb-gold" aria-hidden>◆</span>
               <div>
-                <p className="font-medium text-cb-cream">Transparent Modelling Logic</p>
+                <p className="font-serif font-medium text-cb-cream">Transparent Modelling Logic</p>
                 <p className="mt-1 text-sm text-cb-cream/75">
                   Provide structured outputs that explain the reasoning behind advisory
                   conclusions.

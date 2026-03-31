@@ -1,6 +1,6 @@
 "use client";
 
-import { ChromePendingNavLink } from "@cb/ui";
+import { BRAND_FULL_CAPITAL_BRIDGE_GOLD, ChromePendingNavLink } from "@cb/ui";
 
 /** Marketing home logo strip — same pending + spinner behaviour as login / model headers. */
 export function PlatformMarketingHomeLink({ href }: { href: string }) {
@@ -18,9 +18,9 @@ export function PlatformMarketingHomeLink({ href }: { href: string }) {
     >
       <img
         className="cb-header-chrome-logo"
-        src="/brand/CapitalBridgeLogo_Gold.svg"
+        src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
         alt=""
-        width={200}
+        width={240}
         height={40}
         fetchPriority="high"
         decoding="async"

@@ -116,7 +116,7 @@
   display: block;
   height: var(--cb-header-logo-h);
   width: auto;
-  max-width: min(34vw, 168px);
+  max-width: min(42vw, 220px);
   object-fit: contain;
   object-position: left center;
 }

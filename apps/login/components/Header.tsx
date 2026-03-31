@@ -7,7 +7,7 @@ import {
   PRICING_RETURN_MODEL_QUERY,
   pricingReturnModelDashboardUrl,
 } from "@cb/shared/urls";
-import { ChromePendingNavLink } from "@cb/ui";
+import { BRAND_FULL_CAPITAL_BRIDGE_GOLD, ChromePendingNavLink } from "@cb/ui";
 
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
@@ -53,9 +53,9 @@ function HeaderChrome({
           ariaLabel="Capital Bridge home"
         >
           <img
-            src="/brand/CapitalBridgeLogo_Gold.svg"
+            src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
             alt=""
-            width={200}
+            width={240}
             height={40}
             className="cb-header-chrome-logo max-w-full"
             fetchPriority="high"

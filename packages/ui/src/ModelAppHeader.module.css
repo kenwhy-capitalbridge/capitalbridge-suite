@@ -91,7 +91,7 @@
 .logoImgLegacy {
   height: var(--cb-header-logo-h);
   width: auto;
-  max-width: min(28vw, 128px);
+  max-width: min(42vw, 220px);
   object-fit: contain;
   object-position: left center;
   display: block;

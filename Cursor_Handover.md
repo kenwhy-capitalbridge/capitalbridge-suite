@@ -1,66 +1,121 @@
 # Cursor handover
 
-**Generated:** 2026-03-28 (session close)  
-**For:** New chat session / continuity
+**Generated:** 2026-03-28  
+**Updated:** 2026-03-28 (full conversation + PDF strategy)  
+**Purpose:** Start a new chat from this file to avoid long, laggy threads. Paste or @-mention this file when opening a new session.
 
 ---
 
-## Locked restore point
+## Snapshot: where `main` should be (this session)
+
+After the work below, `origin/main` included at least:
+
+| Commit | Summary |
+|--------|---------|
+| `69b2529` | Capital Stress: **Monte Carlo path count** in CAPITAL DIAGNOSIS intro (`simulationCount`, gold bold serif). |
+| `9d248c2` | Capital Stress: second **EXPAND ALL / COLLAPSE ALL** above **Structural Stability Map** (`toggleExpandAllSections` shared with lower control). |
+
+**Verify current tip:**
+
+```bash
+git fetch origin && git log -1 --oneline origin/main
+```
+
+---
+
+## Locked restore point (older — optional)
 
 | | |
 |---|---|
 | **Tag** | `restore-point-2026-03-28` |
 | **Commit** | `eee0b61` — *fix(ui): center ChromeSpinnerGlyph and restore reliable rotation* |
-| **Full SHA** | `eee0b61e52b2b275176d903f66a50432c06d3aa0` |
 
-**Return to this state:**
-
-```bash
-git fetch origin
-git checkout restore-point-2026-03-28
-# or: git checkout eee0b61
-```
-
-**Create the tag locally** (if you clone fresh and the tag is missing):
-
-```bash
-git tag -a restore-point-2026-03-28 eee0b61 -m "Restore: spinner UX + layout fixes locked"
-```
-
-The tag should exist on **`origin`** after push from this session. *(This tag name was moved from an older snapshot to **`eee0b61`** so it reflects the spinner / pending-button UX work; if you need the prior pointer, use commit **`228250a`.)*
+Return with `git checkout restore-point-2026-03-28` or `git checkout eee0b61` if you need the **pre-stress-copy** spinner/layout baseline. For latest product work, use **`origin/main`** instead.
 
 ---
 
-## Where we left off
+## Context and background
 
-1. **Git / deploy:** `main` at **`eee0b61`**; pending-button UX and **ChromeSpinnerGlyph** layout/animation work are merged and intended to be on **`origin/main`**. Vercel builds from `main` unless overridden.
+### Monorepo
 
-2. **UI/UX — pending controls (done in this arc):** Consistent pattern: **click → label hidden → spinner only inside control → disabled while loading**. Applied across platform (header, profile, dashboard tiles), login/auth flows, `@cb/ui` chrome, Capital Stress run CTA, advisory save button, etc.
+- **Workspace:** `capitalbridge-suite` — apps: `capitalstress`, `capitalhealth`, `incomeengineering`, `forever`, `login`, `platform`, `api`.
+- **Shared packages:** `@cb/ui`, `@cb/shared`, `@cb/advisory-graph`, `@cb/lion-verdict`, `@cb/pdf`.
+- **Login / pricing (public):** [login.thecapitalbridge.com/pricing](https://login.thecapitalbridge.com/pricing) — SELECT PLANS, auth chrome.
+- **Capital Stress (prod example):** `capitalstress.thecapitalbridge.com` — dashboard after login.
 
-3. **ChromeSpinnerGlyph:** Rotation uses **CSS keyframes** on `.cb-spinner-glyph-spin` (not SMIL). Shared wrapper **`.cb-pending-btn-inner`** (in `cb-model-base.css`) centers the glyph when paired with `.cb-visually-hidden` text. Header grid uses **`minmax(4.5rem, 1fr)`** on the right column so LOGIN/auth does not collapse. **`ChromePendingNavLink`** uses `display: inline-flex` when pending.
+### Prior arc (before this conversation’s UI tweaks)
 
-4. **Agreed next work (from earlier plan — confirm with user):**  
-   - **Phase A — UI/UX:** further polish only if needed.  
-   - **Phase B — PDF:** align PDF with **Capital Bridge Advisory Framework** (three pillars; modules Forever / Income Engineering, Capital Health, Capital Stress). Reference: `assets/Capital_Bridge_Framework-725bc425-8030-4e01-8f8a-1c34e767cf0e.png`.
-
-5. **Lion’s Verdict (trial vs paid):** `packages/lion-verdict/access.ts` — `canAccessLion(user)` is true only if `isPaid` or `hasActiveTrialUpgrade`. **Trial** → **`LionVerdictLocked`**; **paid** (or active trial upgrade) → **`LionVerdictActive`** + copy panel. Capital Health / Stress use plan entitlements for some score labeling.
-
-6. **Known follow-up (optional):** `LionVerdictLocked` unlock control may still need a real pricing/subscribe link if product wants it.
+- Pending-button UX: spinner-only-in-control, `ChromeSpinnerGlyph` CSS rotation, `.cb-pending-btn-inner`, header grid fixes.
+- Lion trial vs paid: `packages/lion-verdict/access.ts` → `LionVerdictLocked` vs `LionVerdictActive`.
+- Optional follow-up: real pricing link on locked Lion control.
 
 ---
 
-## Useful paths
+## What we did in this conversation (completed)
 
-- Spinner / chrome: `packages/ui/src/ChromeSpinnerGlyph.tsx`, `ChromePendingNavLink.tsx`, `cb-model-base.css` (`.cb-pending-btn-inner`, `.cb-spinner-glyph-spin`)
-- Platform: `apps/platform/app/components/` (login, logout, profile, `PlatformFrameworkHeader.tsx`)
-- Login: `apps/login/` (auth buttons use `ButtonSpinner` + `cb-visually-hidden` where aligned)
-- Lion: `packages/lion-verdict/`
-- Other notes: `gpthandover.md`
+### 1. Capital Stress — CAPITAL DIAGNOSIS + path count
+
+- **File:** `apps/capitalstress/legacy/App.tsx` (inside `{mcResult && …}`).
+- **Behaviour:** After **Run Simulation**, the intro paragraph appends **gold, bold, serif, uppercase, tracking-wide** text: **“Based on {n} DATA POINTS ANALYSED”**.
+- **Metric:** `{n}` = **`mcResult.simulationCount`** — **number of Monte Carlo paths** from `runMonteCarlo` (via `getSimulationCount(years)`), **not** total daily steps. Example: 10 years → `3,650` paths; formatted with **`toLocaleString()`**.
+- **Product wording:** User asked for “DATA POINTS ANALYSED” while confirming the **number** is path count.
+
+### 2. Capital Stress — EXPAND ALL above Structural Stability Map
+
+- **Placement:** Immediately **below** the gold `border-t` divider, **above** the Structural Stability Map card; **right-aligned** ghost gold button; `no-print`.
+- **Visibility:** Only when `mcResult && depletionBarOutput != null` (same as map).
+- **Logic:** **`toggleExpandAllSections`** (`useCallback` + functional `setCollapsedSections`) toggles all collapsible sections (`structuralStabilityMap`, `capitalOutcomeDist`, `capitalStressRadar`, `furtherStressTest`, `capitalAdjustmentSimulator`). Lower **EXPAND ALL** under Further Structural Stress Test uses the **same** handler.
+
+### 3. Report format strategy (decision — not fully migrated)
+
+- **Agreed standard:** **DOM print route + Playwright** for PDFs across all four model apps (replace divergent **jsPDF** / **@react-pdf/renderer** as the canonical pipeline over time).
+- **Existing infra to use:**
+  - `scripts/generate-pdf.ts` → `@cb/pdf/render` **`renderPdf({ url, outputPath })`**.
+  - Playwright: **`page.goto(realUrl)`**, **`emulateMedia({ media: "print" })`**, wait **`window.__REPORT_READY__ === true`** (default), **`printBackground`**, **`preferCSSPageSize`** — see `packages/pdf/src/renderPdf.ts`.
+  - Client helpers: `packages/pdf/src/reportReady.ts` — `beginReportReadyCycle`, `completeReportReadyCycle`, optional `subscribeReportReadyOnPrint`.
+- **Shared tokens:** `packages/shared/src/cbReportTemplate.ts` (margins, brand paths, firm lines); `packages/advisory-graph/src/reports/tokens.ts` (print typography/colours). *Update the comment in `cbReportTemplate.ts` when react-pdf is no longer primary.*
+- **Per app:** dedicated **print-only route** + `@media print` / shared `print.css`; Capital Stress already has patterns: `PrintReport.tsx`, `@cb/advisory-graph/reports/print.css`, `apps/capitalstress/app/docs/sample-report/page.tsx`.
+
+---
+
+## Action items for the next session (suggested)
+
+1. **PDF migration (large):**  
+   - **Income Engineering:** move off `jsPDF` in `App.tsx` / `PrintReportView` toward a print URL + Playwright.  
+   - **Forever:** same vs `foreverPdfBuild.ts`.  
+   - **Capital Health:** add DOM print route mirroring `CapitalGrowthReport` sections; deprecate or secondary **@react-pdf/renderer** for “official” PDF.  
+   - **Capital Stress:** ensure **download** path can target print URL + Playwright where server/CI PDF is needed; keep `window.print()` if product wants browser print too.
+
+2. **Shared report shell:** Extract repeated DOM (cover, section headers, legal block) into `@cb/ui` or `@cb/advisory-graph` so all four print routes stay aligned.
+
+3. **Optional copy tweak:** If “DATA POINTS ANALYSED” should say **paths** for accuracy, rename while keeping `simulationCount`.
+
+4. **Handover hygiene:** After large milestones, bump **Snapshot** table at top of this file + `git log -1`.
+
+---
+
+## Useful paths (quick reference)
+
+| Area | Path |
+|------|------|
+| Capital Stress dashboard UI | `apps/capitalstress/legacy/App.tsx` |
+| Capital Stress print layout | `apps/capitalstress/legacy/PrintReport.tsx` |
+| Monte Carlo / `simulationCount` | `apps/capitalstress/legacy/services/mathUtils.ts` (`getSimulationCount`, `runMonteCarlo`) |
+| Playwright PDF | `packages/pdf/src/renderPdf.ts`, `scripts/generate-pdf.ts` |
+| Report ready flag | `packages/pdf/src/reportReady.ts` |
+| Model footer / download CTA | `packages/ui/src/ModelReportDownloadFooter.tsx` |
+| Shared print CSS tokens (apps) | `packages/ui/src/cb-model-base.css`, `packages/advisory-graph/src/reports/` |
+| IE print | `apps/incomeengineering/legacy/components/PrintReportView.tsx` |
+| Health PDF (react-pdf today) | `apps/capitalhealth/legacy/CapitalGrowthReport.tsx` |
+| Forever PDF (jsPDF today) | `apps/forever/legacy/foreverPdfBuild.ts` |
+| Lion | `packages/lion-verdict/` |
+
+Other notes in repo: `gpthandover.md`, `Cursor-handover.txt`, `lapsap.txt` (if present).
 
 ---
 
 ## Your role (next assistant)
 
-- **Verify** `origin/main` (or the tag) matches expectations before large changes.
-- **Be concise and action-oriented.** Ask targeted questions if PDF or UI scope is unclear.
-- **No response required** until the user gives further instructions (user preference for how a new session may start).
+- Read this file first; use **Snapshot** + **Action items** to pick up work.
+- **Be concise**; confirm scope before megarefactors (especially PDF migration).
+- Prefer **focused diffs**; match existing patterns in each app until shared shell exists.

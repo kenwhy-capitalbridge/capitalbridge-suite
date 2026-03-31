@@ -1,8 +1,8 @@
+import { CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY } from "./legalMonocopy";
 import { formatReportGeneratedAtLabel } from "./reportIdentity";
 
-/** Footer on every exported / printed report page. */
-export const CB_REPORT_LEGAL_NOTICE =
-  "© Capital Bridge. All rights reserved. Capital Bridge™ and associated marks are proprietary. Any unauthorised use, reproduction, distribution, or derivation of this report or its contents is strictly prohibited. All content, outputs, and presentation derived from the proprietary multi-layer capital allocation engine are the intellectual property of Capital Bridge.";
+/** Footer on every exported / printed report page (same text as site `CbLegalSiteFooter`). */
+export const CB_REPORT_LEGAL_NOTICE = CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY;
 
 export type CbReportModelCode = "STRESS" | "INCOME" | "HEALTH" | "FOREVER";
 

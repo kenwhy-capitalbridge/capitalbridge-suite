@@ -1,4 +1,5 @@
 import React from 'react';
+import { BRAND_FULL_CAPITAL_BRIDGE_GOLD } from '@cb/ui';
 
 const CAPITAL_BRIDGE_URL = 'https://thecapitalbridge.com/advisory-platform/';
 
@@ -21,10 +22,10 @@ export const HeaderSimple: React.FC = () => (
           decoding="async"
         />
         <img
-          src="/brand/CapitalBridgeLogo_Gold.svg"
+          src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
           alt="Capital Bridge — Strength Behind Every Structure"
-          className="hidden h-6 w-auto max-w-[100px] shrink-0 object-contain object-left sm:block sm:h-9 sm:max-w-[160px] md:h-10 md:max-w-[180px]"
-          width={180}
+          className="hidden h-6 w-auto max-w-[min(42vw,220px)] shrink-0 object-contain object-left sm:block sm:h-9 md:h-10"
+          width={240}
           height={40}
           decoding="async"
         />

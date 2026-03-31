@@ -4,11 +4,7 @@ import type { ReactNode } from "react";
 import { MARKETING_SITE_URL, platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
 import { ChromePendingNavLink } from "./ChromePendingNavLink";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
-import {
-  BRAND_FULL_CAPITAL_BRIDGE_GOLD,
-  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
-  BRAND_LIONHEAD_GOLD,
-} from "./brandPaths";
+import { BRAND_FULL_CAPITAL_BRIDGE_GOLD, BRAND_LIONHEAD_GOLD } from "./brandPaths";
 import { useModelMetricSpine } from "./modelMetricSpineContext";
 import styles from "./ModelAppHeader.module.css";
 
@@ -163,9 +159,9 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
           <div className={styles.wrap}>
             <ChromePendingNavLink href={home} className={styles.logoLinkLegacy} ariaLabel="Capital Bridge home">
               <img
-                src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
+                src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
                 alt=""
-                width={200}
+                width={240}
                 height={40}
                 decoding="async"
                 fetchPriority="high"

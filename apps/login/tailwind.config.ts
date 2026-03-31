@@ -27,8 +27,9 @@ const config: Config = {
         ],
       },
       fontFamily: {
-        serif: ["var(--font-roboto-serif)", "Georgia", "serif"],
-        sans: ["var(--font-inter)", "Arial", "sans-serif"],
+        /** Roboto Serif — loaded in `@cb/ui/cb-model-base.css`; must match `--cb-font-serif`. */
+        serif: ["var(--cb-font-serif)"],
+        sans: ["var(--cb-font-sans)", "Arial", "sans-serif"],
       },
     },
   },
