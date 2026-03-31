@@ -21,10 +21,9 @@ export function HeaderBrandPicture({
     <picture className={`cb-header-chrome-picture ${pictureClassName}`.trim()}>
       <source media="(min-width: 1440px)" srcSet={BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT} />
       <source media="(min-width: 1024px)" srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD} />
-      <source media="(min-width: 400px)" srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD} />
       <img
         src={BRAND_LIONHEAD_GOLD}
-        alt=""
+        alt="Capital Bridge"
         width={280}
         height={48}
         decoding="async"

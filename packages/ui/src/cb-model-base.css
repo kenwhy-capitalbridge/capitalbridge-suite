@@ -142,6 +142,13 @@
   }
 }
 
+@media (max-width: 768px) {
+  .cb-header-chrome-picture-img {
+    height: 28px;
+    max-width: none;
+  }
+}
+
 /** Center title: scales down on narrow viewports so it clears logo + actions. */
 .cb-header-chrome-title {
   margin: 0;
