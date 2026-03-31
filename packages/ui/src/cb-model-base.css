@@ -179,6 +179,20 @@
 /**
  * Legal monocopy block (login + platform + model shells) — hairline gold, soft falloff at edges.
  */
+
+
+/** Legal footer monocopy — single source for spacing/size across all apps. */
+.cb-legal-footer-copy {
+  margin-inline: auto;
+  max-width: 74rem;
+  text-align: center;
+  font-family: var(--cb-font-sans);
+  color: rgba(246, 245, 241, 0.88);
+  line-height: 1.35;
+  font-size: clamp(9.8px, 0.64rem, 10.6px);
+  letter-spacing: 0.004em;
+  text-wrap: pretty;
+}
 .cb-legal-footer-top-rule {
   display: block;
   height: 1px;

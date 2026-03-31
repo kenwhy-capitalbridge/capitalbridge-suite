@@ -1,6 +1,7 @@
 import {
   BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT,
   BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
+  BRAND_LARGE_FULL_CAPITAL_BRIDGE_GOLD,
   BRAND_LIONHEAD_GOLD,
 } from "./brandPaths";
 
@@ -19,7 +20,8 @@ export function HeaderBrandPicture({
 }: HeaderBrandPictureProps) {
   return (
     <picture className={`cb-header-chrome-picture ${pictureClassName}`.trim()}>
-      <source media="(min-width: 1280px)" srcSet={BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT} />
+      <source media="(min-width: 1440px)" srcSet={BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT} />
+      <source media="(min-width: 1024px)" srcSet={BRAND_LARGE_FULL_CAPITAL_BRIDGE_GOLD} />
       <source media="(min-width: 400px)" srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD} />
       <img
         src={BRAND_LIONHEAD_GOLD}
