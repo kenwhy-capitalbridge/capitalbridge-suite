@@ -1,4 +1,8 @@
-import { BRAND_LARGE_FULL_CAPITAL_BRIDGE_GOLD, BRAND_LIONHEAD_GOLD } from "./brandPaths";
+import {
+  BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT,
+  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
+  BRAND_LIONHEAD_GOLD,
+} from "./brandPaths";
 
 export type HeaderBrandPictureProps = {
   pictureClassName?: string;
@@ -6,11 +10,8 @@ export type HeaderBrandPictureProps = {
 };
 
 /**
- * One `<picture>`; first matching `<source>` wins.
- *
- * **Wide desktop (≥1280px):** full gold lockup (`BiggerFont-Capital Logo Vertical Transparent.svg`).
- * **Below that (narrow desktop, tablet, mobile):** lion head only — no standalone
- * `CapitalBridgeLogo_Gold.svg` wordmark so the header stays compact when width is tight.
+ * Single `<picture>` so one asset always renders — avoids fragile stacks of `display:none` imgs
+ * and container-query ordering bugs across browsers.
  */
 export function HeaderBrandPicture({
   pictureClassName = "",
@@ -18,7 +19,8 @@ export function HeaderBrandPicture({
 }: HeaderBrandPictureProps) {
   return (
     <picture className={`cb-header-chrome-picture ${pictureClassName}`.trim()}>
-      <source media="(min-width: 1280px)" srcSet={BRAND_LARGE_FULL_CAPITAL_BRIDGE_GOLD} />
+      <source media="(min-width: 1280px)" srcSet={BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT} />
+      <source media="(min-width: 400px)" srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD} />
       <img
         src={BRAND_LIONHEAD_GOLD}
         alt=""
