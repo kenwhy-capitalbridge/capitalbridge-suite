@@ -3,6 +3,7 @@
  * Extend with buttons, cards, forms, etc. as needed.
  */
 export { ModelAppHeader, type ModelAppHeaderProps } from "./ModelAppHeader";
+export { HeaderBrandPicture, type HeaderBrandPictureProps } from "./HeaderBrandPicture";
 export { CapitalBridgeLogoText, type CapitalBridgeLogoTextProps } from "./CapitalBridgeLogoText";
 export {
   BRAND_CAPITAL_BRIDGE_LOGO_GOLD,

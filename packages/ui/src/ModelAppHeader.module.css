@@ -85,64 +85,7 @@
   justify-self: start;
   display: flex;
   align-items: center;
-  min-width: 0;
-  container-type: inline-size;
-  container-name: model-legacy-logo;
-}
-
-.legacyLogoFull,
-.legacyLogoWordmark,
-.legacyLogoLion {
-  height: var(--cb-header-logo-h);
-  width: auto;
-  flex-shrink: 0;
-  object-fit: contain;
-  display: none;
-}
-
-.legacyLogoFull {
-  max-width: min(42vw, 220px);
-  object-position: left center;
-}
-
-.legacyLogoWordmark {
-  max-width: min(38vw, 200px);
-  object-position: left center;
-}
-
-.legacyLogoLion {
-  aspect-ratio: 1;
-  max-width: var(--cb-header-logo-h);
-  object-position: center;
-}
-
-@media (max-width: 1023px) {
-  .logoLinkLegacy .legacyLogoLion {
-    display: block;
-  }
-}
-
-@container model-legacy-logo (min-width: 152px) {
-  @media (max-width: 1023px) {
-    .logoLinkLegacy .legacyLogoWordmark {
-      display: block;
-    }
-
-    .logoLinkLegacy .legacyLogoLion {
-      display: none;
-    }
-  }
-}
-
-@media (min-width: 1024px) {
-  .logoLinkLegacy .legacyLogoFull {
-    display: block;
-  }
-
-  .logoLinkLegacy .legacyLogoWordmark,
-  .logoLinkLegacy .legacyLogoLion {
-    display: none;
-  }
+  min-width: min-content;
 }
 
 .titleCenter {
@@ -304,73 +247,7 @@
   align-items: center;
   align-self: center;
   flex-shrink: 0;
-  container-type: inline-size;
-  container-name: model-spine-logo;
-}
-
-/* ≥1024px: full lockup; 768–1023px: wordmark when slot is wide enough, else lion (see @container). */
-.logoFullWide {
-  display: none;
-  height: var(--cb-header-logo-h);
-  width: auto;
-  max-width: min(42vw, 260px);
-  object-fit: contain;
-  object-position: left center;
-}
-
-.logoWordmarkTablet {
-  display: none;
-  height: var(--cb-header-logo-h);
-  width: auto;
-  max-width: min(40vw, 220px);
-  object-fit: contain;
-  object-position: left center;
-}
-
-.logoLionTablet {
-  display: none;
-  height: var(--cb-header-logo-h);
-  width: auto;
-  aspect-ratio: 1;
-  max-width: var(--cb-header-logo-h);
-  object-fit: contain;
-  object-position: center;
-}
-
-@media (min-width: 1024px) {
-  .logoFullWide {
-    display: block;
-  }
-
-  .logoWordmarkTablet {
-    display: none;
-  }
-
-  .logoLionTablet {
-    display: none;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .logoFullWide {
-    display: none;
-  }
-
-  .logoLionTablet {
-    display: block;
-  }
-}
-
-@container model-spine-logo (min-width: 152px) {
-  @media (max-width: 1023px) {
-    .logoLink .logoWordmarkTablet {
-      display: block;
-    }
-
-    .logoLink .logoLionTablet {
-      display: none;
-    }
-  }
+  min-width: min-content;
 }
 
 .titleCluster {

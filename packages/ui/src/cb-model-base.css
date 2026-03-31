@@ -119,33 +119,32 @@
   animation: cb-ui-spinner-rotate 0.75s linear infinite;
 }
 
-/** Full / wordmark / lion variants — height fills header row; visibility via rules below (not all three `display:block`). */
-.cb-header-chrome-logo-full,
-.cb-header-chrome-logo-wordmark,
-.cb-header-chrome-lion-mobile {
-  height: var(--cb-header-logo-h);
-  width: auto;
-  object-fit: contain;
+/**
+ * Header brand — `<picture>` + single `<img>` (`HeaderBrandPicture`); one raster always paints.
+ */
+.cb-header-chrome-picture {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
   flex-shrink: 0;
 }
 
-.cb-header-chrome-logo-full {
-  /* vw caps avoid cqw→0 when the inline-size container is narrower than the SVG (flex shrink / first paint). */
-  max-width: min(52vw, 280px);
-  object-position: left center;
-}
-
-.cb-header-chrome-logo-wordmark {
-  max-width: min(46vw, 240px);
-  object-position: left center;
-}
-
-.cb-header-chrome-lion-mobile {
-  aspect-ratio: 1;
+.cb-header-chrome-picture-img {
+  height: var(--cb-header-logo-h);
+  width: auto;
   max-height: var(--cb-header-logo-h);
-  max-width: var(--cb-header-logo-h);
-  min-width: calc(var(--cb-header-logo-h) * 0.85);
-  object-position: center;
+  max-width: min(52vw, 280px);
+  object-fit: contain;
+  object-position: left center;
+  flex-shrink: 0;
+  display: block;
+}
+
+@media (max-width: 399px) {
+  .cb-header-chrome-picture-img {
+    max-width: var(--cb-header-logo-h);
+    object-position: center;
+  }
 }
 
 /** Center title: scales down on narrow viewports so it clears logo + actions. */
@@ -168,16 +167,13 @@
 }
 
 /**
- * Marketing home link: `container-type` picks wordmark vs lion when the slot is narrow.
- * ≥1024px: full lockup. <1024px: `CapitalBridgeLogo_Gold` if container ≥ ~9.5rem, else lion.
+ * Marketing home control wrapping `HeaderBrandPicture`.
  */
 .cb-header-chrome-home {
-  min-width: 0;
+  min-width: min-content;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  container-type: inline-size;
-  container-name: cb-header-logo;
 }
 
 /**
@@ -201,45 +197,6 @@
     rgba(255, 204, 106, 0.06) 94%,
     transparent 100%
   );
-}
-
-/* Default (<1024px): lion until container is wide enough for wordmark */
-.cb-header-chrome-logo-full {
-  display: none;
-}
-
-.cb-header-chrome-logo-wordmark {
-  display: none;
-}
-
-.cb-header-chrome-lion-mobile {
-  display: block;
-}
-
-@container cb-header-logo (min-width: 152px) {
-  @media (max-width: 1023px) {
-    .cb-header-chrome-home .cb-header-chrome-logo-wordmark {
-      display: block;
-    }
-
-    .cb-header-chrome-home .cb-header-chrome-lion-mobile {
-      display: none;
-    }
-  }
-}
-
-@media (min-width: 1024px) {
-  .cb-header-chrome-home .cb-header-chrome-logo-full {
-    display: block;
-  }
-
-  .cb-header-chrome-home .cb-header-chrome-logo-wordmark {
-    display: none;
-  }
-
-  .cb-header-chrome-home .cb-header-chrome-lion-mobile {
-    display: none;
-  }
 }
 
 html,

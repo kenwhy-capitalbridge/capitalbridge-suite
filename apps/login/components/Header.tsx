@@ -7,12 +7,7 @@ import {
   PRICING_RETURN_MODEL_QUERY,
   pricingReturnModelDashboardUrl,
 } from "@cb/shared/urls";
-import {
-  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
-  BRAND_FULL_CAPITAL_BRIDGE_GOLD,
-  BRAND_LIONHEAD_GOLD,
-  ChromePendingNavLink,
-} from "@cb/ui";
+import { ChromePendingNavLink, HeaderBrandPicture } from "@cb/ui";
 
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
@@ -39,10 +34,10 @@ function HeaderChrome({
   const showPricingModelBack = Boolean(isPricing && pricingBackHref);
   const showLoginCluster = (isPricing && !showPricingModelBack) || isCheckout;
 
-  /** `shrink` would let this column collapse to 0 width and hide all logos in flex layouts. */
+  /** `min-w-min` (min-content) keeps the logo slot from flex-collapsing to 0 width. */
   const logoClassName = pricingStyleGrid
-    ? "relative flex min-w-0 max-w-[34%] shrink-0 items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none"
-    : "relative flex min-w-0 max-w-[42%] shrink-0 items-center sm:max-w-none";
+    ? "relative flex min-w-min max-w-[34%] shrink-0 items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none"
+    : "relative flex min-w-min max-w-[42%] shrink-0 items-center sm:max-w-none";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#FFCC6A]/20 bg-[#0D3A1D] pt-[env(safe-area-inset-top)]">
@@ -58,31 +53,7 @@ function HeaderChrome({
           className={`cb-header-chrome-home ${logoClassName}`}
           ariaLabel="Capital Bridge home"
         >
-          <img
-            src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
-            alt=""
-            width={280}
-            height={48}
-            className="cb-header-chrome-logo-full max-w-full"
-            fetchPriority="high"
-            decoding="async"
-          />
-          <img
-            src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
-            alt=""
-            width={220}
-            height={44}
-            className="cb-header-chrome-logo-wordmark max-w-full"
-            decoding="async"
-          />
-          <img
-            className="cb-header-chrome-lion-mobile shrink-0"
-            src={BRAND_LIONHEAD_GOLD}
-            alt=""
-            width={48}
-            height={48}
-            decoding="async"
-          />
+          <HeaderBrandPicture />
         </ChromePendingNavLink>
 
         {pricingStyleGrid ? (
