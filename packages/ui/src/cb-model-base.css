@@ -140,6 +140,13 @@
   display: block;
 }
 
+/** `Large-Full_CapitalBridge_Gold.svg` — allow a wider cap when that source is selected (≥1280px). */
+@media (min-width: 1280px) {
+  .cb-header-chrome-picture-img {
+    max-width: min(72vw, 460px);
+  }
+}
+
 @media (max-width: 399px) {
   .cb-header-chrome-picture-img {
     max-width: var(--cb-header-logo-h);
