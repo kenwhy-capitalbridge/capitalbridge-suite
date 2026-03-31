@@ -28,13 +28,7 @@
   /**
    * Sticky header logos — scale up to nearly fill the bar (login sm:h-14 ≈ 56px; mobile min-h-11 ≈ 44px).
    */
-  --cb-header-logo-h: clamp(34px, 11vw, 42px);
-}
-
-@media (min-width: 640px) {
-  :root {
-    --cb-header-logo-h: min(48px, calc(3.5rem - 6px));
-  }
+  --cb-header-logo-h: clamp(28px, 4.2vh, 48px);
 }
 
 @media (max-width: 639px) {
@@ -123,17 +117,18 @@
  * Header brand — `<picture>` + single `<img>` (`HeaderBrandPicture`); one raster always paints.
  */
 .cb-header-chrome-picture {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  height: var(--cb-header-logo-h);
   line-height: 0;
   flex-shrink: 0;
 }
 
 .cb-header-chrome-picture-img {
-  height: var(--cb-header-logo-h);
+  height: 100%;
   width: auto;
-  max-height: var(--cb-header-logo-h);
-  max-width: min(52vw, 280px);
+  max-width: 240px;
+  max-height: 100%;
   object-fit: contain;
   object-position: left center;
   flex-shrink: 0;
@@ -152,16 +147,16 @@
   margin: 0;
   padding-inline: 0.2rem;
   font-family: var(--cb-font-serif);
-  /* Cap separately from logo height — logo scales up; title stays typographic. */
-  font-size: clamp(11px, 2.1vw, 1.05rem);
-  line-height: 1.08;
+  font-size: clamp(14px, 1.6vw, 20px);
+  line-height: 1.2;
   font-weight: 700;
-  letter-spacing: clamp(0.05em, 0.45vw, 0.14em);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 204, 106, 0.95);
   text-align: center;
-  white-space: normal;
-  overflow-wrap: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   max-width: min(56vw, 22rem);
   pointer-events: none;
 }

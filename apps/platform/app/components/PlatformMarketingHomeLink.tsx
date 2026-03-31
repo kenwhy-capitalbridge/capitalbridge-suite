@@ -14,6 +14,7 @@ export function PlatformMarketingHomeLink({ href }: { href: string }) {
         display: "flex",
         alignItems: "center",
         minWidth: "min-content",
+        flexShrink: 0,
       }}
     >
       <HeaderBrandPicture />

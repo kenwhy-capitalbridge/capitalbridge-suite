@@ -55,7 +55,7 @@ export async function PlatformFrameworkHeader({
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
             alignItems: "center",
-            columnGap: "0.5rem",
+            columnGap: "clamp(16px, 2vw, 32px)",
             minHeight: 54,
             maxWidth: 1280,
             margin: "0 auto",
@@ -72,6 +72,7 @@ export async function PlatformFrameworkHeader({
               display: "flex",
               alignItems: "center",
               minWidth: "min-content",
+              flexShrink: 0,
             }}
           >
             <HeaderBrandPicture />
@@ -134,7 +135,7 @@ export async function PlatformFrameworkHeader({
           display: "grid",
           gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
           alignItems: "center",
-          columnGap: "0.5rem",
+          columnGap: "clamp(16px, 2vw, 32px)",
           minHeight: 48,
           maxWidth: 1280,
           margin: "0 auto",

@@ -5,7 +5,6 @@ import { MARKETING_SITE_URL, platformBackThroughSessionSyncUrl } from "@cb/share
 import { ChromePendingNavLink } from "./ChromePendingNavLink";
 import { HeaderBrandPicture } from "./HeaderBrandPicture";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
-import { BRAND_LIONHEAD_GOLD } from "./brandPaths";
 import { useModelMetricSpine } from "./modelMetricSpineContext";
 import styles from "./ModelAppHeader.module.css";
 
@@ -115,15 +114,12 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
 
             <div className={styles.spineMobile}>
               <div className={styles.spineMobileTop}>
-                <ChromePendingNavLink href={home} className={styles.spineMobileLionLink} ariaLabel="Capital Bridge home">
-                  <img
-                    src={BRAND_LIONHEAD_GOLD}
-                    alt=""
-                    width={32}
-                    height={32}
-                    decoding="async"
-                    className={styles.spineMobileLion}
-                  />
+                <ChromePendingNavLink
+                  href={home}
+                  className={`${styles.spineMobileLogoLink} cb-header-chrome-home`}
+                  ariaLabel="Capital Bridge home"
+                >
+                  <HeaderBrandPicture imgClassName={`${styles.spineMobileLogo} cb-header-chrome-picture-img`} />
                 </ChromePendingNavLink>
                 <div className={styles.spineMobileBackSlot}>
                   <ModelAppHeaderBackButton href={back} />
