@@ -238,7 +238,7 @@
 .spineDesktopLeft {
   display: flex;
   align-items: center;
-  gap: clamp(0.45rem, 1.1vw, 0.85rem);
+  gap: clamp(0.8rem, 2vw, 1.6rem);
   min-width: 0;
 }
 
@@ -248,6 +248,7 @@
   align-self: center;
   flex-shrink: 0;
   min-width: min-content;
+  margin-right: clamp(0.25rem, 0.8vw, 0.6rem);
 }
 
 .titleCluster {
