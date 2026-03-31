@@ -25,8 +25,16 @@
   --pf-chrome-font: 0.65rem;
   --pf-header-auth-size: 26px;
   --pf-chrome-pad-x-inline: 0.65rem;
-  /** Sticky header: center title cap-height matches logo image height (platform, login, model apps). */
-  --cb-header-logo-h: clamp(17px, 2.1vw, 22px);
+  /**
+   * Sticky header logos — scale up to nearly fill the bar (login sm:h-14 ≈ 56px; mobile min-h-11 ≈ 44px).
+   */
+  --cb-header-logo-h: clamp(34px, 11vw, 42px);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --cb-header-logo-h: min(48px, calc(3.5rem - 6px));
+  }
 }
 
 @media (max-width: 639px) {
@@ -111,14 +119,31 @@
   animation: cb-ui-spinner-rotate 0.75s linear infinite;
 }
 
-/** Logo in three-column header chrome (marketing home link). */
-.cb-header-chrome-logo {
-  display: block;
+/** Full / wordmark / lion variants — height fills header row; visibility via rules below (not all three `display:block`). */
+.cb-header-chrome-logo-full,
+.cb-header-chrome-logo-wordmark,
+.cb-header-chrome-lion-mobile {
   height: var(--cb-header-logo-h);
   width: auto;
-  max-width: min(42vw, 220px);
   object-fit: contain;
+  flex-shrink: 0;
+}
+
+.cb-header-chrome-logo-full {
+  max-width: min(72cqw, 280px);
   object-position: left center;
+}
+
+.cb-header-chrome-logo-wordmark {
+  max-width: min(65cqw, 240px);
+  object-position: left center;
+}
+
+.cb-header-chrome-lion-mobile {
+  aspect-ratio: 1;
+  max-height: var(--cb-header-logo-h);
+  max-width: var(--cb-header-logo-h);
+  object-position: center;
 }
 
 /** Center title: scales down on narrow viewports so it clears logo + actions. */
@@ -126,7 +151,8 @@
   margin: 0;
   padding-inline: 0.2rem;
   font-family: var(--cb-font-serif);
-  font-size: clamp(12px, 2.2vw, var(--cb-header-logo-h));
+  /* Cap separately from logo height — logo scales up; title stays typographic. */
+  font-size: clamp(11px, 2.1vw, 1.05rem);
   line-height: 1.08;
   font-weight: 700;
   letter-spacing: clamp(0.05em, 0.45vw, 0.14em);
@@ -140,31 +166,53 @@
 }
 
 /**
- * Marketing home link: on tablet/mobile hide wide logo, show lion (`lionhead_Gold.svg` in `public/brand/`).
- * Add class `cb-header-chrome-home` on the wrapping `<a>`; full logo uses `cb-header-chrome-logo`.
+ * Marketing home link: `container-type` picks wordmark vs lion when the slot is narrow.
+ * ≥1024px: full lockup. <1024px: `CapitalBridgeLogo_Gold` if container ≥ ~9.5rem, else lion.
  */
 .cb-header-chrome-home {
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  container-type: inline-size;
+  container-name: cb-header-logo;
+}
+
+/* Default (<1024px): lion until container is wide enough for wordmark */
+.cb-header-chrome-logo-full {
+  display: none;
+}
+
+.cb-header-chrome-logo-wordmark {
+  display: none;
 }
 
 .cb-header-chrome-lion-mobile {
-  display: none;
-  height: var(--cb-header-logo-h);
-  width: auto;
-  max-height: 26px;
-  aspect-ratio: 1;
-  object-fit: contain;
-  object-position: center;
+  display: block;
 }
 
-/* Wordmark → lion at ≤1023px: platform, login, marketing home links. */
-@media (max-width: 1023px) {
-  .cb-header-chrome-home .cb-header-chrome-logo {
+@container cb-header-logo (min-width: 152px) {
+  @media (max-width: 1023px) {
+    .cb-header-chrome-home .cb-header-chrome-logo-wordmark {
+      display: block;
+    }
+
+    .cb-header-chrome-home .cb-header-chrome-lion-mobile {
+      display: none;
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  .cb-header-chrome-home .cb-header-chrome-logo-full {
+    display: block;
+  }
+
+  .cb-header-chrome-home .cb-header-chrome-logo-wordmark {
     display: none;
   }
 
   .cb-header-chrome-home .cb-header-chrome-lion-mobile {
-    display: block;
+    display: none;
   }
 }
 

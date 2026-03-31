@@ -40,7 +40,7 @@
 }
 
 .spacer {
-  height: calc(52px + 1px + env(safe-area-inset-top));
+  height: calc(56px + 1px + env(safe-area-inset-top));
   flex-shrink: 0;
 }
 
@@ -56,7 +56,7 @@
 
 @media (max-width: 767px) {
   .spacer {
-    height: calc(48px + 1px + env(safe-area-inset-top));
+    height: calc(50px + 1px + env(safe-area-inset-top));
   }
 
   /* Mobile metric strip (equal-height row) can exceed ~120px; keep body below fixed header. */
@@ -73,7 +73,7 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   column-gap: 0.5rem;
-  min-height: 52px;
+  min-height: 56px;
   max-width: 1280px;
   margin: 0 auto;
   padding: 0.35rem 1rem;
@@ -86,32 +86,63 @@
   display: flex;
   align-items: center;
   min-width: 0;
+  container-type: inline-size;
+  container-name: model-legacy-logo;
 }
 
-.logoImgLegacy {
+.legacyLogoFull,
+.legacyLogoWordmark,
+.legacyLogoLion {
   height: var(--cb-header-logo-h);
   width: auto;
-  max-width: min(42vw, 220px);
-  object-fit: contain;
-  object-position: left center;
-  display: block;
-}
-
-.legacyLionMobileLink {
-  display: none;
-  align-items: center;
   flex-shrink: 0;
-  color: inherit;
-  text-decoration: none;
+  object-fit: contain;
+  display: none;
 }
 
-.legacyLionMobileImg {
-  height: clamp(20px, 5.2vw, 26px);
-  width: auto;
-  max-height: var(--cb-header-logo-h);
-  object-fit: contain;
+.legacyLogoFull {
+  max-width: min(42vw, 220px);
+  object-position: left center;
+}
+
+.legacyLogoWordmark {
+  max-width: min(38vw, 200px);
+  object-position: left center;
+}
+
+.legacyLogoLion {
+  aspect-ratio: 1;
+  max-width: var(--cb-header-logo-h);
   object-position: center;
-  display: block;
+}
+
+@media (max-width: 1023px) {
+  .logoLinkLegacy .legacyLogoLion {
+    display: block;
+  }
+}
+
+@container model-legacy-logo (min-width: 152px) {
+  @media (max-width: 1023px) {
+    .logoLinkLegacy .legacyLogoWordmark {
+      display: block;
+    }
+
+    .logoLinkLegacy .legacyLogoLion {
+      display: none;
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  .logoLinkLegacy .legacyLogoFull {
+    display: block;
+  }
+
+  .logoLinkLegacy .legacyLogoWordmark,
+  .logoLinkLegacy .legacyLogoLion {
+    display: none;
+  }
 }
 
 .titleCenter {
@@ -183,25 +214,8 @@
   min-width: 0;
 }
 
-/* Tablet: wordmark → lion; keep desktop 3-column grid. */
-@media (max-width: 1023px) and (min-width: 768px) {
-  .logoLinkLegacy {
-    display: none;
-  }
-
-  .legacyLionMobileLink {
-    display: flex;
-    grid-column: 1;
-    justify-self: start;
-  }
-}
-
 @media (max-width: 767px) {
   .logoLinkLegacy {
-    display: none;
-  }
-
-  .legacyLionMobileLink {
     display: flex;
     grid-column: 1;
     grid-row: 1;
@@ -290,14 +304,25 @@
   align-items: center;
   align-self: center;
   flex-shrink: 0;
+  container-type: inline-size;
+  container-name: model-spine-logo;
 }
 
-/* ≥1024px: full lockup; 768–1023px (tablet desktop bar): lion only — matches brand matrix. */
+/* ≥1024px: full lockup; 768–1023px: wordmark when slot is wide enough, else lion (see @container). */
 .logoFullWide {
   display: none;
   height: var(--cb-header-logo-h);
   width: auto;
-  max-width: min(42vw, 220px);
+  max-width: min(42vw, 260px);
+  object-fit: contain;
+  object-position: left center;
+}
+
+.logoWordmarkTablet {
+  display: none;
+  height: var(--cb-header-logo-h);
+  width: auto;
+  max-width: min(40vw, 220px);
   object-fit: contain;
   object-position: left center;
 }
@@ -306,8 +331,8 @@
   display: none;
   height: var(--cb-header-logo-h);
   width: auto;
-  max-height: 28px;
   aspect-ratio: 1;
+  max-width: var(--cb-header-logo-h);
   object-fit: contain;
   object-position: center;
 }
@@ -315,6 +340,10 @@
 @media (min-width: 1024px) {
   .logoFullWide {
     display: block;
+  }
+
+  .logoWordmarkTablet {
+    display: none;
   }
 
   .logoLionTablet {
@@ -329,6 +358,18 @@
 
   .logoLionTablet {
     display: block;
+  }
+}
+
+@container model-spine-logo (min-width: 152px) {
+  @media (max-width: 1023px) {
+    .logoLink .logoWordmarkTablet {
+      display: block;
+    }
+
+    .logoLink .logoLionTablet {
+      display: none;
+    }
   }
 }
 

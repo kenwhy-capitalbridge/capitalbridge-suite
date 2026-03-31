@@ -7,7 +7,12 @@ import {
   PRICING_RETURN_MODEL_QUERY,
   pricingReturnModelDashboardUrl,
 } from "@cb/shared/urls";
-import { BRAND_FULL_CAPITAL_BRIDGE_GOLD, ChromePendingNavLink } from "@cb/ui";
+import {
+  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
+  BRAND_FULL_CAPITAL_BRIDGE_GOLD,
+  BRAND_LIONHEAD_GOLD,
+  ChromePendingNavLink,
+} from "@cb/ui";
 
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
@@ -55,18 +60,26 @@ function HeaderChrome({
           <img
             src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
             alt=""
-            width={240}
-            height={40}
-            className="cb-header-chrome-logo max-w-full"
+            width={280}
+            height={48}
+            className="cb-header-chrome-logo-full max-w-full"
             fetchPriority="high"
             decoding="async"
           />
           <img
-            className="cb-header-chrome-lion-mobile shrink-0"
-            src="/brand/lionhead_Gold.svg"
+            src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
             alt=""
-            width={32}
-            height={32}
+            width={220}
+            height={44}
+            className="cb-header-chrome-logo-wordmark max-w-full"
+            decoding="async"
+          />
+          <img
+            className="cb-header-chrome-lion-mobile shrink-0"
+            src={BRAND_LIONHEAD_GOLD}
+            alt=""
+            width={48}
+            height={48}
             decoding="async"
           />
         </ChromePendingNavLink>

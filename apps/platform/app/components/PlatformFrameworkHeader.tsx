@@ -1,4 +1,8 @@
-import { BRAND_FULL_CAPITAL_BRIDGE_GOLD } from "@cb/ui";
+import {
+  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
+  BRAND_FULL_CAPITAL_BRIDGE_GOLD,
+  BRAND_LIONHEAD_GOLD,
+} from "@cb/ui";
 import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
 import { PlatformLoginButton } from "./PlatformLoginButton";
@@ -56,7 +60,7 @@ export async function PlatformFrameworkHeader({
             gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
             alignItems: "center",
             columnGap: "0.5rem",
-            minHeight: 48,
+            minHeight: 54,
             maxWidth: 1280,
             margin: "0 auto",
             padding: "0.3rem 0.75rem",
@@ -75,20 +79,28 @@ export async function PlatformFrameworkHeader({
             }}
           >
             <img
-              className="cb-header-chrome-logo"
+              className="cb-header-chrome-logo-full"
               src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
               alt=""
-              width={240}
-              height={40}
+              width={280}
+              height={48}
               fetchPriority="high"
               decoding="async"
             />
             <img
-              className="cb-header-chrome-lion-mobile"
-              src="/brand/lionhead_Gold.svg"
+              className="cb-header-chrome-logo-wordmark"
+              src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
               alt=""
-              width={32}
-              height={32}
+              width={220}
+              height={44}
+              decoding="async"
+            />
+            <img
+              className="cb-header-chrome-lion-mobile"
+              src={BRAND_LIONHEAD_GOLD}
+              alt=""
+              width={48}
+              height={48}
               decoding="async"
             />
           </a>

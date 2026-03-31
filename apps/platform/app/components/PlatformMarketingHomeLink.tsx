@@ -1,6 +1,11 @@
 "use client";
 
-import { BRAND_FULL_CAPITAL_BRIDGE_GOLD, ChromePendingNavLink } from "@cb/ui";
+import {
+  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
+  BRAND_FULL_CAPITAL_BRIDGE_GOLD,
+  BRAND_LIONHEAD_GOLD,
+  ChromePendingNavLink,
+} from "@cb/ui";
 
 /** Marketing home logo strip — same pending + spinner behaviour as login / model headers. */
 export function PlatformMarketingHomeLink({ href }: { href: string }) {
@@ -17,20 +22,28 @@ export function PlatformMarketingHomeLink({ href }: { href: string }) {
       }}
     >
       <img
-        className="cb-header-chrome-logo"
+        className="cb-header-chrome-logo-full"
         src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
         alt=""
-        width={240}
-        height={40}
+        width={280}
+        height={48}
         fetchPriority="high"
         decoding="async"
       />
       <img
-        className="cb-header-chrome-lion-mobile"
-        src="/brand/lionhead_Gold.svg"
+        className="cb-header-chrome-logo-wordmark"
+        src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
         alt=""
-        width={32}
-        height={32}
+        width={220}
+        height={44}
+        decoding="async"
+      />
+      <img
+        className="cb-header-chrome-lion-mobile"
+        src={BRAND_LIONHEAD_GOLD}
+        alt=""
+        width={48}
+        height={48}
         decoding="async"
       />
     </ChromePendingNavLink>

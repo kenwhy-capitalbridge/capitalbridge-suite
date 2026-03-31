@@ -23,7 +23,9 @@
   html,
   body {
     background-color: #0d3a1d !important;
-    color: #0d3a1d !important;
+    /* Cream default for dark chrome; cards and Tailwind utilities set their own colours.
+       (!important was hiding footer / legal copy — same green as the background.) */
+    color: var(--cb-cream);
     font-size: var(--cb-body-font-size);
     line-height: var(--cb-body-line-height);
     font-weight: var(--cb-body-font-weight);

@@ -4,7 +4,11 @@ import type { ReactNode } from "react";
 import { MARKETING_SITE_URL, platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
 import { ChromePendingNavLink } from "./ChromePendingNavLink";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
-import { BRAND_FULL_CAPITAL_BRIDGE_GOLD, BRAND_LIONHEAD_GOLD } from "./brandPaths";
+import {
+  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
+  BRAND_FULL_CAPITAL_BRIDGE_GOLD,
+  BRAND_LIONHEAD_GOLD,
+} from "./brandPaths";
 import { useModelMetricSpine } from "./modelMetricSpineContext";
 import styles from "./ModelAppHeader.module.css";
 
@@ -91,17 +95,25 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
                   <img
                     src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
                     alt=""
-                    width={240}
-                    height={40}
+                    width={280}
+                    height={48}
                     decoding="async"
                     fetchPriority="high"
                     className={styles.logoFullWide}
                   />
                   <img
+                    src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
+                    alt=""
+                    width={220}
+                    height={44}
+                    decoding="async"
+                    className={styles.logoWordmarkTablet}
+                  />
+                  <img
                     src={BRAND_LIONHEAD_GOLD}
                     alt=""
-                    width={32}
-                    height={32}
+                    width={48}
+                    height={48}
                     decoding="async"
                     className={styles.logoLionTablet}
                   />
@@ -161,15 +173,28 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
               <img
                 src={BRAND_FULL_CAPITAL_BRIDGE_GOLD}
                 alt=""
-                width={240}
-                height={40}
+                width={280}
+                height={48}
                 decoding="async"
                 fetchPriority="high"
-                className={styles.logoImgLegacy}
+                className={styles.legacyLogoFull}
               />
-            </ChromePendingNavLink>
-            <ChromePendingNavLink href={home} className={styles.legacyLionMobileLink} ariaLabel="Capital Bridge home">
-              <img src={BRAND_LIONHEAD_GOLD} alt="" width={32} height={32} decoding="async" className={styles.legacyLionMobileImg} />
+              <img
+                src={BRAND_CAPITAL_BRIDGE_LOGO_GOLD}
+                alt=""
+                width={220}
+                height={44}
+                decoding="async"
+                className={styles.legacyLogoWordmark}
+              />
+              <img
+                src={BRAND_LIONHEAD_GOLD}
+                alt=""
+                width={48}
+                height={48}
+                decoding="async"
+                className={styles.legacyLogoLion}
+              />
             </ChromePendingNavLink>
             <div className={styles.titleCenter}>
               <span className={`${styles.titleBase} ${styles.titleLegacyDesk}`}>{titleDesktop}</span>
