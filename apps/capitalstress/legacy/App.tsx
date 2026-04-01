@@ -1906,6 +1906,15 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 target={targetCapital}
                 gap={gapAmount}
                 progress={progressPercent}
+                currency={selectedCurrency.label}
+                monthlyIncome={years > 0 ? projectedCapital / (years * 12) : projectedCapital}
+                monthlyExpense={withdrawal}
+                totalCapital={projectedCapital}
+                targetCapital={targetCapital}
+                coverageRatio={lionConfidenceScore}
+                sustainabilityYears={horizonYears}
+                depletionPressure={lionTierLabel}
+                modelType="STRESS"
                 pricingReturnModel="capitalstress"
               />
             ) : (

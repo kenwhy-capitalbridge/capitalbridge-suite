@@ -416,6 +416,15 @@ const AppInner = forwardRef<
                 target={targetCapital}
                 gap={gapAmount}
                 progress={progressPercent}
+                currency={currency}
+                monthlyIncome={totalIncome}
+                monthlyExpense={totalExpenses}
+                totalCapital={totalCapital}
+                targetCapital={targetCapital}
+                coverageRatio={lionSurplusRatio}
+                sustainabilityYears={horizonYears}
+                depletionPressure={result.summary.sustainabilityStatus}
+                modelType="IE"
                 pricingReturnModel="incomeengineering"
               />
             </div>

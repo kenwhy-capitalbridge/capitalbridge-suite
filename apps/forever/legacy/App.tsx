@@ -584,6 +584,15 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
             gap={foreverLionGap}
             target={foreverLionTargetCapital}
             progress={foreverLionProgressPercent}
+            currency={currency}
+            monthlyIncome={familyContribution}
+            monthlyExpense={results.monthlyExpense}
+            totalCapital={results.currentAssets}
+            targetCapital={foreverLionTargetCapital}
+            coverageRatio={surplusRatio}
+            sustainabilityYears={foreverLionHorizonYears}
+            depletionPressure={foreverLionTier}
+            modelType="FOREVER"
             onCopyComputed={setLionCopyPayload}
             pricingReturnModel="forever"
           />

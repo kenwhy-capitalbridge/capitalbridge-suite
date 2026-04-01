@@ -315,8 +315,17 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
       tier,
       persona: mapPersona({ riskTolerance: 0.5, surplusRatio }),
       confidenceScore: 0.5,
+      currency,
+      monthlyIncome: totalIncome,
+      monthlyExpense: totalExpenses,
+      totalCapital,
+      targetCapital: totalExpenses * 12,
+      coverageRatio: surplusRatio,
+      sustainabilityYears: net < 0 ? totalCapital / (Math.abs(net) * 12) : undefined,
+      depletionPressure: summary.sustainabilityStatus,
+      modelType: 'IE',
     });
-  }, [lionAccessEnabled, lionReport, reportClientDisplayName, totalIncome, totalExpenses]);
+  }, [lionAccessEnabled, lionReport, reportClientDisplayName, totalIncome, totalExpenses, currency, totalCapital, net, summary.sustainabilityStatus]);
 
   const paidIeSectionModel =
     lionAccessEnabled && lionPaidCopyIe && lionReport

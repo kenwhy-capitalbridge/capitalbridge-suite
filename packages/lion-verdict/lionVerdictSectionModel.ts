@@ -9,12 +9,12 @@ export function buildPaidLionSectionModel(copy: GetLionVerdictOutput, tier: Tier
   options: readonly string[];
   decisionBoundary: string;
 } {
-  const b = copy.guidanceBullets;
-  const narrative: PaidLionNarrativeSection[] = [];
-  if (b[0]) narrative.push({ label: "Where it stands", text: b[0] });
-  if (b[1]) narrative.push({ label: "Time horizon", text: b[1] });
-  if (b[2]) narrative.push({ label: "Gap", text: b[2] });
-  if (b[3]) narrative.push({ label: "Required return", text: b[3] });
+  const narrative: PaidLionNarrativeSection[] = [
+    { label: "Cash flow", text: copy.narrative.gap },
+    { label: "Capital", text: copy.narrative.capital },
+    { label: "Sustainability", text: copy.narrative.sustainability },
+    { label: "Pressure", text: copy.narrative.pressure },
+  ];
   return {
     narrative,
     options: LION_PRESET_STRATEGIC_OPTIONS[tier],

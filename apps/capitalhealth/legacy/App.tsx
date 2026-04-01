@@ -1550,6 +1550,15 @@ const CalculatorScreen = forwardRef<
               target={targetCapital}
               gap={gapAmount}
               progress={progressPercent}
+              currency={inputs.currency.symbol}
+              monthlyIncome={inputs.mode === 'withdrawal' ? result.passiveIncomeMonthly : undefined}
+              monthlyExpense={inputs.mode === 'withdrawal' ? inputs.targetMonthlyIncome : undefined}
+              totalCapital={projectedCapital}
+              targetCapital={targetCapital}
+              coverageRatio={result.coveragePct / 100}
+              sustainabilityYears={depletionYears ?? Number(inputs.timeHorizonYears)}
+              depletionPressure={lionTierLabel}
+              modelType="HEALTH"
               pricingReturnModel="capitalhealth"
             />
           </div>

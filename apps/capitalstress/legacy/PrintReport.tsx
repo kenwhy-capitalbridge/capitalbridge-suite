@@ -135,6 +135,10 @@ export function PrintReport(props: PrintReportProps) {
     auditMeta = null,
     capitalTimelinePrintPayload = null,
   } = props;
+  const currencyLabel = useMemo(
+    () => formatCurrency(0).replace(/[\d\s,.\-]/g, "").trim() || "RM",
+    [formatCurrency],
+  );
 
   const depletionLabel = depletionBarOutput?.pillLabel ?? '—';
   const lionScorePrint = stressScoreToDisplay0to100(mcResult.capitalResilienceScore);
@@ -167,6 +171,15 @@ export function PrintReport(props: PrintReportProps) {
       tier: lionTierPrint as Tier,
       persona: mapPersona({ riskTolerance, surplusRatio }),
       confidenceScore: 0.5,
+      currency: currencyLabel,
+      monthlyIncome: years > 0 ? mcResult.simulatedAverage / (years * 12) : mcResult.simulatedAverage,
+      monthlyExpense: withdrawal,
+      totalCapital: mcResult.simulatedAverage,
+      targetCapital: investment,
+      coverageRatio: lionScorePrint / 100,
+      sustainabilityYears: years,
+      depletionPressure: lionPublicLabelPrint,
+      modelType: 'STRESS',
     });
   }, [
     lionAccessEnabled,
@@ -175,6 +188,10 @@ export function PrintReport(props: PrintReportProps) {
     lionScorePrint,
     investment,
     mcResult.simulatedAverage,
+    currencyLabel,
+    years,
+    withdrawal,
+    lionPublicLabelPrint,
   ]);
 
   const paidStressSectionModel =

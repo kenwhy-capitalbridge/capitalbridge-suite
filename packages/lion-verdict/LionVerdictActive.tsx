@@ -35,6 +35,15 @@ export type LionVerdictActiveProps = {
   className?: string;
   onCopyComputed?: (copy: GetLionVerdictOutput | null) => void;
   pricingReturnModel?: PricingReturnModelSlug;
+  currency?: string;
+  monthlyIncome?: number;
+  monthlyExpense?: number;
+  totalCapital?: number;
+  targetCapital?: number;
+  coverageRatio?: number;
+  sustainabilityYears?: number;
+  depletionPressure?: string | number;
+  modelType?: "FOREVER" | "HEALTH" | "STRESS" | "IE";
 };
 
 export function LionVerdictActive({
@@ -50,6 +59,15 @@ export function LionVerdictActive({
   className,
   onCopyComputed,
   pricingReturnModel,
+  currency,
+  monthlyIncome,
+  monthlyExpense,
+  totalCapital,
+  targetCapital,
+  coverageRatio,
+  sustainabilityYears,
+  depletionPressure,
+  modelType,
 }: LionVerdictActiveProps) {
   const hasAccess = canAccessLion(user);
   const historyRef = useRef<{ headline: HistoryEntry[]; guidance: HistoryEntry[] }>({
@@ -90,6 +108,16 @@ export function LionVerdictActive({
       previousHeadlineIndex: prevIndexRef.current.headline,
       previousGuidanceIndex: prevIndexRef.current.guidance,
       memory: memoryRef.current,
+      currency,
+      monthlyIncome,
+      monthlyExpense,
+      totalCapital,
+      targetCapital,
+      coverageRatio,
+      sustainabilityYears,
+      lionScore: score,
+      depletionPressure,
+      modelType,
     });
     historyRef.current = result.history;
     memoryRef.current = result.memory;
@@ -105,6 +133,16 @@ export function LionVerdictActive({
     persona,
     confidenceScore,
     globalHistory,
+    currency,
+    monthlyIncome,
+    monthlyExpense,
+    totalCapital,
+    targetCapital,
+    coverageRatio,
+    sustainabilityYears,
+    depletionPressure,
+    modelType,
+    score,
   ]);
 
   useEffect(() => {

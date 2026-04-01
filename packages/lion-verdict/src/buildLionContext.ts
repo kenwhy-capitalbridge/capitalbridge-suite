@@ -7,7 +7,7 @@ export type LionContextInput = {
   coverageRatio?: number;
   sustainabilityYears?: number;
   lionScore?: number;
-  depletionPressure?: number;
+  depletionPressure?: string | number;
   modelType?: "FOREVER" | "HEALTH" | "STRESS" | "IE";
 };
 
@@ -22,7 +22,7 @@ export type LionContext = {
   coverageRatio?: number;
   sustainabilityYears?: number;
   lionScore?: number;
-  depletionPressure?: number;
+  depletionPressure?: string | number;
   modelType?: LionContextInput["modelType"];
 };
 

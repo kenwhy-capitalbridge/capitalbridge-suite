@@ -1,5 +1,6 @@
 import { LION_COPY, type Tier, type Line } from './copy';
 import { buildLionContext, type LionContextInput } from './src/buildLionContext';
+import { generateLionNarrative, type LionNarrative } from './src/generateLionNarrative';
 
 export type HistoryEntry = {
   index: number;
@@ -43,6 +44,7 @@ export type GetLionVerdictOutput = {
   headline: string;
   guidance: string;
   guidanceBullets: string[];
+  narrative: LionNarrative;
   headlineIndex: number;
   guidanceIndex: number;
   confidenceBand: ConfidenceBand;
@@ -89,7 +91,7 @@ function boostWeights(lines: Line[], persona: Persona): Line[] {
 
 export function getLionVerdict(input: GetLionVerdictInput): GetLionVerdictOutput {
   const lionContext = buildLionContext(input);
-  void lionContext;
+  const narrative = generateLionNarrative(lionContext);
 
   const { userId, reportType, tier } = input;
   const headlines = LION_COPY[tier].headlines;
@@ -155,9 +157,10 @@ export function getLionVerdict(input: GetLionVerdictInput): GetLionVerdictOutput
   };
 
   return {
-    headline: finalHeadline,
+    headline: narrative.headline,
     guidance: guidanceText,
     guidanceBullets,
+    narrative,
     headlineIndex,
     guidanceIndex,
     confidenceBand,
