@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/reportReady.ts",
+    "./build-narrative": "./src/buildPdfNarrative.ts",
     "./render": "./src/renderPdf.ts",
     "./report-ready": "./src/reportReady.ts"
   },
