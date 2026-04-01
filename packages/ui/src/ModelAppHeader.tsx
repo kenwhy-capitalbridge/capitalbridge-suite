@@ -113,21 +113,23 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
             </div>
 
             <div className={styles.spineMobile}>
-              <div className={styles.spineMobileTop}>
-                <ChromePendingNavLink
-                  href={home}
-                  className={`${styles.spineMobileLogoLink} cb-header-chrome-home`}
-                  ariaLabel="Capital Bridge home"
-                >
-                  <HeaderBrandPicture imgClassName={`${styles.spineMobileLogo} cb-header-chrome-picture-img`} />
-                </ChromePendingNavLink>
-                <div className={styles.spineMobileBackSlot}>
-                  <ModelAppHeaderBackButton href={back} />
+              <div className={`${styles.spineMobileTop} ${styles.cbHeaderGrid}`}>
+                <div className={styles.headerLeft}>
+                  <ChromePendingNavLink
+                    href={home}
+                    className="cb-header-chrome-home"
+                    ariaLabel="Capital Bridge home"
+                  >
+                    <HeaderBrandPicture imgClassName="cb-header-chrome-picture-img" />
+                  </ChromePendingNavLink>
                 </div>
-                <div className={styles.spineMobileTitleSlot}>
+                <div className={styles.headerCenter}>
                   <span className={styles.titleMobileCentered}>{short ?? titleDesktop}</span>
                 </div>
-                <div className={styles.spineMobileActionsSlot}>{actions}</div>
+                <div className={styles.headerRight}>
+                  <ModelAppHeaderBackButton href={back} />
+                  {actions}
+                </div>
               </div>
               <div className={styles.spineMobileGrid} role="group" aria-label="Key metrics">
                 <MetricBlockMobile labelMobile={spine.slot1.labelMobile} value={spine.slot1.value} />
