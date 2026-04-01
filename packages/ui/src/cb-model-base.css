@@ -215,6 +215,19 @@
   );
 }
 
+.cb-report-section {
+  margin-top: 48px;
+}
+
+.cb-report-title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.cb-report-body {
+  line-height: 1.6;
+}
+
 html,
 body {
   margin: 0;
