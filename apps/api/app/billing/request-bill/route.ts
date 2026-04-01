@@ -52,18 +52,24 @@ async function cleanupFailedPendingSignup(
   sessionId?: string,
 ) {
   if (sessionId) {
-    await svc.schema("public").from("billing_sessions").delete().eq("id", sessionId).catch((error) => {
+    try {
+      await svc.schema("public").from("billing_sessions").delete().eq("id", sessionId);
+    } catch (error) {
       console.warn("[request-bill] cleanup billing_session failed:", error);
-    });
+    }
   }
 
-  await svc.schema("public").from("profiles").delete().eq("id", userId).catch((error) => {
+  try {
+    await svc.schema("public").from("profiles").delete().eq("id", userId);
+  } catch (error) {
     console.warn("[request-bill] cleanup profile failed:", error);
-  });
+  }
 
-  await svc.auth.admin.deleteUser(userId).catch((error) => {
+  try {
+    await svc.auth.admin.deleteUser(userId);
+  } catch (error) {
     console.warn("[request-bill] cleanup auth user failed:", error);
-  });
+  }
 }
 
 function getPaymentFirstRedirectUrl(): string {
