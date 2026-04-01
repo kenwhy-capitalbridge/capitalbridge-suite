@@ -12,6 +12,7 @@ export {
   BRAND_FULL_CAPITAL_BRIDGE_GREEN,
   BRAND_LIONHEAD_GOLD,
   BRAND_LIONHEAD_GREEN,
+  BRAND_LIONHEAD_GOLD_PNG_EXPORT,
 } from "./brandPaths";
 export { LionWatermarkBackdrop } from "./LionWatermarkBackdrop";
 export { LionWatermarkShell } from "./LionWatermarkShell";

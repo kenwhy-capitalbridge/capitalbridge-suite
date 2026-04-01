@@ -6,6 +6,11 @@ export const BRAND_CAPITAL_BRIDGE_LOGO_GOLD = "/brand/CapitalBridgeLogo_Gold.svg
 export const BRAND_CAPITAL_BRIDGE_LOGO_GREEN = "/brand/CapitalBridgeLogo_Green.svg";
 export const BRAND_LIONHEAD_GOLD = "/brand/lionhead_Gold.svg";
 export const BRAND_LIONHEAD_GREEN = "/brand/lionhead_Green.svg";
+/**
+ * "PNG export" — vector lion (no TM) Potrace-traced from the high-res PNG for posters/PDFs.
+ * Sharper than the embedded-raster `lionhead_Gold_no_tm.svg`; use where zoom-independent edges matter.
+ */
+export const BRAND_LIONHEAD_GOLD_PNG_EXPORT = "/brand/lionhead_Gold_no_tm_vector.svg";
 /** Lion + wordmark — dark UI (model headers, wide desktop). */
 export const BRAND_FULL_CAPITAL_BRIDGE_GOLD = "/brand/Full_CapitalBridge_Gold.svg";
 /** Lion + wordmark — light / print / PDF. */

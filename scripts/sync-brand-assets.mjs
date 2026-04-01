@@ -15,6 +15,7 @@ const files = [
   "CapitalBridgeLogo_Green.svg",
   "lionhead_Gold.svg",
   "lionhead_Green.svg",
+  "lionhead_Gold_no_tm_vector.svg",
   "Full_CapitalBridge_Gold.svg",
   "Full_CapitalBridge_Green.svg",
   "Large-Full_CapitalBridge_Gold.svg",
