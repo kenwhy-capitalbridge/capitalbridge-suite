@@ -27,6 +27,16 @@ export function pickRandom(arr: string[]) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function pickUnique(arr: string[], usedSet: Set<string>) {
+  const available = arr.filter((item) => !usedSet.has(item));
+  const choice = available.length > 0 ? pickRandom(available) : pickRandom(arr);
+  usedSet.add(choice);
+  return choice;
+}
+
+const usedHeadlines = new Set<string>();
+const usedGuidance = new Set<string>();
+
 export function getLionTone(score: number): Tier {
   if (score >= 85) return "STRONG";
   if (score >= 70) return "STABLE";
@@ -40,8 +50,8 @@ export function generateLionToneCopy(score: number) {
   const pool = LION_COPY[tier];
 
   return {
-    headline: pickRandom(pool.headlines),
-    guidance: pickRandom(pool.guidance),
+    headline: pickUnique(pool.headlines, usedHeadlines),
+    guidance: pickUnique(pool.guidance, usedGuidance),
     tier,
   };
 }
