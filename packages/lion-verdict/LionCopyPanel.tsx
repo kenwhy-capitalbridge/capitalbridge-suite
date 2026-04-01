@@ -31,7 +31,7 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
 
   return (
     <div
-      className={`lion-verdict-one-page ${LION_VERDICT_PANEL_BOX} ${className ?? ""} max-h-[min(100vh,56rem)] space-y-3 overflow-y-auto sm:space-y-4 print:max-h-none print:overflow-visible`}
+      className={`lion-verdict-one-page ${LION_VERDICT_PANEL_BOX} ${className ?? ""} max-h-[min(100vh,56rem)] space-y-3 overflow-x-hidden overflow-y-auto sm:space-y-4 print:max-h-none print:overflow-visible`}
     >
       <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${LION_VERDICT_HEADER_RULE}`}>
         <div className="flex min-w-0 items-center gap-2.5">
@@ -45,7 +45,10 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
       </div>
 
       <blockquote className="m-0 border-none p-0">
-        <p className={`${LION_VERDICT_HEADLINE} !text-[clamp(0.95rem,2.5vw,1.05rem)] !leading-snug`} aria-live="polite">
+        <p
+          className={`${LION_VERDICT_HEADLINE} text-balance break-words !text-[clamp(0.88rem,4.3vw,1.05rem)] !leading-snug`}
+          aria-live="polite"
+        >
           {LD}
           {copy.narrative.headline?.replace(" ,", ",")}
           {RD}
@@ -76,7 +79,7 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
                   <span className="text-[#FFCC6A]" aria-hidden>
                     •
                   </span>
-                  <span>{decision}</span>
+                  <span className="min-w-0 break-words">{decision}</span>
                 </li>
               ))}
             </ul>
@@ -105,7 +108,7 @@ function Section({
       <p className="mb-1 font-serif text-[10px] font-semibold uppercase tracking-[0.26em] text-[#FFCC6A] sm:text-[11px] sm:tracking-[0.28em]">
         {label}
       </p>
-      <p className="text-[13px] leading-snug text-white/88 sm:text-sm sm:leading-relaxed">{content}</p>
+      <p className="break-words text-[13px] leading-snug text-white/88 sm:text-sm sm:leading-relaxed">{content}</p>
     </div>
   );
 }
