@@ -1,0 +1,12 @@
+{
+  "name": "@cb/lion-verdict",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./access": "./access.ts",
+    "./copy": "./copy.ts",
+    "./get-lion-verdict": "./getLionVerdict.ts"
+  }
+}

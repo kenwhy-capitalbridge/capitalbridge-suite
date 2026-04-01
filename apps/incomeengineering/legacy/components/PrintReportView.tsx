@@ -7,9 +7,8 @@ import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
 import type { ReportAuditMeta } from '@cb/shared/reportTraceability';
 import { CB_FONT_SERIF } from '@cb/shared/typography';
-import type { Tier } from '../../../../packages/lion-verdict/copy';
-import { getLionVerdict, mapPersona } from '../../../../packages/lion-verdict/getLionVerdict';
-import { buildPaidLionSectionModel } from '../../../../packages/lion-verdict/lionVerdictSectionModel';
+import { buildLionContext, generateLionDecisions, generateLionNarrative } from '@cb/lion-verdict';
+import { buildPdfNarrative } from '@cb/pdf/build-narrative';
 import {
   SYSTEM_INSIGHT_LIMITED_LINES,
   SYSTEM_INSIGHT_LIMITED_TITLE,
@@ -305,32 +304,27 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     currency,
   ]);
 
-  const lionPaidCopyIe = useMemo(() => {
+  const lionPdfDataIe = useMemo(() => {
     if (!lionAccessEnabled || !lionReport) return null;
-    const tier = lionReport.verdict.status as Tier;
-    const surplusRatio = totalExpenses > 0 ? totalIncome / totalExpenses : 1;
-    return getLionVerdict({
-      userId: `ie-print:${reportClientDisplayName}`,
-      reportType: 'income_engineering_print',
-      tier,
-      persona: mapPersona({ riskTolerance: 0.5, surplusRatio }),
-      confidenceScore: 0.5,
+    const ctx = buildLionContext({
       currency,
       monthlyIncome: totalIncome,
       monthlyExpense: totalExpenses,
       totalCapital,
       targetCapital: totalExpenses * 12,
-      coverageRatio: surplusRatio,
+      coverageRatio: totalExpenses > 0 ? totalIncome / totalExpenses : 1,
       sustainabilityYears: net < 0 ? totalCapital / (Math.abs(net) * 12) : undefined,
       depletionPressure: summary.sustainabilityStatus,
       modelType: 'IE',
     });
+    const narrative = generateLionNarrative({ ...ctx, lionScore: lionReport.verdict.score });
+    const decisions = generateLionDecisions({ ...ctx, lionScore: lionReport.verdict.score });
+    return buildPdfNarrative(
+      { ...ctx, clientName: reportClientDisplayName, lionScore: lionReport.verdict.score },
+      narrative,
+      decisions,
+    );
   }, [lionAccessEnabled, lionReport, reportClientDisplayName, totalIncome, totalExpenses, currency, totalCapital, net, summary.sustainabilityStatus]);
-
-  const paidIeSectionModel =
-    lionAccessEnabled && lionPaidCopyIe && lionReport
-      ? buildPaidLionSectionModel(lionPaidCopyIe)
-      : null;
 
   const incomeFrameworkIntro = useMemo(
     () => advisoryFrameworkPdfIntro('sustainability_income'),
@@ -560,7 +554,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           </p>
         </section>
 
-        {lionAccessEnabled && paidIeSectionModel && lionPaidCopyIe && lionReport ? (
+        {lionAccessEnabled && lionPdfDataIe && lionReport ? (
         <div
           className="lion-section lion-verdict-one-page"
           data-cb-lion-print-wrap
@@ -581,22 +575,25 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               fontWeight: 700,
             }}
           >
-            &ldquo;{lionPaidCopyIe.headline}&rdquo;
+            &ldquo;{lionPdfDataIe.lion.headline}&rdquo;
           </p>
-          {paidIeSectionModel.narrative.map(({ label, text }) => (
-            <div key={label} style={{ marginBottom: '10px' }}>
-              <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>{label}</h3>
-              <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>{text}</p>
-            </div>
-          ))}
+          {[
+            { label: 'Summary', text: lionPdfDataIe.summary.keyPoint },
+            { label: 'Why this is happening', text: lionPdfDataIe.diagnosis.why },
+            { label: 'System state', text: lionPdfDataIe.diagnosis.state },
+            { label: 'Lion guidance', text: lionPdfDataIe.lion.guidance },
+          ].map(({ label, text }) => (
+              <div key={label} style={{ marginBottom: '10px' }}>
+                <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>{label}</h3>
+                <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>{text}</p>
+              </div>
+            ))}
           <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>What you should do next</h3>
           <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>
-            {paidIeSectionModel.decisions.map((line) => (
+            {lionPdfDataIe.actions.map((line) => (
               <li key={line} style={{ marginBottom: '4px' }}>{line}</li>
             ))}
           </ul>
-          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>If you do nothing</h3>
-          <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.55, fontSize: '12px' }}>{paidIeSectionModel.ifDoNothing}</p>
         </section>
         </div>
       ) : (

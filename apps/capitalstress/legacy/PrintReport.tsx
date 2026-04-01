@@ -23,9 +23,8 @@ import {
 } from '@cb/advisory-graph/lionsVerdict';
 import type { VerdictNarrative } from './services/advisory_engine';
 import { getDepletionBarOutput } from './services/mathUtils';
-import type { Tier } from '../../../packages/lion-verdict/copy';
-import { getLionVerdict, mapPersona } from '../../../packages/lion-verdict/getLionVerdict';
-import { buildPaidLionSectionModel } from '../../../packages/lion-verdict/lionVerdictSectionModel';
+import { buildLionContext, generateLionDecisions, generateLionNarrative } from '@cb/lion-verdict';
+import { buildPdfNarrative } from '@cb/pdf/build-narrative';
 import {
   SYSTEM_INSIGHT_LIMITED_LINES,
   SYSTEM_INSIGHT_LIMITED_TITLE,
@@ -161,16 +160,9 @@ export function PrintReport(props: PrintReportProps) {
   );
   const lionPublicLabelPrint = formatLionPublicStatusLabel(lionTierPrint);
 
-  const lionPaidCopyPrint = useMemo(() => {
+  const lionPdfDataPrint = useMemo(() => {
     if (!lionAccessEnabled) return null;
-    const surplusRatio = investment > 0 ? mcResult.simulatedAverage / investment : 1;
-    const riskTolerance = Math.min(1, Math.max(0, lionScorePrint / 100));
-    return getLionVerdict({
-      userId: `stress-print:${reportClientDisplayName}`,
-      reportType: 'capital_stress_print',
-      tier: lionTierPrint as Tier,
-      persona: mapPersona({ riskTolerance, surplusRatio }),
-      confidenceScore: 0.5,
+    const ctx = buildLionContext({
       currency: currencyLabel,
       monthlyIncome: years > 0 ? mcResult.simulatedAverage / (years * 12) : mcResult.simulatedAverage,
       monthlyExpense: withdrawal,
@@ -181,10 +173,16 @@ export function PrintReport(props: PrintReportProps) {
       depletionPressure: lionPublicLabelPrint,
       modelType: 'STRESS',
     });
+    const narrative = generateLionNarrative({ ...ctx, lionScore: lionScorePrint });
+    const decisions = generateLionDecisions({ ...ctx, lionScore: lionScorePrint });
+    return buildPdfNarrative(
+      { ...ctx, clientName: reportClientDisplayName, lionScore: lionScorePrint },
+      narrative,
+      decisions,
+    );
   }, [
     lionAccessEnabled,
     reportClientDisplayName,
-    lionTierPrint,
     lionScorePrint,
     investment,
     mcResult.simulatedAverage,
@@ -193,11 +191,6 @@ export function PrintReport(props: PrintReportProps) {
     withdrawal,
     lionPublicLabelPrint,
   ]);
-
-  const paidStressSectionModel =
-    lionAccessEnabled && lionPaidCopyPrint
-      ? buildPaidLionSectionModel(lionPaidCopyPrint)
-      : null;
 
   const preparedForCover = reportPreparedForLine(reportClientDisplayName);
   const reportGeneratedAt = formatReportGeneratedAtLabel();
@@ -253,7 +246,7 @@ export function PrintReport(props: PrintReportProps) {
         lionVerdictOutput?.ifYouDoNothing ?? '',
         verdict?.opening ?? '',
         lionAccessEnabled,
-        lionPaidCopyPrint?.headline ?? '',
+        lionPdfDataPrint?.lion.headline ?? '',
         auditMeta?.reportId ?? '',
         keyTakeaways.join('\n'),
         recommendedAdjustments.join('\n'),
@@ -281,7 +274,7 @@ export function PrintReport(props: PrintReportProps) {
       lionVerdictOutput,
       verdict,
       lionAccessEnabled,
-      lionPaidCopyPrint,
+      lionPdfDataPrint,
       auditMeta,
       keyTakeaways,
       recommendedAdjustments,
@@ -1110,7 +1103,7 @@ export function PrintReport(props: PrintReportProps) {
           style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
         >
         <div className="lion-verdict lion-verdict-one-page">
-        {lionAccessEnabled && paidStressSectionModel && lionPaidCopyPrint ? (
+        {lionAccessEnabled && lionPdfDataPrint ? (
           <>
             <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_ACCENT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
               THE LION&apos;S VERDICT
@@ -1129,9 +1122,14 @@ export function PrintReport(props: PrintReportProps) {
                 lineHeight: 1.45,
               }}
             >
-              &ldquo;{lionPaidCopyPrint.headline}&rdquo;
+              &ldquo;{lionPdfDataPrint.lion.headline}&rdquo;
             </p>
-            {paidStressSectionModel.narrative.map(({ label, text }) => (
+            {[
+              { label: 'Summary', text: lionPdfDataPrint.summary.keyPoint },
+              { label: 'Why this is happening', text: lionPdfDataPrint.diagnosis.why },
+              { label: 'System state', text: lionPdfDataPrint.diagnosis.state },
+              { label: 'Lion guidance', text: lionPdfDataPrint.lion.guidance },
+            ].map(({ label, text }) => (
               <div key={label} style={{ marginBottom: '0.55em' }}>
                 <p
                   style={{
@@ -1145,7 +1143,7 @@ export function PrintReport(props: PrintReportProps) {
                 >
                   {label}
                 </p>
-                <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>{text}</p>
+              <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>{text}</p>
               </div>
             ))}
             <p
@@ -1161,27 +1159,10 @@ export function PrintReport(props: PrintReportProps) {
               What you should do next
             </p>
             <ul style={{ fontSize: '10pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.55em', lineHeight: 1.45 }}>
-              {paidStressSectionModel.decisions.map((line) => (
+              {lionPdfDataPrint.actions.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
-            <div style={{ marginBottom: '0.5em', padding: '0.5em 0', borderTop: `1px solid ${PRINT_BORDER}` }}>
-              <p
-                style={{
-                  fontSize: '9pt',
-                  fontWeight: 700,
-                  color: PRINT_ACCENT,
-                  textTransform: 'uppercase',
-                  marginBottom: '0.25em',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                If you do nothing
-              </p>
-              <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>
-                {paidStressSectionModel.ifDoNothing}
-              </p>
-            </div>
             <div style={{ marginTop: '0.5em' }}>
               {microSignals.map((s, i) => (
                 <p key={i} style={{ fontSize: '10pt', color: PRINT_TEXT }}>

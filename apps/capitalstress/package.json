@@ -13,6 +13,7 @@
     "@cb/ui": "*",
     "@cb/advisory-graph": "*",
     "@cb/db-types": "*",
+    "@cb/lion-verdict": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
     "next": "^15.5.14",

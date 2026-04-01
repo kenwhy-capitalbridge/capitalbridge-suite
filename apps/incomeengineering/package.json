@@ -12,6 +12,7 @@
     "@cb/pdf": "*",
     "@cb/advisory-graph": "*",
     "@cb/db-types": "*",
+    "@cb/lion-verdict": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
     "@cb/ui": "*",
