@@ -10,7 +10,6 @@ import {
   LION_VERDICT_TITLE,
 } from "./lionVerdictPanelStyles";
 import { LionVerdictScoreLine, LionVerdictStatusBadge } from "./LionVerdictStatusBadge";
-import { buildPaidLionSectionModel } from "./lionVerdictSectionModel";
 
 type LionCopyPanelProps = {
   copy: GetLionVerdictOutput | null;
@@ -29,7 +28,6 @@ const RD = "\u201D";
  */
 export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: LionCopyPanelProps) {
   if (!canSeeVerdict || !copy) return null;
-  const sectionModel = buildPaidLionSectionModel(copy, tier);
 
   return (
     <div
@@ -49,7 +47,7 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
       <blockquote className="m-0 border-none p-0">
         <p className={`${LION_VERDICT_HEADLINE} !text-[clamp(0.95rem,2.5vw,1.05rem)] !leading-snug`} aria-live="polite">
           {LD}
-          {sectionModel.headline?.replace(" ,", ",")}
+          {copy.narrative.headline?.replace(" ,", ",")}
           {RD}
         </p>
       </blockquote>
@@ -61,17 +59,18 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
       ) : null}
 
       <div className="space-y-2 text-[13px] leading-snug text-white/85 sm:space-y-2.5 sm:text-sm sm:leading-relaxed">
-        {sectionModel.narrative.map(({ label, text }) => (
-          <Section key={label} label={label} content={text} />
-        ))}
+        <Section label="Current position" content={copy.narrative.personalised} />
+        <Section label="Capital position" content={copy.narrative.capital} />
+        <Section label="Sustainability outlook" content={copy.narrative.sustainability} />
+        <Section label="Lion guidance" content={copy.narrative.guidance} />
 
-        {sectionModel.decisions.length > 0 ? (
+        {copy.decisions.length > 0 ? (
           <div className="rounded-xl bg-[#122419]/85 px-3 py-2.5 sm:px-4 sm:py-3">
             <p className="mb-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.26em] text-[#FFCC6A] sm:text-[11px] sm:tracking-[0.28em]">
               What you should do next
             </p>
             <ul className="list-none space-y-1 pl-0 text-[13px] leading-snug text-white/85 sm:text-sm sm:leading-relaxed">
-              {sectionModel.decisions.map((decision) => (
+              {copy.decisions.map((decision) => (
                 <li key={decision} className="flex gap-2">
                   <span className="text-[#FFCC6A]" aria-hidden>
                     •
@@ -82,8 +81,6 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
             </ul>
           </div>
         ) : null}
-
-        <Section label="If you do nothing" content={sectionModel.ifDoNothing} bordered />
       </div>
     </div>
   );
