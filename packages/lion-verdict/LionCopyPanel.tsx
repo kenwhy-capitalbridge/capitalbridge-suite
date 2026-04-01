@@ -66,6 +66,24 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
           <Section key={label} label={label} content={text} />
         ))}
 
+        {sectionModel.decisions.length > 0 ? (
+          <div className="rounded-xl bg-[#122419]/85 px-3 py-2.5 sm:px-4 sm:py-3">
+            <p className="mb-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.26em] text-[#FFCC6A] sm:text-[11px] sm:tracking-[0.28em]">
+              What you should do next
+            </p>
+            <ul className="list-none space-y-1 pl-0 text-[13px] leading-snug text-white/85 sm:text-sm sm:leading-relaxed">
+              {sectionModel.decisions.map((decision) => (
+                <li key={decision} className="flex gap-2">
+                  <span className="text-[#FFCC6A]" aria-hidden>
+                    •
+                  </span>
+                  <span>{decision}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         <div className="rounded-xl bg-[#122419]/85 px-3 py-2.5 sm:px-4 sm:py-3">
           <p className="mb-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.26em] text-[#FFCC6A] sm:text-[11px] sm:tracking-[0.28em]">
             Options

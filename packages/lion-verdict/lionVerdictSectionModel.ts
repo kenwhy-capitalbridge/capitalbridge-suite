@@ -6,6 +6,7 @@ export type PaidLionNarrativeSection = { label: string; text: string };
 
 export function buildPaidLionSectionModel(copy: GetLionVerdictOutput, tier: Tier): {
   narrative: PaidLionNarrativeSection[];
+  decisions: string[];
   options: readonly string[];
   decisionBoundary: string;
 } {
@@ -17,6 +18,7 @@ export function buildPaidLionSectionModel(copy: GetLionVerdictOutput, tier: Tier
   ];
   return {
     narrative,
+    decisions: copy.decisions,
     options: LION_PRESET_STRATEGIC_OPTIONS[tier],
     decisionBoundary: LION_PRESET_DECISION_BOUNDARY[tier],
   };
