@@ -3,6 +3,9 @@ export type PdfNarrativeContext = {
   clientName?: string;
   lionScore?: number;
   depletionPressure?: string | number;
+  netMonthly?: number;
+  sustainabilityYears?: number;
+  capitalGap?: number;
 };
 
 export type PdfNarrativeInput = {
@@ -50,7 +53,19 @@ export function buildPdfNarrative(
     summary: {
       headline: narrative.headline,
       keyPoint: narrative.personalised,
-      bullets: [narrative.headline, narrative.personalised],
+      bullets: [
+        typeof ctx.netMonthly === "number"
+          ? ctx.netMonthly < 0
+            ? `You are short RM ${Math.abs(ctx.netMonthly).toLocaleString()} monthly`
+            : `You have RM ${ctx.netMonthly.toLocaleString()} surplus monthly`
+          : narrative.personalised,
+        `Your capital lasts about ${ctx.sustainabilityYears ?? "-"} years`,
+        typeof ctx.capitalGap === "number"
+          ? ctx.capitalGap > 0
+            ? `You need RM ${ctx.capitalGap.toLocaleString()} more`
+            : "Your capital is sufficient"
+          : "Your capital position needs review",
+      ],
     },
     diagnosis: {
       what: narrative.personalised,
