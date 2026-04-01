@@ -60,6 +60,7 @@ export function LionCopyPanel({ copy, canSeeVerdict, className, tier, score }: L
 
       <div className="space-y-2 text-[13px] leading-snug text-white/85 sm:space-y-2.5 sm:text-sm sm:leading-relaxed">
         <Section label="Current position" content={copy.narrative.personalised} />
+        <Section label="Why this is happening" content={copy.narrative.why} />
         <Section label="Capital position" content={copy.narrative.capital} />
         <Section label="Sustainability outlook" content={copy.narrative.sustainability} />
         <Section label="Lion guidance" content={copy.narrative.guidance} />

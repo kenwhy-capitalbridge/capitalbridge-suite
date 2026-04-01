@@ -5,6 +5,7 @@ import { generateLionToneCopy } from "./lionCopyLibrary";
 export type LionNarrative = {
   headline: string;
   personalised: string;
+  why: string;
   capital: string;
   sustainability: string;
   guidance: string;
@@ -40,6 +41,10 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
       ? `a deficit of ${formatAmount(Math.abs(netMonthly), ctx.currency)}`
       : `a surplus of ${formatAmount(netMonthly, ctx.currency)}`
   }.`;
+  const why =
+    netMonthly < 0
+      ? `This deficit exists because expenses exceed income, requiring capital drawdown of ${formatAmount(Math.abs(netMonthly), ctx.currency)} per month.`
+      : `This surplus exists because income exceeds expenses, allowing capital to remain intact.`;
   const capital = `Total capital stands at ${formatAmount(ctx.totalCapital, ctx.currency)}${
     capitalGap > 0 ? `, with a gap of ${formatAmount(capitalGap, ctx.currency)} to target.` : `.`
   }`;
@@ -55,6 +60,7 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
     return {
       headline: tone.headline,
       personalised,
+      why,
       capital,
       sustainability,
       guidance,
@@ -68,6 +74,7 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
     return {
       headline: tone.headline,
       personalised,
+      why,
       capital,
       sustainability,
       guidance,
@@ -81,6 +88,7 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
     return {
       headline: tone.headline,
       personalised,
+      why,
       capital,
       sustainability,
       guidance,
@@ -94,6 +102,7 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
     return {
       headline: tone.headline,
       personalised,
+      why,
       capital,
       sustainability,
       guidance,
@@ -106,6 +115,7 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
   return {
     headline: tone.headline,
     personalised,
+    why,
     capital,
     sustainability,
     guidance,
