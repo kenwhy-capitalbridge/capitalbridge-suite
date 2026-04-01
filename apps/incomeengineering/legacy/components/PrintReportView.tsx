@@ -329,7 +329,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
 
   const paidIeSectionModel =
     lionAccessEnabled && lionPaidCopyIe && lionReport
-      ? buildPaidLionSectionModel(lionPaidCopyIe, lionReport.verdict.status as Tier)
+      ? buildPaidLionSectionModel(lionPaidCopyIe)
       : null;
 
   const incomeFrameworkIntro = useMemo(
@@ -589,14 +589,14 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>{text}</p>
             </div>
           ))}
-          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>Options</h3>
+          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>What you should do next</h3>
           <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>
-            {paidIeSectionModel.options.map((line) => (
+            {paidIeSectionModel.decisions.map((line) => (
               <li key={line} style={{ marginBottom: '4px' }}>{line}</li>
             ))}
           </ul>
-          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>Decision boundary</h3>
-          <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.55, fontSize: '12px' }}>{paidIeSectionModel.decisionBoundary}</p>
+          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>If you do nothing</h3>
+          <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.55, fontSize: '12px' }}>{paidIeSectionModel.ifDoNothing}</p>
         </section>
         </div>
       ) : (

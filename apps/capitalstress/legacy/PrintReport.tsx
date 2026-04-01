@@ -196,7 +196,7 @@ export function PrintReport(props: PrintReportProps) {
 
   const paidStressSectionModel =
     lionAccessEnabled && lionPaidCopyPrint
-      ? buildPaidLionSectionModel(lionPaidCopyPrint, lionTierPrint as Tier)
+      ? buildPaidLionSectionModel(lionPaidCopyPrint)
       : null;
 
   const preparedForCover = reportPreparedForLine(reportClientDisplayName);
@@ -1158,10 +1158,10 @@ export function PrintReport(props: PrintReportProps) {
                 letterSpacing: '0.06em',
               }}
             >
-              Options
+              What you should do next
             </p>
             <ul style={{ fontSize: '10pt', color: PRINT_TEXT, marginLeft: '1.25em', marginBottom: '0.55em', lineHeight: 1.45 }}>
-              {paidStressSectionModel.options.map((line) => (
+              {paidStressSectionModel.decisions.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
@@ -1176,10 +1176,10 @@ export function PrintReport(props: PrintReportProps) {
                   letterSpacing: '0.06em',
                 }}
               >
-                Decision boundary
+                If you do nothing
               </p>
               <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>
-                {paidStressSectionModel.decisionBoundary}
+                {paidStressSectionModel.ifDoNothing}
               </p>
             </div>
             <div style={{ marginTop: '0.5em' }}>
