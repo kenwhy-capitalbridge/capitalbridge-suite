@@ -27,6 +27,10 @@ function formatYears(value?: number): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: value % 1 === 0 ? 0 : 1 });
 }
 
+function vary(sentenceA: string, sentenceB: string) {
+  return Math.random() > 0.5 ? sentenceA : sentenceB;
+}
+
 export function generateLionNarrative(ctx: LionContext): LionNarrative {
   const netMonthly = typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly) ? ctx.netMonthly : 0;
   const sustainabilityYears =
@@ -36,11 +40,14 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
   const lionScore = typeof ctx.lionScore === "number" && Number.isFinite(ctx.lionScore) ? ctx.lionScore : 0;
   const capitalGap = typeof ctx.capitalGap === "number" && Number.isFinite(ctx.capitalGap) ? ctx.capitalGap : 0;
   const tone = generateLionToneCopy(lionScore);
-  const personalised = `You are generating ${formatAmount(ctx.monthlyIncome, ctx.currency)} against ${formatAmount(ctx.monthlyExpense, ctx.currency)}, resulting in ${
+  const outcome =
     netMonthly < 0
       ? `a deficit of ${formatAmount(Math.abs(netMonthly), ctx.currency)}`
-      : `a surplus of ${formatAmount(netMonthly, ctx.currency)}`
-  }.`;
+      : `a surplus of ${formatAmount(netMonthly, ctx.currency)}`;
+  const personalised = vary(
+    `You are generating ${formatAmount(ctx.monthlyIncome, ctx.currency)} against ${formatAmount(ctx.monthlyExpense, ctx.currency)}, resulting in ${outcome}.`,
+    `Your current structure produces ${formatAmount(ctx.monthlyIncome, ctx.currency)} against ${formatAmount(ctx.monthlyExpense, ctx.currency)}, leaving ${outcome}.`,
+  );
   const why =
     netMonthly < 0
       ? `This deficit exists because expenses exceed income, requiring capital drawdown of ${formatAmount(Math.abs(netMonthly), ctx.currency)} per month.`
