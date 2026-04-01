@@ -1,25 +1,23 @@
 import type { Tier } from "./copy";
 import type { GetLionVerdictOutput } from "./getLionVerdict";
-import { LION_PRESET_DECISION_BOUNDARY, LION_PRESET_STRATEGIC_OPTIONS } from "./lionStructuredPresets";
 
 export type PaidLionNarrativeSection = { label: string; text: string };
 
 export function buildPaidLionSectionModel(copy: GetLionVerdictOutput, tier: Tier): {
   narrative: PaidLionNarrativeSection[];
   decisions: string[];
-  options: readonly string[];
-  decisionBoundary: string;
+  headline: string;
+  ifDoNothing: string;
 } {
   const narrative: PaidLionNarrativeSection[] = [
-    { label: "Cash flow", text: copy.narrative.gap },
-    { label: "Capital", text: copy.narrative.capital },
-    { label: "Sustainability", text: copy.narrative.sustainability },
-    { label: "Pressure", text: copy.narrative.pressure },
+    { label: "What is happening", text: copy.narrative.whatIsHappening },
+    { label: "Why it is happening", text: copy.narrative.whyItIsHappening },
   ];
+  void tier;
   return {
     narrative,
     decisions: copy.decisions,
-    options: LION_PRESET_STRATEGIC_OPTIONS[tier],
-    decisionBoundary: LION_PRESET_DECISION_BOUNDARY[tier],
+    headline: copy.headline,
+    ifDoNothing: copy.narrative.ifDoNothing,
   };
 }
