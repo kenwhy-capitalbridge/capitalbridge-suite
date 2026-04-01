@@ -12,6 +12,7 @@ import {
   CHECKOUT_ACCOUNT_EXISTS,
   CHECKOUT_ERROR_INVALID_RESPONSE,
   CHECKOUT_ERROR_NETWORK,
+  CHECKOUT_ERROR_PROVIDER_MAINTENANCE,
   CHECKOUT_ERROR_START_PAYMENT,
 } from "@/lib/checkoutMessages";
 import {
@@ -187,7 +188,14 @@ function CheckoutContent() {
         const message = typeof data?.message === "string" ? data.message : null;
         const detail = typeof data?.detail === "string" ? data.detail : null;
         const errorCode = typeof data?.error === "string" ? data.error : null;
-        setError(message || detail || errorCode || CHECKOUT_ERROR_START_PAYMENT);
+        setError(
+          message ||
+            detail ||
+            (errorCode === "bill_creation_failed"
+              ? CHECKOUT_ERROR_PROVIDER_MAINTENANCE
+              : errorCode) ||
+            CHECKOUT_ERROR_START_PAYMENT,
+        );
         return;
       }
 

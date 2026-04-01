@@ -46,6 +46,26 @@ type Body = {
   deviceId?: string;
 };
 
+async function cleanupFailedPendingSignup(
+  svc: ReturnType<typeof createServiceClient>,
+  userId: string,
+  sessionId?: string,
+) {
+  if (sessionId) {
+    await svc.schema("public").from("billing_sessions").delete().eq("id", sessionId).catch((error) => {
+      console.warn("[request-bill] cleanup billing_session failed:", error);
+    });
+  }
+
+  await svc.schema("public").from("profiles").delete().eq("id", userId).catch((error) => {
+    console.warn("[request-bill] cleanup profile failed:", error);
+  });
+
+  await svc.auth.admin.deleteUser(userId).catch((error) => {
+    console.warn("[request-bill] cleanup auth user failed:", error);
+  });
+}
+
 function getPaymentFirstRedirectUrl(): string {
   return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
 }
@@ -222,16 +242,36 @@ export async function POST(req: Request) {
     billId = result.billId;
     checkoutUrl = result.checkoutUrl;
   } catch (err) {
-    console.error("[request-bill] Billplz error:", err);
+    const status =
+      err && typeof err === "object" && "status" in err && typeof (err as { status?: unknown }).status === "number"
+        ? (err as { status: number }).status
+        : undefined;
+    const bodyText =
+      err && typeof err === "object" && "body" in err && typeof (err as { body?: unknown }).body === "string"
+        ? ((err as { body: string }).body || "")
+        : "";
+    const message = err instanceof Error ? err.message : "unknown";
+    const providerOffline = status === 503 || /offline for maintenance|undergoing maintenance/i.test(bodyText);
+
+    console.error("[request-bill] Billplz error:", message, status ? { status } : "", bodyText ? { billplz_response: bodyText } : "");
     await svc
       .schema("public")
       .from("billing_sessions")
       .update({
-        last_payment_error: "bill_creation_failed",
+        last_payment_error: providerOffline ? "provider_maintenance" : "bill_creation_failed",
         updated_at: new Date().toISOString(),
       })
       .eq("id", session.id);
-    return NextResponse.json({ error: "bill_creation_failed" }, { status: 502, headers });
+    await cleanupFailedPendingSignup(svc, userId, session.id);
+    return NextResponse.json(
+      {
+        error: "bill_creation_failed",
+        message: providerOffline
+          ? "Payments are temporarily unavailable because our payment provider is under maintenance. Please try again shortly."
+          : "We couldn't start payment right now. Please try again shortly.",
+      },
+      { status: 502, headers }
+    );
   }
 
   // Section 2: Save bill_id, status = bill_created

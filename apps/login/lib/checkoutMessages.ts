@@ -2,6 +2,8 @@ export const CHECKOUT_ACCOUNT_EXISTS =
   "This email is already registered. Please sign in or reset your password.";
 
 export const CHECKOUT_ERROR_START_PAYMENT = "We couldn’t start the payment. Please try again.";
+export const CHECKOUT_ERROR_PROVIDER_MAINTENANCE =
+  "Payments are temporarily unavailable because our payment provider is under maintenance. Please try again shortly.";
 
 export const CHECKOUT_ERROR_INVALID_RESPONSE = "Something went wrong. Please try again.";
 
