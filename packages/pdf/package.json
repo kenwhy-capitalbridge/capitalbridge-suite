@@ -8,7 +8,8 @@
     ".": "./src/reportReady.ts",
     "./build-narrative": "./src/buildPdfNarrative.ts",
     "./render": "./src/renderPdf.ts",
-    "./report-ready": "./src/reportReady.ts"
+    "./report-ready": "./src/reportReady.ts",
+    "./templates/BaseReport": "./src/templates/BaseReport.tsx"
   },
   "dependencies": {
     "playwright": "^1.51.1"
