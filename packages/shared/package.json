@@ -12,6 +12,7 @@
     "./cbReportTemplate": "./src/cbReportTemplate.ts",
     "./reportIdentity": "./src/reportIdentity.ts",
     "./reportTraceability": "./src/reportTraceability.ts",
-    "./legalMonocopy": "./src/legalMonocopy.ts"
+    "./legalMonocopy": "./src/legalMonocopy.ts",
+    "./formatCurrency": "./src/formatCurrency.ts"
   }
 }

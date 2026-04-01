@@ -1,4 +1,5 @@
 import type { LionContext } from "./buildLionContext";
+import { formatRM } from "@cb/shared/formatCurrency";
 import { generateLionToneCopy } from "./lionCopyLibrary";
 
 export type LionNarrative = {
@@ -13,9 +14,11 @@ export type LionNarrative = {
 };
 
 function formatAmount(value?: number, currency?: string): string {
-  const safeValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
-  const currencyLabel = currency ?? "RM";
-  return `${currencyLabel} ${safeValue.toLocaleString()}`;
+  if (currency && currency !== "RM") {
+    const safeValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
+    return `${currency} ${safeValue.toLocaleString("en-MY")}`;
+  }
+  return formatRM(value);
 }
 
 function formatYears(value?: number): string {

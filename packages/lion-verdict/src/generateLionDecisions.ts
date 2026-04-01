@@ -1,8 +1,11 @@
 import type { LionContext } from "./buildLionContext";
+import { formatRM } from "@cb/shared/formatCurrency";
 
 function formatDecisionAmount(value: number, currency?: string): string {
-  const currencyLabel = currency ?? "RM";
-  return `${currencyLabel} ${Math.abs(value).toLocaleString()}`;
+  if (currency && currency !== "RM") {
+    return `${currency} ${Math.abs(value).toLocaleString("en-MY")}`;
+  }
+  return formatRM(Math.abs(value));
 }
 
 export function generateLionDecisions(ctx: LionContext): string[] {
