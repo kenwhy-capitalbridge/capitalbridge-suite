@@ -9,8 +9,9 @@ function formatDecisionAmount(value: number, currency?: string): string {
   return formatRM(Math.abs(value));
 }
 
-function vary(sentenceA: string, sentenceB: string) {
-  return Math.random() > 0.5 ? sentenceA : sentenceB;
+function vary(...sentences: string[]) {
+  if (sentences.length === 0) return "";
+  return sentences[Math.floor(Math.random() * sentences.length)];
 }
 
 export function generateLionDecisions(ctx: LionContext): string[] {
@@ -21,8 +22,9 @@ export function generateLionDecisions(ctx: LionContext): string[] {
   if (typeof ctx.netMonthly === "number" && ctx.netMonthly < 0) {
     actions.push(
       vary(
-        `Close the monthly gap of ${formatDecisionAmount(ctx.netMonthly, ctx.currency)} so income and spending return to balance.`,
-        `Remove the ${formatDecisionAmount(ctx.netMonthly, ctx.currency)} monthly shortfall so capital is no longer funding ongoing spending.`,
+        `Close the monthly shortfall of ${formatDecisionAmount(ctx.netMonthly, ctx.currency)} by either increasing income streams or reducing fixed outflows.`,
+        `Eliminate the ${formatDecisionAmount(ctx.netMonthly, ctx.currency)} monthly deficit so ongoing spending no longer depends on capital drawdown.`,
+        `Repair the ${formatDecisionAmount(ctx.netMonthly, ctx.currency)} monthly funding gap by lifting recurring income or cutting committed expenses.`,
       ),
     );
   }
@@ -30,8 +32,9 @@ export function generateLionDecisions(ctx: LionContext): string[] {
   if (typeof ctx.capitalGap === "number" && ctx.capitalGap > 0) {
     actions.push(
       vary(
-        `Close the capital shortfall of ${formatDecisionAmount(ctx.capitalGap, ctx.currency)} so the structure reaches its stated target.`,
-        `Rebuild ${formatDecisionAmount(ctx.capitalGap, ctx.currency)} of capital so the reserve matches the target requirement.`,
+        `Build an additional ${formatDecisionAmount(ctx.capitalGap, ctx.currency)} in capital to fully secure long-term sustainability.`,
+        `Add ${formatDecisionAmount(ctx.capitalGap, ctx.currency)} of capital so the reserve reaches the level required for full sustainability.`,
+        `Close the ${formatDecisionAmount(ctx.capitalGap, ctx.currency)} capital gap so the structure is backed by the reserve it actually needs.`,
       ),
     );
   }
