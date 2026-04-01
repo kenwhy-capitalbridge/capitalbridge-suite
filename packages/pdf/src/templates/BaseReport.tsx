@@ -9,11 +9,13 @@ type BaseReportData = {
   summary?: {
     headline?: string;
     keyPoint?: string;
+    bullets?: string[];
   };
   diagnosis?: {
     what?: string;
     why?: string;
     state?: string;
+    critical?: string;
   };
   actions?: string[];
   lion?: {
@@ -22,35 +24,14 @@ type BaseReportData = {
   };
 };
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section style={{ marginBottom: "24px" }}>
-      <h2
-        style={{
-          margin: "0 0 10px",
-          color: "#0D3A1D",
-          fontSize: "14px",
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-        }}
-      >
-        {title}
-      </h2>
-      <div style={{ color: "#1f2937", fontSize: "14px", lineHeight: 1.6 }}>{children}</div>
-    </section>
-  );
-}
-
 export default function BaseReport({ data }: { data: BaseReportData }) {
+  const bullets = data.summary?.bullets?.length
+    ? data.summary.bullets
+    : [data.summary?.headline, data.summary?.keyPoint].filter(Boolean);
+
   return (
     <main
+      className="cb-report"
       style={{
         maxWidth: "816px",
         margin: "0 auto",
@@ -60,44 +41,123 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         fontFamily: "Georgia, 'Times New Roman', serif",
       }}
     >
-      <header style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "2px solid #FFCC6A" }}>
-        <p style={{ margin: 0, color: "#8B6914", fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          Capital Bridge Advisory Framework
-        </p>
-        <h1 style={{ margin: "8px 0 6px", color: "#0D3A1D", fontSize: "28px", fontWeight: 700 }}>
+      <section
+        className="cb-report-section"
+        style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "2px solid #FFCC6A" }}
+      >
+        <img
+          src="/brand/Full_CapitalBridge_Green.svg"
+          alt="Capital Bridge"
+          style={{ height: 40, width: "auto", marginBottom: "16px", objectFit: "contain" }}
+        />
+        <h1 style={{ margin: "0 0 8px", color: "#0D3A1D", fontSize: "28px", fontWeight: 700 }}>
           {data.cover?.title ?? "Report"}
         </h1>
-        <p style={{ margin: 0, color: "#4b5563", fontSize: "14px" }}>
-          Prepared for {data.cover?.client ?? "Client"}
+        <p style={{ margin: "0 0 4px", color: "#374151", fontSize: "15px" }}>{data.cover?.client ?? "Client"}</p>
+        <p style={{ margin: 0, color: "#6B7280", fontSize: "13px" }}>{data.cover?.date ?? ""}</p>
+      </section>
+
+      <section className="cb-report-section" style={{ marginBottom: "24px" }}>
+        <h2
+          style={{
+            margin: "0 0 10px",
+            color: "#0D3A1D",
+            fontSize: "14px",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          At a glance
+        </h2>
+        <ul style={{ margin: 0, paddingLeft: "20px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
+          {bullets.map((bullet, index) => (
+            <li key={`${bullet}-${index}`} style={{ marginBottom: "6px" }}>
+              {bullet}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="cb-report-section" style={{ marginBottom: "24px" }}>
+        <h2
+          style={{
+            margin: "0 0 10px",
+            color: "#0D3A1D",
+            fontSize: "14px",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          What is happening
+        </h2>
+        <p style={{ margin: 0, color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>{data.diagnosis?.what ?? ""}</p>
+      </section>
+
+      <section className="cb-report-section" style={{ marginBottom: "24px" }}>
+        <h2
+          style={{
+            margin: "0 0 10px",
+            color: "#0D3A1D",
+            fontSize: "14px",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          Why it is happening
+        </h2>
+        <p style={{ margin: "0 0 10px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
+          {data.diagnosis?.why ?? ""}
         </p>
-        <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: "13px" }}>{data.cover?.date ?? ""}</p>
-      </header>
+        {data.diagnosis?.critical ? (
+          <p style={{ margin: 0, color: "#374151", fontSize: "14px", lineHeight: 1.6 }}>
+            {data.diagnosis.critical}
+          </p>
+        ) : null}
+      </section>
 
-      <Section title="Summary">
-        <p style={{ margin: "0 0 10px", fontWeight: 700 }}>{data.summary?.headline ?? ""}</p>
-        <p style={{ margin: 0 }}>{data.summary?.keyPoint ?? ""}</p>
-      </Section>
-
-      <Section title="Diagnosis">
-        <p style={{ margin: "0 0 10px" }}>{data.diagnosis?.what ?? ""}</p>
-        <p style={{ margin: "0 0 10px" }}>{data.diagnosis?.why ?? ""}</p>
-        <p style={{ margin: 0, color: "#374151", fontWeight: 600 }}>{data.diagnosis?.state ?? ""}</p>
-      </Section>
-
-      <Section title="What you should do next">
-        <ul style={{ margin: 0, paddingLeft: "20px" }}>
-          {(data.actions ?? []).map((action) => (
-            <li key={action} style={{ marginBottom: "6px" }}>
+      <section className="cb-report-section" style={{ marginBottom: "24px" }}>
+        <h2
+          style={{
+            margin: "0 0 10px",
+            color: "#0D3A1D",
+            fontSize: "14px",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          What you should do
+        </h2>
+        <ul style={{ margin: 0, paddingLeft: "20px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
+          {(data.actions ?? []).map((action, index) => (
+            <li key={`${action}-${index}`} style={{ marginBottom: "6px" }}>
               {action}
             </li>
           ))}
         </ul>
-      </Section>
+      </section>
 
-      <Section title="Lion guidance">
-        <p style={{ margin: "0 0 10px", fontWeight: 700 }}>{data.lion?.headline ?? ""}</p>
-        <p style={{ margin: 0 }}>{data.lion?.guidance ?? ""}</p>
-      </Section>
+      <section className="cb-report-section" style={{ marginBottom: 0 }}>
+        <h2
+          style={{
+            margin: "0 0 10px",
+            color: "#0D3A1D",
+            fontSize: "14px",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          Final verdict
+        </h2>
+        <h1 style={{ margin: "0 0 10px", color: "#0D3A1D", fontSize: "24px", fontWeight: 700 }}>
+          {data.lion?.headline ?? ""}
+        </h1>
+        <p style={{ margin: 0, color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>{data.lion?.guidance ?? ""}</p>
+      </section>
     </main>
   );
 }

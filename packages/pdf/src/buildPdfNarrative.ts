@@ -21,11 +21,13 @@ export type PdfNarrativeOutput = {
   summary: {
     headline: string;
     keyPoint: string;
+    bullets: string[];
   };
   diagnosis: {
     what: string;
     why: string;
     state: string;
+    critical?: string;
   };
   actions: string[];
   lion: {
@@ -48,6 +50,7 @@ export function buildPdfNarrative(
     summary: {
       headline: narrative.headline,
       keyPoint: narrative.personalised,
+      bullets: [narrative.headline, narrative.personalised],
     },
     diagnosis: {
       what: narrative.personalised,
