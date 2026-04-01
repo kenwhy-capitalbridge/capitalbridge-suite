@@ -1,4 +1,5 @@
 import { LION_COPY, type Tier, type Line } from './copy';
+import { buildLionContext, type LionContextInput } from './src/buildLionContext';
 
 export type HistoryEntry = {
   index: number;
@@ -34,7 +35,7 @@ export type GetLionVerdictInput = {
   guidanceHistory?: HistoryEntry[];
   globalHistory?: GlobalHistory;
   memory?: LionVerdictMemory;
-};
+} & LionContextInput;
 
 export type ConfidenceBand = 'high' | 'medium' | 'low';
 
@@ -87,6 +88,9 @@ function boostWeights(lines: Line[], persona: Persona): Line[] {
 }
 
 export function getLionVerdict(input: GetLionVerdictInput): GetLionVerdictOutput {
+  const lionContext = buildLionContext(input);
+  void lionContext;
+
   const { userId, reportType, tier } = input;
   const headlines = LION_COPY[tier].headlines;
   const guidance = LION_COPY[tier].guidance;
