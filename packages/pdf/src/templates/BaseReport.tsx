@@ -206,7 +206,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         </p>
       </section>
 
-      <section className="cb-report-section" style={{ marginBottom: 0 }}>
+      <section className="cb-report-section" style={{ marginTop: "160px", marginBottom: 0 }}>
         <h2
           style={{
             margin: "0 0 10px",
