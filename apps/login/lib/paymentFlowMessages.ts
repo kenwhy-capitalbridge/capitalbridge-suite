@@ -19,3 +19,8 @@ export const PAYMENT_HELP_LINE = `Need help? Contact support at ${SUPPORT_EMAIL}
 export const HANDOFF_FORBIDDEN_ORIGIN = "Please refresh this page, then try again.";
 
 export const HANDOFF_SUCCESS_EMAIL_SENT = "Password setup email sent. Please check your inbox.";
+
+export const HANDOFF_PAYMENT_PENDING =
+  "Payment has not been confirmed yet. Complete payment first, then check again.";
+
+export const HANDOFF_STATUS_CHECKING = "Checking payment status…";

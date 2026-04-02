@@ -15,6 +15,8 @@ import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import { NavAssignButton } from "@/components/NavAssignButton";
 import {
   HANDOFF_FORBIDDEN_ORIGIN,
+  HANDOFF_PAYMENT_PENDING,
+  HANDOFF_STATUS_CHECKING,
   HANDOFF_SUCCESS_EMAIL_SENT,
   PAYMENT_ERROR_EMAIL,
   PAYMENT_ERROR_NOT_CONFIGURED,
@@ -85,6 +87,8 @@ function PaymentHandoffContent() {
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusCheckBusy, setStatusCheckBusy] = useState(false);
 
   const accessHref = useMemo(
     () => buildAccessUrl({ redirectTo: LOGIN_REDIRECT, email: status?.email?.trim() ?? undefined }),
@@ -93,15 +97,29 @@ function PaymentHandoffContent() {
 
   const fetchStatusOnce = useCallback(async () => {
     if (!billId) return;
+    setStatusCheckBusy(true);
+    setStatusMessage(HANDOFF_STATUS_CHECKING);
     try {
       const res = await fetch(`/api/billing/status?bill_id=${encodeURIComponent(billId)}`, {
         cache: "no-store",
       });
       const data = (await res.json().catch(() => ({}))) as BillingStatusResponse;
       setStatus(data);
+      if (data.account_ready) {
+        setStatusMessage(null);
+      } else if (data.next_step === "wait_for_payment" || data.billing_status === "pending" || data.billing_status === "bill_created") {
+        setStatusMessage(HANDOFF_PAYMENT_PENDING);
+      } else if (data.next_step === "contact_support") {
+        setStatusMessage(PAYMENT_ERROR_SESSION);
+      } else {
+        setStatusMessage(HANDOFF_PAYMENT_PENDING);
+      }
       setLoading(false);
     } catch {
+      setStatusMessage(PAYMENT_ERROR_SESSION);
       setLoading(false);
+    } finally {
+      setStatusCheckBusy(false);
     }
   }, [billId]);
 
@@ -270,13 +288,19 @@ function PaymentHandoffContent() {
               password upon confirmation.
             </p>
           )}
+          {!loading && statusMessage && (
+            <p className="rounded-lg bg-cb-green/10 px-3 py-2 text-sm font-medium text-cb-green">
+              {statusMessage}
+            </p>
+          )}
           {!loading && billId && (
             <button
               type="button"
               className={btnSecondary}
+              disabled={statusCheckBusy}
               onClick={() => void fetchStatusOnce()}
             >
-              Check payment status
+              {statusCheckBusy ? "Checking payment status…" : "Check payment status"}
             </button>
           )}
         </div>
