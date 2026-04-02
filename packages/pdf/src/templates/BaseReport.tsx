@@ -1,4 +1,5 @@
 import React from "react";
+import { CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY as LEGAL_COPY } from "@cb/shared/legalMonocopy";
 
 type BaseReportData = {
   cover?: {
@@ -158,6 +159,19 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         </h1>
         <p style={{ margin: 0, color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>{data.lion?.guidance ?? ""}</p>
       </section>
+
+      <footer
+        className="cb-report-footer cb-report-section"
+        style={{
+          borderTop: "1px solid rgba(13, 58, 29, 0.12)",
+          paddingTop: "16px",
+          color: "#6B7280",
+          fontSize: "11px",
+          lineHeight: 1.6,
+        }}
+      >
+        {LEGAL_COPY}
+      </footer>
     </main>
   );
 }
