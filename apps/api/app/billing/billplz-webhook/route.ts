@@ -3,6 +3,7 @@ import { createServiceClient } from "@cb/supabase/service";
 import { verifyBillplzWebhookSignature } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
 import { activateMembershipFromPaidBillingSession } from "@/lib/activateMembershipFromBillingSession";
+import { ensureBillingSessionUser } from "@/lib/ensureBillingSessionUser";
 
 export const runtime = "nodejs";
 
@@ -85,21 +86,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const preUserId = sessionByBill.user_id as string | null | undefined;
-  if (!preUserId) {
-    console.error("[billplz-webhook] billing_sessions missing user_id", { bill_id: billId, billing_session_id: billingSessionId });
-    return NextResponse.json({ ok: false, error: "missing_user_id" }, { status: 400 });
+  const ensuredUser = await ensureBillingSessionUser({
+    svc,
+    billingSessionId,
+  });
+  if (!ensuredUser.ok) {
+    console.error("[billplz-webhook] ensure billing user failed", {
+      bill_id: billId,
+      billing_session_id: billingSessionId,
+      error: ensuredUser.error,
+    });
+    return NextResponse.json({ ok: false, error: "user_create_failed", detail: ensuredUser.error }, { status: 500 });
   }
 
-  const { data: authWrap, error: guErr } = await svc.auth.admin.getUserById(preUserId);
-  if (guErr || !authWrap?.user?.id) {
-    console.error("[billplz-webhook] invalid user_id on billing_session", { bill_id: billId, user_id: preUserId });
-    return NextResponse.json({ ok: false, error: "invalid_user" }, { status: 400 });
-  }
-
-  const userId = authWrap.user.id;
+  const userId = ensuredUser.userId;
   const sessionEmail = typeof sessionByBill.email === "string" ? sessionByBill.email.trim() : "";
-  const authEmail = (authWrap.user.email ?? "").trim();
+  const authEmail = ensuredUser.email.trim();
   if (sessionEmail && authEmail && normalizeEmail(sessionEmail) !== normalizeEmail(authEmail)) {
     console.error("[billplz-webhook] email mismatch billing_sessions vs auth.users", {
       bill_id: billId,

@@ -3,6 +3,7 @@ import { createServiceClient } from "@cb/supabase/service";
 import { getBillplzBill } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
 import { activateMembershipFromPaidBillingSession } from "@/lib/activateMembershipFromBillingSession";
+import { ensureBillingSessionUser } from "@/lib/ensureBillingSessionUser";
 
 export const runtime = "nodejs";
 
@@ -62,19 +63,17 @@ export async function GET(req: Request) {
       .eq("id", session.id);
   }
 
-  const preUserId = session.user_id as string | null | undefined;
-  if (!preUserId) {
-    return NextResponse.json({ ok: false, error: "missing_user_id" }, { status: 400 });
+  const ensuredUser = await ensureBillingSessionUser({
+    svc,
+    billingSessionId: session.id,
+  });
+  if (!ensuredUser.ok) {
+    return NextResponse.json({ ok: false, error: "user_create_failed", detail: ensuredUser.error }, { status: 500 });
   }
 
-  const { data: authWrap, error: guErr } = await svc.auth.admin.getUserById(preUserId);
-  if (guErr || !authWrap?.user?.id) {
-    return NextResponse.json({ ok: false, error: "invalid_user" }, { status: 400 });
-  }
-
-  const userId = authWrap.user.id;
+  const userId = ensuredUser.userId;
   const sessionEmail = typeof session.email === "string" ? session.email.trim() : "";
-  const authEmail = (authWrap.user.email ?? "").trim();
+  const authEmail = ensuredUser.email.trim();
   if (sessionEmail && authEmail && normalizeEmail(sessionEmail) !== normalizeEmail(authEmail)) {
     return NextResponse.json({ ok: false, error: "email_mismatch" }, { status: 409 });
   }

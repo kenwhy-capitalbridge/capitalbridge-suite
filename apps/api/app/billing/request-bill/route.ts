@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
 import { hashTrialCheckoutIp, parseClientIpFromRequest } from "@/lib/trialCheckoutSignals";
@@ -45,32 +44,6 @@ type Body = {
   lastName?: string;
   deviceId?: string;
 };
-
-async function cleanupFailedPendingSignup(
-  svc: ReturnType<typeof createServiceClient>,
-  userId: string,
-  sessionId?: string,
-) {
-  if (sessionId) {
-    try {
-      await svc.schema("public").from("billing_sessions").delete().eq("id", sessionId);
-    } catch (error) {
-      console.warn("[request-bill] cleanup billing_session failed:", error);
-    }
-  }
-
-  try {
-    await svc.schema("public").from("profiles").delete().eq("id", userId);
-  } catch (error) {
-    console.warn("[request-bill] cleanup profile failed:", error);
-  }
-
-  try {
-    await svc.auth.admin.deleteUser(userId);
-  } catch (error) {
-    console.warn("[request-bill] cleanup auth user failed:", error);
-  }
-}
 
 function getPaymentFirstRedirectUrl(): string {
   return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
@@ -153,59 +126,10 @@ export async function POST(req: Request) {
     }
   }
 
-  const tempPassword = randomBytes(28).toString("base64url");
-  const userMetadata: Record<string, string | boolean> = {
-    first_name: firstName,
-    last_name: lastName,
-    full_name: billplzName,
-    name: billplzName,
-    checkout_pending: true,
-  };
-
-  const { data: authUser, error: createUserErr } = await svc.auth.admin.createUser({
-    email,
-    password: tempPassword,
-    email_confirm: false,
-    user_metadata: userMetadata,
-  });
-
-  if (createUserErr || !authUser?.user?.id) {
-    const msg = String(createUserErr?.message ?? "").toLowerCase();
-    if (
-      msg.includes("already") ||
-      msg.includes("registered") ||
-      msg.includes("exists") ||
-      createUserErr?.code === "email_exists"
-    ) {
-      return NextResponse.json({ error: "account_exists", detail: "email_already_registered" }, { status: 409, headers });
-    }
-    console.error("[request-bill] create user failed:", createUserErr);
-    return NextResponse.json(
-      { error: "user_create_failed", detail: createUserErr?.message },
-      { status: 500, headers }
-    );
-  }
-
-  const userId = authUser.user.id;
-
-  await svc
-    .schema("public")
-    .from("profiles")
-    .upsert(
-      {
-        id: userId,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-      },
-      { onConflict: "id" }
-    );
-
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
     .insert({
-      user_id: userId,
       email,
       plan_id: planRow.id,
       plan: planRow.slug,
@@ -220,7 +144,6 @@ export async function POST(req: Request) {
 
   if (sessionErr || !session?.id) {
     console.error("[request-bill] billing_sessions insert failed:", sessionErr);
-    await svc.auth.admin.deleteUser(userId).catch(() => {});
     const detail = sessionErr?.message ?? (sessionErr as Error)?.message;
     return NextResponse.json(
       { error: "session_create_failed", detail: typeof detail === "string" ? detail : undefined },
@@ -268,7 +191,7 @@ export async function POST(req: Request) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", session.id);
-    await cleanupFailedPendingSignup(svc, userId, session.id);
+    await svc.schema("public").from("billing_sessions").delete().eq("id", session.id);
     return NextResponse.json(
       {
         error: "bill_creation_failed",
@@ -278,6 +201,20 @@ export async function POST(req: Request) {
       },
       { status: 502, headers }
     );
+  }
+
+  const { error: pendingBillErr } = await svc
+    .schema("public")
+    .from("pending_bills")
+    .insert({
+      email,
+      plan_id: planRow.id,
+      name: billplzName,
+      billplz_bill_id: billId,
+    });
+
+  if (pendingBillErr) {
+    console.warn("[request-bill] pending_bills insert failed:", pendingBillErr.message);
   }
 
   // Section 2: Save bill_id, status = bill_created
@@ -292,5 +229,5 @@ export async function POST(req: Request) {
     })
     .eq("id", session.id);
 
-  return NextResponse.json({ checkoutUrl }, { headers });
+  return NextResponse.json({ checkoutUrl, billId }, { headers });
 }

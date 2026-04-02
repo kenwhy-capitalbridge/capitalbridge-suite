@@ -283,7 +283,7 @@ function PaymentHandoffContent() {
 
         <div className="mt-4 grid gap-2 sm:mt-6 sm:gap-3">
           {paymentUrl && (
-            <a className={btnPrimary} href={paymentUrl}>
+            <a className={btnPrimary} href={paymentUrl} target="_top" rel="noreferrer">
               Open secure payment
             </a>
           )}

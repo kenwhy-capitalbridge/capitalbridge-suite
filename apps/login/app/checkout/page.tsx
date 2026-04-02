@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { emailExists } from "@cb/advisory-graph/auth/emailCheck";
 import { persistCheckoutEmail, buildAccessUrl } from "@/lib/checkoutEmailPersistence";
@@ -52,6 +53,7 @@ const PLAN_LABELS: Record<string, string> = {
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const plan = useMemo(() => searchParams.get("plan") ?? "trial", [searchParams]);
   const planLabel = PLAN_LABELS[plan] ?? plan;
 
@@ -200,13 +202,18 @@ function CheckoutContent() {
       }
 
       const checkoutUrl = data?.checkoutUrl ?? data?.payment_url;
+      const billId = typeof data?.billId === "string" ? data.billId : null;
       if (typeof checkoutUrl === "string" && checkoutUrl) {
         redirectingRef.current = true;
         persistCheckoutEmail(normalizedEmail);
         setSecuring(true);
         setLoading(false);
         window.setTimeout(() => {
-          window.location.href = checkoutUrl;
+          const handoff = new URL("/payment-handoff", window.location.origin);
+          handoff.searchParams.set("payment_url", checkoutUrl);
+          handoff.searchParams.set("plan", plan);
+          if (billId) handoff.searchParams.set("bill_id", billId);
+          router.replace(`${handoff.pathname}${handoff.search}`);
         }, 400);
         return;
       }
