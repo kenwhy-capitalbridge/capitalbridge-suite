@@ -216,12 +216,16 @@
 }
 
 .cb-report-section {
-  margin-top: 48px;
+  margin-top: 80px;
 }
 
 .cb-report-title {
   font-size: 28px;
   margin-bottom: 16px;
+}
+
+.cb-report-container {
+  padding: 60px 32px;
 }
 
 .cb-report-body {

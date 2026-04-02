@@ -37,11 +37,10 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
 
   return (
     <main
-      className="cb-report"
+      className="cb-report cb-report-container"
       style={{
         maxWidth: "816px",
         margin: "0 auto",
-        padding: "40px 32px 56px",
         background: "#fff",
         color: "#111827",
         fontFamily: "Georgia, 'Times New Roman', serif",
