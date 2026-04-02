@@ -89,16 +89,16 @@ export function buildPdfNarrative(
       ? {
           headline: "WHAT HAPPENS NEXT",
           body:
-            "You are currently exposed to structural risk. The next step is to review how your capital, income, and obligations are structured — and identify where adjustments can be made safely.",
+            "You are exposed to structural risk. Review your capital, income, and obligations next. Identify where safe adjustments can be made.",
           closing:
-            "You can continue exploring this on your own, or work with Capital Bridge™ to structure and execute this properly.",
+            "You can continue on your own. Or work with Capital Bridge™ to structure and execute this properly.",
         }
       : {
           headline: "WHAT HAPPENS NEXT",
           body:
-            "Your structure is holding, but not fully optimised. The next step is to explore how your existing capital can be positioned more efficiently without increasing risk.",
+            "Your structure is holding. It is not fully optimised. Review how your existing capital can be positioned more efficiently without increasing risk.",
           closing:
-            "You can continue exploring this on your own, or work with Capital Bridge™ to structure and execute this properly.",
+            "You can continue on your own. Or work with Capital Bridge™ to structure and execute this properly.",
         },
     lion: {
       headline: narrative.headline,
