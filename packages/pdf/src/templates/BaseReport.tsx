@@ -30,6 +30,24 @@ type BaseReportData = {
   };
 };
 
+function highlightFinancialNumbers(text?: string): React.ReactNode {
+  if (!text) return "";
+
+  const pattern = /(RM\s[\d,]+(?:\.\d+)?|[\d,]+(?:\.\d+)?\s+years?|[\d,]+(?:\.\d+)?%)/g;
+  const exactPattern = /^(RM\s[\d,]+(?:\.\d+)?|[\d,]+(?:\.\d+)?\s+years?|[\d,]+(?:\.\d+)?%)$/;
+  const parts = text.split(pattern);
+
+  return parts.map((part, index) =>
+    exactPattern.test(part) ? (
+      <span key={`${part}-${index}`} className="cb-number">
+        {part}
+      </span>
+    ) : (
+      <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>
+    ),
+  );
+}
+
 export default function BaseReport({ data }: { data: BaseReportData }) {
   const bullets = data.summary?.bullets?.length
     ? data.summary.bullets
@@ -98,7 +116,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         <ul style={{ margin: 0, paddingLeft: "20px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
           {bullets.map((bullet, index) => (
             <li key={`${bullet}-${index}`} style={{ marginBottom: "6px" }}>
-              {bullet}
+              {highlightFinancialNumbers(bullet)}
             </li>
           ))}
         </ul>
@@ -117,7 +135,9 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         >
           What is happening
         </h2>
-        <p style={{ margin: 0, color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>{data.diagnosis?.what ?? ""}</p>
+        <p style={{ margin: 0, color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
+          {highlightFinancialNumbers(data.diagnosis?.what)}
+        </p>
       </section>
 
       <section className="cb-report-section" style={{ marginBottom: "24px" }}>
@@ -134,11 +154,11 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           Why it is happening
         </h2>
         <p style={{ margin: "0 0 10px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
-          {data.diagnosis?.why ?? ""}
+          {highlightFinancialNumbers(data.diagnosis?.why)}
         </p>
         {data.diagnosis?.critical ? (
           <p style={{ margin: 0, color: "#374151", fontSize: "14px", lineHeight: 1.6 }}>
-            {data.diagnosis.critical}
+            {highlightFinancialNumbers(data.diagnosis.critical)}
           </p>
         ) : null}
       </section>
@@ -159,7 +179,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         <ul style={{ margin: 0, paddingLeft: "20px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
           {(data.actions ?? []).map((action, index) => (
             <li key={`${action}-${index}`} style={{ marginBottom: "6px" }}>
-              {action}
+              {highlightFinancialNumbers(action)}
             </li>
           ))}
         </ul>
@@ -179,10 +199,10 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           {data.nextStep?.headline ?? "What happens next"}
         </h2>
         <p style={{ margin: "0 0 10px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
-          {data.nextStep?.body ?? ""}
+          {highlightFinancialNumbers(data.nextStep?.body)}
         </p>
         <p style={{ margin: 0, color: "#374151", fontSize: "14px", lineHeight: 1.6 }}>
-          {data.nextStep?.closing ?? ""}
+          {highlightFinancialNumbers(data.nextStep?.closing)}
         </p>
       </section>
 
@@ -200,9 +220,11 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           Final verdict
         </h2>
         <h1 style={{ margin: "0 0 10px", color: "#0D3A1D", fontSize: "24px", fontWeight: 700 }}>
-          {data.lion?.headline ?? ""}
+          {highlightFinancialNumbers(data.lion?.headline)}
         </h1>
-        <p style={{ margin: 0, color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>{data.lion?.guidance ?? ""}</p>
+        <p style={{ margin: 0, color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
+          {highlightFinancialNumbers(data.lion?.guidance)}
+        </p>
       </section>
 
       <footer

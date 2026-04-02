@@ -232,6 +232,11 @@
   line-height: 1.6;
 }
 
+.cb-number {
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
 html,
 body {
   margin: 0;
