@@ -6,6 +6,8 @@ type BaseReportData = {
     title?: string;
     client?: string;
     date?: string;
+    reportId?: string;
+    frameworkNote?: string;
   };
   summary?: {
     headline?: string;
@@ -238,6 +240,23 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
       >
         {LEGAL_COPY}
       </footer>
+
+      <div
+        className="cb-report-authority"
+        style={{
+          position: "absolute",
+          right: "32px",
+          bottom: "20px",
+          textAlign: "right",
+          fontSize: "10px",
+          lineHeight: 1.5,
+          color: "rgba(17, 24, 39, 0.5)",
+        }}
+      >
+        <div>{data.cover?.reportId ?? ""}</div>
+        <div>{data.cover?.date ?? ""}</div>
+        <div>{data.cover?.frameworkNote ?? ""}</div>
+      </div>
     </main>
   );
 }

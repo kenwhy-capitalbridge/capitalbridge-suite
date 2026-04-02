@@ -1,3 +1,4 @@
+import { buildReportId } from "@cb/shared/reportTraceability";
 import { generateLionCritical } from "@cb/lion-verdict";
 
 export type PdfNarrativeContext = {
@@ -22,6 +23,8 @@ export type PdfNarrativeOutput = {
     title: string | undefined;
     client: string;
     date: string;
+    reportId: string;
+    frameworkNote: string;
   };
   summary: {
     headline: string;
@@ -54,12 +57,19 @@ export function buildPdfNarrative(
   const fragileOrDeficit =
     (typeof ctx.netMonthly === "number" && ctx.netMonthly < 0) ||
     (typeof ctx.lionScore === "number" && ctx.lionScore < 70);
+  const generatedAt = new Date();
+  const reportId = buildReportId(
+    (ctx.modelType as "STRESS" | "INCOME" | "HEALTH" | "FOREVER") ?? "INCOME",
+    `${ctx.clientName ?? "Client"}|${generatedAt.toISOString()}|${narrative.headline}`,
+  );
 
   return {
     cover: {
       title: ctx.modelType,
       client: ctx.clientName || "Client",
-      date: new Date().toISOString(),
+      date: generatedAt.toISOString(),
+      reportId,
+      frameworkNote: "Prepared using Capital Bridge™ advisory framework",
     },
     summary: {
       headline: narrative.headline,
