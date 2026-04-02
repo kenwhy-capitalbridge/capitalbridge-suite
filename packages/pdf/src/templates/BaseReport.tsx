@@ -69,7 +69,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
       </div>
       <section
         className="cb-report-section"
-        style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "2px solid #FFCC6A" }}
+        style={{ marginBottom: "32px", paddingBottom: "20px" }}
       >
         <img
           src="/brand/Full_CapitalBridge_Green.svg"
@@ -209,7 +209,6 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
       <footer
         className="cb-report-footer cb-report-section"
         style={{
-          borderTop: "1px solid rgba(13, 58, 29, 0.12)",
           paddingTop: "16px",
           color: "#6B7280",
           fontSize: "11px",
