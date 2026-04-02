@@ -35,6 +35,11 @@ export type PdfNarrativeOutput = {
     critical?: string;
   };
   actions: string[];
+  nextStep: {
+    headline: string;
+    body: string;
+    closing: string;
+  };
   lion: {
     headline: string;
     guidance: string;
@@ -46,6 +51,10 @@ export function buildPdfNarrative(
   narrative: PdfNarrativeInput,
   decisions: string[],
 ): PdfNarrativeOutput {
+  const fragileOrDeficit =
+    (typeof ctx.netMonthly === "number" && ctx.netMonthly < 0) ||
+    (typeof ctx.lionScore === "number" && ctx.lionScore < 70);
+
   return {
     cover: {
       title: ctx.modelType,
@@ -76,6 +85,21 @@ export function buildPdfNarrative(
       critical: generateLionCritical(ctx),
     },
     actions: decisions,
+    nextStep: fragileOrDeficit
+      ? {
+          headline: "WHAT HAPPENS NEXT",
+          body:
+            "You are currently exposed to structural risk. The next step is to review how your capital, income, and obligations are structured — and identify where adjustments can be made safely.",
+          closing:
+            "You can continue exploring this on your own, or work with Capital Bridge™ to structure and execute this properly.",
+        }
+      : {
+          headline: "WHAT HAPPENS NEXT",
+          body:
+            "Your structure is holding, but not fully optimised. The next step is to explore how your existing capital can be positioned more efficiently without increasing risk.",
+          closing:
+            "You can continue exploring this on your own, or work with Capital Bridge™ to structure and execute this properly.",
+        },
     lion: {
       headline: narrative.headline,
       guidance: narrative.guidance,

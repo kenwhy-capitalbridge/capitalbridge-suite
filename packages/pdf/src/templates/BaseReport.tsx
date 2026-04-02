@@ -19,6 +19,11 @@ type BaseReportData = {
     critical?: string;
   };
   actions?: string[];
+  nextStep?: {
+    headline?: string;
+    body?: string;
+    closing?: string;
+  };
   lion?: {
     headline?: string;
     guidance?: string;
@@ -159,6 +164,27 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="cb-report-section" style={{ marginBottom: "24px" }}>
+        <h2
+          style={{
+            margin: "0 0 10px",
+            color: "#0D3A1D",
+            fontSize: "14px",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          {data.nextStep?.headline ?? "What happens next"}
+        </h2>
+        <p style={{ margin: "0 0 10px", color: "#1F2937", fontSize: "14px", lineHeight: 1.6 }}>
+          {data.nextStep?.body ?? ""}
+        </p>
+        <p style={{ margin: 0, color: "#374151", fontSize: "14px", lineHeight: 1.6 }}>
+          {data.nextStep?.closing ?? ""}
+        </p>
       </section>
 
       <section className="cb-report-section" style={{ marginBottom: 0 }}>
