@@ -1,3 +1,5 @@
+import { generateLionCritical } from "@cb/lion-verdict";
+
 export type PdfNarrativeContext = {
   modelType?: string;
   clientName?: string;
@@ -71,6 +73,7 @@ export function buildPdfNarrative(
       what: narrative.personalised,
       why: narrative.why,
       state: `Lion Score: ${ctx.lionScore} · ${ctx.depletionPressure}`,
+      critical: generateLionCritical(ctx),
     },
     actions: decisions,
     lion: {
