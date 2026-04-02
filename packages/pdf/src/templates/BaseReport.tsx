@@ -40,8 +40,28 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         background: "#fff",
         color: "#111827",
         fontFamily: "Georgia, 'Times New Roman', serif",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      <div
+        className="cb-watermark"
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: "40% auto auto 50%",
+          transform: "translate(-50%, -50%) rotate(-18deg)",
+          fontSize: "72px",
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          color: "#0D3A1D",
+          opacity: 0.03,
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+        }}
+      >
+        CAPITAL BRIDGE™
+      </div>
       <section
         className="cb-report-section"
         style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "2px solid #FFCC6A" }}
