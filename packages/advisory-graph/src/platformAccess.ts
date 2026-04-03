@@ -173,7 +173,7 @@ export function deriveEntitlements(plan: Plan | null): Entitlements {
 export function strategicExecutionTierLabel(plan: Plan | null): string {
   const p = plan ?? "trial";
   if (p === "trial") return "Available with Strategic Access";
-  if (p === "strategic") return "Priority access available";
+  if (p === "strategic") return "Access available";
   return "Upgrade to Strategic to unlock execution";
 }
 

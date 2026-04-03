@@ -74,7 +74,7 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
         onClick={() => setOpen(true)}
         className="pf-chrome-gold-btn priority-access-cta-btn"
       >
-        Request Priority Access
+        Request Access
       </button>
 
       {open ? (
@@ -206,7 +206,7 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
                     onClick={handleSubmit}
                     className="pf-chrome-gold-btn priority-access-cta-btn"
                   >
-                    {submitting ? "Saving..." : "Request Priority Access"}
+                    {submitting ? "Saving..." : "Request Access"}
                   </button>
                 </div>
               </>
