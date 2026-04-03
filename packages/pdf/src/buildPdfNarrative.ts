@@ -61,7 +61,46 @@ export type PdfNarrativeOutput = {
     headline: string;
     guidance: string;
   };
+  journey: {
+    completedStepLabel: string;
+    nextStepLabel: string;
+    nextStepSummary: string;
+    steps: Array<{
+      title: string;
+      whatItDoes: string;
+      whyItMatters: string;
+      isCurrent?: boolean;
+      isNext?: boolean;
+    }>;
+  };
 };
+
+const ADVISORY_JOURNEY = [
+  {
+    key: "FOREVER",
+    title: "Forever Income",
+    whatItDoes: "Tests how long your current capital can support your lifestyle.",
+    whyItMatters: "It gives you the baseline sustainability answer before any deeper structuring work.",
+  },
+  {
+    key: "INCOME",
+    title: "Income Engineering",
+    whatItDoes: "Aligns income streams, obligations, and recurring cash flow.",
+    whyItMatters: "It shows whether your monthly structure is helping or weakening sustainability.",
+  },
+  {
+    key: "HEALTH",
+    title: "Capital Health",
+    whatItDoes: "Measures the strength and balance of the capital base behind the plan.",
+    whyItMatters: "It highlights whether the capital pool is strong enough to carry long-term goals.",
+  },
+  {
+    key: "STRESS",
+    title: "Capital Stress",
+    whatItDoes: "Tests the structure under weaker markets and tougher conditions.",
+    whyItMatters: "It shows how resilient the plan remains when reality does not go smoothly.",
+  },
+] as const;
 
 export function buildPdfNarrative(
   ctx: PdfNarrativeContext,
@@ -82,6 +121,17 @@ export function buildPdfNarrative(
     (ctx.modelType as "STRESS" | "INCOME" | "HEALTH" | "FOREVER") ?? "INCOME",
     `${ctx.clientName ?? "Client"}|${generatedAt.toISOString()}|${narrative.headline}`,
   );
+  const journeyModelKey =
+    ctx.modelType === "IE"
+      ? "INCOME"
+      : ctx.modelType === "HEALTH" || ctx.modelType === "STRESS" || ctx.modelType === "FOREVER"
+        ? ctx.modelType
+        : "INCOME";
+  const currentStepIndex = ADVISORY_JOURNEY.findIndex((step) => step.key === journeyModelKey);
+  const safeCurrentStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
+  const nextStep =
+    ADVISORY_JOURNEY[Math.min(safeCurrentStepIndex + 1, ADVISORY_JOURNEY.length - 1)];
+  const currentStep = ADVISORY_JOURNEY[safeCurrentStepIndex];
   const summaryLines = [
     typeof ctx.sustainabilityYears === "number" && Number.isFinite(ctx.sustainabilityYears)
       ? `Your current capital supports your lifestyle for ${ctx.sustainabilityYears.toFixed(1)} years.`
@@ -180,6 +230,24 @@ export function buildPdfNarrative(
     lion: {
       headline: narrative.headline,
       guidance: narrative.guidance,
+    },
+    journey: {
+      completedStepLabel: `You have completed Step ${safeCurrentStepIndex + 1}.`,
+      nextStepLabel:
+        safeCurrentStepIndex < ADVISORY_JOURNEY.length - 1
+          ? `Next: ${nextStep.title}`
+          : "You have completed the full advisory journey.",
+      nextStepSummary:
+        safeCurrentStepIndex < ADVISORY_JOURNEY.length - 1
+          ? `${nextStep.title} — ${nextStep.whatItDoes.replace(/\.$/, "").toLowerCase()}.`
+          : `${currentStep.title} completes the four-step Capital Bridge advisory flow.`,
+      steps: ADVISORY_JOURNEY.map((step, index) => ({
+        title: step.title,
+        whatItDoes: step.whatItDoes,
+        whyItMatters: step.whyItMatters,
+        isCurrent: index === safeCurrentStepIndex,
+        isNext: index === safeCurrentStepIndex + 1,
+      })),
     },
   };
 }

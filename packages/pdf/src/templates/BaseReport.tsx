@@ -45,6 +45,18 @@ export type BaseReportData = {
     headline?: string;
     guidance?: string;
   };
+  journey?: {
+    completedStepLabel?: string;
+    nextStepLabel?: string;
+    nextStepSummary?: string;
+    steps?: Array<{
+      title?: string;
+      whatItDoes?: string;
+      whyItMatters?: string;
+      isCurrent?: boolean;
+      isNext?: boolean;
+    }>;
+  };
 };
 
 const BODY_FONT = 'Arial, Helvetica, "Nimbus Sans L", sans-serif';
@@ -96,6 +108,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
       ].filter((block) => block.body);
 
   const actionItems = (data.actions ?? []).filter(Boolean);
+  const journeySteps = data.journey?.steps ?? [];
 
   return (
     <>
@@ -316,6 +329,59 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             linear-gradient(180deg, rgba(13,58,29,0.06) 0%, rgba(13,58,29,0.015) 100%);
         }
 
+        .cb-journey-banner {
+          padding: 18px 20px;
+          border: ${DIVIDER};
+          background: linear-gradient(180deg, rgba(13,58,29,0.045) 0%, rgba(255,255,255,0.98) 100%);
+        }
+
+        .cb-journey-banner-copy {
+          margin: 0;
+          font-size: 12px;
+          line-height: 1.65;
+          color: #24312c;
+        }
+
+        .cb-journey-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .cb-journey-step {
+          padding: 16px 18px;
+          border: ${DIVIDER};
+          background: rgba(255,255,255,0.82);
+        }
+
+        .cb-journey-step--next {
+          background: rgba(13,58,29,0.06);
+        }
+
+        .cb-journey-step--current {
+          border-color: rgba(13,58,29,0.14);
+        }
+
+        .cb-journey-step-title {
+          margin: 0 0 8px;
+          font-family: ${CB_FONT_SERIF};
+          font-size: 18px;
+          line-height: 1.2;
+          font-weight: 600;
+          color: var(--cb-report-ink);
+        }
+
+        .cb-journey-step p {
+          margin: 0;
+          font-size: 12px;
+          line-height: 1.6;
+          color: #24312c;
+        }
+
+        .cb-journey-step p + p {
+          margin-top: 6px;
+        }
+
         .cb-verdict-title {
           font-size: 28px;
           line-height: 1.15;
@@ -466,6 +532,37 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             <div className="cb-verdict-panel">
               <h2 className="cb-verdict-title">{highlightFinancialNumbers(data.lion?.headline)}</h2>
               <p className="cb-verdict-copy">{highlightFinancialNumbers(data.lion?.guidance)}</p>
+            </div>
+          </Section>
+
+          <Section title="Your Next Step" kicker="Advisory journey">
+            <div className="cb-journey-banner">
+              <p className="cb-journey-banner-copy">
+                <strong>{data.journey?.completedStepLabel}</strong>{" "}
+                {data.journey?.nextStepLabel ? <strong>{data.journey.nextStepLabel}.</strong> : null}{" "}
+                {data.journey?.nextStepSummary}
+              </p>
+            </div>
+            <div className="cb-journey-grid">
+              {journeySteps.map((step, index) => (
+                <div
+                  key={`${step.title}-${index}`}
+                  className={[
+                    "cb-journey-step",
+                    step.isCurrent ? "cb-journey-step--current" : "",
+                    step.isNext ? "cb-journey-step--next" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <h3 className="cb-journey-step-title">
+                    {step.title}
+                    {step.isNext ? " — next" : step.isCurrent ? " — completed" : ""}
+                  </h3>
+                  <p>{step.whatItDoes}</p>
+                  <p>{step.whyItMatters}</p>
+                </div>
+              ))}
             </div>
           </Section>
 
