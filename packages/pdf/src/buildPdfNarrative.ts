@@ -80,6 +80,22 @@ export type PdfNarrativeOutput = {
       isNext?: boolean;
     }>;
   };
+  analysis: {
+    inputSummary: string[];
+    assumptions: string[];
+    outputMetrics: string[];
+    capitalBreakdown: string[];
+    sustainabilityAnalysis: string[];
+    chartInsights: Array<{
+      title: string;
+      metric: string;
+      xAxisLabel: string;
+      yAxisLabel: string;
+      whatThisShows: string;
+      whyThisMatters: string;
+      interpretationNote: string;
+    }>;
+  };
 };
 
 const ADVISORY_JOURNEY = [
@@ -214,6 +230,45 @@ export function buildPdfNarrative(
       body: meaning,
     },
   ];
+  const outputMetrics = [
+    typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
+      ? ctx.netMonthly < 0
+        ? `Monthly shortfall: ${currency} ${Math.abs(ctx.netMonthly).toLocaleString()}`
+        : `Monthly surplus: ${currency} ${ctx.netMonthly.toLocaleString()}`
+      : "Monthly position: under review",
+    typeof ctx.sustainabilityYears === "number" && Number.isFinite(ctx.sustainabilityYears)
+      ? `Sustainability horizon: ${ctx.sustainabilityYears.toFixed(1)} years`
+      : "Sustainability horizon: under review",
+    typeof capitalProgressPct === "number"
+      ? `Progress toward target: ${capitalProgressPct.toFixed(0)}%`
+      : "Progress toward target: under review",
+  ];
+  const chartInsights = [
+    {
+      title: "Capital trajectory",
+      metric: outputMetrics[1],
+      xAxisLabel: "X Axis: Years",
+      yAxisLabel: "Y Axis: RM",
+      whatThisShows:
+        "What this shows: the expected path of capital strength across the planning horizon.",
+      whyThisMatters:
+        "Why this matters: it shows whether the current structure is improving, holding, or weakening over time.",
+      interpretationNote:
+        "Interpretation note: focus on the direction and durability of the path rather than the exact internal calculation.",
+    },
+    {
+      title: "Monthly funding position",
+      metric: outputMetrics[0],
+      xAxisLabel: "X Axis: Time",
+      yAxisLabel: "Y Axis: RM / month",
+      whatThisShows:
+        "What this shows: whether recurring cash needs are supported by recurring cash sources or by capital drawdown.",
+      whyThisMatters:
+        "Why this matters: recurring pressure is often the clearest signal of long-term strain.",
+      interpretationNote:
+        "Interpretation note: this explains behaviour in the structure, not the formula behind it.",
+    },
+  ];
 
   return {
     cover: {
@@ -288,6 +343,38 @@ export function buildPdfNarrative(
         isCurrent: index === safeCurrentStepIndex,
         isNext: index === safeCurrentStepIndex + 1,
       })),
+    },
+    analysis: {
+      inputSummary: [
+        typeof monthlySpend === "number"
+          ? `Current monthly spending considered in this review: ${currency} ${monthlySpend.toLocaleString()}.`
+          : "Current monthly spending is still being reviewed.",
+        typeof monthlyIncome === "number"
+          ? `Recurring monthly cash generation considered: ${currency} ${monthlyIncome.toLocaleString()}.`
+          : "Recurring monthly cash generation is still being reviewed.",
+      ],
+      assumptions: [
+        "This analysis reflects the current structure, time horizon, and advisory assumptions captured for the report.",
+        "Outputs are directional and planning-focused, designed to support decisions rather than disclose internal model mechanics.",
+      ],
+      outputMetrics,
+      capitalBreakdown: [
+        typeof ctx.capitalGap === "number" && Number.isFinite(ctx.capitalGap)
+          ? ctx.capitalGap > 0
+            ? `Additional capital required for full sustainability: ${currency} ${ctx.capitalGap.toLocaleString()}.`
+            : "Current capital already meets the sustainability threshold used for this review."
+          : "Capital threshold assessment is still under review.",
+        typeof capitalProgressPct === "number"
+          ? `Current progress toward the target capital level: ${capitalProgressPct.toFixed(0)}%.`
+          : "Target capital progress is still under review.",
+      ],
+      sustainabilityAnalysis: [
+        typeof ctx.sustainabilityYears === "number" && Number.isFinite(ctx.sustainabilityYears)
+          ? `At the current structure, capital is expected to support the position for about ${ctx.sustainabilityYears.toFixed(1)} years.`
+          : "The expected capital duration is still under review.",
+        meaning,
+      ],
+      chartInsights,
     },
   };
 }

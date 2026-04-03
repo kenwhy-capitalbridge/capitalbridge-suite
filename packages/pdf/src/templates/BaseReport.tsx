@@ -64,6 +64,22 @@ export type BaseReportData = {
       isNext?: boolean;
     }>;
   };
+  analysis?: {
+    inputSummary?: string[];
+    assumptions?: string[];
+    outputMetrics?: string[];
+    capitalBreakdown?: string[];
+    sustainabilityAnalysis?: string[];
+    chartInsights?: Array<{
+      title?: string;
+      metric?: string;
+      xAxisLabel?: string;
+      yAxisLabel?: string;
+      whatThisShows?: string;
+      whyThisMatters?: string;
+      interpretationNote?: string;
+    }>;
+  };
 };
 
 const BODY_FONT = 'Arial, Helvetica, "Nimbus Sans L", sans-serif';
@@ -121,6 +137,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
 
   const actionItems = (data.actions ?? []).filter(Boolean);
   const journeySteps = data.journey?.steps ?? [];
+  const analysis = data.analysis;
 
   return (
     <>
@@ -364,6 +381,47 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           color: rgba(16, 38, 27, 0.56);
         }
 
+        .cb-analysis-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .cb-analysis-card {
+          padding: 18px 20px;
+          border: ${DIVIDER};
+          background: rgba(255,255,255,0.82);
+        }
+
+        .cb-analysis-card ul {
+          margin: 0;
+          padding-left: 18px;
+        }
+
+        .cb-analysis-card li {
+          margin-bottom: 8px;
+          color: #24312c;
+        }
+
+        .cb-analysis-card li:last-child {
+          margin-bottom: 0;
+        }
+
+        .cb-chart-notes {
+          margin-top: 14px;
+        }
+
+        .cb-chart-notes p {
+          margin: 0;
+          font-size: 12px;
+          line-height: 1.6;
+          color: #24312c;
+        }
+
+        .cb-chart-notes p + p {
+          margin-top: 8px;
+        }
+
         .cb-number {
           font-weight: 700;
           color: #0d3a1d;
@@ -544,7 +602,8 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           }
 
           .cb-glance-top,
-          .cb-two-column {
+          .cb-two-column,
+          .cb-analysis-grid {
             grid-template-columns: 1fr;
           }
 
@@ -644,44 +703,113 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </div>
           </Section>
 
-          <Section title="Inputs + Outputs" kicker="Evidence snapshot">
-            <div className="cb-two-column">
-              <div className="cb-callout">
-                <p className="cb-meta-label">Inputs</p>
-                <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.why)}</p>
+          <Section title="Input Summary" kicker="Structured review">
+            <div className="cb-analysis-card">
+              <ul>
+                {(analysis?.inputSummary ?? [data.diagnosis?.what]).filter(Boolean).map((item, index) => (
+                  <li key={`input-${index}`}>{highlightFinancialNumbers(item)}</li>
+                ))}
+              </ul>
+            </div>
+          </Section>
+
+          <Section title="Assumptions" kicker="Planning frame">
+            <div className="cb-analysis-card">
+              <ul>
+                {(analysis?.assumptions ?? [data.diagnosis?.why]).filter(Boolean).map((item, index) => (
+                  <li key={`assumption-${index}`}>{highlightFinancialNumbers(item)}</li>
+                ))}
+              </ul>
+            </div>
+          </Section>
+
+          <Section title="Output Metrics" kicker="Observed outcomes">
+            <div className="cb-analysis-grid">
+              <div className="cb-analysis-card">
+                <p className="cb-meta-label">Output metrics</p>
+                <ul>
+                  {(analysis?.outputMetrics ?? [data.diagnosis?.state]).filter(Boolean).map((item, index) => (
+                    <li key={`output-${index}`}>{highlightFinancialNumbers(item)}</li>
+                  ))}
+                </ul>
               </div>
-              <div className="cb-callout">
-                <p className="cb-meta-label">Outputs</p>
-                <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.state)}</p>
+              <div className="cb-analysis-card">
+                <p className="cb-meta-label">Interpretation notes</p>
+                <p className="cb-report-p">
+                  {highlightFinancialNumbers(
+                    "Interpretation notes explain observed behaviour and directional meaning, without revealing formulas or internal calculation steps.",
+                  )}
+                </p>
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Capital Breakdown" kicker="Capital view">
+            <div className="cb-analysis-card">
+              <ul>
+                {(analysis?.capitalBreakdown ?? [data.diagnosis?.critical]).filter(Boolean).map((item, index) => (
+                  <li key={`capital-${index}`}>{highlightFinancialNumbers(item)}</li>
+                ))}
+              </ul>
+            </div>
+          </Section>
+
+          <Section title="Sustainability Analysis" kicker="Durability view">
+            <div className="cb-analysis-grid">
+              <div className="cb-analysis-card">
+                <ul>
+                  {(analysis?.sustainabilityAnalysis ?? [data.summary?.meaning]).filter(Boolean).map((item, index) => (
+                    <li key={`sustainability-${index}`}>{highlightFinancialNumbers(item)}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="cb-analysis-card">
+                <p className="cb-meta-label">Interpretation notes</p>
+                <p className="cb-report-p">
+                  {highlightFinancialNumbers(
+                    "This section explains how the structure behaves across time and pressure, while keeping the proprietary engine and internal logic private.",
+                  )}
+                </p>
               </div>
             </div>
           </Section>
 
           <Section title="Charts + Inputs + Outputs" kicker="Supporting evidence">
-            <div className="cb-two-column">
-              <div className="cb-report-chart-wrap">
+            <div className="cb-analysis-grid">
+              {(analysis?.chartInsights ?? []).map((chart, index) => (
+                <div key={`chart-${index}`} className="cb-report-chart-wrap">
+                  <div className="cb-chart-header">
+                    <h3 className="cb-chart-title">{chart.title}</h3>
+                    <p className="cb-chart-metric">{highlightFinancialNumbers(chart.metric)}</p>
+                  </div>
+                  <div className="cb-chart-axis-labels">
+                    <span>{chart.xAxisLabel}</span>
+                    <span>{chart.yAxisLabel}</span>
+                  </div>
+                  <div className="cb-chart-notes">
+                    <p>{highlightFinancialNumbers(chart.whatThisShows)}</p>
+                    <p>{highlightFinancialNumbers(chart.whyThisMatters)}</p>
+                    <p>{highlightFinancialNumbers(chart.interpretationNote)}</p>
+                  </div>
+                </div>
+              ))}
+              {!(analysis?.chartInsights?.length) ? (
+                <div className="cb-report-chart-wrap">
                 <div className="cb-chart-header">
                   <h3 className="cb-chart-title">Structure view</h3>
                   <p className="cb-chart-metric">{highlightFinancialNumbers(data.diagnosis?.state)}</p>
                 </div>
-                <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.what)}</p>
                 <div className="cb-chart-axis-labels">
-                  <span>X Axis: Time</span>
-                  <span>Y Axis: Capital / Cash Flow</span>
+                    <span>X Axis: Years</span>
+                    <span>Y Axis: RM</span>
                 </div>
-              </div>
-              <div className="cb-callout">
-                <p className="cb-meta-label">Underlying drivers</p>
-                <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.why)}</p>
-                {data.diagnosis?.critical ? (
-                  <>
-                    <p className="cb-meta-label" style={{ marginTop: "14px" }}>
-                      Critical note
-                    </p>
-                    <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis.critical)}</p>
-                  </>
-                ) : null}
-              </div>
+                  <div className="cb-chart-notes">
+                    <p>{highlightFinancialNumbers("What this shows: the current direction of the structure across time.")}</p>
+                    <p>{highlightFinancialNumbers("Why this matters: it helps a professional reader judge whether the position is strengthening or weakening.")}</p>
+                    <p>{highlightFinancialNumbers("Interpretation note: the chart communicates behaviour and implications, not formulas or internal model logic.")}</p>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </Section>
 
