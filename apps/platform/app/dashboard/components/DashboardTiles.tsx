@@ -94,7 +94,7 @@ const TILES: Omit<Tile, "href">[] = [
   },
   {
     id: "solutions",
-    label: "Solutions & Execution",
+    label: "Strategic Execution (Coming Soon)",
     enabled: (e) => e.canSeeSolutions,
     tooltipDisabled: "Yearly plan only",
   },

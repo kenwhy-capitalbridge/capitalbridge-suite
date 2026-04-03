@@ -1,0 +1,130 @@
+import { redirect } from "next/navigation";
+import { PlatformFrameworkHeader } from "../components/PlatformFrameworkHeader";
+import { getServerUserAndMembership } from "@/lib/auth";
+import { PriorityAccessClient } from "./PriorityAccessClient";
+
+export const dynamic = "force-dynamic";
+
+export default async function SolutionsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ report_id?: string }>;
+}) {
+  const { user, membership } = await getServerUserAndMembership();
+  if (!user) redirect("/");
+
+  const sp = searchParams ? await searchParams : undefined;
+  const reportId = sp?.report_id ?? null;
+  const fullName =
+    user.name ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+    "Capital Bridge User";
+
+  return (
+    <>
+      <PlatformFrameworkHeader
+        verifiedUserEmail={user.email}
+        profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+      />
+      <main style={{ padding: "2.25rem 1.25rem 3rem" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <section
+            style={{
+              padding: "2rem",
+              borderRadius: 24,
+              background:
+                "linear-gradient(180deg, rgba(255,204,106,0.08) 0%, rgba(13,58,29,0.08) 100%)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+          >
+            <p style={eyebrowStyle}>Strategic access</p>
+            <h1 style={{ margin: "0.3rem 0 0", fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.04 }}>
+              Strategic Execution (Coming Soon)
+            </h1>
+            <p style={bodyStyle}>
+              Capital Bridge™ is onboarding licensed partners across financing, insurance, and capital structuring.
+            </p>
+            <p style={{ ...bodyStyle, maxWidth: 700 }}>
+              You may request priority access to be among the first users when structured execution becomes available.
+            </p>
+            <div style={{ marginTop: "1.5rem" }}>
+              <PriorityAccessClient
+                fullName={fullName}
+                email={user.email ?? ""}
+                reportId={reportId}
+              />
+            </div>
+          </section>
+
+          <section
+            style={{
+              display: "grid",
+              gap: 16,
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              marginTop: "1.5rem",
+            }}
+          >
+            <InfoCard
+              title="What happens now"
+              body="Interest is captured immediately, and follow-up stays controlled and manual while the partner network is being onboarded."
+            />
+            <InfoCard
+              title="Why this is safe"
+              body="There is no promise of execution today. The flow simply preserves high-intent demand without creating operational pressure."
+            />
+            <InfoCard
+              title="Who this is for"
+              body="Users who want priority access to structured execution in financing, insurance, or income structuring when it goes live."
+            />
+          </section>
+
+          <section
+            style={{
+              marginTop: "1.5rem",
+              padding: "1.25rem 1.4rem",
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.04)",
+            }}
+          >
+            <p style={eyebrowStyle}>Membership context</p>
+            <p style={{ ...bodyStyle, margin: "0.35rem 0 0" }}>
+              Current plan: <strong>{membership?.plan ?? "active member"}</strong>. Priority access does not change plan status and does not guarantee partner availability.
+            </p>
+          </section>
+        </div>
+      </main>
+    </>
+  );
+}
+
+function InfoCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div
+      style={{
+        padding: "1.15rem 1.2rem",
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.12)",
+        background: "rgba(255,255,255,0.05)",
+      }}
+    >
+      <h2 style={{ margin: 0, fontSize: "1.05rem", lineHeight: 1.2 }}>{title}</h2>
+      <p style={{ ...bodyStyle, margin: "0.55rem 0 0" }}>{body}</p>
+    </div>
+  );
+}
+
+const eyebrowStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: "0.75rem",
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  color: "rgba(246,245,241,0.72)",
+  fontWeight: 700,
+};
+
+const bodyStyle: React.CSSProperties = {
+  fontSize: "1rem",
+  lineHeight: 1.7,
+  color: "rgba(246,245,241,0.9)",
+};

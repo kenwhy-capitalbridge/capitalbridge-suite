@@ -167,6 +167,19 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["billing_events"]["Row"]>;
         Relationships: [];
       };
+      strategic_interest: {
+        Row: {
+          id: string;
+          user_id: string;
+          report_id: string | null;
+          country: string;
+          interest_type: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["strategic_interest"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["strategic_interest"]["Row"]>;
+        Relationships: [];
+      };
       payment_events: {
         Row: {
           id: string;
@@ -261,4 +274,3 @@ export type Database = {
     Enums: { [_ in never]: never };
   };
 };
-
