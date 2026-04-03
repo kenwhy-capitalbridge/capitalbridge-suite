@@ -80,6 +80,11 @@ export type BaseReportData = {
       interpretationNote?: string;
     }>;
   };
+  trust?: {
+    beginner?: string;
+    sceptic?: string;
+    experienced?: string;
+  };
 };
 
 const BODY_FONT = 'Arial, Helvetica, "Nimbus Sans L", sans-serif';
@@ -256,6 +261,18 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
 
         .cb-report-list li:last-child {
           margin-bottom: 0;
+        }
+
+        .cb-trust-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .cb-trust-card {
+          padding: 16px 18px;
+          border: ${DIVIDER};
+          background: rgba(255,255,255,0.82);
         }
 
         .cb-summary-grid {
@@ -601,6 +618,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             grid-template-columns: 1fr;
           }
 
+          .cb-trust-grid,
           .cb-glance-top,
           .cb-two-column,
           .cb-analysis-grid {
@@ -668,6 +686,23 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           <Section title="Executive Summary" kicker="Strategic summary">
             <div className="cb-callout">
               <p className="cb-report-p">{highlightFinancialNumbers(data.summary?.meaning ?? data.summary?.keyPoint)}</p>
+            </div>
+          </Section>
+
+          <Section title="Trust Notes" kicker="How to read this report">
+            <div className="cb-trust-grid">
+              <div className="cb-trust-card">
+                <p className="cb-summary-title">For beginners</p>
+                <p className="cb-report-p">{data.trust?.beginner}</p>
+              </div>
+              <div className="cb-trust-card">
+                <p className="cb-summary-title">For sceptics</p>
+                <p className="cb-report-p">{data.trust?.sceptic}</p>
+              </div>
+              <div className="cb-trust-card">
+                <p className="cb-summary-title">For experienced users</p>
+                <p className="cb-report-p">{data.trust?.experienced}</p>
+              </div>
             </div>
           </Section>
 

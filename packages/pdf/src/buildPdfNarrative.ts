@@ -96,6 +96,11 @@ export type PdfNarrativeOutput = {
       interpretationNote: string;
     }>;
   };
+  trust: {
+    beginner: string;
+    sceptic: string;
+    experienced: string;
+  };
 };
 
 const ADVISORY_JOURNEY = [
@@ -375,6 +380,11 @@ export function buildPdfNarrative(
         meaning,
       ],
       chartInsights,
+    },
+    trust: {
+      beginner: "This report helps you understand your current financial position in simple terms.",
+      sceptic: "The numbers are based entirely on your inputs and remain internally consistent.",
+      experienced: "Strong outcomes still depend on disciplined execution.",
     },
   };
 }
