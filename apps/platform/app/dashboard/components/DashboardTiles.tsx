@@ -112,7 +112,7 @@ const TILES: Tile[] = [
     id: "strategic-execution",
     title: "Strategic Execution",
     description:
-      "Move beyond analysis into structured execution with Capital Bridge™ partners.",
+      "Move beyond analysis into structured execution with Capital Bridge™",
     ctaLabel: "Request Access",
     enabled: () => true,
   },
