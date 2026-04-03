@@ -24,6 +24,7 @@ const INTEREST_OPTIONS = [
 export function PriorityAccessClient({ fullName, email, reportId }: PriorityAccessClientProps) {
   const [open, setOpen] = useState(false);
   const [country, setCountry] = useState("MY");
+  const [contactPhone, setContactPhone] = useState("");
   const [interestType, setInterestType] = useState("");
   const [consentReview, setConsentReview] = useState(false);
   const [consentContact, setConsentContact] = useState(false);
@@ -49,6 +50,7 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
           fullName,
           reportId,
           country,
+          contactPhone: contactPhone.trim() || null,
           interestType: interestType || null,
           consentReview,
           consentContact,
@@ -181,6 +183,49 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
                         </option>
                       ))}
                     </select>
+                  </label>
+                  <label
+                    style={{
+                      display: "grid",
+                      gap: 6,
+                      gridColumn: "1 / -1",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#30443a" }}>
+                      Contact Number (optional)
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 400,
+                        color: "rgba(48,68,58,0.78)",
+                        lineHeight: 1.45,
+                        marginTop: -2,
+                      }}
+                    >
+                      Optional — helps us reach you faster when execution becomes available
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      name="contactPhone"
+                      placeholder="+60 12-345 6789"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      onBlur={() => {
+                        setContactPhone((v) =>
+                          v
+                            .replace(/[^\d+\s().-]/g, "")
+                            .replace(/\s+/g, " ")
+                            .trim(),
+                        );
+                      }}
+                      style={{
+                        ...inputStyle(),
+                        fontSize: "max(16px, 0.95rem)",
+                      }}
+                    />
                   </label>
                 </div>
 

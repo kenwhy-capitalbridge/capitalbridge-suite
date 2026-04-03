@@ -13,6 +13,7 @@ export type StrategicInterestNotifyPayload = {
   country: string;
   reportId: string | null;
   interestType: string | null;
+  contactPhone: string | null;
   userId: string;
   submittedAtIso: string;
 };
@@ -29,6 +30,7 @@ function buildPlainText(p: StrategicInterestNotifyPayload): string {
     `Name: ${p.fullName}`,
     `Email: ${p.email}`,
     `Country: ${p.country}`,
+    `Contact number: ${p.contactPhone ?? "(none)"}`,
     `Report ID: ${p.reportId ?? "(none)"}`,
     `Interest type: ${p.interestType ?? "(not specified)"}`,
     `User ID: ${p.userId}`,
@@ -43,7 +45,7 @@ function buildHtml(p: StrategicInterestNotifyPayload): string {
     `<tr><td style="padding:6px 12px 6px 0;font-weight:600;color:#0d3a1d;">${esc(k)}</td><td style="padding:6px 0;">${esc(v)}</td></tr>`;
   return `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;font-size:15px;color:#10261b;line-height:1.5;">
 <p style="margin:0 0 12px;"><strong>Strategic interest submission</strong></p>
-<table style="border-collapse:collapse;">${row("Name", p.fullName)}${row("Email", p.email)}${row("Country", p.country)}${row("Report ID", p.reportId ?? "—")}${row("Interest type", p.interestType ?? "—")}${row("User ID", p.userId)}${row("Timestamp", p.submittedAtIso)}</table>
+<table style="border-collapse:collapse;">${row("Name", p.fullName)}${row("Email", p.email)}${row("Country", p.country)}${row("Contact number", p.contactPhone ?? "—")}${row("Report ID", p.reportId ?? "—")}${row("Interest type", p.interestType ?? "—")}${row("User ID", p.userId)}${row("Timestamp", p.submittedAtIso)}</table>
 </body></html>`;
 }
 

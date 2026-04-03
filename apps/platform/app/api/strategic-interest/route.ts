@@ -12,9 +12,23 @@ type StrategicInterestBody = {
   reportId?: string | null;
   country?: string;
   interestType?: string | null;
+  contactPhone?: string | null;
   consentReview?: boolean;
   consentContact?: boolean;
 };
+
+/** Optional; allows country codes (+), spaces, parentheses, hyphens. Drops other chars; min 5 digits or omitted. */
+function sanitizeContactPhone(raw: unknown): string | null {
+  if (raw == null || typeof raw !== "string") return null;
+  let s = raw.normalize("NFKC").trim();
+  if (!s) return null;
+  s = s.replace(/[^\d+\s().-]/g, "").replace(/\s+/g, " ").trim();
+  if (!s) return null;
+  const digits = s.replace(/\D/g, "");
+  if (digits.length < 5) return null;
+  if (s.length > 40) s = s.slice(0, 40);
+  return s;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +89,7 @@ export async function POST(request: Request) {
 
     const svc = createServiceClient();
     const reportId = body.reportId ? String(body.reportId).trim() : null;
+    const contactPhone = sanitizeContactPhone(body.contactPhone);
 
     const { data: inserted, error } = await svc
       .schema("public")
@@ -84,6 +99,7 @@ export async function POST(request: Request) {
         report_id: reportId,
         country,
         interest_type: interestType,
+        contact_phone: contactPhone,
       })
       .select("created_at")
       .single();
@@ -108,6 +124,7 @@ export async function POST(request: Request) {
       country,
       reportId,
       interestType,
+      contactPhone,
       userId: user.id,
       submittedAtIso,
     });
