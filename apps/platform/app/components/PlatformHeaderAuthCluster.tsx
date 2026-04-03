@@ -14,10 +14,10 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
   return (
     <div
       style={{
-        justifySelf: "end",
         display: "flex",
         alignItems: "center",
         gap: "0.45rem",
+        flexShrink: 0,
       }}
     >
       <Link

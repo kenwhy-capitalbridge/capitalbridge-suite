@@ -24,7 +24,7 @@ export type PlatformFrameworkHeaderProps = {
   publicBrowse?: boolean;
   /** Center label in the sticky bar (default: Framework). */
   centerTitle?: string;
-  /** Prepend BACK (then logo) in the left column — subpages like `/solutions`. */
+  /** Show BACK in the right cluster (before profile / LOGOUT), matching model-app chrome — e.g. `/solutions`. */
   showBackBeforeHome?: boolean;
   /** Used when history is empty (direct navigation). Default `/framework` → `/`. */
   backFallbackHref?: string;
@@ -150,27 +150,25 @@ export async function PlatformFrameworkHeader({
           boxSizing: "border-box",
         }}
       >
-        {showBackBeforeHome ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "clamp(6px, 1.2vw, 12px)",
-              justifySelf: "start",
-              minWidth: 0,
-              flexShrink: 1,
-            }}
-          >
-            <PlatformHeaderBackButton fallbackHref={backFallbackHref} />
-            <PlatformMarketingHomeLink href={home} />
-          </div>
-        ) : (
-          <PlatformMarketingHomeLink href={home} />
-        )}
+        <PlatformMarketingHomeLink href={home} />
 
         <span className="cb-header-chrome-title">{centerTitle}</span>
 
-        <PlatformHeaderAuthCluster initials={initials} />
+        <div
+          style={{
+            justifySelf: "end",
+            display: "flex",
+            alignItems: "center",
+            gap: "clamp(6px, 0.6vw, 10px)",
+            flexWrap: "nowrap",
+            minWidth: 0,
+          }}
+        >
+          {showBackBeforeHome ? (
+            <PlatformHeaderBackButton fallbackHref={backFallbackHref} />
+          ) : null}
+          <PlatformHeaderAuthCluster initials={initials} />
+        </div>
       </div>
     </header>
   );
