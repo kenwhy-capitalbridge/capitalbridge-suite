@@ -24,6 +24,13 @@ export type BaseReportData = {
   summary?: {
     headline?: string;
     keyPoint?: string;
+    statusLabel?: string;
+    progressPct?: number;
+    monthlySpend?: number;
+    monthlyIncome?: number;
+    monthlyGapOrSurplus?: number;
+    sustainabilityYears?: number;
+    meaning?: string;
     blocks?: Array<{
       title?: string;
       body?: string;
@@ -97,6 +104,11 @@ function Section({
       <div className="cb-section-body">{children}</div>
     </section>
   );
+}
+
+function formatCurrency(value?: number): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "Under review";
+  return `RM ${Math.abs(value).toLocaleString()}`;
 }
 
 export default function BaseReport({ data }: { data: BaseReportData }) {
@@ -235,6 +247,12 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           gap: 16px;
         }
 
+        .cb-glance-top {
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 16px;
+        }
+
         .cb-summary-card {
           padding: 18px 20px;
           border: ${DIVIDER};
@@ -248,6 +266,47 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           letter-spacing: 0.16em;
           text-transform: uppercase;
           color: rgba(16, 38, 27, 0.52);
+        }
+
+        .cb-status-panel {
+          padding: 18px 20px;
+          border: ${DIVIDER};
+          background: linear-gradient(180deg, rgba(13,58,29,0.05) 0%, rgba(255,255,255,0.98) 100%);
+        }
+
+        .cb-status-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          background: rgba(13,58,29,0.1);
+          color: #0d3a1d;
+        }
+
+        .cb-progress-track {
+          width: 100%;
+          height: 10px;
+          margin-top: 14px;
+          border-radius: 999px;
+          background: rgba(13,58,29,0.08);
+          overflow: hidden;
+        }
+
+        .cb-progress-fill {
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #0d3a1d 0%, #3d7b54 100%);
+        }
+
+        .cb-progress-label {
+          margin: 10px 0 0;
+          font-size: 12px;
+          line-height: 1.55;
+          color: #24312c;
         }
 
         .cb-report-chart,
@@ -484,6 +543,11 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             grid-template-columns: 1fr;
           }
 
+          .cb-glance-top,
+          .cb-two-column {
+            grid-template-columns: 1fr;
+          }
+
           .cb-report-footer {
             left: 24px;
             right: 24px;
@@ -500,19 +564,51 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
 
         <section className="cb-report-page">
           <Section title="At a Glance" kicker="Quick interpretation">
-            <div className="cb-callout">
-              <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.what)}</p>
+            <div className="cb-glance-top">
+              <div className="cb-summary-grid">
+                {summaryBlocks.map((block, index) => (
+                  <div key={`${block.title}-${index}`} className="cb-summary-card">
+                    <p className="cb-summary-title">{block.title}</p>
+                    <p className="cb-report-p">{highlightFinancialNumbers(block.body)}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="cb-status-panel">
+                <p className="cb-summary-title">Current Status</p>
+                <div className="cb-status-badge">{data.summary?.statusLabel ?? "Under Review"}</div>
+                <div className="cb-progress-track" aria-hidden>
+                  <div
+                    className="cb-progress-fill"
+                    style={{ width: `${Math.max(0, Math.min(100, data.summary?.progressPct ?? 0))}%` }}
+                  />
+                </div>
+                <p className="cb-progress-label">
+                  Progress toward target: {typeof data.summary?.progressPct === "number"
+                    ? `${data.summary.progressPct.toFixed(0)}%`
+                    : "Under review"}
+                </p>
+                <p className="cb-progress-label">
+                  Monthly position: {typeof data.summary?.monthlyGapOrSurplus === "number"
+                    ? data.summary.monthlyGapOrSurplus < 0
+                      ? `Short ${formatCurrency(data.summary.monthlyGapOrSurplus)}`
+                      : `Surplus ${formatCurrency(data.summary.monthlyGapOrSurplus)}`
+                    : "Under review"}
+                </p>
+              </div>
+            </div>
+            <div className="cb-callout" style={{ marginTop: "16px" }}>
+              <p className="cb-summary-title">What To Do Next</p>
+              <ul className="cb-report-list">
+                {actionItems.slice(0, 3).map((action, index) => (
+                  <li key={`${action}-${index}`}>{highlightFinancialNumbers(action)}</li>
+                ))}
+              </ul>
             </div>
           </Section>
 
           <Section title="Executive Summary" kicker="Strategic summary">
-            <div className="cb-summary-grid">
-              {summaryBlocks.map((block, index) => (
-                <div key={`${block.title}-${index}`} className="cb-summary-card">
-                  <p className="cb-summary-title">{block.title}</p>
-                  <p className="cb-report-p">{highlightFinancialNumbers(block.body)}</p>
-                </div>
-              ))}
+            <div className="cb-callout">
+              <p className="cb-report-p">{highlightFinancialNumbers(data.summary?.meaning ?? data.summary?.keyPoint)}</p>
             </div>
           </Section>
 

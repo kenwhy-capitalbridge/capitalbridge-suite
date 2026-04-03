@@ -40,6 +40,13 @@ export type PdfNarrativeOutput = {
   summary: {
     headline: string;
     keyPoint: string;
+    statusLabel: string;
+    progressPct?: number;
+    monthlySpend?: number;
+    monthlyIncome?: number;
+    monthlyGapOrSurplus?: number;
+    sustainabilityYears?: number;
+    meaning?: string;
     blocks: Array<{
       title: string;
       body: string;
@@ -148,26 +155,52 @@ export function buildPdfNarrative(
       : "Adjustments may still be required to stabilise your position.",
   ];
   const currency = "RM";
+  const monthlyIncome =
+    typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly) && ctx.netMonthly >= 0
+      ? ctx.netMonthly
+      : 0;
+  const monthlySpend =
+    typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
+      ? Math.abs(ctx.netMonthly) + monthlyIncome
+      : undefined;
   const yearlyWithdrawal =
     typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
       ? Math.abs(ctx.netMonthly) * 12
       : undefined;
+  const statusLabel =
+    typeof ctx.lionScore === "number" && Number.isFinite(ctx.lionScore)
+      ? ctx.lionScore >= 85
+        ? "Strong"
+        : ctx.lionScore >= 70
+          ? "Stable"
+          : ctx.lionScore >= 55
+            ? "Fragile"
+            : "At Risk"
+      : fragileOrDeficit
+        ? "Fragile"
+        : "Stable";
+  const meaning =
+    typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
+      ? ctx.netMonthly < 0
+        ? "Your current setup is draining capital each month, so the plan needs changes to hold up for longer."
+        : "Your current setup is still covering itself, but it should be tuned so the position stays durable over time."
+      : "Your current setup needs a clearer monthly picture before the long-term outlook can be trusted.";
   const summaryBlocks = [
     {
       title: "Your Position",
       body:
-        typeof yearlyWithdrawal === "number"
-          ? `You are withdrawing ${currency} ${yearlyWithdrawal.toLocaleString()} yearly from your capital.`
-          : "Your yearly withdrawal level is still being calculated.",
+        typeof monthlySpend === "number"
+          ? `You are currently spending ${currency} ${monthlySpend.toLocaleString()} and generating ${currency} ${monthlyIncome.toLocaleString()}.`
+          : "Your current monthly position is still being calculated.",
     },
     {
       title: "Your Gap",
       body:
-        typeof ctx.capitalGap === "number" && Number.isFinite(ctx.capitalGap)
-          ? ctx.capitalGap > 0
-            ? `You need ${currency} ${ctx.capitalGap.toLocaleString()} more to reach sustainability.`
-            : `You already have the capital needed to reach sustainability.`
-          : "Your sustainability gap still needs review.",
+        typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
+          ? ctx.netMonthly < 0
+            ? `You are short ${currency} ${Math.abs(ctx.netMonthly).toLocaleString()} per month.`
+            : `You have ${currency} ${ctx.netMonthly.toLocaleString()} surplus each month.`
+          : "Your monthly gap still needs review.",
     },
     {
       title: "Your Timeline",
@@ -177,8 +210,8 @@ export function buildPdfNarrative(
           : "Your capital timeline still needs review.",
     },
     {
-      title: "What To Do",
-      body: "Adjust income, capital allocation, or spending to improve sustainability.",
+      title: "What This Means",
+      body: meaning,
     },
   ];
 
@@ -203,6 +236,13 @@ export function buildPdfNarrative(
     summary: {
       headline: narrative.headline,
       keyPoint: narrative.personalised,
+      statusLabel,
+      progressPct: capitalProgressPct,
+      monthlySpend,
+      monthlyIncome,
+      monthlyGapOrSurplus: ctx.netMonthly,
+      sustainabilityYears: ctx.sustainabilityYears,
+      meaning,
       blocks: summaryBlocks,
     },
     diagnosis: {
