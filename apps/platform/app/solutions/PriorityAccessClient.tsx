@@ -16,7 +16,7 @@ const STRATEGIC_ADVANTAGES = [
   "Monthly income distribution structured and executed on your behalf",
 ] as const;
 
-const GATED_CTA_TOOLTIP = "Available under Strategic Advisory";
+const GATED_CTA_TOOLTIP = "Available with Strategic Advisory access";
 
 const COUNTRY_OPTIONS = [
   { value: "MY", label: "Malaysia" },
@@ -211,7 +211,7 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
             maxWidth: 480,
           }}
         >
-          Complete your models to understand if your structure is ready for execution.
+          Completing your models helps determine if your structure is ready for execution.
         </p>
       </div>
 
@@ -269,10 +269,11 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
             </div>
 
             <p style={{ margin: "1rem 0 0.65rem", color: "#30443a", lineHeight: 1.65 }}>
-              You will be notified when execution becomes available in your market. Capital Bridge may review your structure and prepare recommendations ahead of partner onboarding.
+              You will be notified when execution becomes available in your market.
             </p>
             <p style={{ margin: "0 0 1.25rem", color: "#30443a", lineHeight: 1.65 }}>
-              Your current structure will be reviewed for execution readiness.
+              Your current structure will be reviewed for execution readiness. Capital Bridge may prepare recommendations
+              ahead of partner onboarding.
             </p>
 
             {submitted ? (
