@@ -1,5 +1,6 @@
 import React from "react";
 import { CB_REPORT_BRAND_FULL_GREEN_PATH } from "@cb/shared/cbReportTemplate";
+import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { CB_FONT_SERIF } from "@cb/shared/typography";
 
 type CoverPageData = {
@@ -56,8 +57,8 @@ function getReportTitle(rawTitle?: string): string {
 
 function formatCurrencyMetric(value?: number): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "Under review";
-  const label = `RM ${Math.abs(value).toLocaleString()}`;
-  return value < 0 ? `Gap ${label}` : `Surplus ${label}`;
+  const core = formatCurrencyDisplayNoDecimals(Math.abs(value), "RM");
+  return value < 0 ? `Gap ${core}` : `Surplus ${core}`;
 }
 
 function formatProgressMetric(value?: number): string {

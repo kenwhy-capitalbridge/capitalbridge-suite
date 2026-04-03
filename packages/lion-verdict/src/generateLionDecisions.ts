@@ -1,12 +1,9 @@
 import type { LionContext } from "./buildLionContext";
-import { formatRM } from "@cb/shared/formatCurrency";
+import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { getLionTone } from "./lionCopyLibrary";
 
 function formatDecisionAmount(value: number, currency?: string): string {
-  if (currency && currency !== "RM") {
-    return `${currency} ${Math.abs(value).toLocaleString("en-MY")}`;
-  }
-  return formatRM(Math.abs(value));
+  return formatCurrencyDisplayNoDecimals(Math.abs(value), currency);
 }
 
 function vary(...sentences: string[]) {

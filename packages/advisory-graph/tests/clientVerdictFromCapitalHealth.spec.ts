@@ -4,13 +4,13 @@ import { isLionVerdictClientReport } from '../src/lionsVerdict/buildClientVerdic
 
 describe('buildLionVerdictClientReportFromCapitalHealth', () => {
   it('produces a valid client report for withdrawal mode', () => {
-    const fmt = (n: number) => `RM ${n.toFixed(0)}`;
+    const fmt = (n: number) => `RM${n.toFixed(0)}`;
     const r = buildLionVerdictClientReportFromCapitalHealth(
       {
         mode: 'withdrawal',
         tier: 3,
         vars: {
-          withdrawal: 'RM 10,000',
+          withdrawal: 'RM10,000',
           horizon: '25.0',
           runway: '18.5',
           expectedReturn: '5.0%',
@@ -32,13 +32,13 @@ describe('buildLionVerdictClientReportFromCapitalHealth', () => {
   });
 
   it('produces a valid client report for growth mode', () => {
-    const fmt = (n: number) => `USD ${n.toFixed(0)}`;
+    const fmt = (n: number) => `USD${n.toFixed(0)}`;
     const r = buildLionVerdictClientReportFromCapitalHealth(
       {
         mode: 'growth',
         tier: 2,
         vars: {
-          desiredCapital: 'USD 5,000,000',
+          desiredCapital: 'USD5,000,000',
           horizon: '10.0',
           expectedReturn: '6.0%',
           estimatedReturn: '6.0%',

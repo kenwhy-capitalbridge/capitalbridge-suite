@@ -25,7 +25,7 @@ export function CurrencyAmountInput({
   max,
   ariaLabel,
 }: CurrencyAmountInputProps) {
-  const prefix = currency === 'RM' ? 'RM ' : `${currency} `;
+  const prefix = currency === "RM" ? "RM" : String(currency);
   return (
     <div className={wrapperClass}>
       <span className="text-sm text-[#F6F5F1] shrink-0">{prefix}</span>

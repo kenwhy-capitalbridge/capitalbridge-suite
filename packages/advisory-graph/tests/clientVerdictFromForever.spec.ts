@@ -4,7 +4,7 @@ import {
   parseForeverRunway,
 } from '../src/lionsVerdict/buildClientVerdictFromForever';
 
-const fmt = (n: number) => `RM ${Math.round(n).toLocaleString('en-MY')}`;
+const fmt = (n: number) => `RM${Math.round(n).toLocaleString('en-MY')}`;
 
 describe('parseForeverRunway', () => {
   it('parses perpetual and years', () => {

@@ -1,4 +1,5 @@
 import { buildReportId } from "@cb/shared/reportTraceability";
+import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { generateLionCritical } from "@cb/lion-verdict";
 
 export type PdfNarrativeContext = {
@@ -178,11 +179,12 @@ export function buildPdfNarrative(
       : "Your long-term sustainability position still needs to be quantified.",
     typeof ctx.netMonthly === "number"
       ? ctx.netMonthly < 0
-        ? `Adjustments are required to close the monthly gap of RM ${Math.abs(ctx.netMonthly).toLocaleString()}.`
-        : `You are currently running a monthly surplus of RM ${ctx.netMonthly.toLocaleString()}.`
+        ? `Adjustments are required to close the monthly gap of ${formatCurrencyDisplayNoDecimals(Math.abs(ctx.netMonthly), "RM")}.`
+        : `You are currently running a monthly surplus of ${formatCurrencyDisplayNoDecimals(ctx.netMonthly, "RM")}.`
       : "Adjustments may still be required to stabilise your position.",
   ];
   const currency = "RM";
+  const fmtRm = (n: number) => formatCurrencyDisplayNoDecimals(n, currency);
   const monthlyIncome =
     typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly) && ctx.netMonthly >= 0
       ? ctx.netMonthly
@@ -218,7 +220,7 @@ export function buildPdfNarrative(
       title: "Your Position",
       body:
         typeof monthlySpend === "number"
-          ? `You are currently spending ${currency} ${monthlySpend.toLocaleString()} and generating ${currency} ${monthlyIncome.toLocaleString()}.`
+          ? `You are currently spending ${fmtRm(monthlySpend)} and generating ${fmtRm(monthlyIncome)}.`
           : "Your current monthly position is still being calculated.",
     },
     {
@@ -226,8 +228,8 @@ export function buildPdfNarrative(
       body:
         typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
           ? ctx.netMonthly < 0
-            ? `You are short ${currency} ${Math.abs(ctx.netMonthly).toLocaleString()} per month.`
-            : `You have ${currency} ${ctx.netMonthly.toLocaleString()} surplus each month.`
+            ? `You are short ${fmtRm(Math.abs(ctx.netMonthly))} per month.`
+            : `You have ${fmtRm(ctx.netMonthly)} surplus each month.`
           : "Your monthly gap still needs review.",
     },
     {
@@ -245,8 +247,8 @@ export function buildPdfNarrative(
   const outputMetrics = [
     typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
       ? ctx.netMonthly < 0
-        ? `Monthly shortfall: ${currency} ${Math.abs(ctx.netMonthly).toLocaleString()}`
-        : `Monthly surplus: ${currency} ${ctx.netMonthly.toLocaleString()}`
+        ? `Monthly shortfall: ${fmtRm(Math.abs(ctx.netMonthly))}`
+        : `Monthly surplus: ${fmtRm(ctx.netMonthly)}`
       : "Monthly position: under review",
     typeof ctx.sustainabilityYears === "number" && Number.isFinite(ctx.sustainabilityYears)
       ? `Sustainability horizon: ${ctx.sustainabilityYears.toFixed(1)} years`
@@ -272,7 +274,7 @@ export function buildPdfNarrative(
       title: "Monthly funding position",
       metric: outputMetrics[0],
       xAxisLabel: "X Axis: Time",
-      yAxisLabel: "Y Axis: RM / month",
+      yAxisLabel: "Y Axis: RM/month",
       whatThisShows:
         "What this shows: whether recurring cash needs are supported by recurring cash sources or by capital drawdown.",
       whyThisMatters:
@@ -366,10 +368,10 @@ export function buildPdfNarrative(
     analysis: {
       inputSummary: [
         typeof monthlySpend === "number"
-          ? `Current monthly spending considered in this review: ${currency} ${monthlySpend.toLocaleString()}.`
+          ? `Current monthly spending considered in this review: ${fmtRm(monthlySpend)}.`
           : "Current monthly spending is still being reviewed.",
         typeof monthlyIncome === "number"
-          ? `Recurring monthly cash generation considered: ${currency} ${monthlyIncome.toLocaleString()}.`
+          ? `Recurring monthly cash generation considered: ${fmtRm(monthlyIncome)}.`
           : "Recurring monthly cash generation is still being reviewed.",
       ],
       assumptions: [
@@ -380,7 +382,7 @@ export function buildPdfNarrative(
       capitalBreakdown: [
         typeof ctx.capitalGap === "number" && Number.isFinite(ctx.capitalGap)
           ? ctx.capitalGap > 0
-            ? `Additional capital required for full sustainability: ${currency} ${ctx.capitalGap.toLocaleString()}.`
+            ? `Additional capital required for full sustainability: ${fmtRm(ctx.capitalGap)}.`
             : "Current capital already meets the sustainability threshold used for this review."
           : "Capital threshold assessment is still under review.",
         typeof capitalProgressPct === "number"

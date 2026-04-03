@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@cb/shared": "*"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./access": "./access.ts",

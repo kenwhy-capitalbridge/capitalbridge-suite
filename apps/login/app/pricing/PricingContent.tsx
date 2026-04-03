@@ -82,7 +82,7 @@ const INDIVIDUAL_PLANS = [
       "The Lion’s Verdict",
       "Save report on server",
     ],
-    cta: "Start RM 1 Trial",
+    cta: "Start RM1 Trial",
     ctaLink: "/checkout?plan=trial",
     paid: false,
     recommended: false,

@@ -42,6 +42,7 @@ import { SystemInsightLimited } from "../../../packages/lion-verdict/SystemInsig
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { createReportAuditMeta, type ReportAuditMeta } from "@cb/shared/reportTraceability";
 import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
@@ -501,13 +502,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     Critical: '#CA3A2E',
   };
 
-  const formatCurrency = (val: number) => 
-    new Intl.NumberFormat(selectedCurrency.locale, { 
-      style: 'currency', 
-      currency: selectedCurrency.code,
-      maximumFractionDigits: 0,
-      minimumFractionDigits: 0
-    }).format(val);
+  const formatCurrency = (val: number) =>
+    formatCurrencyDisplayNoDecimals(val, selectedCurrency.code);
 
   const currentPathYearly = mcResult
     ? pathView === 'worst'

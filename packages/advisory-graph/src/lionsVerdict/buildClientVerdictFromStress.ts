@@ -24,7 +24,7 @@ export type ClientVerdictGoalContext = {
 };
 
 export type BuildClientVerdictOptions = {
-  /** e.g. (n) => `RM ${...}` — required for currency in strengths copy */
+  /** e.g. (n) => `RM${...}` (no space) — required for currency in strengths copy */
   formatCurrency: (n: number) => string;
   goalContext?: ClientVerdictGoalContext;
 };

@@ -18,7 +18,7 @@ export const IncomeInputs: React.FC = () => {
   const addIncomeRow = useCalculatorStore((s) => s.addIncomeRow);
   const removeIncomeRow = useCalculatorStore((s) => s.removeIncomeRow);
 
-  const currencyPrefix = currency === 'RM' ? 'RM ' : `${currency} `;
+  const currencyPrefix = currency === 'RM' ? 'RM' : currency;
 
   return (
     <section

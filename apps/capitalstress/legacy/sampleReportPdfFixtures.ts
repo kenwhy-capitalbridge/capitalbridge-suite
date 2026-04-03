@@ -2,6 +2,7 @@
  * Deterministic props for `/docs/sample-report` — same math as the design-review sample PDF pipeline.
  */
 
+import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import type { LionStressAdvisoryInputs } from "@cb/advisory-graph/lionsVerdict";
 import type { PrintReportProps } from "./PrintReport";
 import type { DepletionBarOutput } from "./DepletionBarContext";
@@ -112,12 +113,7 @@ export function buildSampleCapitalStressPrintReportProps(): PrintReportProps {
 
   const selectedCurrency = { label: "RM", code: "MYR", locale: "en-MY" };
   const formatCurrency = (val: number) =>
-    new Intl.NumberFormat(selectedCurrency.locale, {
-      style: "currency",
-      currency: selectedCurrency.code,
-      maximumFractionDigits: 0,
-      minimumFractionDigits: 0,
-    }).format(val);
+    formatCurrencyDisplayNoDecimals(val, selectedCurrency.code);
   const formatPercent = (val: number) => `${val.toFixed(1)}%`;
   const formatPercentSmall = (val: number) => `${val.toFixed(2)}%`;
   const formatSignedPct = (val: number) => `${val >= 0 ? "+" : ""}${val.toFixed(1)}%`;

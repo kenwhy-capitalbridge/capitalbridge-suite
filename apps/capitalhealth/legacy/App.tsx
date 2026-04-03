@@ -38,6 +38,7 @@ import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
 import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
+import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 
 /** Coloured rectangular risk badge: label only (e.g. Critical). Institutional, no tier numbers. */
 function RiskTierBadge({ tier, label }: { tier: number; label: string }) {
@@ -209,9 +210,10 @@ function formatNum(n: number, decimals = 0): string {
 
 /** Compact format for large amounts: 1.2m, 850k; full value for tooltips. */
 function formatCurrencyCompact(symbol: string, val: number): string {
-  if (val >= 1_000_000) return `${symbol} ${(val / 1_000_000).toFixed(1).replace(/\.0$/, '')}m`;
-  if (val >= 100_000) return `${symbol} ${Math.round(val / 1_000)}k`;
-  return `${symbol} ${formatNum(val)}`;
+  if (val >= 1_000_000)
+    return `${symbol}${(val / 1_000_000).toFixed(1).replace(/\.0$/, "")}m`;
+  if (val >= 100_000) return `${symbol}${Math.round(val / 1_000)}k`;
+  return formatCurrencyDisplayNoDecimals(val, symbol);
 }
 
 function parseNum(s: string): number {
@@ -351,18 +353,18 @@ const CalculatorScreen = forwardRef<
             const vars = {
               withdrawal:
                 inputs.mode === 'withdrawal'
-                  ? `${inputs.currency.symbol} ${formatNum(inputs.targetMonthlyIncome)}`
+                  ? formatCurrencyDisplayNoDecimals(inputs.targetMonthlyIncome, inputs.currency.symbol)
                   : undefined,
               desiredCapital:
                 inputs.mode === 'growth'
-                  ? `${inputs.currency.symbol} ${formatNum(inputs.targetFutureCapital)}`
+                  ? formatCurrencyDisplayNoDecimals(inputs.targetFutureCapital, inputs.currency.symbol)
                   : undefined,
               horizon: `${Number(inputs.timeHorizonYears).toFixed(1)}`,
               runway: runwayYears,
               expectedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
               estimatedReturn: `${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
             };
-            const fmt = (n: number) => `${inputs.currency.symbol} ${formatNum(n)}`;
+            const fmt = (n: number) => formatCurrencyDisplayNoDecimals(n, inputs.currency.symbol);
             base.lionVerdictClient = buildLionVerdictClientReportFromCapitalHealth(
               {
                 mode,
@@ -389,7 +391,7 @@ const CalculatorScreen = forwardRef<
   );
 
   const formatCurrency = useCallback(
-    (val: number) => `${inputs.currency.symbol} ${formatNum(val)}`,
+    (val: number) => formatCurrencyDisplayNoDecimals(val, inputs.currency.symbol),
     [inputs.currency]
   );
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY as LEGAL_COPY } from "@cb/shared/legalMonocopy";
+import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { CB_FONT_SERIF } from "@cb/shared/typography";
 import CoverPage from "./CoverPage";
 
@@ -94,8 +95,8 @@ const PAGE_PADDING = "36px 40px 44px";
 function highlightFinancialNumbers(text?: string): React.ReactNode {
   if (!text) return "";
 
-  const pattern = /(RM\s[\d,]+(?:\.\d+)?|[\d,]+(?:\.\d+)?\s+years?|[\d,]+(?:\.\d+)?%)/g;
-  const exactPattern = /^(RM\s[\d,]+(?:\.\d+)?|[\d,]+(?:\.\d+)?\s+years?|[\d,]+(?:\.\d+)?%)$/;
+  const pattern = /(RM[\d,]+|[\d,]+(?:\.\d+)?\s+years?|[\d,]+(?:\.\d+)?%)/g;
+  const exactPattern = /^(RM[\d,]+|[\d,]+(?:\.\d+)?\s+years?|[\d,]+(?:\.\d+)?%)$/;
   const parts = text.split(pattern);
 
   return parts.map((part, index) =>
@@ -129,7 +130,7 @@ function Section({
 
 function formatCurrency(value?: number): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "Under review";
-  return `RM ${Math.abs(value).toLocaleString()}`;
+  return formatCurrencyDisplayNoDecimals(Math.abs(value), "RM");
 }
 
 export default function BaseReport({ data }: { data: BaseReportData }) {

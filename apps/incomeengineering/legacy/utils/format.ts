@@ -1,4 +1,5 @@
 import type { CurrencyCode } from '../config/currency';
+import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 
 /**
  * Format number with commas for legibility (e.g. "125,000").
@@ -24,11 +25,10 @@ export function formatNumberWithCommas(value: number, decimals?: number): string
 }
 
 /**
- * Format as currency: symbol + comma-formatted number (e.g. "RM 125,000").
+ * Display-only: prefix + grouped integer, no space, no decimals (e.g. RM125,000).
  */
 export function formatCurrency(value: number, currency: CurrencyCode): string {
-  const symbol = currency === 'RM' ? 'RM' : currency;
-  return `${symbol} ${formatWithCommas(value)}`;
+  return formatCurrencyDisplayNoDecimals(value, currency);
 }
 
 /**

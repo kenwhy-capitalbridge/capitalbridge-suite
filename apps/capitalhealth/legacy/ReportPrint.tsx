@@ -14,6 +14,7 @@ import {
   buildLionVerdictClientReportFromCapitalHealth,
   formatLionPublicStatusLabel,
 } from '@cb/advisory-graph/lionsVerdict';
+import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 
 export type ReportChartPoint = { month: number; nominal: number };
 
@@ -29,9 +30,7 @@ function formatCompact(n: number): string {
 }
 
 function formatCurrency(symbol: string, n: number): string {
-  const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  return `${sign}${symbol} ${formatNum(abs, 0)}`;
+  return formatCurrencyDisplayNoDecimals(n, symbol);
 }
 
 function tierToBadgeClass(tier: number): string {

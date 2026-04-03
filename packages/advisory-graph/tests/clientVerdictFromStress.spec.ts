@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildLionVerdictClientReportFromStress } from '../src/lionsVerdict/buildClientVerdictFromStress';
 
-const fmt = (n: number) => `RM ${Math.round(n).toLocaleString('en-MY')}`;
+const fmt = (n: number) => `RM${Math.round(n).toLocaleString('en-MY')}`;
 
 describe('buildLionVerdictClientReportFromStress', () => {
   it('maps technical score to public status (FRAGILE band) and non-null goal fields', () => {

@@ -1,5 +1,5 @@
 import type { LionContext } from "./buildLionContext";
-import { formatRM } from "@cb/shared/formatCurrency";
+import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { generateLionToneCopy } from "./lionCopyLibrary";
 
 export type LionNarrative = {
@@ -15,11 +15,7 @@ export type LionNarrative = {
 };
 
 function formatAmount(value?: number, currency?: string): string {
-  if (currency && currency !== "RM") {
-    const safeValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
-    return `${currency} ${safeValue.toLocaleString("en-MY")}`;
-  }
-  return formatRM(value);
+  return formatCurrencyDisplayNoDecimals(value, currency);
 }
 
 function formatYears(value?: number): string {

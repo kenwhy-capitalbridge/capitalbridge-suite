@@ -40,6 +40,7 @@ import type { ScenarioAdjustments } from './src/lib/capitalHealthTypes';
 import { APP_NAME } from './src/lib/capitalHealthCopy';
 import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
+import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
 import { createReportAuditMeta, CB_REPORT_LEGAL_NOTICE, type ReportAuditMeta } from '@cb/shared/reportTraceability';
 import {
@@ -620,7 +621,7 @@ export function CapitalGrowthReport({
   reportAudit,
 }: ReportProps) {
   const symbol = inputs.currency.symbol;
-  const formatCurrency = (val: number) => `${symbol} ${formatNum(val)}`;
+  const formatCurrency = (val: number) => formatCurrencyDisplayNoDecimals(val, symbol);
   const generatedAtStr = formatReportGeneratedAtLabel();
   const preparedForStr = reportPreparedForLine(reportClientDisplayName);
   const horizonYears = inputs.timeHorizonYears;
@@ -822,7 +823,7 @@ export function CapitalGrowthReport({
               <Text style={styles.chartTitle}>CAPITAL PROJECTION OVER TIME</Text>
               <CapitalProjectionChart
                 chartData={chartPoints}
-                formatY={(n) => `${symbol} ${formatNum(Math.round(n))}`}
+                formatY={(n) => formatCurrencyDisplayNoDecimals(Math.round(n), symbol)}
                 yAxisLabel={`Y-axis: portfolio capital (${inputs.currency.code})`}
                 xAxisLabel="X-axis: time (month index along the projection; bars are sampled across the horizon)"
                 lastPointCaption={(() => {

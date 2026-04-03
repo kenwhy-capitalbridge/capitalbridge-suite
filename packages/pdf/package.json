@@ -12,6 +12,7 @@
     "./templates/BaseReport": "./src/templates/BaseReport.tsx"
   },
   "dependencies": {
+    "@cb/shared": "*",
     "playwright": "^1.51.1"
   }
 }
