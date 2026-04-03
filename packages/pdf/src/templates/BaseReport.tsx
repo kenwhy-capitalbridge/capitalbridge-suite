@@ -329,6 +329,36 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             linear-gradient(180deg, rgba(13,58,29,0.06) 0%, rgba(13,58,29,0.015) 100%);
         }
 
+        .cb-divider-page {
+          justify-content: center;
+          background:
+            linear-gradient(180deg, rgba(13,58,29,0.07) 0%, rgba(13,58,29,0.015) 100%),
+            #f7f8f6;
+        }
+
+        .cb-divider-card {
+          max-width: 520px;
+          padding: 28px 30px;
+          border: ${DIVIDER};
+          background: rgba(255,255,255,0.92);
+        }
+
+        .cb-divider-title {
+          margin: 0 0 14px;
+          font-family: ${CB_FONT_SERIF};
+          font-size: 30px;
+          line-height: 1.12;
+          font-weight: 600;
+          color: var(--cb-report-ink);
+        }
+
+        .cb-divider-copy {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.7;
+          color: #24312c;
+        }
+
         .cb-journey-banner {
           padding: 18px 20px;
           border: ${DIVIDER};
@@ -469,7 +499,13 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         <CoverPage data={data} />
 
         <section className="cb-report-page">
-          <Section title="At a Glance" kicker="Strategic summary">
+          <Section title="At a Glance" kicker="Quick interpretation">
+            <div className="cb-callout">
+              <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.what)}</p>
+            </div>
+          </Section>
+
+          <Section title="Executive Summary" kicker="Strategic summary">
             <div className="cb-summary-grid">
               {summaryBlocks.map((block, index) => (
                 <div key={`${block.title}-${index}`} className="cb-summary-card">
@@ -480,16 +516,67 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </div>
           </Section>
 
-          <Section title="What Is Happening" kicker="Current structure">
-            <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.what)}</p>
+          <footer className="cb-report-footer">
+            <div className="cb-footer-legal">{LEGAL_COPY}</div>
+            <div className="cb-footer-page" />
+          </footer>
+        </section>
+
+        <section className="cb-report-page cb-divider-page">
+          <div className="cb-divider-card">
+            <p className="cb-section-kicker">Detailed analysis</p>
+            <h2 className="cb-divider-title">For deeper analysis</h2>
+            <p className="cb-divider-copy">
+              The following section provides a more detailed breakdown for those who want to explore
+              the structure further.
+            </p>
+          </div>
+
+          <footer className="cb-report-footer">
+            <div className="cb-footer-legal">{LEGAL_COPY}</div>
+            <div className="cb-footer-page" />
+          </footer>
+        </section>
+
+        <section className="cb-report-page">
+          <Section title="Detailed Analysis" kicker="Evidence layer">
+            <div className="cb-callout">
+              <p className="cb-report-p">
+                This section moves from interpretation into the supporting evidence behind the
+                report, including structure, drivers, inputs, outputs, and advisory reasoning.
+              </p>
+            </div>
           </Section>
 
-          <Section title="Why It Is Happening" kicker="Underlying drivers">
+          <Section title="Inputs + Outputs" kicker="Evidence snapshot">
             <div className="cb-two-column">
-              <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.why)}</p>
               <div className="cb-callout">
-                <p className="cb-meta-label">System state</p>
+                <p className="cb-meta-label">Inputs</p>
+                <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.why)}</p>
+              </div>
+              <div className="cb-callout">
+                <p className="cb-meta-label">Outputs</p>
                 <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.state)}</p>
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Charts + Inputs + Outputs" kicker="Supporting evidence">
+            <div className="cb-two-column">
+              <div className="cb-report-chart-wrap">
+                <div className="cb-chart-header">
+                  <h3 className="cb-chart-title">Structure view</h3>
+                  <p className="cb-chart-metric">{highlightFinancialNumbers(data.diagnosis?.state)}</p>
+                </div>
+                <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.what)}</p>
+                <div className="cb-chart-axis-labels">
+                  <span>X Axis: Time</span>
+                  <span>Y Axis: Capital / Cash Flow</span>
+                </div>
+              </div>
+              <div className="cb-callout">
+                <p className="cb-meta-label">Underlying drivers</p>
+                <p className="cb-report-p">{highlightFinancialNumbers(data.diagnosis?.why)}</p>
                 {data.diagnosis?.critical ? (
                   <>
                     <p className="cb-meta-label" style={{ marginTop: "14px" }}>
