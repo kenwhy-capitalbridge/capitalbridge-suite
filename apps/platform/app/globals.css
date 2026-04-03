@@ -805,6 +805,25 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
   visibility: visible;
 }
 
+/* Platform auth header: BACK + avatar + LOGOUT stay right-aligned; allow horizontal scroll if needed on very narrow widths */
+.platform-header-right-cluster {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.6vw, 10px);
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.platform-header-right-cluster::-webkit-scrollbar {
+  display: none;
+}
+
 /* Solutions / subpages: BACK in sticky bar next to logo */
 .platform-header-back-btn.pf-chrome-gold-btn {
   letter-spacing: 0.1em;
@@ -814,19 +833,6 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
 
 .platform-header-back-btn.pf-chrome-gold-btn[aria-busy="true"] {
   min-width: 3.25rem;
-  justify-content: center;
-}
-
-/* Profile BACK — ~12% shorter than prior 44px touch target */
-.profile-page-back-btn.pf-chrome-gold-btn {
-  min-height: 38px;
-  padding-top: 0.3rem;
-  padding-bottom: 0.3rem;
-  position: relative;
-}
-
-.profile-page-back-btn.pf-chrome-gold-btn[aria-busy="true"] {
-  min-width: 4.5rem;
   justify-content: center;
 }
 

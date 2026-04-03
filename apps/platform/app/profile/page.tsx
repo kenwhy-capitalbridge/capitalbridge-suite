@@ -6,7 +6,6 @@ import { getServerUserAndMembership } from "../../lib/auth";
 import { formatPlanLabel, initialsFromFirstLastOrFallback } from "../../lib/profileInitials";
 import { PlatformFrameworkHeader } from "../components/PlatformFrameworkHeader";
 import { ProfileAccountEmailForm } from "../components/ProfileAccountEmailForm";
-import { ProfileHistoryBackButton } from "../components/ProfileHistoryBackButton";
 import { ProfilePlansLink } from "../components/ProfilePlansLink";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +81,10 @@ export default async function ProfilePage() {
         verifiedUserEmail={user.email}
         centerTitle="USER PROFILE"
         profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+        showBackBeforeHome
+        backFallbackHref="/"
+        backPushHref="/"
+        backAriaLabel="Back to Capital Bridge platform home"
       />
 
       <main
@@ -236,8 +239,6 @@ export default async function ProfilePage() {
           </div>
 
           <ProfileAccountEmailForm currentEmail={user.email ?? null} />
-
-          <ProfileHistoryBackButton />
         </div>
       </main>
     </div>

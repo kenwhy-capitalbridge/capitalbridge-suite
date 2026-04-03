@@ -28,6 +28,10 @@ export type PlatformFrameworkHeaderProps = {
   showBackBeforeHome?: boolean;
   /** Used when history is empty (direct navigation). Default `/framework` → `/`. */
   backFallbackHref?: string;
+  /** When set with `showBackBeforeHome`, BACK always navigates here (e.g. `/profile` → `/`). */
+  backPushHref?: string;
+  /** Optional accessible name for BACK (e.g. profile home navigation). */
+  backAriaLabel?: string;
 };
 
 /** Sticky bar: logo (marketing) | Framework | Logout (auth) or Login (public). */
@@ -38,6 +42,8 @@ export async function PlatformFrameworkHeader({
   centerTitle = "Framework",
   showBackBeforeHome = false,
   backFallbackHref = "/framework",
+  backPushHref,
+  backAriaLabel,
 }: PlatformFrameworkHeaderProps = {}) {
   const supabase = await createAppServerClient();
   const {
@@ -154,18 +160,13 @@ export async function PlatformFrameworkHeader({
 
         <span className="cb-header-chrome-title">{centerTitle}</span>
 
-        <div
-          style={{
-            justifySelf: "end",
-            display: "flex",
-            alignItems: "center",
-            gap: "clamp(6px, 0.6vw, 10px)",
-            flexWrap: "nowrap",
-            minWidth: 0,
-          }}
-        >
+        <div className="platform-header-right-cluster">
           {showBackBeforeHome ? (
-            <PlatformHeaderBackButton fallbackHref={backFallbackHref} />
+            <PlatformHeaderBackButton
+              fallbackHref={backFallbackHref}
+              pushHref={backPushHref}
+              ariaLabel={backAriaLabel}
+            />
           ) : null}
           <PlatformHeaderAuthCluster initials={initials} />
         </div>
