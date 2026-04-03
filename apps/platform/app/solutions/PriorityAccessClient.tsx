@@ -46,6 +46,7 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          fullName,
           reportId,
           country,
           interestType: interestType || null,

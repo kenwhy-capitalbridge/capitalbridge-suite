@@ -1,8 +1,14 @@
+import type { User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { createAppServerClient } from "@cb/supabase/server";
 import { createServiceClient } from "@cb/supabase/service";
+import {
+  notifyStrategicInterestAdmin,
+  type NotifyAdminResult,
+} from "@/lib/strategicInterestAdminNotify";
 
 type StrategicInterestBody = {
+  fullName?: string | null;
   reportId?: string | null;
   country?: string;
   interestType?: string | null;
@@ -11,6 +17,39 @@ type StrategicInterestBody = {
 };
 
 export const dynamic = "force-dynamic";
+
+async function resolveSubmitterDisplayName(
+  svc: ReturnType<typeof createServiceClient>,
+  user: User,
+  bodyFullName?: string | null
+): Promise<string> {
+  const trimmed = bodyFullName?.trim();
+  if (trimmed) return trimmed;
+  const meta =
+    (typeof user.user_metadata?.name === "string" && user.user_metadata.name.trim()) ||
+    (typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()) ||
+    "";
+  if (meta) return meta;
+  const { data: prof } = await svc
+    .schema("public")
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  const fn = prof?.first_name?.trim() ?? "";
+  const ln = prof?.last_name?.trim() ?? "";
+  if (fn || ln) return [fn, ln].filter(Boolean).join(" ");
+  return user.email?.trim() || "Unknown";
+}
+
+function logAdminNotifyIncomplete(userId: string, result: NotifyAdminResult): void {
+  if (result.status === "sent") return;
+  const reason = result.status === "failed" || result.status === "skipped" ? result.reason : "";
+  console.error(
+    "[strategic-interest POST] admin email not sent",
+    JSON.stringify({ userId, notifyStatus: result.status, reason }),
+  );
+}
 
 export async function POST(request: Request) {
   try {
@@ -35,17 +74,45 @@ export async function POST(request: Request) {
     }
 
     const svc = createServiceClient();
-    const { error } = await svc.schema("public").from("strategic_interest").insert({
-      user_id: user.id,
-      report_id: body.reportId ? String(body.reportId).trim() : null,
-      country,
-      interest_type: interestType,
-    });
+    const reportId = body.reportId ? String(body.reportId).trim() : null;
+
+    const { data: inserted, error } = await svc
+      .schema("public")
+      .from("strategic_interest")
+      .insert({
+        user_id: user.id,
+        report_id: reportId,
+        country,
+        interest_type: interestType,
+      })
+      .select("created_at")
+      .single();
 
     if (error) {
       console.error("[strategic-interest POST] insert failed", error.message);
       return NextResponse.json({ error: "Unable to save priority access request" }, { status: 500 });
     }
+
+    const submittedAtIso = inserted?.created_at ?? new Date().toISOString();
+    const fullName = await resolveSubmitterDisplayName(svc, user, body.fullName);
+    const userEmail = user.email?.trim() ?? "";
+
+    const adminTo = (process.env.STRATEGIC_INTEREST_ADMIN_EMAIL ?? "admin@thecapitalbridge.com").trim();
+    const from = (process.env.RESEND_FROM ?? "").trim();
+
+    const notifyResult = await notifyStrategicInterestAdmin({
+      adminTo,
+      from,
+      fullName,
+      email: userEmail || "—",
+      country,
+      reportId,
+      interestType,
+      userId: user.id,
+      submittedAtIso,
+    });
+
+    logAdminNotifyIncomplete(user.id, notifyResult);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
