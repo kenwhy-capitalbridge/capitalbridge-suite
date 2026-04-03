@@ -49,7 +49,7 @@ export type BaseReportData = {
 
 const BODY_FONT = 'Arial, Helvetica, "Nimbus Sans L", sans-serif';
 const DIVIDER = "1px solid rgba(0,0,0,0.08)";
-const PAGE_PADDING = "34px 38px 40px";
+const PAGE_PADDING = "36px 40px 44px";
 
 function highlightFinancialNumbers(text?: string): React.ReactNode {
   if (!text) return "";
@@ -167,23 +167,23 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         }
 
         .cb-report-section {
-          margin-top: 24px;
+          margin-top: 28px;
         }
 
         .cb-report-section-block {
-          padding: 0 0 20px;
+          padding: 0 0 24px;
           border-bottom: ${DIVIDER};
         }
 
         .cb-report-section-block + .cb-report-section-block {
-          margin-top: 24px;
+          margin-top: 28px;
         }
 
         .cb-section-title {
           font-size: 20px;
           line-height: 1.22;
           font-weight: 600;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
 
         .cb-section-body > :first-child {
@@ -223,7 +223,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         }
 
         .cb-summary-card {
-          padding: 16px 18px;
+          padding: 18px 20px;
           border: ${DIVIDER};
           background: rgba(255,255,255,0.82);
         }
@@ -246,6 +246,50 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           width: 100%;
           overflow: hidden;
           box-sizing: border-box;
+        }
+
+        .cb-report-chart-wrap {
+          padding: 18px 20px;
+          border: ${DIVIDER};
+          background: linear-gradient(180deg, rgba(13,58,29,0.035) 0%, rgba(255,255,255,0.96) 100%);
+        }
+
+        .cb-chart-header {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 14px;
+        }
+
+        .cb-chart-title {
+          margin: 0;
+          font-family: ${CB_FONT_SERIF};
+          font-size: 18px;
+          line-height: 1.2;
+          font-weight: 600;
+          color: var(--cb-report-ink);
+        }
+
+        .cb-chart-metric {
+          margin: 0;
+          font-size: 12px;
+          line-height: 1.5;
+          color: #24312c;
+          text-align: right;
+        }
+
+        .cb-chart-axis-labels {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin-top: 12px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: rgba(16, 38, 27, 0.56);
         }
 
         .cb-number {
