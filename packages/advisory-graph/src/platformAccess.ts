@@ -167,6 +167,22 @@ export function deriveEntitlements(plan: Plan | null): Entitlements {
 }
 
 /**
+ * Strategic Execution card / module tier line (persona or `public.plans.slug`).
+ * Trial → strategic upsell; paid non-`strategic` → upgrade; `strategic` → priority copy.
+ */
+export function strategicExecutionTierLabel(plan: Plan | null): string {
+  const p = plan ?? "trial";
+  if (p === "trial") return "Available with Strategic Access";
+  if (p === "strategic") return "Priority access available";
+  return "Upgrade to Strategic to unlock execution";
+}
+
+/** Same as {@link strategicExecutionTierLabel} after normalising a raw DB/RPC slug. */
+export function strategicExecutionTierLabelFromRawPlan(raw: unknown): string {
+  return strategicExecutionTierLabel(normalizePlan(raw));
+}
+
+/**
  * Starts an advisory session in advisory_v2.advisory_sessions.
  * Returns { id } or error object for UI handling.
  */

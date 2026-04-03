@@ -1,3 +1,4 @@
+import { strategicExecutionTierLabelFromRawPlan } from "@cb/advisory-graph";
 import { PlatformFrameworkHeader } from "./PlatformFrameworkHeader";
 import { FrameworkLaunchRow } from "./FrameworkLaunchRow";
 
@@ -9,10 +10,18 @@ const FOREVER_APP_URL =
 export type FrameworkStaticLandingProps = {
   /** Passed through so the sticky header always renders when this page already proved auth. */
   userEmail?: string | null;
+  /** Active `public.plans.slug` when signed in — personalises Strategic Execution module line. */
+  membershipPlanSlug?: string | null;
 };
 
 /** Advisory framework marketing layout (ported from legacy platform; no public “request access” footer). */
-export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandingProps = {}) {
+export async function FrameworkStaticLanding({
+  userEmail,
+  membershipPlanSlug = null,
+}: FrameworkStaticLandingProps = {}) {
+  const strategicTierLine = strategicExecutionTierLabelFromRawPlan(
+    userEmail ? membershipPlanSlug : null,
+  );
   const arrow = (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M7 10l5 5 5-5z" fill="currentColor" />
@@ -150,7 +159,7 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
                 <div className="cb-module-body">
                   <span className="cb-module-meta">
                     <span className="cb-status-dot cb-status-dot--soon" aria-hidden="true" />
-                    STATUS: COMING SOON • MODULE 4
+                    {strategicTierLine} • MODULE 4
                   </span>
                   <span className="cb-module-engine-label">Advisory Layer</span>
                   <h2>Strategic Execution</h2>

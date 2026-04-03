@@ -6,6 +6,7 @@ import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 import {
   fetchPersona,
   deriveEntitlements,
+  strategicExecutionTierLabel,
   type Entitlements,
 } from "@cb/advisory-graph";
 
@@ -73,7 +74,6 @@ type StrategicTile = {
   kind: "strategic";
   id: "strategic-execution";
   title: string;
-  status: string;
   description: string;
   ctaLabel: string;
   enabled: (e: Entitlements) => boolean;
@@ -111,7 +111,6 @@ const TILES: Tile[] = [
     kind: "strategic",
     id: "strategic-execution",
     title: "Strategic Execution",
-    status: "Coming Soon",
     description:
       "Move beyond analysis into structured execution with Capital Bridge™ partners.",
     ctaLabel: "Request Priority Access",
@@ -154,6 +153,7 @@ export function DashboardTiles() {
         if (tile.kind === "strategic") {
           const href = STRATEGIC_EXECUTION_HREF;
           const tileBusy = pendingHref === href;
+          const tierLine = strategicExecutionTierLabel(e.plan);
           return (
             <div key={tile.id} style={{ display: "flex", minWidth: 0, minHeight: "100%" }}>
               {enabled ? (
@@ -173,6 +173,19 @@ export function DashboardTiles() {
                     boxShadow: "0 0 0 1px rgba(255,204,106,0.05)",
                   }}
                 >
+                  <p
+                    style={{
+                      margin: "0 0 0.45rem",
+                      fontSize: "0.68rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,204,106,0.78)",
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {tierLine}
+                  </p>
                   <h3
                     style={{
                       margin: "0 0 0.45rem",
@@ -187,7 +200,7 @@ export function DashboardTiles() {
                   </h3>
                   <p
                     style={{
-                      margin: "0 0 0.5rem",
+                      margin: "0 0 0.85rem",
                       fontSize: "0.88rem",
                       lineHeight: 1.45,
                       color: "rgba(246,245,241,0.82)",
@@ -195,18 +208,6 @@ export function DashboardTiles() {
                     }}
                   >
                     {tile.description}
-                  </p>
-                  <p
-                    style={{
-                      margin: "0 0 0.85rem",
-                      fontSize: "0.68rem",
-                      fontWeight: 600,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      color: "rgba(255,204,106,0.72)",
-                    }}
-                  >
-                    {tile.status}
                   </p>
                   <button
                     type="button"

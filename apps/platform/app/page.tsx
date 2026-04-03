@@ -38,7 +38,12 @@ export default async function Page({
   }
 
   if (!useV2) {
-    return <FrameworkStaticLanding userEmail={user.email} />;
+    return (
+      <FrameworkStaticLanding
+        userEmail={user.email}
+        membershipPlanSlug={membership?.plan ?? null}
+      />
+    );
   }
 
   return (
