@@ -52,36 +52,56 @@ export async function FrameworkStaticLanding({
           </p>
 
           <div className="cb-flow-wrap">
-            <div className="cb-flow-grid">
-              <div className="cb-flow-cell">
-                <span className="cb-flow-a">Evaluate</span>
-                <span className="cb-flow-b">Sustainability</span>
+            <div className="cb-flow-inner">
+              <div className="cb-flow-grid">
+                <div className="cb-flow-cell">
+                  <span className="cb-flow-a">Evaluate</span>
+                  <span className="cb-flow-b">Sustainability</span>
+                </div>
+                <div className="cb-flow-cell">
+                  <span className="cb-flow-a">Engineer</span>
+                  <span className="cb-flow-b">Capital</span>
+                </div>
+                <div className="cb-flow-cell">
+                  <span className="cb-flow-a">Stress Test</span>
+                  <span className="cb-flow-b">Resilience</span>
+                </div>
+                <div className="cb-flow-cell">
+                  <span className="cb-flow-a">Execute</span>
+                  <span className="cb-flow-b">Strategy</span>
+                </div>
               </div>
-              <div className="cb-flow-cell">
-                <span className="cb-flow-a">Engineer</span>
-                <span className="cb-flow-b">Capital</span>
+              <div className="cb-flow-connector-row" aria-hidden="true">
+                <span className="cb-flow-connector-seg" />
+                <span className="cb-flow-connector-seg" />
+                <span className="cb-flow-connector-seg" />
+                <span className="cb-flow-connector-seg" />
               </div>
-              <div className="cb-flow-cell">
-                <span className="cb-flow-a">Stress Test</span>
-                <span className="cb-flow-b">Resilience</span>
+              <div className="cb-flow-indicators">
+                <span className="cb-flow-indicator" aria-hidden="true">
+                  {arrow}
+                </span>
+                <span className="cb-flow-indicator" aria-hidden="true">
+                  {arrow}
+                </span>
+                <span className="cb-flow-indicator" aria-hidden="true">
+                  {arrow}
+                </span>
+                <a
+                  href="#cb-module-strategic-execution"
+                  className="cb-flow-indicator cb-flow-indicator--jump"
+                  aria-label="Go to Strategic Execution (Module 4)"
+                >
+                  {arrow}
+                </a>
               </div>
-            </div>
-            <div className="cb-flow-connector-row" aria-hidden="true">
-              <span className="cb-flow-connector-seg" />
-              <span className="cb-flow-connector-seg" />
-              <span className="cb-flow-connector-seg" />
-            </div>
-            <div className="cb-flow-indicators" aria-hidden="true">
-              <span className="cb-flow-indicator">{arrow}</span>
-              <span className="cb-flow-indicator">{arrow}</span>
-              <span className="cb-flow-indicator">{arrow}</span>
             </div>
           </div>
 
           <div className="cb-system-header">
             <p className="cb-system-header-label">System Status</p>
             <p className="cb-system-header-desc">
-              Capital Decision System Active • 3 Analytical Engines Online • Strategic execution (roadmap)
+              Capital Decision System Active • 4-stage advisory flow • 3 analytical engines online • Execution roadmap
             </p>
           </div>
 
@@ -154,7 +174,7 @@ export async function FrameworkStaticLanding({
                   />
                 </div>
               </article>
-              <article className="cb-module cb-module--strategic">
+              <article id="cb-module-strategic-execution" className="cb-module cb-module--strategic">
                 <div className="cb-module-header-bar" />
                 <div className="cb-module-body">
                   <span className="cb-module-meta">
