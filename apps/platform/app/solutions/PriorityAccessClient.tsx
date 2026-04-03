@@ -1,12 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type PriorityAccessClientProps = {
   fullName: string;
   email: string;
   reportId?: string | null;
+  /** Only Strategic Advisory (`plans.slug === strategic`) may open the request modal. */
+  isStrategicPlan: boolean;
 };
+
+const STRATEGIC_ADVANTAGES = [
+  "Financing structures that can exceed your repayment obligations",
+  "Access to curated private opportunities not publicly available",
+  "Monthly income distribution structured and executed on your behalf",
+] as const;
+
+const GATED_CTA_TOOLTIP = "Available under Strategic Advisory";
 
 const COUNTRY_OPTIONS = [
   { value: "MY", label: "Malaysia" },
@@ -21,8 +31,30 @@ const INTEREST_OPTIONS = [
   { value: "Income Structuring", label: "Income Structuring" },
 ] as const;
 
-export function PriorityAccessClient({ fullName, email, reportId }: PriorityAccessClientProps) {
+export function PriorityAccessClient({ fullName, email, reportId, isStrategicPlan }: PriorityAccessClientProps) {
   const [open, setOpen] = useState(false);
+  const [gatedTipOpen, setGatedTipOpen] = useState(false);
+  const gatedTipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isStrategicPlan) setOpen(false);
+  }, [isStrategicPlan]);
+
+  useEffect(() => {
+    if (isStrategicPlan) {
+      setGatedTipOpen(false);
+      if (gatedTipTimerRef.current) {
+        clearTimeout(gatedTipTimerRef.current);
+        gatedTipTimerRef.current = null;
+      }
+    }
+  }, [isStrategicPlan]);
+
+  useEffect(() => {
+    return () => {
+      if (gatedTipTimerRef.current) clearTimeout(gatedTipTimerRef.current);
+    };
+  }, []);
   const [country, setCountry] = useState("MY");
   const [contactPhone, setContactPhone] = useState("");
   const [interestType, setInterestType] = useState("");
@@ -70,17 +102,120 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
     }
   }
 
+  const buttonLabel = isStrategicPlan ? "Request Access" : "Strategic Access Required";
+  const subtext = isStrategicPlan
+    ? "Submit your structure for priority access to execution pathways."
+    : "Unlock execution capabilities, partner access, and structured income implementation under Strategic Advisory.";
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="pf-chrome-gold-btn priority-access-cta-btn"
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: "0.65rem",
+          maxWidth: 520,
+        }}
       >
-        Request Access
-      </button>
+        {isStrategicPlan ? (
+          <div style={{ display: "inline-block", maxWidth: "100%" }}>
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="pf-chrome-gold-btn priority-access-cta-btn"
+            >
+              {buttonLabel}
+            </button>
+          </div>
+        ) : (
+          <span
+            className={`priority-access-cta-gated-wrap${gatedTipOpen ? " priority-access-cta-gated-wrap--tip-open" : ""}`}
+          >
+            <span id="priority-access-gated-desc" className="cb-visually-hidden">
+              {GATED_CTA_TOOLTIP}
+            </span>
+            <button
+              type="button"
+              disabled
+              aria-disabled={true}
+              aria-describedby="priority-access-gated-desc"
+              className="pf-chrome-gold-btn priority-access-cta-btn priority-access-cta-btn--plan-gated"
+            >
+              {buttonLabel}
+            </button>
+            <span
+              className="priority-access-cta-gated-overlay"
+              role="presentation"
+              onPointerUp={(e) => {
+                if (e.pointerType !== "touch") return;
+                if (gatedTipTimerRef.current) clearTimeout(gatedTipTimerRef.current);
+                setGatedTipOpen(true);
+                gatedTipTimerRef.current = setTimeout(() => {
+                  setGatedTipOpen(false);
+                  gatedTipTimerRef.current = null;
+                }, 2800);
+              }}
+            />
+            <span className="priority-access-cta-tooltip-bubble" aria-hidden="true">
+              {GATED_CTA_TOOLTIP}
+            </span>
+          </span>
+        )}
+        <p
+          style={{
+            margin: 0,
+            fontSize: "0.9rem",
+            lineHeight: 1.55,
+            color: "rgba(246,245,241,0.78)",
+            maxWidth: 480,
+          }}
+        >
+          {subtext}
+        </p>
+        <div style={{ marginTop: "0.35rem", width: "100%" }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.72rem",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "rgba(246,245,241,0.65)",
+            }}
+          >
+            Strategic Advantages
+          </p>
+          <ul
+            style={{
+              margin: "0.5rem 0 0",
+              paddingLeft: "1.15rem",
+              color: "rgba(246,245,241,0.88)",
+              fontSize: "0.92rem",
+              lineHeight: 1.55,
+            }}
+          >
+            {STRATEGIC_ADVANTAGES.map((line) => (
+              <li key={line} style={{ marginBottom: "0.35rem" }}>
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p
+          style={{
+            margin: "0.85rem 0 0",
+            fontSize: "0.78rem",
+            lineHeight: 1.5,
+            color: "rgba(246,245,241,0.48)",
+            maxWidth: 480,
+          }}
+        >
+          Complete your models to understand if your structure is ready for execution.
+        </p>
+      </div>
 
-      {open ? (
+      {open && isStrategicPlan ? (
         <div
           role="dialog"
           aria-modal="true"
@@ -133,8 +268,11 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
               </button>
             </div>
 
-            <p style={{ margin: "1rem 0 1.25rem", color: "#30443a", lineHeight: 1.65 }}>
+            <p style={{ margin: "1rem 0 0.65rem", color: "#30443a", lineHeight: 1.65 }}>
               You will be notified when execution becomes available in your market. Capital Bridge may review your structure and prepare recommendations ahead of partner onboarding.
+            </p>
+            <p style={{ margin: "0 0 1.25rem", color: "#30443a", lineHeight: 1.65 }}>
+              Your current structure will be reviewed for execution readiness.
             </p>
 
             {submitted ? (

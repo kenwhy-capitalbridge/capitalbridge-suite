@@ -54,17 +54,24 @@ export default async function SolutionsPage({
             <h1 style={{ margin: "0.3rem 0 0", fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.04 }}>
               Strategic Execution (Coming Soon)
             </h1>
-            <p style={bodyStyle}>
-              Capital Bridge™ is onboarding licensed partners across financing, insurance, and capital structuring.
-            </p>
-            <p style={{ ...bodyStyle, maxWidth: 700 }}>
-              You may request priority access to be among the first users when structured execution becomes available.
-            </p>
+            <div style={{ marginTop: "1.25rem", maxWidth: 720 }}>
+              <p style={{ ...bodyStyle, margin: 0, fontWeight: 700, fontSize: "1.05rem" }}>
+                This is where capital starts working for you, not just sitting.
+              </p>
+              <p style={{ ...bodyStyle, margin: "0.85rem 0 0" }}>
+                This layer connects your capital structure to real financing, investment opportunities, and structured
+                income distribution through Capital Bridge™ partners.
+              </p>
+              <p style={{ ...bodyStyle, margin: "0.85rem 0 0" }}>
+                Access is available under Strategic Advisory.
+              </p>
+            </div>
             <div style={{ marginTop: "1.5rem" }}>
               <PriorityAccessClient
                 fullName={fullName}
                 email={user.email ?? ""}
                 reportId={reportId}
+                isStrategicPlan={membership?.plan === "strategic"}
               />
             </div>
           </section>
@@ -91,20 +98,6 @@ export default async function SolutionsPage({
             />
           </section>
 
-          <section
-            style={{
-              marginTop: "1.5rem",
-              padding: "1.25rem 1.4rem",
-              borderRadius: 18,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.04)",
-            }}
-          >
-            <p style={eyebrowStyle}>Membership context</p>
-            <p style={{ ...bodyStyle, margin: "0.35rem 0 0" }}>
-              Current plan: <strong>{membership?.plan ?? "active member"}</strong>. Priority access does not change plan status and does not guarantee partner availability.
-            </p>
-          </section>
         </div>
       </main>
     </div>

@@ -741,6 +741,70 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
   max-width: 100%;
 }
 
+/* Non–Strategic Advisory: match spec (opacity + not-allowed); overrides generic :disabled chrome */
+.priority-access-cta-btn.pf-chrome-gold-btn.priority-access-cta-btn--plan-gated:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Gated CTA: overlay captures pointer events for tooltip + tap hint (disabled button does not) */
+.priority-access-cta-gated-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  cursor: not-allowed;
+}
+
+.priority-access-cta-gated-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: not-allowed;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.priority-access-cta-tooltip-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  z-index: 2;
+  min-width: max-content;
+  max-width: min(280px, 85vw);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: rgba(246, 245, 241, 0.95);
+  text-align: center;
+  text-transform: none;
+  font-family: var(--cb-font-sans, system-ui, sans-serif);
+  background: rgba(5, 16, 11, 0.92);
+  border: 1px solid rgba(255, 204, 106, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .priority-access-cta-gated-wrap:hover .priority-access-cta-tooltip-bubble {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.priority-access-cta-gated-wrap.priority-access-cta-gated-wrap--tip-open .priority-access-cta-tooltip-bubble {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* Solutions / subpages: BACK in sticky bar next to logo */
 .platform-header-back-btn.pf-chrome-gold-btn {
   letter-spacing: 0.1em;
