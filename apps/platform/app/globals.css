@@ -687,6 +687,18 @@ a {
   }
 }
 
+/* Solutions / subpages: BACK in sticky bar next to logo */
+.platform-header-back-btn.pf-chrome-gold-btn {
+  letter-spacing: 0.1em;
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+}
+
+.platform-header-back-btn.pf-chrome-gold-btn[aria-busy="true"] {
+  min-width: 3.25rem;
+  justify-content: center;
+}
+
 /* Profile BACK — ~12% shorter than prior 44px touch target */
 .profile-page-back-btn.pf-chrome-gold-btn {
   min-height: 38px;

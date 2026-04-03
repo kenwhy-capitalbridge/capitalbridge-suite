@@ -21,12 +21,25 @@ export default async function SolutionsPage({
     "Capital Bridge User";
 
   return (
-    <>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#0D3A1D" }}>
       <PlatformFrameworkHeader
         verifiedUserEmail={user.email}
         profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+        centerTitle="STRATEGIC EXECUTION"
+        showBackBeforeHome
+        backFallbackHref="/framework"
       />
-      <main style={{ padding: "2.25rem 1.25rem 3rem" }}>
+      <main
+        style={{
+          flex: 1,
+          width: "100%",
+          maxWidth: 1280,
+          margin: "0 auto",
+          padding:
+            "clamp(1rem, 2.5vw, 2.25rem) clamp(0.75rem, 2vw, 1.25rem) clamp(2rem, 4vw, 3rem)",
+          boxSizing: "border-box",
+        }}
+      >
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <section
             style={{
@@ -94,7 +107,7 @@ export default async function SolutionsPage({
           </section>
         </div>
       </main>
-    </>
+    </div>
   );
 }
 

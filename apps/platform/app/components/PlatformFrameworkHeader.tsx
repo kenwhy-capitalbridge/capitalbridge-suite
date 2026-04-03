@@ -4,6 +4,7 @@ import { MARKETING_SITE_URL } from "@cb/shared/urls";
 import { PlatformLoginButton } from "./PlatformLoginButton";
 import { PlatformHeaderAuthCluster } from "./PlatformHeaderAuthCluster";
 import { PlatformMarketingHomeLink } from "./PlatformMarketingHomeLink";
+import { PlatformHeaderBackButton } from "./PlatformHeaderBackButton";
 import { initialsFromFirstLastOrFallback } from "../../lib/profileInitials";
 
 function marketingHomeUrl(): string {
@@ -23,6 +24,10 @@ export type PlatformFrameworkHeaderProps = {
   publicBrowse?: boolean;
   /** Center label in the sticky bar (default: Framework). */
   centerTitle?: string;
+  /** Prepend BACK (then logo) in the left column — subpages like `/solutions`. */
+  showBackBeforeHome?: boolean;
+  /** Used when history is empty (direct navigation). Default `/framework` → `/`. */
+  backFallbackHref?: string;
 };
 
 /** Sticky bar: logo (marketing) | Framework | Logout (auth) or Login (public). */
@@ -31,6 +36,8 @@ export async function PlatformFrameworkHeader({
   profileNames,
   publicBrowse = false,
   centerTitle = "Framework",
+  showBackBeforeHome = false,
+  backFallbackHref = "/framework",
 }: PlatformFrameworkHeaderProps = {}) {
   const supabase = await createAppServerClient();
   const {
@@ -143,7 +150,23 @@ export async function PlatformFrameworkHeader({
           boxSizing: "border-box",
         }}
       >
-        <PlatformMarketingHomeLink href={home} />
+        {showBackBeforeHome ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "clamp(6px, 1.2vw, 12px)",
+              justifySelf: "start",
+              minWidth: 0,
+              flexShrink: 1,
+            }}
+          >
+            <PlatformHeaderBackButton fallbackHref={backFallbackHref} />
+            <PlatformMarketingHomeLink href={home} />
+          </div>
+        ) : (
+          <PlatformMarketingHomeLink href={home} />
+        )}
 
         <span className="cb-header-chrome-title">{centerTitle}</span>
 
