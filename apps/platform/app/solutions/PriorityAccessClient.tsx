@@ -72,16 +72,7 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
       <button
         type="button"
         onClick={() => setOpen(true)}
-        style={{
-          padding: "0.95rem 1.2rem",
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "#0d3a1d",
-          color: "#f6f5f1",
-          fontSize: "0.95rem",
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
+        className="pf-chrome-gold-btn priority-access-cta-btn"
       >
         Request Priority Access
       </button>
@@ -210,17 +201,10 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
                 <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
                   <button
                     type="button"
-                    disabled={!canSubmit}
+                    disabled={!canSubmit || submitting}
+                    aria-busy={submitting}
                     onClick={handleSubmit}
-                    style={{
-                      padding: "0.9rem 1.2rem",
-                      borderRadius: 12,
-                      border: 0,
-                      background: canSubmit ? "#0d3a1d" : "rgba(13,58,29,0.28)",
-                      color: "#f6f5f1",
-                      fontWeight: 700,
-                      cursor: canSubmit ? "pointer" : "not-allowed",
-                    }}
+                    className="pf-chrome-gold-btn priority-access-cta-btn"
                   >
                     {submitting ? "Saving..." : "Request Priority Access"}
                   </button>

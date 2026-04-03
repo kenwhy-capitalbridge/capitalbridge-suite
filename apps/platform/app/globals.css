@@ -687,6 +687,17 @@ a {
   }
 }
 
+/* /solutions — same gold/green chrome as header BACK; hover = green + gold border (cb-model-base) */
+.priority-access-cta-btn.pf-chrome-gold-btn {
+  min-height: 2.75rem;
+  padding-left: 1.15rem;
+  padding-right: 1.15rem;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+  max-width: 100%;
+}
+
 /* Solutions / subpages: BACK in sticky bar next to logo */
 .platform-header-back-btn.pf-chrome-gold-btn {
   letter-spacing: 0.1em;
