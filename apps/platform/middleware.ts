@@ -31,7 +31,8 @@ function isProtected(pathname: string): boolean {
     pathname === "/" ||
     pathname === "/dashboard" ||
     pathname === "/profile" ||
-    pathname.startsWith("/dashboard/")
+    pathname.startsWith("/dashboard/") ||
+    pathname.startsWith("/admin")
   );
 }
 

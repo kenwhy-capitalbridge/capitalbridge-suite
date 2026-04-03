@@ -188,6 +188,8 @@ interface PrintReportViewProps {
   reportClientDisplayName?: string;
   /** Present after a download is requested; echoed on the cover for the captured PDF. */
   auditMeta?: ReportAuditMeta | null;
+  /** Adds Execution Pathway (Early Access) to the Lion PDF block when true. */
+  hasStrategicInterest?: boolean;
 }
 
 const sectionHeading: React.CSSProperties = {
@@ -254,6 +256,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   lionAccessEnabled,
   reportClientDisplayName = 'Client',
   auditMeta = null,
+  hasStrategicInterest = false,
 }) => {
   const totalIncome = summary.monthlyIncome + summary.estimatedMonthlyInvestmentIncome;
   const totalExpenses = summary.monthlyExpenses + summary.monthlyLoanRepayments;
@@ -320,11 +323,27 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     const narrative = generateLionNarrative({ ...ctx, lionScore: lionReport.verdict.score });
     const decisions = generateLionDecisions({ ...ctx, lionScore: lionReport.verdict.score });
     return buildPdfNarrative(
-      { ...ctx, clientName: reportClientDisplayName, lionScore: lionReport.verdict.score },
+      {
+        ...ctx,
+        clientName: reportClientDisplayName,
+        lionScore: lionReport.verdict.score,
+        hasStrategicInterest,
+      },
       narrative,
       decisions,
     );
-  }, [lionAccessEnabled, lionReport, reportClientDisplayName, totalIncome, totalExpenses, currency, totalCapital, net, summary.sustainabilityStatus]);
+  }, [
+    lionAccessEnabled,
+    lionReport,
+    reportClientDisplayName,
+    totalIncome,
+    totalExpenses,
+    currency,
+    totalCapital,
+    net,
+    summary.sustainabilityStatus,
+    hasStrategicInterest,
+  ]);
 
   const incomeFrameworkIntro = useMemo(
     () => advisoryFrameworkPdfIntro('sustainability_income'),
@@ -588,6 +607,33 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
                 <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>{text}</p>
               </div>
             ))}
+          {lionPdfDataIe.executionPathway ? (
+            <div style={{ marginBottom: '10px' }}>
+              <h3
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#0D3A1D',
+                  textTransform: 'uppercase',
+                  marginBottom: '6px',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {lionPdfDataIe.executionPathway.title}
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  color: '#2d3748',
+                  lineHeight: 1.5,
+                  fontSize: '12px',
+                  whiteSpace: 'pre-line',
+                }}
+              >
+                {lionPdfDataIe.executionPathway.body}
+              </p>
+            </div>
+          ) : null}
           <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.06em' }}>What you should do next</h3>
           <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.5, fontSize: '12px' }}>
             {lionPdfDataIe.actions.map((line) => (

@@ -113,7 +113,7 @@ const TILES: Tile[] = [
     title: "Strategic Execution",
     description:
       "Move beyond analysis into structured execution with Capital Bridge™",
-    ctaLabel: "Request Access",
+    ctaLabel: "Request Priority Access",
     enabled: () => true,
   },
 ];
@@ -121,6 +121,7 @@ const TILES: Tile[] = [
 export function DashboardTiles() {
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [hasStrategicInterest, setHasStrategicInterest] = useState(false);
 
   const navigateTo = useCallback((href: string) => {
     if (pendingHref) return;
@@ -130,9 +131,26 @@ export function DashboardTiles() {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    fetchPersona(supabase).then((p) => {
+    void fetchPersona(supabase).then((p) => {
       setEntitlements(deriveEntitlements(p?.active_plan ?? null));
     });
+    void (async () => {
+      const supabaseInner = createSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabaseInner.auth.getUser();
+      if (!user) {
+        setHasStrategicInterest(false);
+        return;
+      }
+      const { data } = await supabaseInner
+        .schema("public")
+        .from("strategic_interest")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1);
+      setHasStrategicInterest(!!data?.length);
+    })();
   }, []);
 
   const e = entitlements ?? deriveEntitlements(null);
@@ -154,6 +172,8 @@ export function DashboardTiles() {
           const href = STRATEGIC_EXECUTION_HREF;
           const tileBusy = pendingHref === href;
           const tierLine = strategicExecutionTierLabel(e.plan);
+          const strategicLocked = hasStrategicInterest;
+          const strategicDisabled = tilesLocked || strategicLocked;
           return (
             <div key={tile.id} style={{ display: "flex", minWidth: 0, minHeight: "100%" }}>
               {enabled ? (
@@ -211,9 +231,13 @@ export function DashboardTiles() {
                   </p>
                   <button
                     type="button"
-                    disabled={tilesLocked}
+                    disabled={strategicDisabled}
                     aria-busy={tileBusy}
-                    onClick={() => navigateTo(href)}
+                    aria-disabled={strategicLocked}
+                    onClick={() => {
+                      if (strategicLocked) return;
+                      navigateTo(href);
+                    }}
                     style={{
                       display: tileBusy ? "flex" : "block",
                       alignItems: tileBusy ? "center" : undefined,
@@ -224,15 +248,17 @@ export function DashboardTiles() {
                       padding: "0.65rem 0.85rem",
                       border: "2px solid transparent",
                       borderRadius: 8,
-                      background: "var(--gold, #ffcc6a)",
+                      background: strategicLocked
+                        ? "rgba(255,204,106,0.35)"
+                        : "var(--gold, #ffcc6a)",
                       color: "var(--green, #0d3a1d)",
                       fontSize: "0.82rem",
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.05em",
-                      cursor: tilesLocked ? "wait" : "pointer",
+                      cursor: strategicLocked ? "not-allowed" : tilesLocked ? "wait" : "pointer",
                       fontFamily: "inherit",
-                      opacity: tilesLocked && !tileBusy ? 0.55 : 1,
+                      opacity: strategicLocked ? 0.65 : tilesLocked && !tileBusy ? 0.55 : 1,
                     }}
                   >
                     {tileBusy ? (
@@ -240,10 +266,25 @@ export function DashboardTiles() {
                         <ChromeSpinnerGlyph sizePx={18} />
                         <span className="cb-visually-hidden">Loading</span>
                       </span>
+                    ) : strategicLocked ? (
+                      "Priority Access Requested"
                     ) : (
                       tile.ctaLabel
                     )}
                   </button>
+                  {strategicLocked ? (
+                    <p
+                      style={{
+                        margin: "0.5rem 0 0",
+                        fontSize: "0.78rem",
+                        lineHeight: 1.45,
+                        color: "rgba(246,245,241,0.72)",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      You will be notified when execution becomes available
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </div>

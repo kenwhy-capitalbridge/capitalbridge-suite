@@ -78,6 +78,8 @@ export interface PrintReportProps {
   auditMeta?: ReportAuditMeta | null;
   /** Optional progression page — only passed when prior saved reports exist. */
   capitalTimelinePrintPayload?: CapitalTimelinePrintPayload | null;
+  /** Adds Execution Pathway (Early Access) to the Lion PDF block when true. */
+  hasStrategicInterest?: boolean;
 }
 
 const PRINT_TEXT = '#0D3A1D';
@@ -133,6 +135,7 @@ export function PrintReport(props: PrintReportProps) {
     lionAccessEnabled = true,
     auditMeta = null,
     capitalTimelinePrintPayload = null,
+    hasStrategicInterest = false,
   } = props;
   const currencyLabel = useMemo(
     () => formatCurrency(0).replace(/[\d\s,.\-]/g, "").trim() || "RM",
@@ -176,7 +179,12 @@ export function PrintReport(props: PrintReportProps) {
     const narrative = generateLionNarrative({ ...ctx, lionScore: lionScorePrint });
     const decisions = generateLionDecisions({ ...ctx, lionScore: lionScorePrint });
     return buildPdfNarrative(
-      { ...ctx, clientName: reportClientDisplayName, lionScore: lionScorePrint },
+      {
+        ...ctx,
+        clientName: reportClientDisplayName,
+        lionScore: lionScorePrint,
+        hasStrategicInterest,
+      },
       narrative,
       decisions,
     );
@@ -190,6 +198,7 @@ export function PrintReport(props: PrintReportProps) {
     years,
     withdrawal,
     lionPublicLabelPrint,
+    hasStrategicInterest,
   ]);
 
   const preparedForCover = reportPreparedForLine(reportClientDisplayName);
@@ -257,6 +266,7 @@ export function PrintReport(props: PrintReportProps) {
         stressScenarioResults?.length ?? 0,
         adjustmentResults?.reduceWithdrawal?.capitalResilienceScore ?? '',
         capitalTimelinePrintPayload?.points.map((p) => `${p.t}:${p.y}`).join(',') ?? '',
+        hasStrategicInterest ? '1' : '0',
       ].join('|'),
     [
       mcResult,
@@ -283,6 +293,7 @@ export function PrintReport(props: PrintReportProps) {
       stressScenarioResults,
       adjustmentResults,
       capitalTimelinePrintPayload,
+      hasStrategicInterest,
     ],
   );
 
@@ -1146,6 +1157,25 @@ export function PrintReport(props: PrintReportProps) {
               <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>{text}</p>
               </div>
             ))}
+            {lionPdfDataPrint.executionPathway ? (
+              <div style={{ marginBottom: '0.55em' }}>
+                <p
+                  style={{
+                    fontSize: '9pt',
+                    fontWeight: 700,
+                    color: PRINT_ACCENT,
+                    textTransform: 'uppercase',
+                    marginBottom: '0.2em',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {lionPdfDataPrint.executionPathway.title}
+                </p>
+                <p style={{ fontSize: '10pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45, whiteSpace: 'pre-line' }}>
+                  {lionPdfDataPrint.executionPathway.body}
+                </p>
+              </div>
+            ) : null}
             <p
               style={{
                 fontSize: '9pt',

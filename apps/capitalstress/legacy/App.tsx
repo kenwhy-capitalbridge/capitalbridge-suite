@@ -44,6 +44,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { createReportAuditMeta, type ReportAuditMeta } from "@cb/shared/reportTraceability";
 import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
+import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 
 const CURRENCIES = [
   { label: 'RM', code: 'MYR', locale: 'en-MY' },
@@ -267,6 +268,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const [radarLabelTooltip, setRadarLabelTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
   const [printAuditMeta, setPrintAuditMeta] = useState<ReportAuditMeta | null>(null);
+  const [hasStrategicInterest, setHasStrategicInterest] = useState(false);
   const [stressTimelineSaved, setStressTimelineSaved] = useState<CapitalTimelinePoint[] | undefined>(
     undefined,
   );
@@ -295,6 +297,26 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setHasStrategicInterest(false);
+        return;
+      }
+      const { data } = await supabase
+        .schema('public')
+        .from('strategic_interest')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      setHasStrategicInterest(!!data?.length);
+    })();
   }, []);
 
   const selectedCurrency = CURRENCIES[currencyIndex];
@@ -2017,6 +2039,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             reportClientDisplayName={reportClientDisplayName}
             auditMeta={printAuditMeta}
             capitalTimelinePrintPayload={capitalTimelinePrintPayload}
+            hasStrategicInterest={hasStrategicInterest}
           />
         );
       })()}

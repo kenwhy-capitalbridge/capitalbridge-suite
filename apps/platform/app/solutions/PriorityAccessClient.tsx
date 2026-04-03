@@ -146,9 +146,14 @@ export function PriorityAccessClient({ fullName, email, reportId }: PriorityAcce
                   border: "1px solid rgba(13,58,29,0.12)",
                 }}
               >
-                <p style={{ margin: 0, fontWeight: 700 }}>Priority access requested.</p>
-                <p style={{ margin: "0.4rem 0 0", lineHeight: 1.6 }}>
-                  You’ll be among the first to hear when structured execution opens in your market.
+                <p style={{ margin: 0, fontWeight: 700, lineHeight: 1.55 }}>
+                  Your request has been received.
+                </p>
+                <p style={{ margin: "0.65rem 0 0", lineHeight: 1.65 }}>
+                  Capital Bridge™ will review your capital structure and notify you when execution becomes available in your market.
+                </p>
+                <p style={{ margin: "0.65rem 0 0", lineHeight: 1.65 }}>
+                  You may be contacted earlier if your structure qualifies for early onboarding.
                 </p>
               </div>
             ) : (

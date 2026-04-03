@@ -10,6 +10,8 @@ export type PdfNarrativeContext = {
   sustainabilityYears?: number;
   capitalGap?: number;
   capitalProgressPct?: number;
+  /** User has submitted strategic_interest (priority access). */
+  hasStrategicInterest?: boolean;
 };
 
 export type PdfNarrativeInput = {
@@ -67,6 +69,11 @@ export type PdfNarrativeOutput = {
   lion: {
     headline: string;
     guidance: string;
+  };
+  /** Present when the user requested priority access to structured execution. */
+  executionPathway?: {
+    title: string;
+    body: string;
   };
   journey: {
     completedStepLabel: string;
@@ -331,6 +338,13 @@ export function buildPdfNarrative(
       headline: narrative.headline,
       guidance: narrative.guidance,
     },
+    executionPathway: ctx.hasStrategicInterest
+      ? {
+          title: "Execution Pathway (Early Access)",
+          body:
+            "You have requested priority access to structured execution.\n\nCapital Bridge™ will assess your structure and match suitable execution pathways when available.",
+        }
+      : undefined,
     journey: {
       completedStepLabel: `You have completed Step ${safeCurrentStepIndex + 1}.`,
       nextStepLabel:

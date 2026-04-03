@@ -41,6 +41,7 @@ import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictAct
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { SummaryKPIs } from './types/calculator';
 import { formatCurrency } from './utils/format';
+import { createSupabaseBrowserClient } from '@cb/advisory-graph/supabaseClient';
 
 export type IncomeEngineeringAppHandle = {
   getInputs: () => Record<string, unknown>;
@@ -69,6 +70,28 @@ const AppInner = forwardRef<
   function AppInner(props, ref) {
   const { state, dispatch } = useCalculatorStoreInternals();
   const { currency, monthlyExpenses, incomeRows, assetUnlocks, investmentBuckets } = state;
+
+  const [hasStrategicInterest, setHasStrategicInterest] = useState(false);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setHasStrategicInterest(false);
+        return;
+      }
+      const { data } = await supabase
+        .schema('public')
+        .from('strategic_interest')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      setHasStrategicInterest(!!data?.length);
+    })();
+  }, []);
 
   const loansFromAssets = useMemo(() => assetUnlocksToLoans(assetUnlocks), [assetUnlocks]);
 
@@ -454,6 +477,7 @@ const AppInner = forwardRef<
           lionAccessEnabled={lionAccessEnabled}
           reportClientDisplayName={props.reportClientDisplayName}
           auditMeta={pdfAuditMeta}
+          hasStrategicInterest={hasStrategicInterest}
         />
       </div>
     </div>

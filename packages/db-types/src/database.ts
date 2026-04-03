@@ -175,6 +175,9 @@ export type Database = {
           country: string;
           interest_type: string | null;
           contact_phone: string | null;
+          status: string;
+          notes: string | null;
+          last_contacted_at: string | null;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["strategic_interest"]["Row"]>;
