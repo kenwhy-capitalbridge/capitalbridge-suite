@@ -26,11 +26,10 @@ const MODEL_URLS: Record<string, string> = {
     typeof process.env.NEXT_PUBLIC_CAPITAL_STRESS_APP_URL === "string"
       ? process.env.NEXT_PUBLIC_CAPITAL_STRESS_APP_URL
       : "https://capitalstress.thecapitalbridge.com",
-  solutions:
-    typeof process.env.NEXT_PUBLIC_SOLUTIONS_APP_URL === "string"
-      ? process.env.NEXT_PUBLIC_SOLUTIONS_APP_URL
-      : "https://platform.thecapitalbridge.com/solutions",
 };
+
+/** In-app priority access flow (auth required by /solutions). */
+const STRATEGIC_EXECUTION_HREF = "/solutions";
 
 /** Trial-tier SPAs (Vite); open at site root — no `/dashboard`, no Supabase model hub. */
 const TRIAL_MODEL_URLS: Record<string, string> = {
@@ -62,41 +61,61 @@ function modelTileHref(tileId: string, plan: Entitlements["plan"]): string {
   return `${trimTrailingSlash(base)}/dashboard`;
 }
 
-type Tile = {
+type ModelTile = {
+  kind: "model";
   id: string;
   label: string;
-  href: string;
   enabled: (e: Entitlements) => boolean;
   tooltipDisabled?: string;
 };
 
-const TILES: Omit<Tile, "href">[] = [
+type StrategicTile = {
+  kind: "strategic";
+  id: "strategic-execution";
+  title: string;
+  status: string;
+  description: string;
+  ctaLabel: string;
+  enabled: (e: Entitlements) => boolean;
+};
+
+type Tile = ModelTile | StrategicTile;
+
+const TILES: Tile[] = [
   {
+    kind: "model",
     id: "forever-income",
     label: "Forever Income",
     enabled: () => true,
   },
   {
+    kind: "model",
     id: "income-engineering",
     label: "Income Engineering",
     enabled: () => true,
   },
   {
+    kind: "model",
     id: "capital-health",
     label: "Evaluate Income Sustainability (Capital Health)",
     enabled: () => true,
   },
   {
+    kind: "model",
     id: "capital-stress",
     label: "Stress Test Resilience (Capital Stress)",
     enabled: (e) => e.canUseStressModel,
     tooltipDisabled: "Available on paid plans",
   },
   {
-    id: "solutions",
-    label: "Strategic Execution (Coming Soon)",
-    enabled: (e) => e.canSeeSolutions,
-    tooltipDisabled: "Yearly plan only",
+    kind: "strategic",
+    id: "strategic-execution",
+    title: "Strategic Execution",
+    status: "Coming Soon",
+    description:
+      "Move beyond analysis into structured execution with Capital Bridge™ and licensed partners.",
+    ctaLabel: "Request Priority Access",
+    enabled: () => true,
   },
 ];
 
@@ -123,18 +142,108 @@ export function DashboardTiles() {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
         gap: 16,
       }}
     >
       {TILES.map((tile) => {
         const enabled = tile.enabled(e);
-        const href =
-          tile.id === "solutions"
-            ? MODEL_URLS.solutions
-            : modelTileHref(tile.id, e.plan);
-        const tileBusy = pendingHref === href;
         const tilesLocked = pendingHref !== null;
+
+        if (tile.kind === "strategic") {
+          const href = STRATEGIC_EXECUTION_HREF;
+          const tileBusy = pendingHref === href;
+          return (
+            <div key={tile.id}>
+              {enabled ? (
+                <div
+                  style={{
+                    width: "100%",
+                    padding: "1rem 1.25rem 1.15rem",
+                    border: "1px solid rgba(255,204,106,0.42)",
+                    borderRadius: 8,
+                    background:
+                      "linear-gradient(165deg, rgba(255,204,106,0.07) 0%, rgba(13,58,29,0.92) 42%)",
+                    boxShadow: "0 0 0 1px rgba(255,204,106,0.06), 0 4px 16px rgba(0,0,0,0.12)",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: "0 0 0.35rem",
+                      fontSize: "0.68rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,204,106,0.75)",
+                    }}
+                  >
+                    {tile.status}
+                  </p>
+                  <h3
+                    style={{
+                      margin: "0 0 0.5rem",
+                      fontSize: "0.95rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,204,106,0.95)",
+                    }}
+                  >
+                    {tile.title}
+                  </h3>
+                  <p
+                    style={{
+                      margin: "0 0 1rem",
+                      fontSize: "0.88rem",
+                      lineHeight: 1.45,
+                      color: "rgba(246,245,241,0.82)",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {tile.description}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={tilesLocked}
+                    aria-busy={tileBusy}
+                    onClick={() => navigateTo(href)}
+                    style={{
+                      display: tileBusy ? "flex" : "block",
+                      alignItems: tileBusy ? "center" : undefined,
+                      justifyContent: tileBusy ? "center" : undefined,
+                      width: "100%",
+                      textAlign: tileBusy ? "center" : "center",
+                      padding: "0.65rem 0.85rem",
+                      border: "2px solid transparent",
+                      borderRadius: 8,
+                      background: "var(--gold, #ffcc6a)",
+                      color: "var(--green, #0d3a1d)",
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      cursor: tilesLocked ? "wait" : "pointer",
+                      fontFamily: "inherit",
+                      opacity: tilesLocked && !tileBusy ? 0.55 : 1,
+                    }}
+                  >
+                    {tileBusy ? (
+                      <span className="cb-pending-btn-inner">
+                        <ChromeSpinnerGlyph sizePx={18} />
+                        <span className="cb-visually-hidden">Loading</span>
+                      </span>
+                    ) : (
+                      tile.ctaLabel
+                    )}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          );
+        }
+
+        const href = modelTileHref(tile.id, e.plan);
+        const tileBusy = pendingHref === href;
 
         return (
           <div key={tile.id}>

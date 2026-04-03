@@ -322,7 +322,7 @@ a {
 
 .cb-modules {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 1.25rem;
   position: relative;
   z-index: 1;
@@ -362,6 +362,37 @@ a {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(255, 204, 106, 0.12);
   border-color: rgba(255, 204, 106, 0.9);
+}
+
+/** Fourth tile — subtle premium lift without outshining core model cards */
+.cb-module--strategic {
+  border-color: rgba(255, 204, 106, 0.52);
+  background: linear-gradient(165deg, rgba(255, 204, 106, 0.055) 0%, var(--green) 38%);
+  box-shadow: 0 0 0 1px rgba(255, 204, 106, 0.06), 0 4px 18px rgba(0, 0, 0, 0.12);
+}
+
+.cb-module--strategic:hover {
+  box-shadow: 0 8px 26px rgba(255, 204, 106, 0.11), 0 0 0 1px rgba(255, 204, 106, 0.1);
+  border-color: rgba(255, 204, 106, 0.72);
+}
+
+.cb-status-dot--soon {
+  background: rgba(255, 204, 106, 0.85);
+  animation: cb-status-pulse-soon 2.4s ease-in-out infinite;
+}
+
+@keyframes cb-status-pulse-soon {
+  0%,
+  100% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 rgba(255, 204, 106, 0);
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(255, 204, 106, 0.45);
+    transform: scale(1.08);
+  }
 }
 
 .cb-module-meta {

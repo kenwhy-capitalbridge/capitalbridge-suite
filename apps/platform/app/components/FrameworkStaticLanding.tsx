@@ -71,7 +71,9 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
 
           <div className="cb-system-header">
             <p className="cb-system-header-label">System Status</p>
-            <p className="cb-system-header-desc">Capital Decision System Active • 3 Analytical Engines Online</p>
+            <p className="cb-system-header-desc">
+              Capital Decision System Active • 3 Analytical Engines Online • Strategic execution (roadmap)
+            </p>
           </div>
 
           <div className="cb-modules-wrap">
@@ -141,6 +143,24 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
                   <FrameworkLaunchRow
                     buttons={[{ href: "https://capitalstress.thecapitalbridge.com/", label: "Capital Stress Model" }]}
                   />
+                </div>
+              </article>
+              <article className="cb-module cb-module--strategic">
+                <div className="cb-module-header-bar" />
+                <div className="cb-module-body">
+                  <span className="cb-module-meta">
+                    <span className="cb-status-dot cb-status-dot--soon" aria-hidden="true" />
+                    STATUS: COMING SOON • MODULE 4
+                  </span>
+                  <span className="cb-module-engine-label">Advisory Layer</span>
+                  <h2>Strategic Execution</h2>
+                  <p className="cb-module-why">
+                    Move beyond analysis into structured execution with Capital Bridge™ and licensed partners.
+                  </p>
+                  <hr className="cb-module-divider" />
+                  <p className="cb-module-desc">Early access when structured execution goes live.</p>
+                  <span className="cb-module-label">Next step:</span>
+                  <FrameworkLaunchRow buttons={[{ href: "/solutions", label: "Request Priority Access" }]} />
                 </div>
               </article>
             </div>
