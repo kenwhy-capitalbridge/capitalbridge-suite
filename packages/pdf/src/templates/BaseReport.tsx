@@ -36,7 +36,7 @@ type BaseReportData = {
 
 const BODY_FONT = 'Arial, Helvetica, "Nimbus Sans L", sans-serif';
 const DIVIDER = "1px solid rgba(0,0,0,0.08)";
-const PAGE_PADDING = "34px 38px 86px";
+const PAGE_PADDING = "34px 38px 40px";
 
 function highlightFinancialNumbers(text?: string): React.ReactNode {
   if (!text) return "";
@@ -97,7 +97,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="cb-report-section-block">
+    <section className="cb-report-section cb-report-section-block">
       {kicker ? <p className="cb-section-kicker">{kicker}</p> : null}
       <h2 className="cb-section-title">{title}</h2>
       <div className="cb-section-body">{children}</div>
@@ -137,8 +137,9 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           color: var(--cb-report-ink);
         }
 
-        .cb-report-shell {
-          max-width: 816px;
+        .cb-report-shell,
+        .cb-report-container {
+          max-width: 720px;
           margin: 0 auto;
           background: var(--cb-report-paper);
           color: var(--cb-report-ink);
@@ -148,10 +149,11 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         }
 
         .cb-report-page {
-          position: relative;
           min-height: calc(297mm - 24mm);
           padding: ${PAGE_PADDING};
           box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
           background:
             linear-gradient(180deg, rgba(13,58,29,0.04) 0%, rgba(13,58,29,0) 18%),
             linear-gradient(135deg, rgba(13,58,29,0.025) 0%, rgba(13,58,29,0) 34%);
@@ -162,8 +164,6 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         }
 
         .cb-report-cover {
-          display: flex;
-          flex-direction: column;
           justify-content: space-between;
           gap: 28px;
         }
@@ -185,15 +185,12 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         }
 
         .cb-report-logo {
-          width: 240px;
-          height: 48px;
+          width: 160px;
+          height: auto;
           display: block;
           margin-bottom: 28px;
-        }
-
-        .cb-report-logo image {
-          width: 100%;
-          height: 100%;
+          object-fit: contain;
+          max-width: 100%;
         }
 
         .cb-report-eyebrow,
@@ -267,13 +264,17 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           color: #1d2b25;
         }
 
+        .cb-report-section {
+          margin-top: 24px;
+        }
+
         .cb-report-section-block {
           padding: 0 0 20px;
           border-bottom: ${DIVIDER};
         }
 
         .cb-report-section-block + .cb-report-section-block {
-          margin-top: 22px;
+          margin-top: 24px;
         }
 
         .cb-section-title {
@@ -313,6 +314,17 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           margin-bottom: 0;
         }
 
+        .cb-report-chart,
+        .cb-report-chart-wrap,
+        .cb-report-chart-wrap svg,
+        .cb-report-chart-wrap canvas,
+        .cb-report-chart-wrap img {
+          max-width: 100%;
+          width: 100%;
+          overflow: hidden;
+          box-sizing: border-box;
+        }
+
         .cb-number {
           font-weight: 700;
           color: #0d3a1d;
@@ -345,14 +357,11 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         }
 
         .cb-report-footer {
-          position: absolute;
-          left: 38px;
-          right: 38px;
-          bottom: 28px;
           display: flex;
           align-items: flex-end;
           justify-content: space-between;
           gap: 20px;
+          margin-top: auto;
           padding-top: 12px;
           border-top: ${DIVIDER};
           color: rgba(16, 38, 27, 0.62);
@@ -427,6 +436,11 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
               viewBox="0 0 360 72"
               role="img"
               aria-label="Capital Bridge"
+              style={{
+                width: "160px",
+                height: "auto",
+                objectFit: "contain",
+              }}
             >
               <image
                 href={CB_REPORT_BRAND_FULL_GREEN_PATH}
