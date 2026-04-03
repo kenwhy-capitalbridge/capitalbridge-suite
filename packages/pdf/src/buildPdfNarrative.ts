@@ -40,7 +40,10 @@ export type PdfNarrativeOutput = {
   summary: {
     headline: string;
     keyPoint: string;
-    bullets: string[];
+    blocks: Array<{
+      title: string;
+      body: string;
+    }>;
   };
   diagnosis: {
     what: string;
@@ -94,6 +97,40 @@ export function buildPdfNarrative(
         : `You are currently running a monthly surplus of RM ${ctx.netMonthly.toLocaleString()}.`
       : "Adjustments may still be required to stabilise your position.",
   ];
+  const currency = "RM";
+  const yearlyWithdrawal =
+    typeof ctx.netMonthly === "number" && Number.isFinite(ctx.netMonthly)
+      ? Math.abs(ctx.netMonthly) * 12
+      : undefined;
+  const summaryBlocks = [
+    {
+      title: "Your Position",
+      body:
+        typeof yearlyWithdrawal === "number"
+          ? `You are withdrawing ${currency} ${yearlyWithdrawal.toLocaleString()} yearly from your capital.`
+          : "Your yearly withdrawal level is still being calculated.",
+    },
+    {
+      title: "Your Gap",
+      body:
+        typeof ctx.capitalGap === "number" && Number.isFinite(ctx.capitalGap)
+          ? ctx.capitalGap > 0
+            ? `You need ${currency} ${ctx.capitalGap.toLocaleString()} more to reach sustainability.`
+            : `You already have the capital needed to reach sustainability.`
+          : "Your sustainability gap still needs review.",
+    },
+    {
+      title: "Your Timeline",
+      body:
+        typeof ctx.sustainabilityYears === "number" && Number.isFinite(ctx.sustainabilityYears)
+          ? `Your capital lasts approximately ${ctx.sustainabilityYears.toFixed(1)} years.`
+          : "Your capital timeline still needs review.",
+    },
+    {
+      title: "What To Do",
+      body: "Adjust income, capital allocation, or spending to improve sustainability.",
+    },
+  ];
 
   return {
     cover: {
@@ -116,19 +153,7 @@ export function buildPdfNarrative(
     summary: {
       headline: narrative.headline,
       keyPoint: narrative.personalised,
-      bullets: [
-        typeof ctx.netMonthly === "number"
-          ? ctx.netMonthly < 0
-            ? `You are short RM ${Math.abs(ctx.netMonthly).toLocaleString()} monthly`
-            : `You have RM ${ctx.netMonthly.toLocaleString()} surplus monthly`
-          : narrative.personalised,
-        `Your capital lasts about ${ctx.sustainabilityYears ?? "-"} years`,
-        typeof ctx.capitalGap === "number"
-          ? ctx.capitalGap > 0
-            ? `You need RM ${ctx.capitalGap.toLocaleString()} more`
-            : "Your capital is sufficient"
-          : "Your capital position needs review",
-      ],
+      blocks: summaryBlocks,
     },
     diagnosis: {
       what: narrative.personalised,

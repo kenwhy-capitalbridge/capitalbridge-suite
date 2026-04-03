@@ -24,7 +24,10 @@ export type BaseReportData = {
   summary?: {
     headline?: string;
     keyPoint?: string;
-    bullets?: string[];
+    blocks?: Array<{
+      title?: string;
+      body?: string;
+    }>;
   };
   diagnosis?: {
     what?: string;
@@ -85,9 +88,12 @@ function Section({
 }
 
 export default function BaseReport({ data }: { data: BaseReportData }) {
-  const bullets = data.summary?.bullets?.length
-    ? data.summary.bullets
-    : [data.summary?.headline, data.summary?.keyPoint].filter(Boolean);
+  const summaryBlocks = data.summary?.blocks?.length
+    ? data.summary.blocks
+    : [
+        { title: "Your Position", body: data.summary?.headline },
+        { title: "Your Gap", body: data.summary?.keyPoint },
+      ].filter((block) => block.body);
 
   const actionItems = (data.actions ?? []).filter(Boolean);
 
@@ -210,6 +216,27 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           margin-bottom: 0;
         }
 
+        .cb-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .cb-summary-card {
+          padding: 16px 18px;
+          border: ${DIVIDER};
+          background: rgba(255,255,255,0.82);
+        }
+
+        .cb-summary-title {
+          margin: 0 0 8px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: rgba(16, 38, 27, 0.52);
+        }
+
         .cb-report-chart,
         .cb-report-chart-wrap,
         .cb-report-chart-wrap svg,
@@ -313,6 +340,10 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             grid-template-columns: 1fr;
           }
 
+          .cb-summary-grid {
+            grid-template-columns: 1fr;
+          }
+
           .cb-report-footer {
             left: 24px;
             right: 24px;
@@ -329,11 +360,14 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
 
         <section className="cb-report-page">
           <Section title="At a Glance" kicker="Strategic summary">
-            <ul className="cb-report-list">
-              {bullets.map((bullet, index) => (
-                <li key={`${bullet}-${index}`}>{highlightFinancialNumbers(bullet)}</li>
+            <div className="cb-summary-grid">
+              {summaryBlocks.map((block, index) => (
+                <div key={`${block.title}-${index}`} className="cb-summary-card">
+                  <p className="cb-summary-title">{block.title}</p>
+                  <p className="cb-report-p">{highlightFinancialNumbers(block.body)}</p>
+                </div>
               ))}
-            </ul>
+            </div>
           </Section>
 
           <Section title="What Is Happening" kicker="Current structure">
