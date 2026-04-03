@@ -723,7 +723,14 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </div>
           </Section>
 
-          <Section title="Output Metrics" kicker="Observed outcomes">
+          <footer className="cb-report-footer">
+            <div className="cb-footer-legal">{LEGAL_COPY}</div>
+            <div className="cb-footer-page" />
+          </footer>
+        </section>
+
+        <section className="cb-report-page">
+          <Section title="Key Outcomes" kicker="Observed outcomes">
             <div className="cb-analysis-grid">
               <div className="cb-analysis-card">
                 <p className="cb-meta-label">Output metrics</p>
@@ -737,7 +744,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
                 <p className="cb-meta-label">Interpretation notes</p>
                 <p className="cb-report-p">
                   {highlightFinancialNumbers(
-                    "Interpretation notes explain observed behaviour and directional meaning, without revealing formulas or internal calculation steps.",
+                    "These outcomes summarize where the structure currently stands and which metrics deserve the closest attention.",
                   )}
                 </p>
               </div>
@@ -774,6 +781,13 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </div>
           </Section>
 
+          <footer className="cb-report-footer">
+            <div className="cb-footer-legal">{LEGAL_COPY}</div>
+            <div className="cb-footer-page" />
+          </footer>
+        </section>
+
+        <section className="cb-report-page">
           <Section title="Charts + Inputs + Outputs" kicker="Supporting evidence">
             <div className="cb-analysis-grid">
               {(analysis?.chartInsights ?? []).map((chart, index) => (
@@ -813,6 +827,23 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </div>
           </Section>
 
+          <Section title="Interpretation" kicker="Advisory reading">
+            <div className="cb-analysis-grid">
+              <div className="cb-analysis-card">
+                <p className="cb-meta-label">What the behaviour suggests</p>
+                <p className="cb-report-p">{highlightFinancialNumbers(data.summary?.meaning ?? data.diagnosis?.why)}</p>
+              </div>
+              <div className="cb-analysis-card">
+                <p className="cb-meta-label">Why it matters now</p>
+                <p className="cb-report-p">
+                  {highlightFinancialNumbers(
+                    "Interpretation focuses on how the structure behaves under current conditions and what that means for decision quality going forward.",
+                  )}
+                </p>
+              </div>
+            </div>
+          </Section>
+
           <footer className="cb-report-footer">
             <div className="cb-footer-legal">{LEGAL_COPY}</div>
             <div className="cb-footer-page" />
@@ -820,7 +851,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
         </section>
 
         <section className="cb-report-page">
-          <Section title="Recommended Actions" kicker="Advisory priorities">
+          <Section title="Action Plan" kicker="Advisory priorities">
             <ul className="cb-report-list">
               {actionItems.map((action, index) => (
                 <li key={`${action}-${index}`}>{highlightFinancialNumbers(action)}</li>
@@ -828,6 +859,20 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </ul>
           </Section>
 
+          <Section title="Lion's Verdict" kicker="Capital Bridge view">
+            <div className="cb-verdict-panel">
+              <h2 className="cb-verdict-title">{highlightFinancialNumbers(data.lion?.headline)}</h2>
+              <p className="cb-verdict-copy">{highlightFinancialNumbers(data.lion?.guidance)}</p>
+            </div>
+          </Section>
+
+          <footer className="cb-report-footer">
+            <div className="cb-footer-legal">{LEGAL_COPY}</div>
+            <div className="cb-footer-page" />
+          </footer>
+        </section>
+
+        <section className="cb-report-page">
           <Section title={data.nextStep?.headline ?? "What Happens Next"} kicker="Execution pathway">
             <div className="cb-callout">
               <p className="cb-report-p">{highlightFinancialNumbers(data.nextStep?.body)}</p>
@@ -839,14 +884,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
             </div>
           </Section>
 
-          <Section title="Final Verdict" kicker="Capital Bridge view">
-            <div className="cb-verdict-panel">
-              <h2 className="cb-verdict-title">{highlightFinancialNumbers(data.lion?.headline)}</h2>
-              <p className="cb-verdict-copy">{highlightFinancialNumbers(data.lion?.guidance)}</p>
-            </div>
-          </Section>
-
-          <Section title="Your Next Step" kicker="Advisory journey">
+          <Section title="Next Step Journey" kicker="Advisory journey">
             <div className="cb-journey-banner">
               <p className="cb-journey-banner-copy">
                 <strong>{data.journey?.completedStepLabel}</strong>{" "}
