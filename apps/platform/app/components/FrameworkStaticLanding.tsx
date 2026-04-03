@@ -155,7 +155,7 @@ export async function FrameworkStaticLanding({ userEmail }: FrameworkStaticLandi
                   <span className="cb-module-engine-label">Advisory Layer</span>
                   <h2>Strategic Execution</h2>
                   <p className="cb-module-why">
-                    Move beyond analysis into structured execution with Capital Bridge™ and licensed partners.
+                    Move beyond analysis into structured execution with Capital Bridge™ partners.
                   </p>
                   <hr className="cb-module-divider" />
                   <p className="cb-module-desc">Early access when structured execution goes live.</p>

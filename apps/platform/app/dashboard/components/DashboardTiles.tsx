@@ -113,7 +113,7 @@ const TILES: Tile[] = [
     title: "Strategic Execution",
     status: "Coming Soon",
     description:
-      "Move beyond analysis into structured execution with Capital Bridge™ and licensed partners.",
+      "Move beyond analysis into structured execution with Capital Bridge™ partners.",
     ctaLabel: "Request Priority Access",
     enabled: () => true,
   },
@@ -144,6 +144,7 @@ export function DashboardTiles() {
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
         gap: 16,
+        alignItems: "stretch",
       }}
     >
       {TILES.map((tile) => {
@@ -154,34 +155,27 @@ export function DashboardTiles() {
           const href = STRATEGIC_EXECUTION_HREF;
           const tileBusy = pendingHref === href;
           return (
-            <div key={tile.id}>
+            <div key={tile.id} style={{ display: "flex", minWidth: 0, minHeight: "100%" }}>
               {enabled ? (
                 <div
                   style={{
                     width: "100%",
-                    padding: "1rem 1.25rem 1.15rem",
-                    border: "1px solid rgba(255,204,106,0.42)",
+                    minHeight: "100%",
+                    boxSizing: "border-box",
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "1rem 1.25rem",
+                    border: "1px solid rgba(255,204,106,0.38)",
                     borderRadius: 8,
-                    background:
-                      "linear-gradient(165deg, rgba(255,204,106,0.07) 0%, rgba(13,58,29,0.92) 42%)",
-                    boxShadow: "0 0 0 1px rgba(255,204,106,0.06), 0 4px 16px rgba(0,0,0,0.12)",
+                    backgroundColor: "rgba(255,204,106,0.09)",
+                    backgroundImage:
+                      "linear-gradient(165deg, rgba(255,204,106,0.06) 0%, transparent 55%)",
+                    boxShadow: "0 0 0 1px rgba(255,204,106,0.05)",
                   }}
                 >
-                  <p
-                    style={{
-                      margin: "0 0 0.35rem",
-                      fontSize: "0.68rem",
-                      fontWeight: 600,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      color: "rgba(255,204,106,0.75)",
-                    }}
-                  >
-                    {tile.status}
-                  </p>
                   <h3
                     style={{
-                      margin: "0 0 0.5rem",
+                      margin: "0 0 0.45rem",
                       fontSize: "0.95rem",
                       fontWeight: 700,
                       letterSpacing: "0.04em",
@@ -193,7 +187,7 @@ export function DashboardTiles() {
                   </h3>
                   <p
                     style={{
-                      margin: "0 0 1rem",
+                      margin: "0 0 0.5rem",
                       fontSize: "0.88rem",
                       lineHeight: 1.45,
                       color: "rgba(246,245,241,0.82)",
@@ -201,6 +195,18 @@ export function DashboardTiles() {
                     }}
                   >
                     {tile.description}
+                  </p>
+                  <p
+                    style={{
+                      margin: "0 0 0.85rem",
+                      fontSize: "0.68rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,204,106,0.72)",
+                    }}
+                  >
+                    {tile.status}
                   </p>
                   <button
                     type="button"
@@ -212,6 +218,7 @@ export function DashboardTiles() {
                       alignItems: tileBusy ? "center" : undefined,
                       justifyContent: tileBusy ? "center" : undefined,
                       width: "100%",
+                      marginTop: "auto",
                       textAlign: tileBusy ? "center" : "center",
                       padding: "0.65rem 0.85rem",
                       border: "2px solid transparent",
