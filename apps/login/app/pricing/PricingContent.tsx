@@ -236,10 +236,10 @@ function PlanCard({
     >
       {showBadge && badgeText && (
         <div
-          className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-cb-gold px-3 py-0.5 text-xs font-medium text-cb-green ${
+          className={`absolute -top-3 left-1/2 z-10 w-max max-w-none -translate-x-1/2 whitespace-nowrap rounded-full bg-cb-gold py-0.5 text-xs font-medium text-cb-green ${
             badgeText === "Flagship Access & Execution"
-              ? "shadow-[0_0_12px_rgba(255,204,106,0.6),0_0_24px_rgba(255,204,106,0.3)]"
-              : ""
+              ? "px-4 shadow-[0_0_12px_rgba(255,204,106,0.6),0_0_24px_rgba(255,204,106,0.3)] sm:px-3.5"
+              : "px-3.5"
           }`}
         >
           {badgeText}
