@@ -7,7 +7,7 @@
  * regional list price (issuer may apply FX when the payer uses a non‑MYR card).
  */
 
-export type MarketId = "MY" | "SG" | "TH" | "PH" | "US" | "AU" | "CN" | "HK";
+export type MarketId = "MY" | "SG" | "TH" | "PH" | "US" | "AU" | "CN" | "HK" | "VN";
 
 export type PlanPriceKey = "trial" | "monthly" | "quarterly" | "strategic";
 
@@ -61,6 +61,13 @@ export const MARKET_PLAN_PRICES: Record<MarketId, Record<PlanPriceKey, string>> 
     quarterly: "HK$580",
     strategic: "HK$3,800",
   },
+  /** Vietnam — list prices in VND (₫). */
+  VN: {
+    trial: "₫150,000",
+    monthly: "₫1,200,000",
+    quarterly: "₫3,300,000",
+    strategic: "₫18,000,000",
+  },
 };
 
 /**
@@ -68,7 +75,7 @@ export const MARKET_PLAN_PRICES: Record<MarketId, Record<PlanPriceKey, string>> 
  *
  * MY / SG: list prices in RM / parallel S$ numerals → same MYR sen for SG as MY.
  * Other markets: MYR sen = round(regional list amount × MYR-per-unit), using reference
- * rates (revise with finance): THB 1/7.5 MYR, PHP 0.083, USD 4.45, AUD 2.85, CNY 0.65, HKD 0.55.
+ * rates (revise with finance): THB 1/7.5 MYR, PHP 0.083, USD 4.45, AUD 2.85, CNY 0.65, HKD 0.55, VND 1/5800 MYR.
  */
 export const MARKET_PLAN_BILLPLZ_MYR_SEN: Record<MarketId, Record<PlanPriceKey, number>> = {
   MY: { trial: 2900, monthly: 20000, quarterly: 54000, strategic: 300000 },
@@ -79,6 +86,8 @@ export const MARKET_PLAN_BILLPLZ_MYR_SEN: Record<MarketId, Record<PlanPriceKey, 
   AU: { trial: 3135, monthly: 99722, quarterly: 28215, strategic: 156465 },
   CN: { trial: 3250, monthly: 10920, quarterly: 30420, strategic: 187200 },
   HK: { trial: 2640, monthly: 10340, quarterly: 31900, strategic: 209000 },
+  /** VN: MYR sen = round(VND list amount ÷ 5800 × 100); ref FX — revise with finance. */
+  VN: { trial: 2586, monthly: 20690, quarterly: 56897, strategic: 310345 },
 };
 
 export const MARKET_LABELS: Record<MarketId, string> = {
@@ -87,9 +96,10 @@ export const MARKET_LABELS: Record<MarketId, string> = {
   TH: "TH",
   PH: "PH",
   US: "US",
-  AU: "AU/NZ",
+  AU: "AU",
   CN: "CN",
   HK: "HK",
+  VN: "VN",
 };
 
 /** ISO 3166-1 alpha-2 → default market (Vercel / geo). */
@@ -102,7 +112,7 @@ export function marketFromCountryCode(iso: string | null | undefined): MarketId 
     PH: "PH",
     US: "US",
     AU: "AU",
-    NZ: "AU",
+    VN: "VN",
     CN: "CN",
     HK: "HK",
   };
@@ -117,7 +127,8 @@ export type CheckoutCountryCode =
   | "CN"
   | "HK"
   | "TH"
-  | "PH";
+  | "PH"
+  | "VN";
 
 export const CHECKOUT_COUNTRIES: {
   code: CheckoutCountryCode;
@@ -134,6 +145,7 @@ export const CHECKOUT_COUNTRIES: {
   { code: "HK", label: "Hong Kong", flag: "🇭🇰", market: "HK", dial: "+852" },
   { code: "TH", label: "Thailand", flag: "🇹🇭", market: "TH", dial: "+66" },
   { code: "PH", label: "Philippines", flag: "🇵🇭", market: "PH", dial: "+63" },
+  { code: "VN", label: "Vietnam", flag: "🇻🇳", market: "VN", dial: "+84" },
 ];
 
 export function getCheckoutCountry(code: string): (typeof CHECKOUT_COUNTRIES)[number] | undefined {
@@ -151,7 +163,32 @@ const KNOWN_MARKET_IDS = new Set<string>(Object.keys(MARKET_PLAN_PRICES));
 
 export function normalizeMarketId(raw: string | null | undefined): MarketId {
   const u = (raw ?? "").trim().toUpperCase();
+  if (u === "VIETNAM") return "VN";
   return KNOWN_MARKET_IDS.has(u) ? (u as MarketId) : "MY";
+}
+
+/**
+ * `/solutions` body copy (non–strategic-plan users) from `profiles.advisory_market`.
+ * Unknown regions default to Malaysia copy.
+ */
+const SOLUTIONS_FAMILY_OFFICE_MY =
+  "Access is available under Strategic Advisory. Similar Family Office services typically cost RM15,000–RM60,000+ per year and usually require at least RM5M – RM25M to get started.";
+
+const SOLUTIONS_FAMILY_OFFICE_BY_MARKET: Record<MarketId, string> = {
+  MY: SOLUTIONS_FAMILY_OFFICE_MY,
+  SG: SOLUTIONS_FAMILY_OFFICE_MY,
+  TH: "Access is available under Strategic Advisory. Similar Family Office services typically starts at ฿12,000 per year and usually require at least USD 1M – 3M to get started.",
+  PH: "Access is available under Strategic Advisory. Similar Family Office services typically starts at ₱30,000 per year and usually require at least USD 1M – 3M to get started.",
+  US: "Access is available under Strategic Advisory. Similar Family Office services typically starts at USD 5,000 per year and usually require at least USD 2M – 5M to get started.",
+  AU: "Access is available under Strategic Advisory. Similar Family Office services typically starts at AUD 4,000 per year and usually require at least AUD 3M – 10M to get started.",
+  CN: "Access is available under Strategic Advisory. Similar Family Office services typically starts at RMB 8,000 per year and usually require at least RMB 6M – 20M to get started.",
+  HK: "Access is available under Strategic Advisory. Similar Family Office services typically starts at HKD 10,000 per year and usually require at least USD 3M – 10M to get started.",
+  VN: "Access is available under Strategic Advisory. Similar Family Office services typically starts at USD 2,000 per year and usually require at least USD 1M – 2M to get started.",
+};
+
+export function solutionsFamilyOfficeCopyForAdvisoryMarket(raw: string | null | undefined): string {
+  const mid = normalizeMarketId(raw);
+  return SOLUTIONS_FAMILY_OFFICE_BY_MARKET[mid] ?? SOLUTIONS_FAMILY_OFFICE_BY_MARKET.MY;
 }
 
 export type BillingRegionValidationCode =
@@ -229,6 +266,7 @@ export function modelCurrencyPrefixFromIso4217(iso4217: string): string | null {
     AUD: "AUD",
     CNY: "RMB",
     HKD: "HKD",
+    VND: "₫",
   };
   return map[u] ?? null;
 }
@@ -242,6 +280,7 @@ const CURRENCY_BY_MARKET: Record<MarketId, string> = {
   AU: "AUD",
   CN: "CNY",
   HK: "HKD",
+  VN: "VND",
 };
 
 /** Model UI currency key (Forever / Income Engineering / Capital Health) from advisory market. */

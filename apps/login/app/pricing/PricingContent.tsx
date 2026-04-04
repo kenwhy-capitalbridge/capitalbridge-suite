@@ -15,7 +15,7 @@ import {
   type MarketId,
 } from "@cb/shared/markets";
 
-const PRICING_MARKET_IDS: MarketId[] = ["MY", "SG", "TH", "PH", "US", "AU", "CN", "HK"];
+const PRICING_MARKET_IDS: MarketId[] = ["MY", "SG", "TH", "PH", "US", "AU", "CN", "HK", "VN"];
 
 function isMarketId(s: string): s is MarketId {
   return Object.prototype.hasOwnProperty.call(MARKET_PLAN_PRICES, s);

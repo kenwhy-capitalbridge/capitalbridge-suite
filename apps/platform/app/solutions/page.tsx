@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { solutionsFamilyOfficeCopyForAdvisoryMarket } from "@cb/shared/markets";
 import { PlatformFrameworkHeader } from "../components/PlatformFrameworkHeader";
 import { getServerUserAndMembership } from "@/lib/auth";
 import { PriorityAccessClient } from "./PriorityAccessClient";
@@ -67,7 +68,7 @@ export default async function SolutionsPage({
               <p style={{ ...bodyStyle, margin: "0.85rem 0 0" }}>
                 {isStrategicPlan
                   ? "Access is available under Strategic Advisory."
-                  : "Access is available under Strategic Advisory. Similar Family Office services typically cost RM15,000–RM60,000+ per year and usually require at least USD1 million to get started."}
+                  : solutionsFamilyOfficeCopyForAdvisoryMarket(user.advisory_market ?? null)}
               </p>
             </div>
             <div style={{ marginTop: "1.5rem" }}>
