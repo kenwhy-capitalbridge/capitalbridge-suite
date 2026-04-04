@@ -805,7 +805,31 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
   visibility: visible;
 }
 
-/* Platform auth header: BACK + avatar + LOGOUT stay right-aligned; allow horizontal scroll if needed on very narrow widths */
+/* Sticky bar row: safe-area + slightly tighter gutters on phones so logo / title / TRIAL / actions fit */
+.platform-framework-header-inner {
+  padding-top: max(0.3rem, env(safe-area-inset-top, 0px));
+  padding-bottom: 0.3rem;
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+}
+
+.platform-framework-header-inner--public {
+  min-height: 54px;
+}
+
+.platform-framework-header-inner--authed {
+  min-height: 48px;
+}
+
+@media (max-width: 420px) {
+  .platform-framework-header-inner {
+    column-gap: clamp(6px, 1.5vw, 14px) !important;
+    padding-left: max(0.45rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.45rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+/* Platform auth header: BACK + TRIAL + avatar + LOGOUT stay right-aligned; scroll if needed on very narrow widths */
 .platform-header-right-cluster {
   justify-self: end;
   display: flex;
@@ -818,10 +842,45 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
   overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .platform-header-right-cluster::-webkit-scrollbar {
   display: none;
+}
+
+/* Trial plan — compact gold label (aligned with model-app `ModelHeaderSaveRestore` TRIAL cue).
+   Use min font size + vw so text stays legible on narrow phones (pure vw was ~6px at 375px). */
+.platform-header-trial-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5rem;
+  padding: 0.2rem 0.45rem;
+  font-family: var(--cb-font-sans);
+  font-size: clamp(0.5625rem, 2.75vw, 0.6875rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 204, 106, 0.88);
+  border: 1px solid rgba(255, 204, 106, 0.38);
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.2);
+  user-select: none;
+}
+
+@media (max-width: 420px) {
+  .platform-header-trial-badge {
+    letter-spacing: 0.08em;
+    padding: 0.16rem 0.34rem;
+    min-height: 1.35rem;
+  }
+
+  .platform-header-right-cluster {
+    gap: 3px;
+  }
 }
 
 /* Solutions / subpages: BACK in sticky bar next to logo */

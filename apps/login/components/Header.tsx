@@ -8,6 +8,7 @@ import {
   pricingReturnModelDashboardUrl,
 } from "@cb/shared/urls";
 import { ChromePendingNavLink, HeaderBrandPicture } from "@cb/ui";
+import { BRAND_LIONHEAD_GOLD } from "@cb/ui/brandPaths";
 
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
@@ -18,7 +19,7 @@ const platformProfileHref = `${PLATFORM_APP_URL.replace(/\/+$/, "")}/profile`;
 const headerGoldBtnClass = "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline shrink-0";
 
 const cbHeaderTextLinkClass =
-  "whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-[#FFCC6A] underline-offset-2 transition-colors hover:text-[#F6F5F1] sm:text-xs";
+  "login-header-text-link whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.06em] text-[#FFCC6A] underline-offset-2 transition-colors hover:text-[#F6F5F1] min-[380px]:text-[10px] sm:text-xs sm:tracking-wide";
 
 function HeaderChrome({
   pathname,
@@ -34,18 +35,18 @@ function HeaderChrome({
   const showPricingModelBack = Boolean(isPricing && pricingBackHref);
   const showLoginCluster = (isPricing && !showPricingModelBack) || isCheckout;
 
-  /** `min-w-min` (min-content) keeps the logo slot from flex-collapsing to 0 width. */
+  /** Mobile: compact lion only (`/brand/lionhead_Gold.svg`); md+: full `HeaderBrandPicture`. */
   const logoClassName = pricingStyleGrid
-    ? "relative flex min-w-min max-w-[34%] shrink-0 items-center justify-self-start min-[400px]:max-w-[40%] sm:max-w-none"
-    : "relative flex min-w-min max-w-[42%] shrink-0 items-center sm:max-w-none";
+    ? "relative flex h-7 w-7 shrink-0 items-center justify-self-start md:h-auto md:w-auto md:max-w-[34%] min-[400px]:md:max-w-[40%] sm:max-w-none"
+    : "relative flex h-7 w-7 shrink-0 items-center md:h-auto md:w-auto md:max-w-[42%] sm:max-w-none";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#FFCC6A]/20 bg-[#0D3A1D] pt-[env(safe-area-inset-top)]">
       <div
         className={
           pricingStyleGrid
-            ? "mx-auto grid min-h-11 max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 px-2 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
-            : "mx-auto flex min-h-11 max-w-6xl items-center justify-between gap-1 px-2 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
+            ? "login-header-pricing-grid mx-auto grid min-h-11 max-w-6xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 px-1.5 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
+            : "mx-auto flex min-h-11 max-w-6xl items-center justify-between gap-1.5 px-2 py-1 sm:min-h-0 sm:h-14 sm:gap-3 sm:px-6 sm:py-0"
         }
       >
         <ChromePendingNavLink
@@ -53,17 +54,27 @@ function HeaderChrome({
           className={`cb-header-chrome-home ${logoClassName}`}
           ariaLabel="Capital Bridge home"
         >
-          <HeaderBrandPicture />
+          <img
+            src={BRAND_LIONHEAD_GOLD}
+            alt=""
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 object-contain md:hidden"
+            aria-hidden
+          />
+          <span className="hidden md:contents">
+            <HeaderBrandPicture />
+          </span>
         </ChromePendingNavLink>
 
         {pricingStyleGrid ? (
-          <span className="cb-header-chrome-title justify-self-center min-w-0 max-w-full truncate">
+          <span className="login-header-pricing-title cb-header-chrome-title justify-self-center self-center min-w-0 max-w-full truncate px-0.5 text-center">
             {isPlansBrowse ? "AVAILABLE PLANS" : "SELECT PLANS"}
           </span>
         ) : null}
 
         {showPricingModelBack && pricingBackHref ? (
-          <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 justify-self-end overflow-visible sm:gap-2">
+          <div className="login-header-pricing-actions flex shrink-0 flex-nowrap items-center justify-end gap-1 justify-self-end overflow-visible sm:gap-2">
             <ChromePendingNavLink href={pricingBackHref} className={headerGoldBtnClass}>
               BACK
             </ChromePendingNavLink>
@@ -74,7 +85,7 @@ function HeaderChrome({
           <div
             className={
               pricingStyleGrid
-                ? "flex shrink-0 flex-nowrap items-center justify-end gap-1.5 justify-self-end overflow-visible sm:gap-2"
+                ? "login-header-pricing-actions flex shrink-0 flex-nowrap items-center justify-end gap-1 justify-self-end overflow-visible sm:gap-2"
                 : "flex max-w-[52%] shrink-0 flex-nowrap items-center justify-end gap-1.5 overflow-visible text-[#FFCC6A] sm:max-w-none sm:gap-2"
             }
           >
@@ -91,7 +102,7 @@ function HeaderChrome({
         ) : null}
 
         {isPlansBrowse ? (
-          <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 justify-self-end overflow-visible sm:gap-2">
+          <div className="login-header-pricing-actions flex shrink-0 flex-nowrap items-center justify-end gap-1 justify-self-end overflow-visible sm:gap-2">
             <ChromePendingNavLink href={platformProfileHref} className={headerGoldBtnClass}>
               BACK
             </ChromePendingNavLink>

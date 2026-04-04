@@ -81,6 +81,7 @@ export default async function ProfilePage() {
         verifiedUserEmail={user.email}
         centerTitle="USER PROFILE"
         profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+        membershipPlanSlug={membership?.plan ?? null}
         showBackBeforeHome
         backFallbackHref="/"
         backPushHref="/"

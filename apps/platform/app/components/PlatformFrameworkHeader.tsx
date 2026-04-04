@@ -32,6 +32,8 @@ export type PlatformFrameworkHeaderProps = {
   backPushHref?: string;
   /** Optional accessible name for BACK (e.g. profile home navigation). */
   backAriaLabel?: string;
+  /** Active `plans.slug` — shows a **TRIAL** pill when `"trial"` (same cue as model-app headers). */
+  membershipPlanSlug?: string | null;
 };
 
 /** Sticky bar: logo (marketing) | Framework | Logout (auth) or Login (public). */
@@ -44,6 +46,7 @@ export async function PlatformFrameworkHeader({
   backFallbackHref = "/framework",
   backPushHref,
   backAriaLabel,
+  membershipPlanSlug = null,
 }: PlatformFrameworkHeaderProps = {}) {
   const supabase = await createAppServerClient();
   const {
@@ -64,6 +67,7 @@ export async function PlatformFrameworkHeader({
         }}
       >
         <div
+          className="platform-framework-header-inner platform-framework-header-inner--public"
           style={{
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
@@ -72,7 +76,6 @@ export async function PlatformFrameworkHeader({
             minHeight: 54,
             maxWidth: 1280,
             margin: "0 auto",
-            padding: "0.3rem 0.75rem",
             boxSizing: "border-box",
           }}
         >
@@ -131,6 +134,7 @@ export async function PlatformFrameworkHeader({
   );
 
   const home = marketingHomeUrl();
+  const showTrialPill = membershipPlanSlug === "trial";
 
   return (
     <header
@@ -144,6 +148,7 @@ export async function PlatformFrameworkHeader({
       }}
     >
       <div
+        className="platform-framework-header-inner platform-framework-header-inner--authed"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
@@ -152,7 +157,6 @@ export async function PlatformFrameworkHeader({
           minHeight: 48,
           maxWidth: 1280,
           margin: "0 auto",
-          padding: "0.3rem 0.75rem",
           boxSizing: "border-box",
         }}
       >
@@ -167,6 +171,11 @@ export async function PlatformFrameworkHeader({
               pushHref={backPushHref}
               ariaLabel={backAriaLabel}
             />
+          ) : null}
+          {showTrialPill ? (
+            <span className="platform-header-trial-badge" title="Trial plan">
+              TRIAL
+            </span>
           ) : null}
           <PlatformHeaderAuthCluster initials={initials} />
         </div>

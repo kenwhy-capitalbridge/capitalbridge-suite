@@ -25,6 +25,7 @@ export default async function SolutionsPage({
       <PlatformFrameworkHeader
         verifiedUserEmail={user.email}
         profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
+        membershipPlanSlug={membership?.plan ?? null}
         centerTitle="STRATEGIC EXECUTION"
         showBackBeforeHome
         backFallbackHref="/framework"

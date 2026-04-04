@@ -57,3 +57,16 @@ npm run test:e2e
 |------|---------|
 | BACK link | From Forever `/dashboard`, **BACK** navigates to the **platform** hostname (`CB_E2E_PLATFORM_ORIGIN`). |
 | Save | **Save** triggers `POST …/api/advisory-report` with **200** (skips if `Save off` or button disabled). |
+| Platform header @375px | On `CB_E2E_PLATFORM_ORIGIN` `/`, viewport **375×812**, the sticky `<header>` matches a committed PNG baseline (`e2e/platform-header-mobile.spec.ts-snapshots/platform-header-375-chromium.png`). Catches mobile chrome regressions (e.g. **TRIAL** pill + avatar + **LOGOUT**). |
+
+### Updating the platform header snapshot
+
+After intentional header/CSS changes:
+
+```bash
+npx playwright test e2e/platform-header-mobile.spec.ts --update-snapshots
+```
+
+Commit the updated `platform-header-375-chromium.png`. If Linux CI pixels differ slightly from macOS, bump `maxDiffPixelRatio` in `platform-header-mobile.spec.ts` or regenerate the baseline on Linux.
+
+**Note:** The baseline is captured from your signed-in account. **TRIAL** appears in the image only when that account’s active plan slug is `trial`; paid accounts still validate layout without the pill.

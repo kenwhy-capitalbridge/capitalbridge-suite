@@ -149,3 +149,29 @@
     @apply rounded-lg bg-red-100 px-3 py-2 text-sm text-red-800 sm:px-4;
   }
 }
+
+/* Login Header.tsx — pricing/plans row: center column can shrink; compact actions on narrow phones */
+@media (max-width: 767px) {
+  .login-header-pricing-grid {
+    column-gap: 0.125rem;
+  }
+
+  .login-header-pricing-grid .login-header-pricing-title.cb-header-chrome-title {
+    font-size: clamp(0.5rem, 2.65vw, 0.6875rem);
+    letter-spacing: 0.07em;
+    line-height: 1.15;
+    max-width: 100%;
+  }
+
+  .login-header-pricing-actions .pf-chrome-gold-btn.pf-chrome-gold-btn--header-inline {
+    font-size: clamp(0.45rem, 2.15vw, 0.58rem);
+    letter-spacing: 0.1em;
+    min-height: 26px;
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+  }
+
+  .login-header-pricing-actions .login-header-text-link {
+    letter-spacing: 0.05em;
+  }
+}

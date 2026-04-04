@@ -408,14 +408,14 @@ export function PricingContent() {
 
   return (
     <main className="min-h-0 flex-1 bg-[#0D3A1D]">
-      <div className="mx-auto max-w-5xl px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-10 sm:pb-10 md:py-14 md:pb-14">
+      <div className="mx-auto max-w-5xl px-4 pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-10 sm:pb-10 md:py-14 md:pb-14">
         {/* Value Anchor Section */}
         <section className="text-center">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
-            <h1 className="font-serif text-balance text-xl font-semibold leading-tight text-cb-gold min-[400px]:text-2xl sm:text-4xl sm:leading-snug lg:text-5xl">
+            <h1 className="font-serif text-balance text-lg font-semibold leading-tight text-cb-gold min-[400px]:text-xl sm:text-4xl sm:leading-snug lg:text-5xl">
               The Capital Bridge Advisory Framework
             </h1>
-            <div className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-cb-cream/85 sm:mt-4 sm:text-lg sm:leading-normal">
+            <div className="mx-auto mt-3 max-w-3xl text-xs leading-relaxed text-cb-cream/85 min-[400px]:text-sm sm:mt-4 sm:text-lg sm:leading-normal">
               <p className="font-serif font-semibold text-cb-cream">
                 A Clear Path To Growing Capital And Building Income That Lasts A Lifetime
               </p>
