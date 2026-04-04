@@ -2,10 +2,12 @@ import type { CSSProperties } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
+import { CHECKOUT_COUNTRIES, MARKET_LABELS, normalizeMarketId, type MarketId } from "@cb/shared/markets";
 import { getServerUserAndMembership } from "../../lib/auth";
 import { formatPlanLabel, initialsFromFirstLastOrFallback } from "../../lib/profileInitials";
 import { PlatformFrameworkHeader } from "../components/PlatformFrameworkHeader";
 import { ProfileAccountEmailForm } from "../components/ProfileAccountEmailForm";
+import { ProfileAdvisoryMarketForm } from "../components/ProfileAdvisoryMarketForm";
 import { ProfilePlansLink } from "../components/ProfilePlansLink";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +58,20 @@ export default async function ProfilePage() {
         : "See your membership dates below.";
 
   const plansHref = `${LOGIN_APP_URL.replace(/\/+$/, "")}/plans`;
+
+  const advisoryMarket: MarketId | null = user.advisory_market
+    ? normalizeMarketId(user.advisory_market)
+    : null;
+
+  const advisoryRegionSummary =
+    advisoryMarket == null
+      ? "—"
+      : (() => {
+          const row = CHECKOUT_COUNTRIES.find((c) => c.market === advisoryMarket);
+          return row
+            ? `${row.flag} ${row.label} (${MARKET_LABELS[advisoryMarket]})`
+            : MARKET_LABELS[advisoryMarket];
+        })();
 
   const dtStyle: CSSProperties = {
     margin: 0,
@@ -189,6 +205,18 @@ export default async function ProfilePage() {
             </div>
 
             <div>
+              <dt style={dtStyle}>Advisory region</dt>
+              <dd
+                style={{
+                  ...ddStyle,
+                  wordBreak: "break-word",
+                }}
+              >
+                {advisoryRegionSummary}
+              </dd>
+            </div>
+
+            <div>
               <dt style={dtStyle}>Access period</dt>
               <dd style={ddStyle}>
                 {validitySummary}
@@ -240,6 +268,8 @@ export default async function ProfilePage() {
           </div>
 
           <ProfileAccountEmailForm currentEmail={user.email ?? null} />
+
+          <ProfileAdvisoryMarketForm currentMarket={advisoryMarket} />
         </div>
       </main>
     </div>

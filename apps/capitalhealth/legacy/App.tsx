@@ -1,6 +1,6 @@
 //Capital Health Model
 "use client";
-import React, { useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle, useLayoutEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle, useLayoutEffect, useEffect } from 'react';
 import './index.css';
 import {
   AreaChart,
@@ -203,6 +203,30 @@ const MONTHLY_TOPUP_SLIDER: Record<string, { default: number; max: number; step:
   PHP: { default: 70_000, max: 600_000, step: 15_000 },
 };
 
+function initialInputsFromCurrencyCode(code: string | null | undefined): CalculatorInputs {
+  const c = CURRENCIES.find((x) => x.code === code) ?? CURRENCIES[0];
+  const cc = c.code;
+  return {
+    mode: 'withdrawal',
+    currency: c,
+    riskPreset: 'balanced',
+    targetMonthlyIncome: DESIRED_MONTHLY_INCOME_DEFAULT[cc] ?? DESIRED_MONTHLY_INCOME_DEFAULT.USD,
+    targetFutureCapital: (FUTURE_CAPITAL_SLIDER[cc] ?? FUTURE_CAPITAL_SLIDER.USD).default,
+    timeHorizonYears: 10,
+    startingCapital: (STARTING_CAPITAL_SLIDER[cc] ?? STARTING_CAPITAL_SLIDER.USD).default,
+    expectedAnnualReturnPct: PRESETS.balanced.annualReturn,
+    monthlyTopUp: 0,
+    inflationEnabled: false,
+    inflationPct: 1.5,
+    cashBufferPct: PRESETS.balanced.cashBufferPct,
+    cashAPY: PRESETS.balanced.cashAPY,
+    reinvestmentSplitPct: PRESETS.balanced.reinvestmentSplitPct,
+    withdrawalRule: 'fixed',
+    withdrawalPctOfCapital: PRESETS.balanced.withdrawalPctOfCapital,
+    yieldBoost: 'balanced',
+  };
+}
+
 function formatNum(n: number, decimals = 0): string {
   const x = Number.isFinite(n) ? n : 0;
   return x.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -247,6 +271,8 @@ type CapitalHealthAppProps = {
   canSeeVerdict?: boolean;
   lionAccessUser?: LionAccessUser;
   reportClientDisplayName?: string;
+  /** RM | SGD | … from profile `advisory_market`; no in-app currency toggle. */
+  defaultCurrencyCode?: string | null;
 };
 
 type CapitalHealthVerdictBundle = {
@@ -263,19 +289,27 @@ export default forwardRef<CapitalHealthAppHandle, CapitalHealthAppProps>(functio
       canSeeVerdict={props.canSeeVerdict ?? true}
       lionAccessUser={lionAccessUser}
       reportClientDisplayName={props.reportClientDisplayName ?? 'Client'}
+      defaultCurrencyCode={props.defaultCurrencyCode ?? null}
     />
   );
 });
 
 const CalculatorScreen = forwardRef<
   CapitalHealthAppHandle,
-  { canSeeVerdict: boolean; lionAccessUser: LionAccessUser; reportClientDisplayName: string }
+  {
+    canSeeVerdict: boolean;
+    lionAccessUser: LionAccessUser;
+    reportClientDisplayName: string;
+    defaultCurrencyCode: string | null;
+  }
 >(function CalculatorScreen(
   props,
   ref
 ) {
-  const { lionAccessUser, canSeeVerdict, reportClientDisplayName } = props;
-  const [inputs, setInputsRaw] = useState<CalculatorInputs>(defaultInputs);
+  const { lionAccessUser, canSeeVerdict, reportClientDisplayName, defaultCurrencyCode } = props;
+  const [inputs, setInputsRaw] = useState<CalculatorInputs>(() =>
+    defaultCurrencyCode ? initialInputsFromCurrencyCode(defaultCurrencyCode) : defaultInputs
+  );
   const [history, setHistory] = useState<CalculatorInputs[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [reportGenerating, setReportGenerating] = useState(false);
@@ -772,33 +806,6 @@ const CalculatorScreen = forwardRef<
               Monthly Withdrawal
             </button>
           </div>
-        </section>
-
-        {/* Currency strip */}
-        <section className="bg-[#0D3A1D] rounded-xl border border-[#FFCC6A] p-4 text-center sm:text-left">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2">
-            Currency
-          </h2>
-          <div className="flex flex-nowrap gap-1 sm:flex-wrap sm:gap-2 overflow-x-auto pb-1 sm:pb-0">
-            {CURRENCIES.map((c) => (
-              <button
-                key={c.code}
-                type="button"
-                onClick={() => update({
-                  currency: c,
-                  startingCapital: (STARTING_CAPITAL_SLIDER[c.code] ?? STARTING_CAPITAL_SLIDER.USD).default,
-                  targetMonthlyIncome: DESIRED_MONTHLY_INCOME_DEFAULT[c.code] ?? DESIRED_MONTHLY_INCOME_DEFAULT.USD,
-                })}
-                className={`flex-shrink-0 px-2 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-sm font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] ${
-                  inputs.currency.code === c.code
-                    ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]'
-                    : 'bg-[#0D3A1D] border-[#FFCC6A] text-[#F6F5F1] hover:border-[#FFCC6A]'
-                }`}
-              >
-                {c.code}
-              </button>
-            ))}
-                    </div>
         </section>
 
         {/* Section A — Expectations */}

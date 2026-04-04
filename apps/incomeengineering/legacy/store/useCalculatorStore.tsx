@@ -99,6 +99,23 @@ const initialState: CalculatorState = {
   liquidateToCoverShortfall: false,
 };
 
+function buildInitialStateFromCurrency(code?: CurrencyCode): CalculatorState {
+  const c: CurrencyCode = code && CURRENCIES[code] ? code : DEFAULT_CURRENCY;
+  return {
+    currency: c,
+    timeHorizonYears: TIME_HORIZON_DEFAULT,
+    monthlyExpenses: CURRENCIES[c].defaultMonthlyExpenses,
+    incomeRows: defaultIncomes(c),
+    assetUnlocks: [],
+    loans: [],
+    investmentBuckets: defaultBuckets(),
+    autoReinvestSurplus: true,
+    flatTaxOnReturns: false,
+    flatTaxRate: 0,
+    liquidateToCoverShortfall: false,
+  };
+}
+
 function reducer(state: CalculatorState, action: Action): CalculatorState {
   switch (action.type) {
     case 'SET_CURRENCY':
@@ -242,12 +259,22 @@ function hydrateInitialState(payload: unknown | undefined): CalculatorState {
 export function CalculatorStoreProvider({
   children,
   initialHydratePayload,
+  initialCurrency,
 }: {
   children: React.ReactNode;
   /** Optional snapshot (e.g. `/docs/sample-report` PDF fixture) applied before first paint. */
   initialHydratePayload?: unknown;
+  /** Advisory profile currency (no in-app selector; set from account region). */
+  initialCurrency?: CurrencyCode;
 }) {
-  const [state, dispatch] = useReducer(reducer, initialHydratePayload, hydrateInitialState);
+  const [state, dispatch] = useReducer(
+    reducer,
+    { initialHydratePayload, initialCurrency },
+    (init) => {
+      if (init.initialHydratePayload != null) return hydrateInitialState(init.initialHydratePayload);
+      return buildInitialStateFromCurrency(init.initialCurrency);
+    }
+  );
   const value = useMemo(() => ({ state, dispatch }), [state]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

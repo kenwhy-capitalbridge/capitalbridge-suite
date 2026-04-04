@@ -19,6 +19,7 @@ export default async function SolutionsPage({
     user.name ||
     [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
     "Capital Bridge User";
+  const isStrategicPlan = membership?.plan === "strategic";
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#0D3A1D" }}>
@@ -64,7 +65,9 @@ export default async function SolutionsPage({
                 income distribution through Capital Bridge™ partners.
               </p>
               <p style={{ ...bodyStyle, margin: "0.85rem 0 0" }}>
-                Access is available under Strategic Advisory.
+                {isStrategicPlan
+                  ? "Access is available under Strategic Advisory."
+                  : "Access is available under Strategic Advisory. Similar Family Office services typically cost RM15,000–RM60,000+ per year and usually require at least USD1 million to get started."}
               </p>
             </div>
             <div style={{ marginTop: "1.5rem" }}>
@@ -72,7 +75,7 @@ export default async function SolutionsPage({
                 fullName={fullName}
                 email={user.email ?? ""}
                 reportId={reportId}
-                isStrategicPlan={membership?.plan === "strategic"}
+                isStrategicPlan={isStrategicPlan}
               />
             </div>
           </section>

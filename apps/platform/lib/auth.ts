@@ -26,6 +26,7 @@ export async function getServerUserAndMembership(): Promise<{
     name?: string | null;
     firstName?: string | null;
     lastName?: string | null;
+    advisory_market?: string | null;
   } | null;
   membership: ServerMembership;
 }> {
@@ -39,7 +40,7 @@ export async function getServerUserAndMembership(): Promise<{
     const { data: profile } = await supabase
       .schema("public")
       .from("profiles")
-      .select("first_name, last_name")
+      .select("first_name, last_name, advisory_market")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -79,6 +80,7 @@ export async function getServerUserAndMembership(): Promise<{
         name: name || null,
         firstName,
         lastName,
+        advisory_market: typeof profile?.advisory_market === "string" ? profile.advisory_market : null,
       },
       membership: membership
         ? {

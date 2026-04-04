@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
 import { hashTrialCheckoutIp, parseClientIpFromRequest } from "@/lib/trialCheckoutSignals";
+import { parseRequestCountryCode } from "@/lib/requestGeo";
+import {
+  getBillplzChargeAmountSen,
+  normalizeMarketId,
+  validateBillingRegionForRequest,
+  type MarketId,
+} from "@cb/shared/markets";
 
 export const runtime = "nodejs";
 
@@ -43,6 +50,12 @@ type Body = {
   firstName?: string;
   lastName?: string;
   deviceId?: string;
+  /** ISO country (checkout) e.g. MY, SG */
+  checkoutCountry?: string;
+  /** E.164-style or national+dial context */
+  checkoutPhone?: string;
+  /** Advisory market MY | SG | TH | … */
+  market?: string;
 };
 
 function getPaymentFirstRedirectUrl(): string {
@@ -66,6 +79,39 @@ export async function POST(req: Request) {
   const deviceIdRaw = typeof body.deviceId === "string" ? body.deviceId.trim() : "";
   const deviceId = deviceIdRaw.length > 0 && deviceIdRaw.length <= 128 ? deviceIdRaw : "";
   const checkoutIpHash = hashTrialCheckoutIp(parseClientIpFromRequest(req));
+  const checkoutCountry =
+    typeof body.checkoutCountry === "string" ? body.checkoutCountry.trim().slice(0, 8) : "";
+  const checkoutPhone = typeof body.checkoutPhone === "string" ? body.checkoutPhone.trim().slice(0, 32) : "";
+  const marketRaw = typeof body.market === "string" ? body.market.trim().slice(0, 8) : "";
+  const ipCountry = parseRequestCountryCode(req);
+  const allowAnyRegion = process.env.BILLING_ALLOW_ANY_REGION === "1";
+  let billingMarket: MarketId;
+  if (allowAnyRegion) {
+    billingMarket = normalizeMarketId(marketRaw || null);
+  } else {
+    const region = validateBillingRegionForRequest({
+      ipCountry,
+      clientMarket: marketRaw,
+      checkoutCountry,
+      requireCheckoutCountry: true,
+    });
+    if (!region.ok) {
+      const status =
+        region.code === "checkout_country_required" || region.code === "invalid_checkout_country" ? 400 : 403;
+      return NextResponse.json({ error: region.code }, { status, headers });
+    }
+    billingMarket = region.market;
+  }
+  const billAmountSen = getBillplzChargeAmountSen(billingMarket, requestedPlan);
+  const checkoutMetadata: Record<string, string> = {
+    bill_amount_sen: String(billAmountSen),
+    bill_currency: "MYR",
+    bill_market: billingMarket,
+    ...(checkoutCountry ? { country: checkoutCountry } : {}),
+    ...(checkoutPhone ? { phone: checkoutPhone } : {}),
+    market: billingMarket,
+    ip_country: ipCountry ?? "",
+  };
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400, headers });
@@ -138,6 +184,7 @@ export async function POST(req: Request) {
       updated_at: new Date().toISOString(),
       ...(checkoutIpHash ? { checkout_ip_hash: checkoutIpHash } : {}),
       ...(deviceId ? { checkout_device_id: deviceId } : {}),
+      checkout_metadata: checkoutMetadata,
     })
     .select("id")
     .single();
@@ -161,7 +208,7 @@ export async function POST(req: Request) {
   let checkoutUrl: string;
   try {
     const result = await createBillplzBill({
-      amountCents: planRow.price_cents,
+      amountCents: billAmountSen,
       description: `Capital Bridge — ${planRow.name}`,
       email,
       name: billplzName,

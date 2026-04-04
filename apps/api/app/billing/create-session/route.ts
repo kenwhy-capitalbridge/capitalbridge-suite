@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
+import { parseRequestCountryCode } from "@/lib/requestGeo";
+import {
+  getBillplzChargeAmountSen,
+  normalizeMarketId,
+  validateBillingRegionForRequest,
+  type MarketId,
+} from "@cb/shared/markets";
 
 export const runtime = "nodejs";
 
@@ -34,7 +41,7 @@ export async function OPTIONS(req: Request) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
 }
 
-type Body = { email?: string; plan?: string; name?: string };
+type Body = { email?: string; plan?: string; name?: string; market?: string };
 
 function getPaymentFirstRedirectUrl(): string {
   return process.env.BILLPLZ_PAYMENT_FIRST_REDIRECT_URL ?? DEFAULT_PAYMENT_RETURN_URL;
@@ -59,6 +66,26 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Body;
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const requestedPlan = (body.plan ?? "trial").toString();
+  const marketRaw = typeof body.market === "string" ? body.market.trim().slice(0, 8) : "";
+  const ipCountry = parseRequestCountryCode(req);
+  const allowAnyRegion = process.env.BILLING_ALLOW_ANY_REGION === "1";
+  let billingMarket: MarketId;
+  if (allowAnyRegion) {
+    billingMarket = normalizeMarketId(marketRaw || null);
+  } else {
+    const region = validateBillingRegionForRequest({
+      ipCountry,
+      clientMarket: marketRaw,
+      checkoutCountry: null,
+      requireCheckoutCountry: false,
+    });
+    if (!region.ok) {
+      const status = region.code === "invalid_checkout_country" ? 400 : 403;
+      return NextResponse.json({ error: region.code }, { status, headers });
+    }
+    billingMarket = region.market;
+  }
+  const billAmountSen = getBillplzChargeAmountSen(billingMarket, requestedPlan);
   const name = typeof body.name === "string" ? body.name.trim() : email || "Customer";
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -78,6 +105,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400, headers });
   }
 
+  const checkoutMetadata: Record<string, string> = {
+    bill_amount_sen: String(billAmountSen),
+    bill_currency: "MYR",
+    bill_market: billingMarket,
+    market: billingMarket,
+    ip_country: ipCountry ?? "",
+  };
+
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
@@ -88,6 +123,7 @@ export async function POST(req: Request) {
       status: "pending",
       payment_attempt_count: 0,
       updated_at: new Date().toISOString(),
+      checkout_metadata: checkoutMetadata,
     })
     .select("id")
     .single();
@@ -108,7 +144,7 @@ export async function POST(req: Request) {
   let paymentUrl: string;
   try {
     const result = await createBillplzBill({
-      amountCents: planRow.price_cents,
+      amountCents: billAmountSen,
       description: `Capital Bridge — ${planRow.name}`,
       email,
       name: name || email,

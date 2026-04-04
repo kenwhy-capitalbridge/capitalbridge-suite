@@ -3,16 +3,19 @@
 import { useEffect, useRef } from "react";
 import LegacyApp, { type IncomeEngineeringAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
+import type { CurrencyCode } from "@/legacy/config/currency";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
 type Props = {
   lionAccessUser: LionAccessUser;
   reportClientDisplayName: string;
+  initialCurrencyCode?: CurrencyCode;
 };
 
 export function IncomeEngineeringDashboardClient({
   lionAccessUser,
   reportClientDisplayName,
+  initialCurrencyCode,
 }: Props) {
   const appRef = useRef<IncomeEngineeringAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
@@ -29,7 +32,12 @@ export function IncomeEngineeringDashboardClient({
 
   return (
     <main>
-      <LegacyApp ref={appRef} lionAccessUser={lionAccessUser} reportClientDisplayName={reportClientDisplayName} />
+      <LegacyApp
+        ref={appRef}
+        lionAccessUser={lionAccessUser}
+        reportClientDisplayName={reportClientDisplayName}
+        initialCurrencyCode={initialCurrencyCode}
+      />
     </main>
   );
 }

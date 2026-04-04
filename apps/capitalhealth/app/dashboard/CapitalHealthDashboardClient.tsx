@@ -9,12 +9,15 @@ type Props = {
   canSeeVerdict: boolean;
   lionAccessUser: LionAccessUser;
   reportClientDisplayName: string;
+  /** When omitted (e.g. preview), legacy app uses built-in defaults. */
+  defaultCurrencyCode?: string | null;
 };
 
 export function CapitalHealthDashboardClient({
   canSeeVerdict,
   lionAccessUser,
   reportClientDisplayName,
+  defaultCurrencyCode = null,
 }: Props) {
   const appRef = useRef<CapitalHealthAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
@@ -36,6 +39,7 @@ export function CapitalHealthDashboardClient({
         canSeeVerdict={canSeeVerdict}
         lionAccessUser={lionAccessUser}
         reportClientDisplayName={reportClientDisplayName}
+        defaultCurrencyCode={defaultCurrencyCode}
       />
     </main>
   );

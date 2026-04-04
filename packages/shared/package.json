@@ -13,6 +13,7 @@
     "./reportIdentity": "./src/reportIdentity.ts",
     "./reportTraceability": "./src/reportTraceability.ts",
     "./legalMonocopy": "./src/legalMonocopy.ts",
-    "./formatCurrency": "./src/formatCurrency.ts"
+    "./formatCurrency": "./src/formatCurrency.ts",
+    "./markets": "./src/markets.ts"
   }
 }

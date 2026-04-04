@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
+import { parseRequestCountryCode } from "@/lib/requestGeo";
+import {
+  getBillplzChargeAmountSen,
+  normalizeMarketId,
+  validateBillingRegionForRequest,
+  type MarketId,
+} from "@cb/shared/markets";
 
 export const runtime = "nodejs";
 
 /** Reuse existing session/bill if within this window (ms). Prevents duplicate bills on retry/refresh. */
 const SESSION_REUSE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-type Body = { plan?: string };
+type Body = { plan?: string; market?: string };
 
 /**
  * Authenticated billing: one billing_sessions row = one Billplz bill; payment webhook creates membership.
@@ -22,6 +29,26 @@ export async function POST(req: Request) {
 
     const body = (await req.json().catch(() => ({}))) as Body;
     const requestedPlan = (body.plan ?? "trial").toString();
+    const marketRaw = typeof body.market === "string" ? body.market.trim().slice(0, 8) : "";
+    const ipCountry = parseRequestCountryCode(req);
+    const allowAnyRegion = process.env.BILLING_ALLOW_ANY_REGION === "1";
+    let billingMarket: MarketId;
+    if (allowAnyRegion) {
+      billingMarket = normalizeMarketId(marketRaw || null);
+    } else {
+      const region = validateBillingRegionForRequest({
+        ipCountry,
+        clientMarket: marketRaw,
+        checkoutCountry: null,
+        requireCheckoutCountry: false,
+      });
+      if (!region.ok) {
+        const status = region.code === "invalid_checkout_country" ? 400 : 403;
+        return NextResponse.json({ error: region.code }, { status });
+      }
+      billingMarket = region.market;
+    }
+    const billAmountSen = getBillplzChargeAmountSen(billingMarket, requestedPlan);
 
     const svc = createServiceClient();
     const {
@@ -94,6 +121,13 @@ export async function POST(req: Request) {
 
     let sessionId = existingSession?.id ?? null;
     if (!sessionId) {
+      const checkoutMetadata: Record<string, string> = {
+        bill_amount_sen: String(billAmountSen),
+        bill_currency: "MYR",
+        bill_market: billingMarket,
+        market: billingMarket,
+        ip_country: ipCountry ?? "",
+      };
       const { data: newSession, error: sessionErr } = await svc
         .schema("public")
         .from("billing_sessions")
@@ -105,6 +139,7 @@ export async function POST(req: Request) {
           status: "pending",
           payment_attempt_count: 1,
           updated_at: now.toISOString(),
+          checkout_metadata: checkoutMetadata,
         })
         .select("id")
         .single();
@@ -128,7 +163,7 @@ export async function POST(req: Request) {
     } else {
       try {
         const result = await createBillplzBill({
-          amountCents: planRow.price_cents,
+          amountCents: billAmountSen,
           description: `Capital Bridge — ${planRow.name}`,
           email: user.email ?? "client@thecapitalbridge.com",
           name: user.email ?? "Capital Bridge Client",

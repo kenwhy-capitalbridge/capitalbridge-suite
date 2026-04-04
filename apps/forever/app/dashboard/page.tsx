@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { marketToModelCurrencyPrefix, normalizeMarketId } from "@cb/shared/markets";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { ForeverDashboardClient } from "./ForeverDashboardClient";
 
@@ -20,9 +21,14 @@ export default async function ForeverDashboard() {
   const { data: profile } = await supabase
     .schema("public")
     .from("profiles")
-    .select("first_name, last_name")
+    .select("first_name, last_name, advisory_market")
     .eq("id", user.id)
     .maybeSingle();
+
+  const modelCurrencyPrefix =
+    typeof profile?.advisory_market === "string"
+      ? marketToModelCurrencyPrefix(normalizeMarketId(profile.advisory_market))
+      : null;
 
   const reportClientDisplayName = reportClientDisplayNameFromAuth({
     email: user.email,
@@ -63,6 +69,7 @@ export default async function ForeverDashboard() {
       <ForeverDashboardClient
         lionAccessUser={lionAccessUser}
         reportClientDisplayName={reportClientDisplayName}
+        modelCurrencyPrefix={modelCurrencyPrefix}
       />
     </main>
   );

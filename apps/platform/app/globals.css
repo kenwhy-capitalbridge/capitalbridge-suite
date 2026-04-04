@@ -406,6 +406,36 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
   border-color: rgba(255, 204, 106, 0.72);
 }
 
+/**
+ * Trial plan: Risk & Resilience + Strategic Execution — muted grey rim (still clickable; not gold “full access”).
+ */
+.cb-module--trial-restricted {
+  border-color: rgba(132, 138, 136, 0.48);
+  background: var(--green);
+  box-shadow: 0 0 0 1px rgba(95, 102, 100, 0.14);
+}
+
+.cb-module--trial-restricted:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
+  border-color: rgba(152, 158, 156, 0.58);
+}
+
+.cb-module--trial-restricted .cb-module-header-bar {
+  background: linear-gradient(90deg, rgba(120, 126, 124, 0.42) 0%, rgba(88, 92, 90, 0.1) 50%, rgba(120, 126, 124, 0.42) 100%);
+}
+
+.cb-module--strategic.cb-module--trial-restricted {
+  border-color: rgba(132, 138, 136, 0.48);
+  background: var(--green);
+  box-shadow: 0 0 0 1px rgba(95, 102, 100, 0.14);
+}
+
+.cb-module--strategic.cb-module--trial-restricted:hover {
+  border-color: rgba(152, 158, 156, 0.58);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+}
+
 .cb-status-dot--soon {
   background: rgba(255, 204, 106, 0.85);
   animation: cb-status-pulse-soon 2.4s ease-in-out infinite;
@@ -985,4 +1015,37 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
     align-items: center;
     box-sizing: border-box;
   }
+
+  /* Regional top-up modal: stack CTAs like email row (full-width tap targets) */
+  .profile-page-advisory-modal-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .profile-page-advisory-modal-actions > button {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+}
+
+/* Advisory region modal: notched phones + scroll if copy wraps */
+.profile-page-advisory-modal-backdrop {
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.profile-page-advisory-modal-panel {
+  flex-shrink: 0;
+  max-height: min(92vh, calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS: avoid focus-zoom on region select (match email field minimum; overrides inline clamp) */
+.profile-page-email-row select.profile-page-email-input {
+  font-size: max(1rem, 16px) !important;
 }

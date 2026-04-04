@@ -86,6 +86,7 @@ export type Database = {
           updated_at: string;
           checkout_ip_hash: string | null;
           checkout_device_id: string | null;
+          checkout_metadata: Record<string, unknown> | null;
         };
         Insert: Partial<Database["public"]["Tables"]["billing_sessions"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["billing_sessions"]["Row"]>;
@@ -135,6 +136,8 @@ export type Database = {
           first_name: string | null;
           last_name: string | null;
           plan_change_intent: string | null;
+          /** Advisory pricing region (MY|SG|…); from checkout or profile change after top-up */
+          advisory_market: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;

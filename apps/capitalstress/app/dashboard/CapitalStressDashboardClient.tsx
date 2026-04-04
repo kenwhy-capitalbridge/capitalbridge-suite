@@ -11,6 +11,7 @@ type Props = {
   canSeeVerdict: boolean;
   lionAccessUser: LionAccessUser;
   reportClientDisplayName: string;
+  initialCurrencyLabel?: string | null;
 };
 
 export function CapitalStressDashboardClient({
@@ -19,6 +20,7 @@ export function CapitalStressDashboardClient({
   canSeeVerdict,
   lionAccessUser,
   reportClientDisplayName,
+  initialCurrencyLabel = null,
 }: Props) {
   const appRef = useRef<CapitalStressAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
@@ -42,6 +44,7 @@ export function CapitalStressDashboardClient({
         canSeeVerdict={canSeeVerdict}
         lionAccessUser={lionAccessUser}
         reportClientDisplayName={reportClientDisplayName}
+        initialCurrencyLabel={initialCurrencyLabel}
       />
     </main>
   );

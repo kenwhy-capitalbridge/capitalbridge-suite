@@ -1,4 +1,3 @@
-import { strategicExecutionTierLabelFromRawPlan } from "@cb/advisory-graph";
 import { PlatformFrameworkHeader } from "./PlatformFrameworkHeader";
 import { FrameworkLaunchRow } from "./FrameworkLaunchRow";
 
@@ -19,9 +18,13 @@ export async function FrameworkStaticLanding({
   userEmail,
   membershipPlanSlug = null,
 }: FrameworkStaticLandingProps = {}) {
-  const strategicTierLine = strategicExecutionTierLabelFromRawPlan(
-    userEmail ? membershipPlanSlug : null,
-  );
+  /** Stress + Strategic tiles are trial-limited — grey border chrome (see `.cb-module--trial-restricted`). */
+  const isTrialUser = Boolean(userEmail && membershipPlanSlug === "trial");
+  const trialModuleClass = isTrialUser ? "cb-module cb-module--trial-restricted" : "cb-module";
+  const strategicModuleClass = isTrialUser
+    ? "cb-module cb-module--strategic cb-module--trial-restricted"
+    : "cb-module cb-module--strategic";
+
   const arrow = (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M7 10l5 5 5-5z" fill="currentColor" />
@@ -156,7 +159,7 @@ export async function FrameworkStaticLanding({
                   />
                 </div>
               </article>
-              <article className="cb-module">
+              <article className={trialModuleClass}>
                 <div className="cb-module-header-bar" />
                 <div className="cb-module-body">
                   <span className="cb-module-meta">
@@ -178,12 +181,12 @@ export async function FrameworkStaticLanding({
                   />
                 </div>
               </article>
-              <article id="cb-module-strategic-execution" className="cb-module cb-module--strategic">
+              <article id="cb-module-strategic-execution" className={strategicModuleClass}>
                 <div className="cb-module-header-bar" />
                 <div className="cb-module-body">
                   <span className="cb-module-meta">
-                    <span className="cb-status-dot cb-status-dot--soon" aria-hidden="true" />
-                    {strategicTierLine} • MODULE 4
+                    <span className="cb-status-dot" aria-hidden="true" />
+                    STATUS: AVAILABLE • MODULE 4
                   </span>
                   <span className="cb-module-engine-label">Advisory Layer</span>
                   <h2>Strategic Execution</h2>

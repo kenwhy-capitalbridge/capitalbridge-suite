@@ -44,6 +44,8 @@ const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialU
 type ForeverAppProps = {
   lionAccessUser?: LionAccessUser;
   reportClientDisplayName?: string;
+  /** From profile `advisory_market`; currency selector removed. */
+  modelCurrencyPrefix?: string | null;
 };
 
 /** Imperative API for Supabase save/restore (AdvisoryShell). */
@@ -61,6 +63,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
 
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
   const reportClientDisplayName = props.reportClientDisplayName ?? "Client";
+  const profileCurrencyPrefix = props.modelCurrencyPrefix?.trim() || null;
   const lionAccessEnabled = canAccessLion(lionAccessUser);
 
   const isAllowed =
@@ -86,8 +89,16 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
   }
 
   // Global Currency State
-  const [currency, setCurrency] = useState<string>('RM');
-  
+  const [currency, setCurrency] = useState<string>(() =>
+    profileCurrencyPrefix && currencies.includes(profileCurrencyPrefix) ? profileCurrencyPrefix : "RM"
+  );
+
+  useEffect(() => {
+    if (profileCurrencyPrefix && currencies.includes(profileCurrencyPrefix)) {
+      setCurrency(profileCurrencyPrefix);
+    }
+  }, [profileCurrencyPrefix]);
+
   // Expense & Market States
   const [expense, setExpense] = useState<number>(10000);
   const [expenseType, setExpenseType] = useState<ExpenseType>(ExpenseType.MONTHLY);
@@ -413,13 +424,9 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
               <h2 className="text-xl font-semibold text-[#FFCC6A] flex items-center gap-2 flex-shrink-0">
                 <Landmark className="w-5 h-5" /> Forever Income Model
               </h2>
-              <div className="flex flex-wrap bg-emerald-950/50 rounded-lg p-0.5 border border-[#FFCC6A]/20 gap-0.5 max-w-full">
-                {currencies.map((curr) => (
-                  <button key={curr} onClick={() => setCurrency(curr)} className={`px-2 py-1 rounded-md text-[9px] font-bold transition-all flex-shrink-0 ${currency === curr ? 'bg-[#FFCC6A] text-[#0D3A1D] shadow-sm' : 'text-gray-400 hover:text-white'}`}>
-                    {curr}
-                  </button>
-                ))}
-              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#FFCC6A]/80">
+                Currency: <span className="text-[#FFCC6A]">{currency}</span>
+              </p>
             </div>
 
             <div className="mb-6 md:mb-10 lg:mb-12 space-y-5 md:space-y-7 lg:space-y-9">

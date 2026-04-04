@@ -2,13 +2,20 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { getBillplzBill } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
-import { activateMembershipFromPaidBillingSession } from "@/lib/activateMembershipFromBillingSession";
 import { ensureBillingSessionUser } from "@/lib/ensureBillingSessionUser";
+import { finalizePaidBillingSession } from "@/lib/finalizePaidBillingSession";
 
 export const runtime = "nodejs";
 
 function normalizeEmail(s: string) {
   return s.trim().toLowerCase();
+}
+
+function parseCheckoutMetadata(raw: unknown): Record<string, unknown> | null {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return null;
 }
 
 /**
@@ -28,7 +35,7 @@ export async function GET(req: Request) {
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
-    .select("id, email, plan_id, status, user_id, membership_id")
+    .select("id, email, plan_id, status, user_id, membership_id, checkout_metadata")
     .eq("bill_id", billId)
     .maybeSingle();
 
@@ -36,8 +43,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "session_not_found" }, { status: 404 });
   }
 
+  const checkoutMeta = parseCheckoutMetadata(session.checkout_metadata);
+  const intent = typeof checkoutMeta?.intent === "string" ? checkoutMeta.intent.trim() : "";
+
   if (session.status === "paid" && session.membership_id) {
     return NextResponse.json({ ok: true, already_processed: true });
+  }
+
+  if (session.status === "paid" && intent === "market_change") {
+    return NextResponse.json({ ok: true, already_processed: true, source: "market_change" });
   }
 
   const bill = await getBillplzBill(billId);
@@ -82,45 +96,33 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "user_missing_email" }, { status: 400 });
   }
 
-  const { data: planRow } = await svc
-    .schema("public")
-    .from("plans")
-    .select("id, is_trial")
-    .eq("id", session.plan_id)
-    .maybeSingle();
-
-  if (!planRow?.id) {
-    return NextResponse.json({ ok: false, error: "plan_not_found" }, { status: 400 });
-  }
-
-  await svc
-    .schema("public")
-    .from("profiles")
-    .upsert({ id: userId, email: userEmail }, { onConflict: "id" });
-
-  const activate = await activateMembershipFromPaidBillingSession({
+  const finalized = await finalizePaidBillingSession({
     svc,
     billingSessionId: session.id,
     userId,
+    userEmail,
+    checkoutMetadata: checkoutMeta,
   });
 
-  if (!activate.ok || !activate.membershipId) {
-    console.error("[confirm-payment] membership activation failed", {
+  if (!finalized.ok) {
+    console.error("[confirm-payment] finalize failed", {
       billId,
-      error: activate.ok ? undefined : activate.error,
+      error: finalized.error,
     });
     return NextResponse.json(
-      { ok: false, error: "membership_activate_failed", detail: activate.ok ? undefined : activate.error },
+      { ok: false, error: "billing_finalize_failed", detail: finalized.error },
       { status: 500 }
     );
   }
 
-  try {
-    const { data: uwrap } = await svc.auth.admin.getUserById(userId);
-    const meta = { ...(uwrap?.user?.user_metadata ?? {}), checkout_pending: false };
-    await svc.auth.admin.updateUserById(userId, { user_metadata: meta });
-  } catch {
-    /* noop */
+  if (finalized.kind === "membership") {
+    try {
+      const { data: uwrap } = await svc.auth.admin.getUserById(userId);
+      const meta = { ...(uwrap?.user?.user_metadata ?? {}), checkout_pending: false };
+      await svc.auth.admin.updateUserById(userId, { user_metadata: meta });
+    } catch {
+      /* noop */
+    }
   }
 
   return NextResponse.json({ ok: true, source: "confirm_payment" });

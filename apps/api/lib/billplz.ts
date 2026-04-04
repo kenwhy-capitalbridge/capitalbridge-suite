@@ -12,6 +12,7 @@ export function getBillplzConfig() {
 }
 
 export async function createBillplzBill(params: {
+  /** MYR sen (1/100 ringgit). Billplz bills are denominated in MYR. */
   amountCents: number;
   description: string;
   email: string;

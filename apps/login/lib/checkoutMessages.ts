@@ -8,3 +8,6 @@ export const CHECKOUT_ERROR_PROVIDER_MAINTENANCE =
 export const CHECKOUT_ERROR_INVALID_RESPONSE = "Something went wrong. Please try again.";
 
 export const CHECKOUT_ERROR_NETWORK = "Please check your connection and try again.";
+
+export const CHECKOUT_ERROR_REGION_MISMATCH =
+  "Pricing is locked to your region. Refresh the page and try again, or contact support if you are travelling.";

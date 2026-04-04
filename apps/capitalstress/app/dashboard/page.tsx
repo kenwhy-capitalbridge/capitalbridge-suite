@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { marketToModelCurrencyPrefix, normalizeMarketId } from "@cb/shared/markets";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
 import { CapitalStressDashboardClient } from "./CapitalStressDashboardClient";
@@ -30,9 +31,14 @@ export default async function CapitalStressDashboard() {
   const { data: profile } = await supabase
     .schema("public")
     .from("profiles")
-    .select("first_name, last_name")
+    .select("first_name, last_name, advisory_market")
     .eq("id", user.id)
     .maybeSingle();
+
+  const initialCurrencyLabel =
+    typeof profile?.advisory_market === "string"
+      ? marketToModelCurrencyPrefix(normalizeMarketId(profile.advisory_market))
+      : null;
 
   const reportClientDisplayName = reportClientDisplayNameFromAuth({
     email: user.email,
@@ -76,6 +82,7 @@ export default async function CapitalStressDashboard() {
       canSeeVerdict={ent.canSeeVerdict}
       lionAccessUser={lionAccessUser}
       reportClientDisplayName={reportClientDisplayName}
+      initialCurrencyLabel={initialCurrencyLabel}
     />
   );
 }

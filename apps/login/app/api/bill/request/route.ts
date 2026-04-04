@@ -13,6 +13,9 @@ type Body = {
   lastName?: string;
   plan?: string;
   deviceId?: string;
+  checkoutCountry?: string;
+  checkoutPhone?: string;
+  market?: string;
 };
 
 function getApiBaseUrl(): string {
@@ -42,6 +45,9 @@ export async function POST(req: Request) {
         lastName: typeof body.lastName === "string" ? body.lastName : undefined,
         plan: body.plan ?? "trial",
         deviceId: typeof body.deviceId === "string" ? body.deviceId : undefined,
+        checkoutCountry: typeof body.checkoutCountry === "string" ? body.checkoutCountry : undefined,
+        checkoutPhone: typeof body.checkoutPhone === "string" ? body.checkoutPhone : undefined,
+        market: typeof body.market === "string" ? body.market : undefined,
       }),
       cache: "no-store",
     });

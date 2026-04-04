@@ -235,7 +235,16 @@ type CapitalStressAppProps = {
   canSeeVerdict?: boolean;
   lionAccessUser?: LionAccessUser;
   reportClientDisplayName?: string;
+  /** Model currency label (RM, SGD, …) from profile `advisory_market`. */
+  initialCurrencyLabel?: string | null;
 };
+
+function currencyIndexFromLabel(label: string | null | undefined): number {
+  const t = typeof label === "string" ? label.trim() : "";
+  if (!t) return 0;
+  const idx = CURRENCIES.findIndex((c) => c.label === t);
+  return idx >= 0 ? idx : 0;
+}
 
 const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function App(props, ref) {
   const advisoryUserId = props.advisoryUserId ?? null;
@@ -250,7 +259,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const [upperPct, setUpperPct] = useState<number>(7.0);
   const [years, setYears] = useState<number>(10);
   const [confidence, setConfidence] = useState<number>(90);
-  const [currencyIndex, setCurrencyIndex] = useState<number>(0);
+  const [currencyIndex, setCurrencyIndex] = useState<number>(() =>
+    currencyIndexFromLabel(props.initialCurrencyLabel ?? null)
+  );
   const [inflationAdjustmentOn, setInflationAdjustmentOn] = useState<boolean>(true);
   const [inflationPct, setInflationPct] = useState<number>(1.5);
   const [stressSeverity, setStressSeverity] = useState<StressSeverity>('none');
@@ -758,24 +769,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             
             <div className="max-w-2xl mx-auto space-y-10 sm:space-y-12 md:space-y-16 lg:space-y-20">
               
-              {/* CURRENCY */}
-              <div className="w-full overflow-x-hidden pb-2 no-print">
-                <div className="flex flex-nowrap gap-1 sm:gap-2 w-full items-stretch">
-                  {CURRENCIES.map((c, idx) => (
-                    <button
-                      key={c.code}
-                      onClick={() => setCurrencyIndex(idx)}
-                      className={`flex-1 min-w-0 min-h-[1.5rem] sm:min-h-0 h-6 sm:h-7 flex items-center justify-center py-0.5 px-0.5 sm:py-1 sm:px-1 text-xs sm:text-[11px] md:text-xs font-bold rounded-[5px] sm:rounded-[8px] border transition-all uppercase tracking-tight whitespace-nowrap leading-none ${
-                        currencyIndex === idx
-                        ? 'bg-[#FFCC6A] text-[#0D3A1D] border-[#FFCC6A]'
-                        : 'bg-[#0D3A1D]/60 text-[#FFCC6A]/60 border-[#FFCC6A]/20 hover:border-[#FFCC6A]/60'
-                      }`}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-center text-[10px] sm:text-xs text-[#FFCC6A]/85 pb-2 no-print">
+                Currency: <span className="font-bold text-[#FFCC6A]">{selectedCurrency.label}</span>
+              </p>
 
               {/* INITIAL CAPITAL */}
               <div>

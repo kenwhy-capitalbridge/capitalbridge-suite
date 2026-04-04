@@ -20,8 +20,8 @@ import './index.css';
 import { CalculatorStoreProvider, useCalculatorStoreInternals } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
 import { createReportAuditMeta, type ReportAuditMeta } from '@cb/shared/reportTraceability';
+import type { CurrencyCode } from './config/currency';
 import { ModelReportDownloadFooter, stampAllPdfPagesWithAudit, useModelMetricSpine } from '@cb/ui';
-import { CurrencySelectorEmbedded } from './components/CurrencySelector';
 import { ExpensesInput } from './components/ExpensesInput';
 import { IncomeInputs } from './components/IncomeInputs';
 import { AssetsUnlockPanel } from './components/AssetsUnlockPanel';
@@ -394,12 +394,11 @@ const AppInner = forwardRef<
           <section aria-label="Expectations setting" className="space-y-5 min-[641px]:space-y-7 min-[1025px]:space-y-9 min-[1441px]:space-y-10">
             <div className="rounded-xl border border-[#FFCC6A]/25 bg-[#163d28] p-4 sm:p-6">
               <h2 className="font-serif-section mb-1 text-base font-bold uppercase sm:text-lg">Expectations Setting</h2>
-              <p className="mb-4 text-xs text-[#B8B5AE] opacity-90">Define your lifestyle goal and planning assumptions</p>
+              <p className="mb-1 text-xs text-[#B8B5AE] opacity-90">Define your lifestyle goal and planning assumptions</p>
+              <p className="mb-4 text-[11px] leading-relaxed text-[#B8B5AE] opacity-80 break-words sm:text-xs">
+                Currency matches your advisory region (change on the Capital Bridge platform profile).
+              </p>
               <div className="space-y-5">
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#B8B5AE]">Currency</p>
-                  <CurrencySelectorEmbedded />
-                </div>
                 <ExpensesInput />
               </div>
             </div>
@@ -490,12 +489,17 @@ const App = forwardRef<
     lionAccessUser?: LionAccessUser;
     reportClientDisplayName?: string;
     initialHydratePayload?: unknown;
+    /** From profile `advisory_market`; no in-app currency toggle. */
+    initialCurrencyCode?: CurrencyCode;
   }
 >(function App(props, ref) {
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
   const reportClientDisplayName = props.reportClientDisplayName ?? 'Client';
   return (
-    <CalculatorStoreProvider initialHydratePayload={props.initialHydratePayload}>
+    <CalculatorStoreProvider
+      initialHydratePayload={props.initialHydratePayload}
+      initialCurrency={props.initialCurrencyCode}
+    >
       <AppInner ref={ref} lionAccessUser={lionAccessUser} reportClientDisplayName={reportClientDisplayName} />
     </CalculatorStoreProvider>
   );

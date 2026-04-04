@@ -7,6 +7,19 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { ButtonSpinner } from "@/components/ButtonSpinner";
+import {
+  MARKET_LABELS,
+  MARKET_PLAN_PRICES,
+  getMarketPlanPriceDisplay,
+  persistAdvisoryMarketPreference,
+  type MarketId,
+} from "@cb/shared/markets";
+
+const PRICING_MARKET_IDS: MarketId[] = ["MY", "SG", "TH", "PH", "US", "AU", "CN", "HK"];
+
+function isMarketId(s: string): s is MarketId {
+  return Object.prototype.hasOwnProperty.call(MARKET_PLAN_PRICES, s);
+}
 
 const OUTCOME_PREVIEW_BOXES = [
   {
@@ -185,11 +198,13 @@ const ALL_DISPLAY_PLANS = [...INDIVIDUAL_PLANS, ...ADVISOR_PLANS];
 
 function PlanCard({
   plan,
+  market,
   onPay,
   loadingPlan,
   isLoggedIn,
 }: {
   plan: (typeof INDIVIDUAL_PLANS)[0] | (typeof ADVISOR_PLANS)[0];
+  market: MarketId;
   onPay: (planId: string) => void;
   loadingPlan: string | null;
   isLoggedIn: boolean;
@@ -206,6 +221,11 @@ function PlanCard({
   const showBadge = plan.recommended || !!planExt.badgeLabel;
   const badgeText = planExt.badgeLabel ?? (plan.recommended ? "Recommended" : "");
   const useGlow = planExt.glow;
+  const priceLabel = getMarketPlanPriceDisplay(market, plan.id);
+  const trialCtaLabel = plan.paid
+    ? plan.cta
+    : `Start ${getMarketPlanPriceDisplay(market, "trial")} Trial`;
+  const trialCheckoutHref = `/checkout?plan=trial&market=${encodeURIComponent(market)}`;
   const cardInner = (
     <div
       className={`relative flex h-full flex-col rounded-2xl bg-[#e5e4df] p-4 shadow-lg sm:p-6 ${
@@ -240,7 +260,7 @@ function PlanCard({
       )}
       <div className="mt-2 flex flex-wrap items-baseline gap-1">
         <span className="font-serif text-2xl font-semibold text-cb-green sm:text-3xl">
-          RM{plan.price.toLocaleString()}
+          {priceLabel}
         </span>
         {plan.price > 0 && (
           <span className="text-sm text-cb-green/70">{plan.durationLabel}</span>
@@ -351,15 +371,15 @@ function PlanCard({
                 <span className="cb-visually-hidden">Redirecting…</span>
               </span>
             ) : (
-              plan.cta
+              trialCtaLabel
             )}
           </button>
         ) : (
           <Link
-            href={("ctaLink" in plan ? plan.ctaLink : null) ?? "/checkout?plan=trial"}
+            href={trialCheckoutHref}
             className="cb-btn-primary block w-full text-center shadow-[0_6px_16px_rgba(0,0,0,0.2),0_2px_6px_rgba(0,0,0,0.12)]"
           >
-            {plan.cta}
+            {trialCtaLabel}
           </Link>
         )}
       </div>
@@ -393,6 +413,8 @@ export function PricingContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
   const [isOutcomeExpanded, setIsOutcomeExpanded] = useState(false);
+  const [market, setMarket] = useState<MarketId>("MY");
+  const [geoReady, setGeoReady] = useState(false);
   const recentlyExpired = searchParams.get("message") === "recently_expired";
 
   useEffect(() => {
@@ -400,10 +422,23 @@ export function PricingContent() {
     supabase.auth.getSession().then(({ data: { session } }) => setIsLoggedIn(!!session));
   }, []);
 
+  /** Pricing tier follows IP geo only (server enforces the same on payment). */
+  useEffect(() => {
+    void fetch("/api/geo")
+      .then((r) => r.json())
+      .then((d: { market?: string }) => {
+        const m = typeof d?.market === "string" && isMarketId(d.market) ? d.market : "MY";
+        setMarket(m);
+        persistAdvisoryMarketPreference(m);
+        setGeoReady(true);
+      })
+      .catch(() => setGeoReady(true));
+  }, []);
+
   function handlePay(planId: string) {
     if (!planId) return;
     setError(null);
-    router.replace(`/checkout?plan=${encodeURIComponent(planId)}`);
+    router.replace(`/checkout?plan=${encodeURIComponent(planId)}&market=${encodeURIComponent(market)}`);
   }
 
   return (
@@ -583,12 +618,14 @@ export function PricingContent() {
                 </p>
                 <div className="mt-4 flex flex-col items-center justify-center gap-1">
                   <Link
-                    href="/checkout?plan=trial"
+                    href={`/checkout?plan=trial&market=${encodeURIComponent(market)}`}
                     className="cb-btn-primary inline-block w-full text-center sm:w-auto"
                   >
                     Start My Trial Analysis
                   </Link>
-                  <span className="text-sm text-cb-cream/70">7-day Access • RM1 Verification</span>
+                  <span className="text-sm text-cb-cream/70">
+                    7-day Access • {getMarketPlanPriceDisplay(market, "trial")} verification
+                  </span>
                 </div>
               </div>
             </>
@@ -659,6 +696,28 @@ export function PricingContent() {
               Choose a plan that fits your advisory needs — start with a low‑cost trial, stay
               flexible with monthly access, or upgrade to quarterly or strategic yearly tiers.
             </p>
+            <p className="mx-auto mt-2 max-w-3xl text-xs text-cb-cream/60 sm:text-sm">
+              Prices shown are for your region (from your connection). Checkout uses the same region;
+              you can&apos;t switch to another market&apos;s rates.
+            </p>
+            <div className="mx-auto mt-4 flex max-w-3xl flex-wrap items-center justify-center gap-2">
+              <span className="text-xs text-cb-cream/70 sm:text-sm">Markets:</span>
+              {PRICING_MARKET_IDS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  disabled={!geoReady || id !== market}
+                  title={geoReady && id !== market ? "Pricing is locked to your region" : undefined}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:text-sm disabled:cursor-not-allowed disabled:opacity-45 ${
+                    market === id
+                      ? "border-cb-gold bg-cb-gold/20 text-cb-gold"
+                      : "border-cb-cream/30 text-cb-cream/80 hover:border-cb-gold/50"
+                  }`}
+                >
+                  {MARKET_LABELS[id]}
+                </button>
+              ))}
+            </div>
           </div>
 
           {recentlyExpired && (
@@ -684,6 +743,7 @@ export function PricingContent() {
                 <PlanCard
                   key={plan.id}
                   plan={plan}
+                  market={market}
                   onPay={handlePay}
                   loadingPlan={loadingPlan}
                   isLoggedIn={isLoggedIn}

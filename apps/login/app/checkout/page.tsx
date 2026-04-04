@@ -14,6 +14,7 @@ import {
   CHECKOUT_ERROR_INVALID_RESPONSE,
   CHECKOUT_ERROR_NETWORK,
   CHECKOUT_ERROR_PROVIDER_MAINTENANCE,
+  CHECKOUT_ERROR_REGION_MISMATCH,
   CHECKOUT_ERROR_START_PAYMENT,
 } from "@/lib/checkoutMessages";
 import {
@@ -22,6 +23,14 @@ import {
   FORM_EMAIL_INVALID,
 } from "@/lib/sanitizeAuthErrorMessage";
 import { getOrCreateTrialDeviceId } from "@/lib/trialDeviceId";
+import {
+  CHECKOUT_COUNTRIES,
+  getCheckoutCountry,
+  persistAdvisoryMarketPreference,
+  STORAGE_CHECKOUT_COUNTRY_KEY,
+  STORAGE_CHECKOUT_PHONE_KEY,
+  type CheckoutCountryCode,
+} from "@cb/shared/markets";
 
 /** Assistive only — common domain typos (does not block submit). */
 function getEmailTypoSuggestion(raw: string): string | null {
@@ -69,10 +78,54 @@ function CheckoutContent() {
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
   const [loginExistingPending, setLoginExistingPending] = useState(false);
 
+  const [country, setCountry] = useState<CheckoutCountryCode>("MY");
+  const [mobileNational, setMobileNational] = useState("");
+  const [countryFieldError, setCountryFieldError] = useState<string | null>(null);
+  const [mobileFieldError, setMobileFieldError] = useState<string | null>(null);
+  const [geoLocked, setGeoLocked] = useState(false);
+
   const emailInputRef = useRef<HTMLInputElement>(null);
   const submittingRef = useRef(false);
   /** Avoid `finally` re-enabling submit while redirecting (stale `securing` closure). */
   const redirectingRef = useRef(false);
+
+  /** Country / price tier follows IP geo (server enforces the same). Not driven by ?market= or cookies. */
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/geo")
+      .then((r) => r.json())
+      .then((d: { country?: string; market?: string }) => {
+        if (cancelled) return;
+        const iso = typeof d?.country === "string" ? d.country.trim().toUpperCase() : "";
+        const row = iso && CHECKOUT_COUNTRIES.find((c) => c.code === iso);
+        if (row) {
+          setCountry(row.code);
+        } else {
+          setCountry("MY");
+        }
+        setGeoLocked(true);
+      })
+      .catch(() => {
+        if (!cancelled) setGeoLocked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const row = getCheckoutCountry(country);
+    if (row) persistAdvisoryMarketPreference(row.market);
+  }, [country]);
+
+  useEffect(() => {
+    try {
+      const p = localStorage.getItem(STORAGE_CHECKOUT_PHONE_KEY);
+      if (p) setMobileNational(p.replace(/\D/g, ""));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   /** Auto-focus email for faster completion (invisible conversion). */
   useEffect(() => {
@@ -83,6 +136,8 @@ function CheckoutContent() {
   }, []);
 
   const typoSuggestion = useMemo(() => getEmailTypoSuggestion(email), [email]);
+  const countryRow = getCheckoutCountry(country);
+  const dialDisplay = countryRow?.dial ?? "+60";
 
   function validateEmail(value: string): boolean {
     const t = value.trim().toLowerCase();
@@ -134,6 +189,24 @@ function CheckoutContent() {
       return;
     }
 
+    const row = getCheckoutCountry(country);
+    if (!row) {
+      setCountryFieldError("Select a country.");
+      setLoading(false);
+      submittingRef.current = false;
+      return;
+    }
+    setCountryFieldError(null);
+    const digits = mobileNational.replace(/\D/g, "");
+    if (digits.length < 6 || digits.length > 14) {
+      setMobileFieldError("Enter a valid mobile number (digits only).");
+      setLoading(false);
+      submittingRef.current = false;
+      return;
+    }
+    setMobileFieldError(null);
+    const fullPhone = `${row.dial.replace(/\s/g, "")}${digits}`;
+
     try {
       const exists = await emailExists(supabase, normalizedEmail);
       if (exists) {
@@ -144,6 +217,13 @@ function CheckoutContent() {
       }
 
       const deviceId = plan === "trial" ? getOrCreateTrialDeviceId() : "";
+      persistAdvisoryMarketPreference(row.market);
+      try {
+        localStorage.setItem(STORAGE_CHECKOUT_COUNTRY_KEY, country);
+        localStorage.setItem(STORAGE_CHECKOUT_PHONE_KEY, digits);
+      } catch {
+        /* ignore */
+      }
       const res = await fetch("/api/bill/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -153,6 +233,9 @@ function CheckoutContent() {
           firstName: fn,
           lastName: ln,
           plan,
+          checkoutCountry: country,
+          checkoutPhone: fullPhone,
+          market: row.market,
           ...(deviceId ? { deviceId } : {}),
         }),
       });
@@ -185,6 +268,14 @@ function CheckoutContent() {
               ? data.message
               : "Trial is not available for this device or network.",
           );
+          return;
+        }
+        if (data?.error === "region_mismatch") {
+          setError(CHECKOUT_ERROR_REGION_MISMATCH);
+          return;
+        }
+        if (data?.error === "checkout_country_required" || data?.error === "invalid_checkout_country") {
+          setError(CHECKOUT_ERROR_REGION_MISMATCH);
           return;
         }
         const message = typeof data?.message === "string" ? data.message : null;
@@ -357,6 +448,74 @@ function CheckoutContent() {
               </p>
             )}
           </label>
+
+          <label className="grid gap-1.5 text-left">
+            <span className="text-sm font-medium text-cb-green">Country</span>
+            <select
+              className="cb-input disabled:cursor-not-allowed disabled:opacity-70"
+              value={country}
+              disabled={geoLocked}
+              onChange={(e) => {
+                setCountry(e.target.value as CheckoutCountryCode);
+                setCountryFieldError(null);
+              }}
+              autoComplete="country"
+              aria-invalid={!!countryFieldError}
+              aria-describedby={
+                countryFieldError ? "checkout-country-error" : "checkout-country-hint"
+              }
+            >
+              {CHECKOUT_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.label}
+                </option>
+              ))}
+            </select>
+            <p id="checkout-country-hint" className="text-xs leading-relaxed text-cb-green/65">
+              {geoLocked
+                ? "Your plan price is set for your region (from your connection). The country shown must match where you are paying from."
+                : "Detecting your region…"}
+            </p>
+            {countryFieldError && (
+              <p id="checkout-country-error" className="cb-message-error mt-1 text-sm">
+                {countryFieldError}
+              </p>
+            )}
+          </label>
+
+          <div className="grid gap-1.5 text-left">
+            <span className="text-sm font-medium text-cb-green">Mobile number</span>
+            <div className="flex min-w-0 gap-2">
+              <span
+                className="cb-input flex shrink-0 items-center justify-center gap-1.5 px-3 font-mono text-sm text-cb-green/90"
+                aria-hidden
+              >
+                <span>{countryRow?.flag}</span>
+                <span>{dialDisplay}</span>
+              </span>
+              <input
+                className="cb-input min-w-0 flex-1 font-mono"
+                value={mobileNational}
+                onChange={(e) => {
+                  const d = e.target.value.replace(/\D/g, "");
+                  setMobileNational(d);
+                  if (mobileFieldError) setMobileFieldError(null);
+                }}
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="tel-national"
+                placeholder="Mobile number (digits only)"
+                aria-invalid={!!mobileFieldError}
+                aria-describedby={mobileFieldError ? "checkout-mobile-error" : undefined}
+              />
+            </div>
+            {mobileFieldError && (
+              <p id="checkout-mobile-error" className="cb-message-error mt-1 text-sm">
+                {mobileFieldError}
+              </p>
+            )}
+          </div>
 
           <p className="text-center text-sm leading-relaxed text-cb-green/75">
             You&apos;ll receive a secure email to set your password after payment.
