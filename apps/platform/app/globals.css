@@ -17,6 +17,8 @@
   --divider-gold-subtle: rgba(201, 164, 90, 0.5);
   /* Module launch CTAs (Forever / Income Engineering / …) — smaller than body copy */
   --cb-launch-model-btn-fs: clamp(0.62rem, 1.05vw, 0.74rem);
+  /* Framework cards — STATUS line (keeps row height closer when NOT AVAILABLE wraps) */
+  --cb-module-status-fs: clamp(0.62rem, 0.95vw, 0.76rem);
 }
 
 *,
@@ -456,15 +458,23 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
 }
 
 .cb-module-meta {
-  font-size: var(--cb-body-font-size);
+  font-size: var(--cb-module-status-fs);
   font-weight: 500;
   color: var(--muted-gold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   margin-bottom: 0.15rem;
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  align-items: flex-start;
+  gap: 0.35rem;
+  line-height: 1.28;
+  min-width: 0;
+}
+
+.cb-module-meta .cb-status-dot {
+  width: 4px;
+  height: 4px;
+  margin-top: 0.3em;
 }
 
 .cb-status-dot {
@@ -627,6 +637,7 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
     --cb-mobile-label-fs: min(1rem, max(13px, 0.9rem));
     /* Launch model CTAs: smaller than body on phones, floor ~10px */
     --cb-launch-model-btn-fs: max(10px, min(0.64rem, 2.75vw));
+    --cb-module-status-fs: max(10px, min(0.68rem, 2.4vw));
   }
 
   .cb-framework {
@@ -735,7 +746,11 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
     font-size: var(--cb-body-font-size);
     flex-grow: 0;
   }
-  .cb-module-meta,
+  .cb-module-meta {
+    font-size: var(--cb-module-status-fs);
+    letter-spacing: 0.08em;
+  }
+
   .cb-module-engine-label,
   .cb-module-label {
     font-size: var(--cb-mobile-label-fs);
