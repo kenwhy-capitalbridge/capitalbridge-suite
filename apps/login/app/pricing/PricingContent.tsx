@@ -12,6 +12,7 @@ import {
   MARKET_PLAN_PRICES,
   getMarketPlanPriceDisplay,
   persistAdvisoryMarketPreference,
+  solutionsFamilyOfficeCopyForAdvisoryMarket,
   type MarketId,
 } from "@cb/shared/markets";
 
@@ -160,8 +161,6 @@ const ADVISOR_PLANS = [
     durationLabel: "365-Day Strategic Advisory Access",
     description:
       "Full-year strategic advisory access for entrepreneurs, investors, and families structuring sustainable lifetime income portfolios.",
-    identityLine:
-      "Similar Family Office services typically cost RM15,000–RM60,000+ per year and usually require at least USD1 million to get started.",
     includes: [
       "Full advisory dashboard",
       "Forever Income Model",
@@ -250,12 +249,8 @@ function PlanCard({
         <p className="mt-1 text-sm text-cb-green/70">{planExt.identityLine}</p>
       )}
       {plan.id === "yearly_full" && (
-        <p className="mt-1 text-sm text-cb-green/70">
-          Similar Family Office services typically{" "}
-          <span className="font-semibold">
-            cost RM15,000–RM60,000+ per year
-          </span>{" "}
-          and usually require at least USD1 million to get started.
+        <p className="mt-1 text-sm leading-relaxed text-cb-green/70">
+          {solutionsFamilyOfficeCopyForAdvisoryMarket(market)}
         </p>
       )}
       <div className="mt-2 flex flex-wrap items-baseline gap-1">
