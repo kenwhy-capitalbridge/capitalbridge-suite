@@ -53,7 +53,7 @@ const isDevOrPreview =
   (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENV === "staging");
 
 const PLAN_LABELS: Record<string, string> = {
-  trial: "Trial (7 Days)",
+  trial: "Trial (10 Days)",
   monthly: "Monthly (30 Days)",
   quarterly: "Quarterly (90 Days)",
   yearly_full: "Strategic (365 Days)",

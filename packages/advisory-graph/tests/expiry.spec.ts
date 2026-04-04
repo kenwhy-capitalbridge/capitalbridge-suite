@@ -8,6 +8,12 @@ describe("computeExpiry", () => {
     expect(result.toISOString()).toBe("2025-01-08T00:00:00.000Z");
   });
 
+  it("adds 10 days correctly", () => {
+    const start = new Date("2025-01-01T00:00:00.000Z");
+    const result = computeExpiry(start, 10);
+    expect(result.toISOString()).toBe("2025-01-11T00:00:00.000Z");
+  });
+
   it("adds 30 days correctly", () => {
     const start = new Date("2025-01-01T00:00:00.000Z");
     const result = computeExpiry(start, 30);

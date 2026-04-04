@@ -76,9 +76,9 @@ const FEATURE_MICROCOPY: Record<string, string> = {
 const INDIVIDUAL_PLANS = [
   {
     id: "trial",
-    name: "Trial Access (7 days)",
+    name: "Trial Access (10 days)",
     price: 1,
-    durationLabel: "7 Day Access",
+    durationLabel: "10 Day Access",
     description:
       "Try the advisory dashboard and models before committing.",
     includes: [
@@ -624,7 +624,7 @@ export function PricingContent() {
                     Start My Trial Analysis
                   </Link>
                   <span className="text-sm text-cb-cream/70">
-                    7-day Access • {getMarketPlanPriceDisplay(market, "trial")} verification
+                    10-day Access • {getMarketPlanPriceDisplay(market, "trial")} verification
                   </span>
                 </div>
               </div>
@@ -695,10 +695,6 @@ export function PricingContent() {
             <p className="mx-auto mt-2 max-w-3xl text-sm leading-relaxed text-cb-cream/80 sm:text-base">
               Choose a plan that fits your advisory needs — start with a low‑cost trial, stay
               flexible with monthly access, or upgrade to quarterly or strategic yearly tiers.
-            </p>
-            <p className="mx-auto mt-2 max-w-3xl text-xs text-cb-cream/60 sm:text-sm">
-              Prices shown are for your region (from your connection). Checkout uses the same region;
-              you can&apos;t switch to another market&apos;s rates.
             </p>
             <div className="mx-auto mt-4 flex max-w-3xl flex-wrap items-center justify-center gap-2">
               <span className="text-xs text-cb-cream/70 sm:text-sm">Markets:</span>

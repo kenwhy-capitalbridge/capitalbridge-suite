@@ -49,9 +49,9 @@ export async function activateMembershipFromPaidBillingSession(params: {
   }
 
   let durDays =
-    planRow.duration_days != null ? Math.floor(Number(planRow.duration_days)) : planRow.is_trial ? 7 : 30;
+    planRow.duration_days != null ? Math.floor(Number(planRow.duration_days)) : planRow.is_trial ? 10 : 30;
   if (!Number.isFinite(durDays) || durDays < 1) {
-    durDays = planRow.is_trial ? 7 : 30;
+    durDays = planRow.is_trial ? 10 : 30;
   }
 
   const start = new Date();

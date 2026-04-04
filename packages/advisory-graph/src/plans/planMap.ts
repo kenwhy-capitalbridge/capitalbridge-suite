@@ -71,7 +71,7 @@ export async function loadPlanMap(supabase: SupabaseClient): Promise<PlanDuratio
 export function getPlanDuration(planIdOrName: string, fallbackDays?: number): number {
   const key = String(planIdOrName).trim();
   if (key && cache[key] != null) return cache[key];
-  return fallbackDays != null ? Math.floor(fallbackDays) : 7;
+  return fallbackDays != null ? Math.floor(fallbackDays) : 10;
 }
 
 /**
