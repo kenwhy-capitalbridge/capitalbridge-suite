@@ -21,7 +21,13 @@ const GATED_CTA_TOOLTIP = "Available with Strategic Advisory access";
 const COUNTRY_OPTIONS = [
   { value: "MY", label: "Malaysia" },
   { value: "SG", label: "Singapore" },
-  { value: "OTHER", label: "Other" },
+  { value: "TH", label: "Thailand" },
+  { value: "VN", label: "Vietnam" },
+  { value: "PH", label: "Philippines" },
+  { value: "US", label: "United States" },
+  { value: "AU", label: "Australia" },
+  { value: "CN", label: "China" },
+  { value: "HK", label: "Hong Kong" },
 ] as const;
 
 export function PriorityAccessClient({ fullName, email, reportId, isStrategicPlan }: PriorityAccessClientProps) {
