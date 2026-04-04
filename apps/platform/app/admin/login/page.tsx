@@ -1,7 +1,9 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
-import { isPlatformAdminEmail } from "@/lib/platformAdmin";
-import { isAdminPasswordGateEnabled } from "@/lib/platformAdminGateShared";
+import {
+  isPlatformAdminEmail,
+  isPlatformAdminSurfaceConfigured,
+} from "@/lib/platformAdmin";
 import { verifyAdminGateCookieValue } from "@/lib/platformAdminGate.server";
 import { cookies } from "next/headers";
 import { CB_PLATFORM_ADMIN_GATE_COOKIE } from "@/lib/platformAdminGateShared";
@@ -14,6 +16,10 @@ export default async function AdminLoginPage({
 }: {
   searchParams?: Promise<{ next?: string }>;
 }) {
+  if (!isPlatformAdminSurfaceConfigured()) {
+    notFound();
+  }
+
   const supabase = await createAppServerClient();
   const {
     data: { user },
@@ -28,20 +34,29 @@ export default async function AdminLoginPage({
 
   const sp = searchParams ? await searchParams : undefined;
   const nextRaw = sp?.next;
-  const nextPath =
-    typeof nextRaw === "string" && nextRaw.startsWith("/admin") && !nextRaw.startsWith("/admin/login")
-      ? nextRaw
-      : "/admin/strategic";
-
-  if (isAdminPasswordGateEnabled()) {
-    const jar = await cookies();
-    const token = jar.get(CB_PLATFORM_ADMIN_GATE_COOKIE)?.value;
-    const payload = verifyAdminGateCookieValue(token);
-    const email = user.email.trim().toLowerCase();
-    if (payload && payload.uid === user.id && payload.email === email) {
-      redirect(nextPath);
+  const defaultNext = "/admin/login/strategic";
+  const nextPath = (() => {
+    if (typeof nextRaw !== "string" || !nextRaw.startsWith("/")) {
+      return defaultNext;
     }
-  } else {
+    const pathOnly = nextRaw.split("?")[0];
+    if (pathOnly === "/admin/login" || pathOnly === "/admin/login/") {
+      return defaultNext;
+    }
+    if (
+      pathOnly.startsWith("/admin/login/strategic") ||
+      pathOnly.startsWith("/admin/strategic")
+    ) {
+      return nextRaw;
+    }
+    return defaultNext;
+  })();
+
+  const jar = await cookies();
+  const token = jar.get(CB_PLATFORM_ADMIN_GATE_COOKIE)?.value;
+  const payload = verifyAdminGateCookieValue(token);
+  const email = user.email.trim().toLowerCase();
+  if (payload && payload.uid === user.id && payload.email === email) {
     redirect(nextPath);
   }
 

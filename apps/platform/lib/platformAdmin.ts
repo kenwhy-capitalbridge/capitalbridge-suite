@@ -1,6 +1,7 @@
 /**
  * Platform admin gate for internal routes (e.g. strategic interest pipeline).
- * Set PLATFORM_ADMIN_EMAILS (comma-separated) or STRATEGIC_INTEREST_ADMIN_EMAIL as fallback.
+ * Set PLATFORM_ADMIN_EMAILS (comma-separated) and PLATFORM_ADMIN_PASSWORDS on Vercel;
+ * both are required for /admin and /api/admin to respond (otherwise 404).
  */
 
 function adminEmailSet(): Set<string> {
@@ -8,9 +9,7 @@ function adminEmailSet(): Set<string> {
     process.env.PLATFORM_ADMIN_EMAILS?.split(",")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean) ?? [];
-  if (listed.length > 0) return new Set(listed);
-  const fallback = process.env.STRATEGIC_INTEREST_ADMIN_EMAIL?.trim().toLowerCase();
-  return fallback ? new Set([fallback]) : new Set();
+  return new Set(listed);
 }
 
 export function isPlatformAdminEmail(email: string | null | undefined): boolean {
@@ -22,13 +21,16 @@ export function isPlatformAdminEmail(email: string | null | undefined): boolean 
 
 /** Ordered list (for aligning PLATFORM_ADMIN_PASSWORDS by index). */
 export function platformAdminEmailList(): string[] {
-  const listed =
+  return (
     process.env.PLATFORM_ADMIN_EMAILS?.split(",")
       .map((s) => s.trim().toLowerCase())
-      .filter(Boolean) ?? [];
-  if (listed.length > 0) return listed;
-  const fallback = process.env.STRATEGIC_INTEREST_ADMIN_EMAIL?.trim().toLowerCase();
-  return fallback ? [fallback] : [];
+      .filter(Boolean) ?? []
+  );
+}
+
+/** Admin UI and APIs are disabled unless both env vars are set (edge-safe). */
+export function isPlatformAdminSurfaceConfigured(): boolean {
+  return platformAdminEmailList().length > 0 && Boolean(process.env.PLATFORM_ADMIN_PASSWORDS?.trim());
 }
 
 export const STRATEGIC_INTEREST_STATUSES = [

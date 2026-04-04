@@ -10,7 +10,21 @@ loadEnvConfig(monorepoRoot, false);
 const nextConfig = {
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true }
+  typescript: { ignoreBuildErrors: true },
+  async redirects() {
+    return [
+      {
+        source: "/admin/strategic",
+        destination: "/admin/login/strategic",
+        permanent: true,
+      },
+      {
+        source: "/admin/strategic/briefing",
+        destination: "/admin/login/strategic/briefing",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

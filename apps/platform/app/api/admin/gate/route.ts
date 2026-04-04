@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAppServerClient } from "@cb/supabase/server";
-import { isPlatformAdminEmail } from "@/lib/platformAdmin";
+import {
+  isPlatformAdminEmail,
+  isPlatformAdminSurfaceConfigured,
+} from "@/lib/platformAdmin";
 import {
   adminGatePasswordOk,
   appendAdminGateCookie,
@@ -12,6 +15,10 @@ import { CB_PLATFORM_ADMIN_GATE_MAX_AGE_SEC } from "@/lib/platformAdminGateShare
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  if (!isPlatformAdminSurfaceConfigured()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const supabase = await createAppServerClient();
   const {
     data: { user },

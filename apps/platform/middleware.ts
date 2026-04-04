@@ -12,7 +12,7 @@ import {
   encodeMembershipSafeCookie,
   MEMBERSHIP_SAFE_MODE_SEC,
 } from "./lib/safeModeCookie";
-import { isPlatformAdminEmail } from "./lib/platformAdmin";
+import { isPlatformAdminEmail, isPlatformAdminSurfaceConfigured } from "./lib/platformAdmin";
 import {
   getAdminGateCookieFromHeader,
   verifyAdminGateCookieValueEdge,
@@ -41,6 +41,11 @@ function isProtected(pathname: string): boolean {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/api/admin")
   );
+}
+
+/** Only the password form is gate-exempt; nested routes like /admin/login/strategic require the gate cookie. */
+function isAdminGatePasswordPage(pathname: string): boolean {
+  return pathname === "/admin/login" || pathname === "/admin/login/";
 }
 
 async function clearUserActiveSessionRow(userId: string): Promise<void> {
@@ -163,6 +168,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const pathname = req.nextUrl.pathname;
+  if (
+    (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) &&
+    !isPlatformAdminSurfaceConfigured()
+  ) {
+    if (pathname.startsWith("/api/admin")) {
+      const r = NextResponse.json({ error: "Not found" }, { status: 404 });
+      applyHtmlNoStoreHeaders(r);
+      return r;
+    }
+    const r = new NextResponse(null, { status: 404 });
+    applyHtmlNoStoreHeaders(r);
+    return r;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -276,17 +296,15 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  const pathname = req.nextUrl.pathname;
-
   if (
     isAdminPasswordGateEnabled() &&
     user.email &&
     isPlatformAdminEmail(user.email)
   ) {
     const gateExempt =
-      pathname.startsWith("/admin/login") || pathname.startsWith("/api/admin/gate");
+      isAdminGatePasswordPage(pathname) || pathname.startsWith("/api/admin/gate");
     const gateRequired =
-      (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) ||
+      (pathname.startsWith("/admin") && !isAdminGatePasswordPage(pathname)) ||
       (pathname.startsWith("/api/admin") && !pathname.startsWith("/api/admin/gate"));
 
     if (gateRequired && !gateExempt) {

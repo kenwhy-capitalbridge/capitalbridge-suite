@@ -15,10 +15,7 @@ export function getAdminGateKeyMaterial(): string {
   const explicit = process.env.PLATFORM_ADMIN_GATE_SECRET?.trim();
   if (explicit) return explicit;
   const p = process.env.PLATFORM_ADMIN_PASSWORDS?.trim() ?? "";
-  const e =
-    process.env.PLATFORM_ADMIN_EMAILS?.trim() ??
-    process.env.STRATEGIC_INTEREST_ADMIN_EMAIL?.trim() ??
-    "";
+  const e = process.env.PLATFORM_ADMIN_EMAILS?.trim() ?? "";
   if (!p) return "";
   return `${p}\n${e}`;
 }

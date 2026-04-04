@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAppServerClient } from "@cb/supabase/server";
 import { createServiceClient } from "@cb/supabase/service";
-import { isPlatformAdminEmail } from "@/lib/platformAdmin";
+import {
+  isPlatformAdminEmail,
+  isPlatformAdminSurfaceConfigured,
+} from "@/lib/platformAdmin";
 import { requireAdminApiGate } from "@/lib/platformAdminGate.server";
 import {
   loadStrategicBriefingForUserIds,
@@ -15,6 +18,10 @@ export const dynamic = "force-dynamic";
  * Returns strategic_interest rows + latest advisory_v2 reports per model per user.
  */
 export async function POST(request: Request) {
+  if (!isPlatformAdminSurfaceConfigured()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const supabase = await createAppServerClient();
   const {
     data: { user },

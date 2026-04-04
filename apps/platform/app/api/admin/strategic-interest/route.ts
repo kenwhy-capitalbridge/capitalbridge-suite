@@ -3,6 +3,7 @@ import { createAppServerClient } from "@cb/supabase/server";
 import { createServiceClient } from "@cb/supabase/service";
 import {
   isPlatformAdminEmail,
+  isPlatformAdminSurfaceConfigured,
   isStrategicInterestStatus,
 } from "@/lib/platformAdmin";
 import { requireAdminApiGate } from "@/lib/platformAdminGate.server";
@@ -11,6 +12,10 @@ import { loadStrategicInterestAdminRows } from "@/lib/strategicInterestAdminLoad
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  if (!isPlatformAdminSurfaceConfigured()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const supabase = await createAppServerClient();
   const {
     data: { user },
@@ -32,6 +37,10 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  if (!isPlatformAdminSurfaceConfigured()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const supabase = await createAppServerClient();
   const {
     data: { user },

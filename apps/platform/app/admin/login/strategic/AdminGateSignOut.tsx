@@ -12,7 +12,8 @@ export function AdminGateSignOut() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ logout: true }),
             });
-            window.location.href = "/admin/login?next=%2Fadmin%2Fstrategic";
+            window.location.href =
+              "/admin/login?next=%2Fadmin%2Flogin%2Fstrategic";
           })();
         }}
         style={{
