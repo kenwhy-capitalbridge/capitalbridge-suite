@@ -12,6 +12,12 @@ import {
   encodeMembershipSafeCookie,
   MEMBERSHIP_SAFE_MODE_SEC,
 } from "./lib/safeModeCookie";
+import { isPlatformAdminEmail } from "./lib/platformAdmin";
+import {
+  getAdminGateCookieFromHeader,
+  verifyAdminGateCookieValueEdge,
+} from "./lib/platformAdminGate.edge";
+import { isAdminPasswordGateEnabled } from "./lib/platformAdminGateShared";
 
 const CB_MBR_SAFE = "cb_mbr_safe";
 
@@ -32,7 +38,8 @@ function isProtected(pathname: string): boolean {
     pathname === "/dashboard" ||
     pathname === "/profile" ||
     pathname.startsWith("/dashboard/") ||
-    pathname.startsWith("/admin")
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api/admin")
   );
 }
 
@@ -266,6 +273,41 @@ export async function middleware(req: NextRequest) {
   if (slot?.session_id && !isUserActiveSessionStale(typeof slot.updated_at === "string" ? slot.updated_at : null)) {
     if (jwtSessionId != null && String(slot.session_id) !== jwtSessionId) {
       return redirectToSignIn(req, supabaseUrl, supabaseAnonKey, userId);
+    }
+  }
+
+  const pathname = req.nextUrl.pathname;
+
+  if (
+    isAdminPasswordGateEnabled() &&
+    user.email &&
+    isPlatformAdminEmail(user.email)
+  ) {
+    const gateExempt =
+      pathname.startsWith("/admin/login") || pathname.startsWith("/api/admin/gate");
+    const gateRequired =
+      (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) ||
+      (pathname.startsWith("/api/admin") && !pathname.startsWith("/api/admin/gate"));
+
+    if (gateRequired && !gateExempt) {
+      const raw = getAdminGateCookieFromHeader(req.headers.get("cookie"));
+      const payload = await verifyAdminGateCookieValueEdge(raw);
+      const email = user.email.trim().toLowerCase();
+      if (!payload || payload.uid !== user.id || payload.email !== email) {
+        if (pathname.startsWith("/api/admin")) {
+          const r = NextResponse.json(
+            { error: "Admin gate required", code: "admin_gate" },
+            { status: 401 },
+          );
+          applyHtmlNoStoreHeaders(r);
+          return r;
+        }
+        const u = new URL("/admin/login", req.url);
+        u.searchParams.set("next", `${pathname}${req.nextUrl.search}`);
+        const r = NextResponse.redirect(u);
+        applyHtmlNoStoreHeaders(r);
+        return r;
+      }
     }
   }
 

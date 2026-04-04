@@ -20,6 +20,17 @@ export function isPlatformAdminEmail(email: string | null | undefined): boolean 
   return set.has(email.trim().toLowerCase());
 }
 
+/** Ordered list (for aligning PLATFORM_ADMIN_PASSWORDS by index). */
+export function platformAdminEmailList(): string[] {
+  const listed =
+    process.env.PLATFORM_ADMIN_EMAILS?.split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean) ?? [];
+  if (listed.length > 0) return listed;
+  const fallback = process.env.STRATEGIC_INTEREST_ADMIN_EMAIL?.trim().toLowerCase();
+  return fallback ? [fallback] : [];
+}
+
 export const STRATEGIC_INTEREST_STATUSES = [
   "new",
   "contacted",

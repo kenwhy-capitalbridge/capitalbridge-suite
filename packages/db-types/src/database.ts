@@ -281,4 +281,47 @@ export type Database = {
     Functions: { [_ in never]: never };
     Enums: { [_ in never]: never };
   };
+  advisory_v2: {
+    Tables: {
+      advisory_sessions: {
+        Row: { id: string; user_id: string; created_at: string };
+        Insert: Partial<{ id: string; user_id: string; created_at: string }>;
+        Update: Partial<{ id: string; user_id: string; created_at: string }>;
+        Relationships: [];
+      };
+      advisory_reports: {
+        Row: {
+          id: string;
+          session_id: string;
+          user_id: string;
+          model_type: "forever-income" | "income-engineering" | "capital-health" | "capital-stress";
+          inputs: Json;
+          results: Json;
+          created_at: string;
+        };
+        Insert: Partial<{
+          id: string;
+          session_id: string;
+          user_id: string;
+          model_type: "forever-income" | "income-engineering" | "capital-health" | "capital-stress";
+          inputs: Json;
+          results: Json;
+          created_at: string;
+        }>;
+        Update: Partial<{
+          id: string;
+          session_id: string;
+          user_id: string;
+          model_type: "forever-income" | "income-engineering" | "capital-health" | "capital-stress";
+          inputs: Json;
+          results: Json;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
+    };
+    Views: { [_ in never]: never };
+    Functions: { [_ in never]: never };
+    Enums: { [_ in never]: never };
+  };
 };

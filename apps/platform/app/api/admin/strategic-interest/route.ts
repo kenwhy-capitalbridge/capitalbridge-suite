@@ -5,11 +5,12 @@ import {
   isPlatformAdminEmail,
   isStrategicInterestStatus,
 } from "@/lib/platformAdmin";
+import { requireAdminApiGate } from "@/lib/platformAdminGate.server";
 import { loadStrategicInterestAdminRows } from "@/lib/strategicInterestAdminLoad";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createAppServerClient();
   const {
     data: { user },
@@ -17,6 +18,8 @@ export async function GET() {
   if (!user?.email || !isPlatformAdminEmail(user.email)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const gate = requireAdminApiGate(request, user);
+  if (gate) return gate;
 
   const svc = createServiceClient();
   const { rows, error } = await loadStrategicInterestAdminRows(svc);
@@ -36,6 +39,8 @@ export async function PATCH(request: Request) {
   if (!user?.email || !isPlatformAdminEmail(user.email)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const gate = requireAdminApiGate(request, user);
+  if (gate) return gate;
 
   let body: { id?: string; status?: string };
   try {
