@@ -178,6 +178,7 @@ export type Database = {
           country: string;
           interest_type: string | null;
           contact_phone: string | null;
+          subscriber_message: string | null;
           status: string;
           notes: string | null;
           last_contacted_at: string | null;

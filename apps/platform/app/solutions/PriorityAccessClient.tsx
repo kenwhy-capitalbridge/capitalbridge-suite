@@ -24,13 +24,6 @@ const COUNTRY_OPTIONS = [
   { value: "OTHER", label: "Other" },
 ] as const;
 
-const INTEREST_OPTIONS = [
-  { value: "", label: "Select one" },
-  { value: "Financing", label: "Financing" },
-  { value: "Insurance", label: "Insurance" },
-  { value: "Income Structuring", label: "Income Structuring" },
-] as const;
-
 export function PriorityAccessClient({ fullName, email, reportId, isStrategicPlan }: PriorityAccessClientProps) {
   const [open, setOpen] = useState(false);
   const [gatedTipOpen, setGatedTipOpen] = useState(false);
@@ -57,7 +50,7 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
   }, []);
   const [country, setCountry] = useState("MY");
   const [contactPhone, setContactPhone] = useState("");
-  const [interestType, setInterestType] = useState("");
+  const [subscriberMessage, setSubscriberMessage] = useState("");
   const [consentReview, setConsentReview] = useState(false);
   const [consentContact, setConsentContact] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -83,7 +76,7 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
           reportId,
           country,
           contactPhone: contactPhone.trim() || null,
-          interestType: interestType || null,
+          message: subscriberMessage.trim() || null,
           consentReview,
           consentContact,
         }),
@@ -306,7 +299,7 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
                     <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#30443a" }}>Email</span>
                     <input value={email} readOnly style={inputStyle(true)} />
                   </label>
-                  <label style={{ display: "grid", gap: 6 }}>
+                  <label style={{ display: "grid", gap: 6, gridColumn: "1 / -1" }}>
                     <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#30443a" }}>Country</span>
                     <select value={country} onChange={(e) => setCountry(e.target.value)} style={inputStyle()}>
                       {COUNTRY_OPTIONS.map((option) => (
@@ -316,17 +309,35 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
                       ))}
                     </select>
                   </label>
-                  <label style={{ display: "grid", gap: 6 }}>
+                  <label style={{ display: "grid", gap: 6, gridColumn: "1 / -1" }}>
                     <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#30443a" }}>
-                      What are you most interested in?
+                      Message (optional)
                     </span>
-                    <select value={interestType} onChange={(e) => setInterestType(e.target.value)} style={inputStyle()}>
-                      {INTEREST_OPTIONS.map((option) => (
-                        <option key={option.label} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 400,
+                        color: "rgba(48,68,58,0.78)",
+                        lineHeight: 1.45,
+                        marginTop: -2,
+                      }}
+                    >
+                      Add context for your request — goals, timing, or questions for the team
+                    </span>
+                    <textarea
+                      value={subscriberMessage}
+                      onChange={(e) => setSubscriberMessage(e.target.value)}
+                      maxLength={8000}
+                      rows={4}
+                      placeholder="e.g. I am interested in execution once financing terms are confirmed…"
+                      style={{
+                        ...inputStyle(),
+                        minHeight: 100,
+                        resize: "vertical",
+                        fontFamily: "inherit",
+                        lineHeight: 1.5,
+                      }}
+                    />
                   </label>
                   <label
                     style={{

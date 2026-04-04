@@ -60,6 +60,7 @@ export function StrategicInterestAdminTable({ initialRows }: { initialRows: Row[
               <th style={{ padding: "10px 12px", fontWeight: 600 }}>Name</th>
               <th style={{ padding: "10px 12px", fontWeight: 600 }}>Email</th>
               <th style={{ padding: "10px 12px", fontWeight: 600 }}>Country</th>
+              <th style={{ padding: "10px 12px", fontWeight: 600 }}>Message</th>
               <th style={{ padding: "10px 12px", fontWeight: 600 }}>Created</th>
               <th style={{ padding: "10px 12px", fontWeight: 600 }}>Status</th>
             </tr>
@@ -67,7 +68,7 @@ export function StrategicInterestAdminTable({ initialRows }: { initialRows: Row[
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: "1.25rem", color: "rgba(16,38,27,0.65)" }}>
+                <td colSpan={6} style={{ padding: "1.25rem", color: "rgba(16,38,27,0.65)" }}>
                   No submissions yet.
                 </td>
               </tr>
@@ -77,6 +78,17 @@ export function StrategicInterestAdminTable({ initialRows }: { initialRows: Row[
                   <td style={{ padding: "10px 12px" }}>{r.display_name}</td>
                   <td style={{ padding: "10px 12px" }}>{r.profile_email}</td>
                   <td style={{ padding: "10px 12px" }}>{r.country}</td>
+                  <td
+                    style={{
+                      padding: "10px 12px",
+                      maxWidth: 280,
+                      verticalAlign: "top",
+                      wordBreak: "break-word",
+                      color: "rgba(16,38,27,0.85)",
+                    }}
+                  >
+                    {r.subscriber_message?.trim() || "—"}
+                  </td>
                   <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>
                     {new Date(r.created_at).toLocaleString()}
                   </td>

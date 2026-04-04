@@ -11,7 +11,10 @@ type StrategicInterestBody = {
   fullName?: string | null;
   reportId?: string | null;
   country?: string;
+  /** @deprecated optional legacy field; prefer `message` */
   interestType?: string | null;
+  /** Optional commentary from the subscriber (replaces interest dropdown). */
+  message?: string | null;
   contactPhone?: string | null;
   consentReview?: boolean;
   consentContact?: boolean;
@@ -28,6 +31,15 @@ function sanitizeContactPhone(raw: unknown): string | null {
   if (digits.length < 5) return null;
   if (s.length > 40) s = s.slice(0, 40);
   return s;
+}
+
+const SUBSCRIBER_MESSAGE_MAX = 8000;
+
+function sanitizeSubscriberMessage(raw: unknown): string | null {
+  if (raw == null || typeof raw !== "string") return null;
+  const t = raw.normalize("NFKC").trim();
+  if (!t) return null;
+  return t.length > SUBSCRIBER_MESSAGE_MAX ? t.slice(0, SUBSCRIBER_MESSAGE_MAX) : t;
 }
 
 export const dynamic = "force-dynamic";
@@ -78,7 +90,8 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as StrategicInterestBody;
     const country = String(body.country ?? "").trim().toUpperCase();
-    const interestType = body.interestType ? String(body.interestType).trim() : null;
+    const subscriberMessage = sanitizeSubscriberMessage(body.message);
+    const interestTypeLegacy = body.interestType ? String(body.interestType).trim() : null;
 
     if (!country) {
       return NextResponse.json({ error: "Country is required" }, { status: 400 });
@@ -91,25 +104,38 @@ export async function POST(request: Request) {
     const reportId = body.reportId ? String(body.reportId).trim() : null;
     const contactPhone = sanitizeContactPhone(body.contactPhone);
 
-    const { data: inserted, error } = await svc
+    const { data: insertedRows, error } = await svc
       .schema("public")
       .from("strategic_interest")
       .insert({
         user_id: user.id,
         report_id: reportId,
         country,
-        interest_type: interestType,
+        interest_type: subscriberMessage ? null : interestTypeLegacy || null,
         contact_phone: contactPhone,
+        subscriber_message: subscriberMessage,
+        status: "new",
       })
-      .select("created_at")
-      .single();
+      .select("created_at");
 
     if (error) {
-      console.error("[strategic-interest POST] insert failed", error.message);
+      console.error(
+        "[strategic-interest POST] insert failed",
+        error.message,
+        error.code,
+        error.details,
+        error.hint,
+      );
       return NextResponse.json({ error: "Unable to save priority access request" }, { status: 500 });
     }
 
-    const submittedAtIso = inserted?.created_at ?? new Date().toISOString();
+    const inserted = insertedRows?.[0];
+    if (!inserted?.created_at) {
+      console.error("[strategic-interest POST] insert returned no row (check RLS / grants / schema)");
+      return NextResponse.json({ error: "Unable to save priority access request" }, { status: 500 });
+    }
+
+    const submittedAtIso = inserted.created_at;
     const fullName = await resolveSubmitterDisplayName(svc, user, body.fullName);
     const userEmail = user.email?.trim() ?? "";
 
@@ -123,7 +149,8 @@ export async function POST(request: Request) {
       email: userEmail || "—",
       country,
       reportId,
-      interestType,
+      interestType: subscriberMessage ? null : interestTypeLegacy || null,
+      subscriberMessage,
       contactPhone,
       userId: user.id,
       submittedAtIso,
