@@ -155,12 +155,22 @@ async function resolveSubmitterDisplayName(
   return user.email?.trim() || "Unknown";
 }
 
-function logAdminNotifyIncomplete(userId: string, result: NotifyAdminResult): void {
+function logAdminNotifyIncomplete(
+  userId: string,
+  result: NotifyAdminResult,
+  envHint: { hasResendApiKey: boolean; hasResendFrom: boolean },
+): void {
   if (result.status === "sent") return;
   const reason = result.status === "failed" || result.status === "skipped" ? result.reason : "";
   console.error(
     "[strategic-interest POST] admin email not sent",
-    JSON.stringify({ userId, notifyStatus: result.status, reason }),
+    JSON.stringify({
+      userId,
+      notifyStatus: result.status,
+      reason,
+      hasResendApiKey: envHint.hasResendApiKey,
+      hasResendFrom: envHint.hasResendFrom,
+    }),
   );
 }
 
@@ -270,9 +280,17 @@ export async function POST(request: Request) {
       submittedAtIso,
     });
 
-    logAdminNotifyIncomplete(user.id, notifyResult);
+    const envHint = {
+      hasResendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
+      hasResendFrom: Boolean((process.env.RESEND_FROM ?? "").trim()),
+    };
+    logAdminNotifyIncomplete(user.id, notifyResult, envHint);
 
-    return NextResponse.json({ ok: true });
+    // Save always succeeds before this; email is best-effort via Resend (see adminEmailSent).
+    return NextResponse.json({
+      ok: true,
+      adminEmailSent: notifyResult.status === "sent",
+    });
   } catch (error) {
     console.error("[strategic-interest POST] unexpected error", error);
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
