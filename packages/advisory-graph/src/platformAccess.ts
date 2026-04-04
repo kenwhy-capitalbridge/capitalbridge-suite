@@ -183,6 +183,22 @@ export function strategicExecutionTierLabelFromRawPlan(raw: unknown): string {
 }
 
 /**
+ * Framework landing (Module 3–4 status lines): aligns with {@link deriveEntitlements} — trial locks stress (M3);
+ * only `strategic` unlocks Strategic Execution (M4). Anonymous visitors see all “available” (marketing).
+ */
+export function frameworkModuleAvailabilityFromPlanSlug(args: {
+  signedIn: boolean;
+  planSlug: string | null;
+}): { module3Unavailable: boolean; module4Unavailable: boolean } {
+  const ent = deriveEntitlementsFromRawPlan(args.planSlug);
+  const isTrialUser = args.signedIn && ent.plan === "trial";
+  return {
+    module3Unavailable: isTrialUser,
+    module4Unavailable: args.signedIn && ent.plan !== "strategic",
+  };
+}
+
+/**
  * Starts an advisory session in advisory_v2.advisory_sessions.
  * Returns { id } or error object for UI handling.
  */

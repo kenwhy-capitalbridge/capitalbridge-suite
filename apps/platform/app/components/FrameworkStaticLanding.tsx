@@ -1,5 +1,24 @@
+import { frameworkModuleAvailabilityFromPlanSlug } from "@cb/advisory-graph";
 import { PlatformFrameworkHeader } from "./PlatformFrameworkHeader";
 import { FrameworkLaunchRow } from "./FrameworkLaunchRow";
+
+function ModuleStatusLine({
+  moduleNumber,
+  unavailable,
+}: {
+  moduleNumber: 1 | 2 | 3 | 4;
+  unavailable: boolean;
+}) {
+  return (
+    <span className="cb-module-meta">
+      <span
+        className={unavailable ? "cb-status-dot cb-status-dot--unavailable" : "cb-status-dot"}
+        aria-hidden="true"
+      />
+      STATUS: {unavailable ? "NOT AVAILABLE" : "AVAILABLE"} • MODULE {moduleNumber}
+    </span>
+  );
+}
 
 const FOREVER_APP_URL =
   typeof process.env.NEXT_PUBLIC_FOREVER_APP_URL === "string" && process.env.NEXT_PUBLIC_FOREVER_APP_URL
@@ -19,7 +38,12 @@ export async function FrameworkStaticLanding({
   membershipPlanSlug = null,
 }: FrameworkStaticLandingProps = {}) {
   /** Stress + Strategic tiles are trial-limited — grey border chrome (see `.cb-module--trial-restricted`). */
-  const isTrialUser = Boolean(userEmail && membershipPlanSlug === "trial");
+  const isSignedIn = Boolean(userEmail);
+  const { module3Unavailable, module4Unavailable } = frameworkModuleAvailabilityFromPlanSlug({
+    signedIn: isSignedIn,
+    planSlug: membershipPlanSlug,
+  });
+  const isTrialUser = module3Unavailable;
   const trialModuleClass = isTrialUser ? "cb-module cb-module--trial-restricted" : "cb-module";
   const strategicModuleClass = isTrialUser
     ? "cb-module cb-module--strategic cb-module--trial-restricted"
@@ -117,10 +141,7 @@ export async function FrameworkStaticLanding({
               <article className="cb-module">
                 <div className="cb-module-header-bar" />
                 <div className="cb-module-body">
-                  <span className="cb-module-meta">
-                    <span className="cb-status-dot" aria-hidden="true" />
-                    STATUS: AVAILABLE • MODULE 1
-                  </span>
+                  <ModuleStatusLine moduleNumber={1} unavailable={false} />
                   <span className="cb-module-engine-label">Decision Engine</span>
                   <h2>Income Durability</h2>
                   <p className="cb-module-why">
@@ -140,10 +161,7 @@ export async function FrameworkStaticLanding({
               <article className="cb-module">
                 <div className="cb-module-header-bar" />
                 <div className="cb-module-body">
-                  <span className="cb-module-meta">
-                    <span className="cb-status-dot" aria-hidden="true" />
-                    STATUS: AVAILABLE • MODULE 2
-                  </span>
+                  <ModuleStatusLine moduleNumber={2} unavailable={false} />
                   <span className="cb-module-engine-label">Decision Engine</span>
                   <h2>Capital Structure</h2>
                   <p className="cb-module-why">
@@ -162,10 +180,7 @@ export async function FrameworkStaticLanding({
               <article className={trialModuleClass}>
                 <div className="cb-module-header-bar" />
                 <div className="cb-module-body">
-                  <span className="cb-module-meta">
-                    <span className="cb-status-dot" aria-hidden="true" />
-                    STATUS: AVAILABLE • MODULE 3
-                  </span>
+                  <ModuleStatusLine moduleNumber={3} unavailable={module3Unavailable} />
                   <span className="cb-module-engine-label">Decision Engine</span>
                   <h2>Risk & Resilience</h2>
                   <p className="cb-module-why">
@@ -184,10 +199,7 @@ export async function FrameworkStaticLanding({
               <article id="cb-module-strategic-execution" className={strategicModuleClass}>
                 <div className="cb-module-header-bar" />
                 <div className="cb-module-body">
-                  <span className="cb-module-meta">
-                    <span className="cb-status-dot" aria-hidden="true" />
-                    STATUS: AVAILABLE • MODULE 4
-                  </span>
+                  <ModuleStatusLine moduleNumber={4} unavailable={module4Unavailable} />
                   <span className="cb-module-engine-label">Advisory Layer</span>
                   <h2>Strategic Execution</h2>
                   <p className="cb-module-why">

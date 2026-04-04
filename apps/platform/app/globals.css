@@ -490,6 +490,25 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
   }
 }
 
+.cb-status-dot--unavailable {
+  background: #c94a4a;
+  animation: cb-status-pulse-unavailable 1.75s ease-in-out infinite;
+}
+
+@keyframes cb-status-pulse-unavailable {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 rgba(201, 74, 74, 0);
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 10px #c94a4a, 0 0 16px rgba(201, 74, 74, 0.75);
+    transform: scale(1.2);
+  }
+}
+
 .cb-module-engine-label {
   font-size: var(--cb-body-font-size);
   font-weight: 600;
