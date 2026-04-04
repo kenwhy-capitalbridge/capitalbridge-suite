@@ -42,12 +42,12 @@
 }
 
 :root {
-  --ink: #111827;
-  --ink-2: #374151;
-  --muted: #6B7280;
-  --border: #E5E7EB;
+  --ink: #0D3A1D;
+  --ink-2: #24312c;
+  --muted: #5f6b67;
+  --border: rgba(255, 204, 106, 0.38);
   --paper: #ffffff;
-  --paper-2: #F9FAFB;
+  --paper-2: #f8fcf8;
 
   --tier-1: #55B685; /* Very Strong */
   --tier-2: #9BCF8E; /* Strong */
@@ -58,7 +58,7 @@
 
 @page {
   size: A4 portrait;
-  margin: 12mm 12mm 14mm 12mm;
+  margin: 18mm 16mm 22mm 16mm;
 }
 
 * { box-sizing: border-box; }
@@ -105,9 +105,11 @@ body {
 
 .title {
   margin: 0;
+  font-family: 'Roboto Serif', Georgia, 'Noto Serif', serif;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.02em;
+  color: var(--ink);
 }
 
 .date {
@@ -118,13 +120,16 @@ body {
 
 .section-label {
   margin: 0 0 4mm 0;
+  font-family: 'Roboto Serif', Georgia, 'Noto Serif', serif;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-2);
+  color: #9a7320;
   break-after: avoid;
   page-break-after: avoid;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(255, 204, 106, 0.5);
 }
 
 .divider {
@@ -140,10 +145,10 @@ body {
 }
 
 .kpi {
-  border: 1px solid #0D3A1D;
+  border: 1px solid rgba(255, 204, 106, 0.42);
   border-radius: 8px;
   padding: 5mm 5mm;
-  background: var(--paper);
+  background: var(--paper-2);
 }
 
 .kpi .label {

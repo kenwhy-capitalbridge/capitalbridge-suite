@@ -291,7 +291,7 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
   const snapTop = pos.y;
   doc.setDrawColor(...lightGreen);
   doc.setLineWidth(0.3);
-  doc.setFillColor(245, 252, 248);
+  doc.setFillColor(248, 252, 248);
   doc.rect(margin, snapTop, pageWidth - 2 * margin, snapshotH, "FD");
   doc.setTextColor(...darkGreen);
   doc.setFont("helvetica", "bold");
@@ -325,7 +325,7 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
   const execTop = pos.y;
   doc.setDrawColor(...lightGreen);
   doc.setLineWidth(0.2);
-  doc.setFillColor(248, 252, 250);
+  doc.setFillColor(248, 252, 248);
   doc.rect(margin, execTop, pageWidth - 2 * margin, execH, "FD");
   doc.setTextColor(...darkGreen);
   doc.setFont("helvetica", "bold");
@@ -381,7 +381,7 @@ export function buildForeverStrategicWealthPdf(ctx: ForeverStrategicWealthPdfCon
   const metTop = pos.y;
   doc.setDrawColor(...lightGreen);
   doc.setLineWidth(0.2);
-  doc.setFillColor(248, 252, 250);
+  doc.setFillColor(248, 252, 248);
   doc.rect(margin, metTop, metricsBoxW, metricsH, "FD");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);

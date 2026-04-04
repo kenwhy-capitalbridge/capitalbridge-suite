@@ -6,6 +6,13 @@
 export const CB_REPORT_INK_GREEN = "#0D3A1D";
 export const CB_REPORT_GOLD = "#FFCC6A";
 
+/** Panel fill aligned with Forever Income diagnostic PDF (soft mint-white). */
+export const CB_REPORT_SOFT_PANEL_BG = "#f8fcf8";
+/** Subtle gold-tinted rule for soft boxes (browser print + reference for PDFs). */
+export const CB_REPORT_SOFT_PANEL_BORDER = "rgba(255, 204, 106, 0.4)";
+/** Body / secondary text on white (matches shared HTML report tokens). */
+export const CB_REPORT_BODY_MUTED = "#5f6b67";
+
 /** Outer margin from physical page edge (mm) — comfortable A4 print/view. */
 export const CB_REPORT_PAGE_MARGIN_MM = 18;
 

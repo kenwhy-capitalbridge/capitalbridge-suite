@@ -195,7 +195,7 @@ export default function BaseReport({ data }: { data: BaseReportData }) {
           font-weight: 700;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: rgba(16, 38, 27, 0.62);
+          color: #9a7320;
         }
 
         .cb-section-title,

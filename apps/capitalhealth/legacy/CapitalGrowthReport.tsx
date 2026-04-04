@@ -44,6 +44,7 @@ import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
 import { createReportAuditMeta, CB_REPORT_LEGAL_NOTICE, type ReportAuditMeta } from '@cb/shared/reportTraceability';
 import {
+  CB_REPORT_BODY_MUTED,
   CB_REPORT_BRAND_FULL_GREEN_PATH,
   CB_REPORT_FIRM_ADDRESS_LINES,
   CB_REPORT_FOOTER_RESERVE_PT,
@@ -52,6 +53,7 @@ import {
   CB_REPORT_GOLD,
   CB_REPORT_INK_GREEN,
   CB_REPORT_PAGE_MARGIN_MM,
+  CB_REPORT_SOFT_PANEL_BG,
   cbReportMmToPt,
 } from '@cb/shared/cbReportTemplate';
 import {
@@ -89,7 +91,9 @@ const ADVISORY_LONG: Record<StatusKind, string> = {
 const GOLD = CB_REPORT_GOLD;
 const GREEN = CB_REPORT_INK_GREEN;
 const DARK = CB_REPORT_INK_GREEN;
-const MUTED = '#444';
+const MUTED = CB_REPORT_BODY_MUTED;
+const SOFT_PANEL = CB_REPORT_SOFT_PANEL_BG;
+const SOFT_BORDER = 'rgba(255, 204, 106, 0.42)';
 const STATUS_COLORS: Record<StatusKind, string> = {
   sustainable: '#11B981',
   plausible: '#D97706',
@@ -123,7 +127,7 @@ const BAR_COUNT = 48;
 const REPORT_PAGE_OUTER = cbReportMmToPt(CB_REPORT_PAGE_MARGIN_MM);
 const CONTENT_PADDING = 12;
 const BORDER_RADIUS = 8;
-const SECTION_SPACING = 36;
+const SECTION_SPACING = 40;
 const SUBSECTION_SPACING = 22;
 const CHART_SPACING = 28;
 const CARD_SPACING = 20;
@@ -170,16 +174,16 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: GOLD,
-    borderRadius: 6,
+    borderColor: SOFT_BORDER,
+    borderRadius: 8,
     padding: 12,
-    backgroundColor: 'transparent',
+    backgroundColor: SOFT_PANEL,
   },
   sectionTitle: {
     fontSize: 9,
     fontWeight: 'bold',
     letterSpacing: 0.5,
-    color: GREEN,
+    color: GOLD,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
@@ -206,12 +210,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: '#fafaf9',
-    borderRadius: 4,
+    backgroundColor: SOFT_PANEL,
+    borderRadius: 8,
     padding: 8,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: GREEN,
+    borderColor: SOFT_BORDER,
   },
   cardLabel: {
     fontSize: 8,
@@ -228,10 +232,10 @@ const styles = StyleSheet.create({
   chartSection: {
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: GOLD,
-    borderRadius: 6,
+    borderColor: SOFT_BORDER,
+    borderRadius: 8,
     padding: 12,
-    backgroundColor: 'transparent',
+    backgroundColor: SOFT_PANEL,
   },
   chartTitle: {
     fontSize: 16,
@@ -358,10 +362,10 @@ const styles = StyleSheet.create({
   confidenceFill: { height: '100%', borderRadius: 6 },
   confidenceLabel: { fontSize: 8, color: MUTED, marginTop: 4 },
   summaryRow: { flexDirection: 'row', gap: 12, marginBottom: CARD_SPACING },
-  summaryCard: { flex: 1, padding: 10, borderWidth: 1, borderColor: GOLD, borderRadius: 6, backgroundColor: '#fafaf9' },
+  summaryCard: { flex: 1, padding: 10, borderWidth: 1, borderColor: SOFT_BORDER, borderRadius: 8, backgroundColor: SOFT_PANEL },
   summaryCardLabel: { fontSize: 8, color: MUTED, marginBottom: 4, textTransform: 'uppercase' },
   summaryCardValue: { fontSize: 11, fontWeight: 'bold', color: DARK },
-  stressTable: { width: '100%', borderWidth: 1, borderColor: GOLD, borderRadius: 6 },
+  stressTable: { width: '100%', borderWidth: 1, borderColor: SOFT_BORDER, borderRadius: 8 },
   stressTableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', paddingVertical: 6, paddingHorizontal: 8 },
   stressTableHeader: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: GREEN, paddingVertical: 6, paddingHorizontal: 8, backgroundColor: '#f5f5f4' },
   stressTableCol1: { width: '40%', fontSize: 9, color: DARK },
@@ -427,12 +431,23 @@ function ReportPage({
             alignItems: 'flex-start',
           }}
         >
-          <Text style={{ fontSize: 8, color: '#4a6b52', paddingRight: 8 }}>Capital Bridge — Client Advisory Report</Text>
-          <View style={{ alignItems: 'flex-end', maxWidth: '52%' }}>
-            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>Report ID: {audit.reportId}</Text>
-            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>{audit.generatedAtLabel}</Text>
-            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>Version: {audit.versionLabel}</Text>
-            <Text style={{ fontSize: 7, color: '#374151', textAlign: 'right', lineHeight: 1.35 }}>{audit.modelDisplayName}</Text>
+          <Text
+            style={{
+              fontSize: 9,
+              fontFamily: 'Roboto Serif',
+              fontWeight: 'bold',
+              color: GREEN,
+              paddingRight: 8,
+              maxWidth: '52%',
+              lineHeight: 1.25,
+            }}
+          >
+            {audit.modelDisplayName}
+          </Text>
+          <View style={{ alignItems: 'flex-end', maxWidth: '48%' }}>
+            <Text style={{ fontSize: 7, color: '#4b5563', textAlign: 'right', lineHeight: 1.35 }}>Report ID: {audit.reportId}</Text>
+            <Text style={{ fontSize: 7, color: '#4b5563', textAlign: 'right', lineHeight: 1.35 }}>{audit.generatedAtLabel}</Text>
+            <Text style={{ fontSize: 7, color: '#4b5563', textAlign: 'right', lineHeight: 1.35 }}>Version: {audit.versionLabel}</Text>
           </View>
         </View>
         <View style={{ flexGrow: 1, flexShrink: 0, marginTop: 14, minHeight: 0 }}>{children}</View>
@@ -444,10 +459,10 @@ function ReportPage({
             right: CB_REPORT_FRAME_PADDING_PT,
           }}
         >
-          <Text style={{ fontSize: 4.8, color: '#6b7280', textAlign: 'justify', lineHeight: 1.15, marginBottom: 6 }}>
+          <Text style={{ fontSize: 4.8, color: '#6b7280', textAlign: 'justify', lineHeight: 1.12, marginBottom: 5 }}>
             {CB_REPORT_LEGAL_NOTICE}
           </Text>
-          <Text style={{ fontSize: 9, color: '#4a6b52', textAlign: 'center' }}>
+          <Text style={{ fontSize: 8, color: '#5f6b67', textAlign: 'center' }}>
             Page {pageNumber} of {totalPages}
           </Text>
         </View>

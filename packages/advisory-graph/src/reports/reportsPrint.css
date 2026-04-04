@@ -126,29 +126,51 @@
     display: table-header-group;
   }
 
-  /* Room for fixed print header + legal footer */
+  /* Forever Income v4 rhythm: clean top band + room for fixed header/footer */
   @page {
     size: A4;
-    margin: 20mm 12mm 32mm 12mm;
+    margin: 22mm 16mm 30mm 16mm;
   }
 
   .cb-report-print-header {
     position: fixed;
     top: 0;
+    left: 0;
     right: 0;
     z-index: 10000;
-    width: 52%;
-    max-width: 14cm;
-    padding: 3mm 12mm 2mm 4mm;
+    padding: 3mm 16mm 2.5mm;
     box-sizing: border-box;
+    background: #fff;
+    border-bottom: 0.5pt solid rgba(13, 58, 29, 0.1);
+  }
+
+  .cb-report-print-header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    max-width: 100%;
+  }
+
+  .cb-report-print-header-model {
+    font-family: "Roboto Serif", Georgia, "Noto Serif", ui-serif, serif;
+    font-size: 9pt;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0d3a1d;
+    max-width: 52%;
+  }
+
+  .cb-report-print-header-meta {
+    flex-shrink: 0;
+    text-align: right;
     font-family: ui-sans-serif, system-ui, sans-serif;
     font-size: 7.5pt;
     line-height: 1.35;
-    color: #0d3a1d;
-    text-align: right;
+    color: #4b5563;
   }
 
-  .cb-report-print-header-inner > div {
+  .cb-report-print-header-meta > div {
     margin: 0;
     padding: 0;
   }
@@ -159,14 +181,14 @@
     left: 0;
     right: 0;
     z-index: 10000;
-    padding: 2mm 12mm 3mm;
+    padding: 2mm 16mm 3mm;
     box-sizing: border-box;
     font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: 5.5pt;
-    line-height: 1.25;
-    color: #374151;
+    font-size: 5.25pt;
+    line-height: 1.2;
+    color: #6b7280;
     text-align: justify;
     background: #fff;
-    border-top: 0.5pt solid rgba(13, 58, 29, 0.12);
+    border-top: 0.5pt solid rgba(13, 58, 29, 0.1);
   }
 }

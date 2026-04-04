@@ -84,7 +84,8 @@ export interface PrintReportProps {
 
 const PRINT_TEXT = '#0D3A1D';
 const PRINT_ACCENT = '#FFCC6A';
-const PRINT_BORDER = 'rgba(13, 58, 29, 0.2)';
+/** Soft gold-tinted rule — matches Forever Income / Income Engineering print panels */
+const PRINT_BORDER = 'rgba(255, 204, 106, 0.38)';
 
 function PrintStageLabel({ children }: { children: React.ReactNode }) {
   return <p className="cb-print-stage-label">{children}</p>;

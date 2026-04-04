@@ -5,8 +5,13 @@ import {
 } from '@cb/advisory-graph/lionsVerdict';
 import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
+import {
+  CB_REPORT_SOFT_PANEL_BG,
+  CB_REPORT_SOFT_PANEL_BORDER,
+} from '@cb/shared/cbReportTemplate';
 import type { ReportAuditMeta } from '@cb/shared/reportTraceability';
-import { CB_FONT_SERIF } from '@cb/shared/typography';
+import { CB_FONT_SANS, CB_FONT_SERIF } from '@cb/shared/typography';
+import { ReportPrintChrome } from '@cb/ui';
 import { buildLionContext, generateLionDecisions, generateLionNarrative } from '@cb/lion-verdict';
 import { buildPdfNarrative } from '@cb/pdf/build-narrative';
 import {
@@ -163,10 +168,10 @@ function ChartCalloutsIe({ what, why }: { what: string; why: string }) {
   return (
     <>
       <p className="cb-chart-what">
-        <strong style={{ color: '#8B6914' }}>What this shows:</strong> {what}
+        <strong style={{ color: '#9a7320' }}>What this shows:</strong> {what}
       </p>
       <p className="cb-chart-why">
-        <strong style={{ color: '#8B6914' }}>Why this matters:</strong> {why}
+        <strong style={{ color: '#9a7320' }}>Why this matters:</strong> {why}
       </p>
     </>
   );
@@ -193,6 +198,7 @@ interface PrintReportViewProps {
 }
 
 const sectionHeading: React.CSSProperties = {
+  fontFamily: CB_FONT_SERIF,
   fontSize: '13px',
   fontWeight: 700,
   color: '#0D3A1D',
@@ -200,7 +206,7 @@ const sectionHeading: React.CSSProperties = {
   letterSpacing: '0.08em',
   marginBottom: '10px',
   paddingBottom: '6px',
-  borderBottom: '1px solid #FFCC6A',
+  borderBottom: '1px solid rgba(255, 204, 106, 0.55)',
   lineHeight: 1.35,
 };
 
@@ -210,27 +216,27 @@ const lionVerdictSectionHeading: React.CSSProperties = {
 };
 
 const sectionBlock: React.CSSProperties = {
-  marginBottom: '20px',
-  padding: '14px 16px',
-  background: '#f8fbf8',
+  marginBottom: '22px',
+  padding: '16px 18px',
+  background: CB_REPORT_SOFT_PANEL_BG,
   borderRadius: '8px',
-  border: '1px solid rgba(255, 204, 106, 0.4)',
+  border: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
   breakInside: 'avoid',
   pageBreakInside: 'avoid',
 };
 
-/** `clone` repeats border/background on each page fragment so the gold frame closes at page bottoms (print/PDF). */
+/** Soft outer shell — matches Forever Income diagnostic PDF rhythm (no heavy gold frame). */
 const reportBoxStyle: React.CSSProperties = {
-  fontFamily: CB_FONT_SERIF,
-  padding: '32px',
-  paddingBottom: '36px',
-  color: '#1a1a1a',
-  fontSize: '14px',
-  lineHeight: 1.58,
-  border: '3px solid #FFCC6A',
-  borderRadius: '16px',
+  fontFamily: CB_FONT_SANS,
+  padding: '28px 26px 32px',
+  color: '#10261b',
+  fontSize: '12px',
+  lineHeight: 1.62,
+  border: '1px solid rgba(13, 58, 29, 0.12)',
+  borderRadius: '12px',
+  borderTop: '3px solid #FFCC6A',
   background: '#fff',
-  boxShadow: '0 0 0 1px rgba(13, 58, 29, 0.08)',
+  boxShadow: 'none',
   WebkitBoxDecorationBreak: 'clone',
   boxDecorationBreak: 'clone',
 };
@@ -365,15 +371,17 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
 
   return (
     <div className="print-report print-report-root" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      {auditMeta ? <ReportPrintChrome audit={auditMeta} /> : null}
       {/* Part 1: through Monthly Income (page break after this in PDF) */}
       <div data-pdf-part="1" style={reportBoxStyle}>
         <PrintStageLabel>Cover Page</PrintStageLabel>
-        <div style={{ textAlign: 'center', marginBottom: '28px', paddingBottom: '20px', borderBottom: '2px solid #FFCC6A' }}>
+        <div style={{ textAlign: 'center', marginBottom: '28px', paddingBottom: '20px', borderBottom: '1px solid rgba(255, 204, 106, 0.45)' }}>
           <p style={{ fontSize: '10px', fontWeight: 600, color: '#0D3A1D', letterSpacing: '0.15em', margin: 0, textTransform: 'uppercase' }}>
             Capital Bridge Advisory Framework
           </p>
           <h1
             style={{
+              fontFamily: CB_FONT_SERIF,
               fontSize: '20px',
               fontWeight: 700,
               color: '#0D3A1D',
@@ -393,12 +401,6 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           <p style={{ fontSize: '12px', color: '#0D3A1D', opacity: 0.85, marginTop: '6px', marginBottom: 0 }}>
             Report generated: {reportGeneratedAtLabel}
           </p>
-          {auditMeta ? (
-            <p style={{ fontSize: '10px', color: '#6b7280', marginTop: '10px', marginBottom: 0, lineHeight: 1.45 }}>
-              Report ID: {auditMeta.reportId} · {auditMeta.generatedAtLabel} · {auditMeta.versionLabel} ·{' '}
-              {auditMeta.modelDisplayName}
-            </p>
-          ) : null}
         </div>
 
         <PrintStageLabel>System Context</PrintStageLabel>
@@ -711,31 +713,43 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         ) : null}
       </section>
 
-      <div
-        style={{
-          marginTop: '20px',
-          borderTop: '1px solid rgba(255, 204, 106, 0.45)',
-          paddingTop: '28px',
-          textAlign: 'center',
-        }}
-      >
+        <div
+          style={{
+            marginTop: '24px',
+            borderTop: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
+            paddingTop: '22px',
+            textAlign: 'center',
+          }}
+        >
         <PrintStageLabel>Closing</PrintStageLabel>
-        <p style={{ fontSize: '12px', color: '#4a5568', margin: 0, lineHeight: 1.62 }}>
+        <p
+          style={{
+            fontSize: '11px',
+            color: '#5f6b67',
+            lineHeight: 1.55,
+            maxWidth: '36em',
+            margin: '0 auto',
+          }}
+        >
           This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.
+          Legal notice appears in the print footer on each page.
         </p>
         <p
           style={{
-            fontSize: '13px',
-            fontWeight: 700,
+            fontSize: '12px',
+            fontWeight: 600,
             color: '#0D3A1D',
-            marginTop: '0.65em',
+            marginTop: '12px',
             marginBottom: 0,
-            padding: '14px 16px',
-            background: 'linear-gradient(135deg, #E8F5E9 0%, #f0fdf4 100%)',
-            borderLeft: '4px solid #FFCC6A',
-            borderRadius: '6px',
+            padding: '12px 14px',
+            background: CB_REPORT_SOFT_PANEL_BG,
+            border: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
+            borderRadius: '8px',
             breakInside: 'avoid',
             pageBreakInside: 'avoid',
+            maxWidth: '28em',
+            marginLeft: 'auto',
+            marginRight: 'auto',
           }}
         >
           Please save or print a copy for your records.
