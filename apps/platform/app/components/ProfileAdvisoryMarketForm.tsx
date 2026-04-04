@@ -34,6 +34,17 @@ type Props = {
   currentMarket: MarketId | null;
 };
 
+function friendlyMarketChangeApiError(detail: string | undefined, fallback: string): string {
+  const raw = (detail || "").trim();
+  if (
+    raw.includes("advisory_market") &&
+    (raw.includes("schema cache") || /could not find.*column/i.test(raw))
+  ) {
+    return "Region change is temporarily unavailable while the database is updated. Please try again in a few minutes, or contact support if this continues.";
+  }
+  return raw || fallback;
+}
+
 export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
   const effectiveCurrent = currentMarket ?? "MY";
   const [selected, setSelected] = useState<MarketId>(effectiveCurrent);
@@ -90,14 +101,14 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
 
       if (!previewRes.ok) {
         const err = previewJson as ApiErr;
-        setError(err.detail || err.error || "Could not check region change.");
+        setError(friendlyMarketChangeApiError(err.detail || err.error, "Could not check region change."));
         return;
       }
 
       const preview = previewJson as ApiPreview;
       if (preview.ok !== true || preview.preview !== true) {
         const err = previewJson as ApiErr;
-        setError(err.detail || err.error || "Could not check region change.");
+        setError(friendlyMarketChangeApiError(err.detail || err.error, "Could not check region change."));
         return;
       }
 
@@ -110,7 +121,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
         const applyJson = (await applyRes.json().catch(() => ({}))) as ApiOkUpdated | ApiErr;
         if (!applyRes.ok || !("mode" in applyJson) || applyJson.mode !== "updated") {
           const err = applyJson as ApiErr;
-          setError(err.detail || err.error || "Update failed.");
+          setError(friendlyMarketChangeApiError(err.detail || err.error, "Update failed."));
           return;
         }
         setMessage("Your advisory region has been updated. Model apps will use the new currency on next load.");
@@ -140,7 +151,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
       const json = (await res.json().catch(() => ({}))) as ApiOkPayment | ApiErr;
       if (!res.ok || !("mode" in json) || json.mode !== "payment_required" || !json.checkoutUrl) {
         const err = json as ApiErr;
-        setError(err.detail || err.error || "Could not start payment.");
+        setError(friendlyMarketChangeApiError(err.detail || err.error, "Could not start payment."));
         return;
       }
       window.location.href = json.checkoutUrl;
@@ -270,14 +281,15 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
 
       {message ? (
         <p
+          className="profile-page-callout profile-page-callout--success"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
             padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",
             fontSize: "clamp(0.74rem, 2.1vw, 0.82rem)",
             lineHeight: 1.45,
-            color: "rgba(13, 58, 29, 0.92)",
-            backgroundColor: "rgba(255, 204, 106, 0.2)",
-            border: "1px solid rgba(255, 204, 106, 0.35)",
+            color: "#10261b",
+            backgroundColor: "#f6f5f1",
+            border: "1px solid rgba(255, 204, 106, 0.55)",
             borderRadius: 6,
             maxWidth: "min(100%, 520px)",
             boxSizing: "border-box",
@@ -289,12 +301,18 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
 
       {error ? (
         <p
+          className="profile-page-callout profile-page-callout--error"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
+            padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",
             fontSize: "clamp(0.74rem, 2.1vw, 0.82rem)",
             lineHeight: 1.45,
-            color: "rgba(255, 214, 180, 0.98)",
+            color: "#5c1f16",
+            backgroundColor: "#fff5f4",
+            border: "1px solid rgba(180, 35, 24, 0.35)",
+            borderRadius: 6,
             maxWidth: "min(100%, 520px)",
+            boxSizing: "border-box",
           }}
         >
           {error}

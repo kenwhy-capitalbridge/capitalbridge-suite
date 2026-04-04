@@ -181,14 +181,15 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
 
       {message && (
         <p
+          className="profile-page-callout profile-page-callout--success"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
             padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",
             fontSize: "clamp(0.74rem, 2.1vw, 0.82rem)",
             lineHeight: 1.45,
-            color: "rgba(13, 58, 29, 0.92)",
-            backgroundColor: "rgba(255, 204, 106, 0.2)",
-            border: "1px solid rgba(255, 204, 106, 0.35)",
+            color: "#10261b",
+            backgroundColor: "#f6f5f1",
+            border: "1px solid rgba(255, 204, 106, 0.55)",
             borderRadius: 6,
             maxWidth: "min(100%, 520px)",
             boxSizing: "border-box",
@@ -199,12 +200,18 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
       )}
       {error && (
         <p
+          className="profile-page-callout profile-page-callout--error"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
+            padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",
             fontSize: "clamp(0.74rem, 2.1vw, 0.82rem)",
             lineHeight: 1.45,
-            color: "rgba(255, 214, 180, 0.98)",
+            color: "#5c1f16",
+            backgroundColor: "#fff5f4",
+            border: "1px solid rgba(180, 35, 24, 0.35)",
+            borderRadius: 6,
             maxWidth: "min(100%, 520px)",
+            boxSizing: "border-box",
           }}
         >
           {error}
