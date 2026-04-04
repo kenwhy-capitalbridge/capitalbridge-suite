@@ -18,7 +18,7 @@
   /* Module launch CTAs (Forever / Income Engineering / …) — smaller than body copy */
   --cb-launch-model-btn-fs: clamp(0.62rem, 1.05vw, 0.74rem);
   /* Framework cards — STATUS line (keeps row height closer when NOT AVAILABLE wraps) */
-  --cb-module-status-fs: clamp(0.62rem, 0.95vw, 0.76rem);
+  --cb-module-status-fs: clamp(0.68rem, 1.05vw, 0.84rem);
 }
 
 *,
@@ -637,7 +637,7 @@ a.cb-flow-indicator.cb-flow-indicator--jump:focus-visible {
     --cb-mobile-label-fs: min(1rem, max(13px, 0.9rem));
     /* Launch model CTAs: smaller than body on phones, floor ~10px */
     --cb-launch-model-btn-fs: max(10px, min(0.64rem, 2.75vw));
-    --cb-module-status-fs: max(10px, min(0.68rem, 2.4vw));
+    --cb-module-status-fs: max(11px, min(0.74rem, 2.65vw));
   }
 
   .cb-framework {
