@@ -95,7 +95,7 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
     }
   }
 
-  const buttonLabel = isStrategicPlan ? "Request Access" : "Strategic Access Required";
+  const buttonLabel = isStrategicPlan ? "Request Execution" : "Strategic Access Required";
   const subtext = isStrategicPlan
     ? "Submit your structure for priority access to execution pathways."
     : "Unlock execution capabilities, partner access, and structured income implementation under Strategic Advisory.";
@@ -407,7 +407,7 @@ export function PriorityAccessClient({ fullName, email, reportId, isStrategicPla
                     onClick={handleSubmit}
                     className="pf-chrome-gold-btn priority-access-cta-btn"
                   >
-                    {submitting ? "Saving..." : "Request Access"}
+                    {submitting ? "Saving..." : "Request Execution"}
                   </button>
                 </div>
               </>
