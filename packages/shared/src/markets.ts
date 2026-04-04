@@ -174,9 +174,13 @@ export function normalizeMarketId(raw: string | null | undefined): MarketId {
 const SOLUTIONS_FAMILY_OFFICE_MY =
   "Access is available under Strategic Advisory. Similar Family Office services typically cost RM15,000–RM60,000+ per year and usually require at least RM5M – RM25M to get started.";
 
+/** Singapore — same structure as MY; list pricing uses S$ numerals in UI. */
+const SOLUTIONS_FAMILY_OFFICE_SG =
+  "Access is available under Strategic Advisory. Similar Family Office services typically cost S$15,000–S$60,000+ per year and usually require at least S$5M – S$25M to get started.";
+
 const SOLUTIONS_FAMILY_OFFICE_BY_MARKET: Record<MarketId, string> = {
   MY: SOLUTIONS_FAMILY_OFFICE_MY,
-  SG: SOLUTIONS_FAMILY_OFFICE_MY,
+  SG: SOLUTIONS_FAMILY_OFFICE_SG,
   TH: "Access is available under Strategic Advisory. Similar Family Office services typically starts at ฿12,000 per year and usually require at least USD 1M – 3M to get started.",
   PH: "Access is available under Strategic Advisory. Similar Family Office services typically starts at ₱30,000 per year and usually require at least USD 1M – 3M to get started.",
   US: "Access is available under Strategic Advisory. Similar Family Office services typically starts at USD 5,000 per year and usually require at least USD 2M – 5M to get started.",
