@@ -175,6 +175,17 @@
     padding: 0;
   }
 
+  /*
+   * Fixed header sits over the normal flow; reserve top band so titles/prose are not covered
+   * (Playwright PDF + browser print). Matches first-child placement from ReportPrintChrome.
+   */
+  .cb-report-root:has(> .cb-report-print-header),
+  .print-report-root:has(> .cb-report-print-header),
+  #print-report:has(> .cb-report-print-header) {
+    padding-top: 19mm;
+    box-sizing: border-box;
+  }
+
   .cb-report-print-footer {
     position: fixed;
     bottom: 0;
@@ -190,5 +201,25 @@
     text-align: justify;
     background: #fff;
     border-top: 0.5pt solid rgba(13, 58, 29, 0.1);
+  }
+
+  /*
+   * STEP 4 (Forever v6 / Playwright footer): `renderPdf({ playwrightFooter })` adds
+   * `cb-report-pdf-playwright-footer` on <html>. Band height must stay aligned with
+   * PLAYWRIGHT_PDF_FOOTER_MARGIN_BOTTOM_PX in @cb/pdf/playwright-pdf-footer.
+   */
+  html.cb-report-pdf-playwright-footer {
+    --cb-playwright-pdf-footer-reserved: 72px;
+  }
+
+  html.cb-report-pdf-playwright-footer .cb-report-print-footer {
+    display: none !important;
+  }
+
+  html.cb-report-pdf-playwright-footer .print-report-root,
+  html.cb-report-pdf-playwright-footer .cb-report-root,
+  html.cb-report-pdf-playwright-footer #print-report {
+    padding-bottom: var(--cb-playwright-pdf-footer-reserved);
+    box-sizing: border-box;
   }
 }

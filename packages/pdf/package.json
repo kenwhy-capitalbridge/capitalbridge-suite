@@ -7,6 +7,8 @@
   "exports": {
     ".": "./src/reportReady.ts",
     "./build-narrative": "./src/buildPdfNarrative.ts",
+    "./forever-report-assets": "./src/foreverReportAssets.ts",
+    "./playwright-pdf-footer": "./src/playwrightPdfFooter.ts",
     "./render": "./src/renderPdf.ts",
     "./report-ready": "./src/reportReady.ts",
     "./templates/BaseReport": "./src/templates/BaseReport.tsx"

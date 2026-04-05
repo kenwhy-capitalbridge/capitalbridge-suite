@@ -3,6 +3,8 @@
  * existing `.print-*` rules until all models use the shared stylesheet.
  */
 
+export { CB_REPORT_PDF_PLAYWRIGHT_FOOTER_HTML_CLASS } from "@cb/shared/reportPdfPlaywright";
+
 /** Root wrapper — hide on screen in apps that mount report off-DOM; show @ media print */
 export const CB_REPORT_ROOT = 'cb-report-root';
 

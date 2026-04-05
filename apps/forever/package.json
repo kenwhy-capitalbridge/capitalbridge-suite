@@ -6,11 +6,13 @@
     "dev": "next dev -p 3006",
     "build": "next build",
     "start": "next start -p 3006",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "render:print-pdf": "node ../../node_modules/tsx/dist/cli.mjs scripts/render-print-pdf.ts"
   },
   "dependencies": {
     "@cb/advisory-graph": "*",
     "@cb/db-types": "*",
+    "@cb/pdf": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
     "@cb/ui": "*",

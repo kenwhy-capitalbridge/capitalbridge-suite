@@ -1,4 +1,5 @@
 @import "@cb/ui/cb-model-base.css";
+@import "@cb/advisory-graph/reports/print.css";
 
 @tailwind base;
 @tailwind components;
@@ -10,5 +11,21 @@
     font-size: var(--cb-body-font-size);
     line-height: var(--cb-body-line-height);
     font-weight: var(--cb-body-font-weight);
+  }
+}
+
+/* Step 5 — Playwright / browser print: only the main column; site chrome is screen-only */
+@media print {
+  .cb-forever-site-shell > :not(.cb-forever-main) {
+    display: none !important;
+  }
+
+  .cb-forever-main {
+    display: block !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #0d3a1d !important;
   }
 }

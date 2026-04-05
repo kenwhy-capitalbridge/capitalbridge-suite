@@ -276,6 +276,26 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["model_shared_facts"]["Row"]>;
         Relationships: [];
       };
+      /** Forever v6+ PDF: one row per export; `id` = exportId, `report_id` = traceability id */
+      report_exports: {
+        Row: {
+          id: string;
+          user_id: string;
+          report_id: string;
+          tier: string | null;
+          lion_config: Json;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          report_id: string;
+          tier?: string | null;
+          lion_config?: Json;
+          id?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["report_exports"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

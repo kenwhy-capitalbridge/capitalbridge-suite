@@ -1,6 +1,8 @@
 /**
- * jsPDF builder for the Forever Income “Strategic Wealth Diagnostic” export.
- * Shared by the app download handler and docs sample PDF script.
+ * jsPDF builder for the Forever Income “Strategic Wealth Diagnostic” (legacy layout).
+ *
+ * **STEP 11:** The live app no longer calls this — official PDF is `/dashboard/print` + Playwright
+ * (`npm run render:print-pdf`). This file remains for `apps/forever/scripts/render-sample-pdf-for-docs.ts`.
  */
 
 import type { LionVerdictClientReport } from "@cb/advisory-graph/lionsVerdict";

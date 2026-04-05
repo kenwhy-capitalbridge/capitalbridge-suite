@@ -220,3 +220,163 @@ Other notes in repo: `gpthandover.md`, `Cursor-handover.txt`, `lapsap.txt` (if p
 - **Be concise**; confirm scope before megarefactors (especially PDF migration).
 - Prefer **focused diffs**; match existing patterns in each app until shared shell exists.
 - For **trust-sensitive UI** (legal copy, header lockup), prefer **`@cb/shared`** + **`@cb/ui`** single sources (`legalMonocopy`, `HeaderBrandPicture`, `cb-model-base.css`) over one-off strings or duplicate `<img>` stacks.
+## --- CONTEXT CONTINUATION (Gitex Pre-Launch Phase) ---
+
+### Current State (as of latest session)
+
+Capital Bridge platform is in final pre-launch phase for Gitex (Singapore).
+
+Core systems are already implemented and stable:
+
+1. PRODUCT LAYERS COMPLETE
+- 4-model framework:
+  1. Evaluate Sustainability (Forever Income)
+  2. Engineer Capital (Income Engineering)
+  3. Stress Test Resilience (Capital Health / Stress)
+  4. Execute Strategy (Strategic Execution)
+
+- Lion’s Verdict:
+  - Fully dynamic, personalised, non-generic
+  - Integrated across all apps and PDF
+
+- PDF System:
+  - Premium, multi-page, dual-layer (At-a-Glance + Detailed)
+  - No formulas exposed
+  - Strong branding + legal protection
+  - Strategic execution section included
+  - Authority signals (report ID, date, framework note)
+
+---
+
+2. STRATEGIC EXECUTION (CRITICAL LAYER)
+
+Fully implemented:
+
+- /solutions page (platform.thecapitalbridge.com)
+- Plan gating:
+  - Only Strategic users can submit
+  - Trial / non-strategic:
+    - CTA disabled
+    - Tooltip shown
+    - No modal access
+
+- UX:
+  - Clear execution positioning
+  - “This is where capital starts working for you”
+  - Strategic advantages reframed as outcomes
+  - Progression nudge added
+
+- Submission flow:
+  - Stored in Supabase: public.strategic_interest
+  - Optional contact_phone field included
+  - Admin email notification via Resend
+  - No partner routing yet (pre-partner phase)
+
+---
+
+3. PIPELINE STATUS
+
+System now functions as:
+
+User → Models → Lion Verdict → Strategic Execution → Submit → DB + Email
+
+This is now:
+- A demand capture system
+- A pre-partner pipeline
+- A conversion boundary between analysis and execution
+
+---
+
+4. UX / UI STATUS
+
+- Framework updated to 4-step flow (includes Execute Strategy)
+- Strategic tile visible across:
+  - Framework landing
+  - Dashboard (V2)
+
+- Header/footer/branding unified
+- Responsive logo system implemented
+- Legal footer + typography standardised
+
+- Final UI polish applied:
+  - Tooltip refinement
+  - Modal copy refinement
+  - Progression nudge softened
+  - Disabled CTA behaviour correct
+
+---
+
+5. WHAT WAS INTENTIONALLY NOT DONE
+
+- No partner integration yet (Malaysia / Singapore onboarding ongoing)
+- No auto-routing to banks/insurers
+- No aggressive conversion layer (kept premium and controlled)
+
+---
+
+6. NEXT PHASE (DO NOT REPEAT PREVIOUS WORK)
+
+We are now moving into:
+
+### AI LAYER (FINAL STAGE BEFORE GITEX)
+
+Two separate systems to implement:
+
+1. El-Capitan GPT
+- External voice (QR via plushies, marketing)
+- Purpose:
+  - Challenge user thinking
+  - Reframe financial behaviour
+  - Introduce “forever income” concept
+- Tone:
+  - Sharp, intelligent, slightly confrontational
+  - Never generic
+
+2. Website Chatbot
+- Internal assistant
+- Purpose:
+  - Guide users through platform
+  - Explain models and outputs
+  - Assist with onboarding and plans
+- Tone:
+  - Calm, structured, helpful
+  - Step-by-step guidance
+
+---
+
+7. CURRENT PRIORITY
+
+Next step in new chat:
+
+- Run El-Capitan scenario simulations:
+  - Layman (no knowledge)
+  - Overconfident investor
+  - Skeptical finance professional
+  - Reckless spender
+
+- Refine tone and response behaviour
+
+- Then generate:
+  - El-Capitan JSON
+  - Chatbot JSON
+
+---
+
+8. OPERATING RULES (IMPORTANT)
+
+- Do NOT revisit completed implementation steps
+- Do NOT suggest structural rebuilds
+- Focus only on:
+  - refinement
+  - AI behaviour
+  - conversion quality
+  - real-world usage (Gitex context)
+
+- Keep responses:
+  - concise
+  - actionable
+  - no fluff
+
+---
+
+## END OF CONTEXT

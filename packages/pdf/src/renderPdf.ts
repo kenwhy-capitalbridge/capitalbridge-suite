@@ -7,6 +7,18 @@
  */
 
 import { chromium } from "playwright";
+import {
+  CB_PDF_FOOTER_DOM_REPORT_ID_ATTR,
+  CB_PDF_FOOTER_DOM_VERSION_ATTR,
+  CB_REPORT_PDF_PLAYWRIGHT_FOOTER_HTML_CLASS,
+} from "@cb/shared/reportPdfPlaywright";
+import { loadForeverReportLogoFooterDataUri } from "./foreverReportAssets";
+import {
+  buildPlaywrightPdfFooterTemplate,
+  PLAYWRIGHT_PDF_EMPTY_HEADER_TEMPLATE,
+  PLAYWRIGHT_PDF_FOOTER_MARGIN_BOTTOM_PX,
+  type PlaywrightPdfFooterContext,
+} from "./playwrightPdfFooter";
 
 export type PdfPageFormat = "A4" | "Letter";
 
@@ -21,7 +33,25 @@ export type RenderPdfOptions = {
    * Set false only for rare static pages that do not set the flag.
    */
   waitForReportReadySignal?: boolean;
+  /**
+   * Playwright `storageState` JSON path (saved auth). Same pattern as e2e `storageState` option.
+   */
+  storageStatePath?: string;
+  /**
+   * Forever v6 / Option B: Chromium footer with wordmark data URI, short legal only, report id + version + page numbers.
+   * When omitted, `displayHeaderFooter` is off (legacy sample PDFs unchanged).
+   * Mutually exclusive with `playwrightFooterFromDom`.
+   */
+  playwrightFooter?: PlaywrightPdfFooterContext;
+  /**
+   * When true (and `playwrightFooter` is omitted), footer uses Report ID + version from DOM
+   * (`CB_PDF_FOOTER_DOM_*` on `.cb-report-root` or first matching element) and the Forever green wordmark from
+   * `@cb/pdf/forever-report-assets`.
+   */
+  playwrightFooterFromDom?: boolean;
 };
+
+export type { PlaywrightPdfFooterContext };
 
 const DEFAULT_MARGIN_MM = "12mm";
 
@@ -46,9 +76,16 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
   const timeoutMs = options.timeoutMs ?? 120_000;
   const waitReady = options.waitForReportReadySignal !== false;
 
+  if (options.playwrightFooter && options.playwrightFooterFromDom) {
+    throw new Error("renderPdf: pass only one of playwrightFooter or playwrightFooterFromDom");
+  }
+
   const browser = await chromium.launch({ headless: true });
   try {
-    const page = await browser.newPage();
+    const context = await browser.newContext(
+      options.storageStatePath ? { storageState: options.storageStatePath } : {},
+    );
+    const page = await context.newPage();
     await page.goto(options.url, {
       waitUntil: "networkidle",
       timeout: timeoutMs,
@@ -70,15 +107,52 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
 
     await waitForFonts(page);
 
+    let footerCtx: PlaywrightPdfFooterContext | undefined = options.playwrightFooter;
+    if (options.playwrightFooterFromDom) {
+      const dom = await page.evaluate(
+        ([idAttr, verAttr]) => {
+          const pick = () => {
+            const byRoot = document.querySelector(
+              `.cb-report-root[${idAttr}]`,
+            ) as HTMLElement | null;
+            if (byRoot) return byRoot;
+            return document.querySelector(`[${idAttr}]`) as HTMLElement | null;
+          };
+          const el = pick();
+          return {
+            reportId: el?.getAttribute(idAttr)?.trim() ?? "",
+            versionLabel: el?.getAttribute(verAttr)?.trim() ?? "",
+          };
+        },
+        [CB_PDF_FOOTER_DOM_REPORT_ID_ATTR, CB_PDF_FOOTER_DOM_VERSION_ATTR],
+      );
+      footerCtx = {
+        reportId: dom.reportId.length > 0 ? dom.reportId : "CB-UNKNOWN",
+        versionLabel: dom.versionLabel.length > 0 ? dom.versionLabel : "v0.0",
+        logoDataUri: loadForeverReportLogoFooterDataUri(),
+      };
+    }
+
+    const useFooter = Boolean(footerCtx);
+
+    if (useFooter) {
+      await page.evaluate((cls) => {
+        document.documentElement.classList.add(cls);
+      }, CB_REPORT_PDF_PLAYWRIGHT_FOOTER_HTML_CLASS);
+    }
+
     const pdf = await page.pdf({
       path: options.outputPath,
       format: options.format ?? "A4",
       printBackground: true,
       preferCSSPageSize: true,
+      displayHeaderFooter: useFooter,
+      headerTemplate: useFooter ? PLAYWRIGHT_PDF_EMPTY_HEADER_TEMPLATE : undefined,
+      footerTemplate: useFooter && footerCtx ? buildPlaywrightPdfFooterTemplate(footerCtx) : undefined,
       margin: {
         top: DEFAULT_MARGIN_MM,
         right: DEFAULT_MARGIN_MM,
-        bottom: DEFAULT_MARGIN_MM,
+        bottom: useFooter ? `${PLAYWRIGHT_PDF_FOOTER_MARGIN_BOTTOM_PX}px` : DEFAULT_MARGIN_MM,
         left: DEFAULT_MARGIN_MM,
       },
     });
@@ -88,3 +162,4 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     await browser.close();
   }
 }
+

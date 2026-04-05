@@ -1,5 +1,12 @@
 import { CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY } from "./legalMonocopy";
+import {
+  formatAdvisoryReportExportZoneLabel,
+  marketIdToReportExportTimeZone,
+  type MarketId,
+} from "./markets";
 import { formatReportGeneratedAtLabel } from "./reportIdentity";
+
+export { CB_REPORT_EXPORT_TIMEZONE_KUALA_LUMPUR } from "./reportIdentity";
 
 /** Footer on every exported / printed report page (same text as site `CbLegalSiteFooter`). */
 export const CB_REPORT_LEGAL_NOTICE = CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY;
@@ -28,6 +35,8 @@ export type ReportAuditMeta = {
   generatedAt: Date;
   generatedAtLabel: string;
   modelDisplayName: string;
+  /** e.g. `SG · GMT+8` — advisory market + offset when Forever v6 export uses profile zone */
+  reportExportZoneLabel?: string;
 };
 
 function fnv1a32Hex(input: string): string {
@@ -55,6 +64,54 @@ export function formatPdfTimestampParts(d: Date): { datePart: string; timePart: 
   const h = String(d.getHours()).padStart(2, "0");
   const min = String(d.getMinutes()).padStart(2, "0");
   return { datePart: `${y}${m}${day}`, timePart: `${h}${min}` };
+}
+
+/** IANA zone for filename date/time segments (STEP 10). */
+export function formatPdfTimestampPartsInTimeZone(
+  d: Date,
+  timeZone: string,
+): { datePart: string; timePart: string } {
+  const dtf = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    hourCycle: "h23",
+  });
+  const parts = dtf.formatToParts(d);
+  const map: Record<string, string> = {};
+  for (const p of parts) {
+    if (p.type !== "literal") map[p.type] = p.value;
+  }
+  const y = map.year ?? "";
+  const m = map.month ?? "";
+  const day = map.day ?? "";
+  const h = map.hour ?? "";
+  const min = map.minute ?? "";
+  return { datePart: `${y}${m}${day}`, timePart: `${h}${min}` };
+}
+
+const FOREVER_V6_MODEL_FILE_SEGMENT = "Forever-Income-Model";
+
+/**
+ * STEP 10 — `Trial_CapitalBridge_Forever-Income-Model_…` when plan is trial; MY timezone in date/time parts.
+ */
+export function buildForeverV6CapitalBridgePdfFilename(args: {
+  userDisplayName: string;
+  versionLabel: string;
+  generatedAt: Date;
+  timeZone: string;
+  planSlug: string;
+}): string {
+  const { datePart, timePart } = formatPdfTimestampPartsInTimeZone(args.generatedAt, args.timeZone);
+  const user = sanitizePdfFilenameSegment(args.userDisplayName);
+  const ver = args.versionLabel.startsWith("v") ? args.versionLabel : `v${args.versionLabel}`;
+  const core = `CapitalBridge_${FOREVER_V6_MODEL_FILE_SEGMENT}_${user}_${datePart}_${timePart}_${ver}.pdf`;
+  const trial = args.planSlug.toLowerCase().trim() === "trial";
+  return trial ? `Trial_${core}` : core;
 }
 
 export function buildCapitalBridgePdfFilename(args: {
@@ -104,23 +161,51 @@ export function createReportAuditMeta(args: {
   userDisplayName: string;
   modelDisplayName?: string;
   now?: Date;
+  /**
+   * STEP 10 (Forever v6): hyphenated model segment, optional `Trial_` prefix, profile-driven IANA zone in
+   * filename + `generatedAtLabel`, plus `reportExportZoneLabel` (market code · GMT offset).
+   * Only applies when `modelCode === "FOREVER"`.
+   */
+  foreverV6Export?: { planSlug: string; advisoryMarketId?: MarketId; timeZone?: string };
 }): ReportAuditMeta {
   const now = args.now ?? new Date();
   const version = nextReportExportVersion();
   const seed = `${args.modelCode}|${args.userDisplayName}|${now.getTime()}|${Math.random().toString(36).slice(2, 11)}`;
   const reportId = buildReportId(args.modelCode, seed);
-  const filename = buildCapitalBridgePdfFilename({
-    modelCode: args.modelCode,
-    userDisplayName: args.userDisplayName,
-    versionLabel: version.label,
-    generatedAt: now,
-  });
+
+  const v6 = args.foreverV6Export && args.modelCode === "FOREVER" ? args.foreverV6Export : undefined;
+  const marketId = v6 ? (v6.advisoryMarketId ?? "MY") : undefined;
+  const tz =
+    v6 && marketId !== undefined
+      ? (v6.timeZone ?? marketIdToReportExportTimeZone(marketId))
+      : undefined;
+  const zoneLabel =
+    v6 && marketId !== undefined && tz !== undefined
+      ? formatAdvisoryReportExportZoneLabel(marketId, tz, now)
+      : undefined;
+
+  const filename = v6
+    ? buildForeverV6CapitalBridgePdfFilename({
+        userDisplayName: args.userDisplayName,
+        versionLabel: version.label,
+        generatedAt: now,
+        timeZone: tz!,
+        planSlug: v6.planSlug,
+      })
+    : buildCapitalBridgePdfFilename({
+        modelCode: args.modelCode,
+        userDisplayName: args.userDisplayName,
+        versionLabel: version.label,
+        generatedAt: now,
+      });
+
   return {
     reportId,
     versionLabel: version.label,
     filename,
     generatedAt: now,
-    generatedAtLabel: formatReportGeneratedAtLabel(now),
+    generatedAtLabel: tz ? formatReportGeneratedAtLabel(now, { timeZone: tz }) : formatReportGeneratedAtLabel(now),
     modelDisplayName: args.modelDisplayName ?? CB_REPORT_MODEL_DISPLAY_NAME[args.modelCode],
+    reportExportZoneLabel: zoneLabel,
   };
 }

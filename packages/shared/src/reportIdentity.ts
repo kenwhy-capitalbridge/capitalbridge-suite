@@ -1,5 +1,11 @@
-/** Date and time for PDF / report covers (en-GB, 24h). */
-export function formatReportGeneratedAtLabel(d: Date = new Date()): string {
+/** Malaysia default IANA zone — same as `marketIdToReportExportTimeZone("MY")` in `@cb/shared/markets`. */
+export const CB_REPORT_EXPORT_TIMEZONE_KUALA_LUMPUR = "Asia/Kuala_Lumpur";
+
+/** Date and time for PDF / report covers (en-GB, 24h). Optional `timeZone` (e.g. STEP 10 Kuala Lumpur). */
+export function formatReportGeneratedAtLabel(
+  d: Date = new Date(),
+  options?: { timeZone?: string },
+): string {
   return d.toLocaleString("en-GB", {
     day: "numeric",
     month: "long",
@@ -7,6 +13,7 @@ export function formatReportGeneratedAtLabel(d: Date = new Date()): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    ...(options?.timeZone ? { timeZone: options.timeZone } : {}),
   });
 }
 

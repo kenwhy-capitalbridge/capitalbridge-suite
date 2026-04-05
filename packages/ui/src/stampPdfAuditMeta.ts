@@ -18,6 +18,7 @@ export function stampAllPdfPagesWithAudit(doc: jsPDF, meta: ReportAuditMeta): vo
     const headerLines = [
       `Report ID: ${meta.reportId}`,
       meta.generatedAtLabel,
+      ...(meta.reportExportZoneLabel ? [meta.reportExportZoneLabel] : []),
       `Version: ${meta.versionLabel}`,
       meta.modelDisplayName,
     ];

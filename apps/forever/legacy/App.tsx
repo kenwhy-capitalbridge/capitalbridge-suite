@@ -33,10 +33,11 @@ import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictAct
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
-import { buildForeverStrategicWealthPdf } from "./foreverPdfBuild";
-import { loadForeverGreenBrandLogosForPdf } from "./foreverPdfLogos";
-import { createReportAuditMeta } from "@cb/shared/reportTraceability";
-import { ChromeSpinnerGlyph, ModelReportDownloadFooter, stampAllPdfPagesWithAudit, useModelMetricSpine } from "@cb/ui";
+import { ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
+import {
+  FOREVER_PRINT_SNAPSHOT_STORAGE_KEY,
+  type ForeverPrintSnapshotV1,
+} from "@/app/dashboard/print/foreverPrintSnapshot";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -105,7 +106,6 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
   const [familyContribution, setFamilyContribution] = useState<number>(0);
   const [expectedReturn, setExpectedReturn] = useState<number>(7);
   const [inflationRate, setInflationRate] = useState<number>(2);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Granular Asset States
   const [cash, setCash] = useState<number>(20000);
@@ -367,43 +367,64 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
     ? (capitalDiff * (results.realReturnRate / 100)) / 12 
     : (capitalDiff * (results.realReturnRate / 100));
 
-  const handleDownloadPDF = async () => {
-    if (isGenerating) return;
-    setIsGenerating(true);
+  /** STEP 11 — single path to v6 print + Playwright PDF; replaces client jsPDF download. */
+  const buildPrintSnapshot = (): ForeverPrintSnapshotV1 => ({
+    v: 1,
+    savedAt: Date.now(),
+    inputs: {
+      currency,
+      expense,
+      expenseType,
+      familyContribution,
+      expectedReturn,
+      inflationRate,
+      cash,
+      investments,
+      realEstate,
+      propertyLoanCost,
+      propertyTimeHorizon,
+    },
+    results: {
+      monthlyExpense: results.monthlyExpense,
+      annualExpense: results.annualExpense,
+      propertyMonthlyRepayment: results.propertyMonthlyRepayment,
+      familyContribution: results.familyContribution,
+      expectedReturn: results.expectedReturn,
+      inflationRate: results.inflationRate,
+      realReturnRate: results.realReturnRate,
+      capitalNeeded: Number.isFinite(results.capitalNeeded) ? results.capitalNeeded : null,
+      currentAssets: results.currentAssets,
+      assetBreakdown: results.assetBreakdown,
+      gap: results.gap,
+      progressPercent: results.progressPercent,
+      isSustainable: results.isSustainable,
+      runway: results.runway,
+      ...(lionAccessEnabled && lionCopyPayload
+        ? {
+            lionCopy: {
+              tier: foreverLionTier,
+              headline: lionCopyPayload.headline,
+              guidance: lionCopyPayload.guidance,
+              headlineIndex: lionCopyPayload.headlineIndex,
+              guidanceIndex: lionCopyPayload.guidanceIndex,
+              confidenceBand: lionCopyPayload.confidenceBand,
+              emphasis: lionCopyPayload.emphasis,
+              persona: lionCopyPayload.persona,
+              history: lionCopyPayload.history,
+            },
+          }
+        : {}),
+    },
+  });
 
+  const goToV6PrintReport = () => {
+    if (!results.isSustainable) return;
     try {
-      const { fullLockupPngDataUrl } = await loadForeverGreenBrandLogosForPdf();
-
-      const audit = createReportAuditMeta({
-        modelCode: "FOREVER",
-        userDisplayName: reportClientDisplayName ?? "Client",
-      });
-      const doc = buildForeverStrategicWealthPdf({
-        currency,
-        expenseType,
-        expense,
-        familyContribution,
-        expectedReturn,
-        inflationRate,
-        cash,
-        investments,
-        realEstate,
-        propertyLoanCost,
-        propertyTimeHorizon,
-        results,
-        foreverLionReport,
-        includeLionsVerdict: lionAccessEnabled,
-        logoFullLockupPngDataUrl: fullLockupPngDataUrl,
-        reportClientDisplayName,
-      });
-
-      stampAllPdfPagesWithAudit(doc, audit);
-      doc.save(audit.filename);
-    } catch (error) {
-      console.error("PDF Generation Error:", error);
-    } finally {
-      setIsGenerating(false);
+      sessionStorage.setItem(FOREVER_PRINT_SNAPSHOT_STORAGE_KEY, JSON.stringify(buildPrintSnapshot()));
+    } catch {
+      /* quota / private mode */
     }
+    window.location.assign("/dashboard/print");
   };
 
   const status = useMemo(() => {
@@ -608,18 +629,19 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
 
       <div className="w-full max-w-[900px] px-3 sm:px-5 lg:px-10">
         <ModelReportDownloadFooter
-          onDownload={() => void handleDownloadPDF()}
-          disabled={!results.isSustainable || isGenerating}
-          buttonLabel={isGenerating ? "Generating…" : undefined}
-          buttonLeading={
-            isGenerating ? <ChromeSpinnerGlyph sizePx={16} /> : undefined
-          }
+          onDownload={goToV6PrintReport}
+          disabled={!results.isSustainable}
+          buttonLabel="OPEN PRINT REPORT"
           buttonClassName={
             results.isSustainable
               ? undefined
               : "mx-auto flex min-h-[2.5rem] w-full max-w-[min(100%,28rem)] cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-bold text-gray-500 shadow-none"
           }
         />
+        <p className="mt-3 text-center text-[10px] font-normal text-gray-500 px-2">
+          Opens the v6 print layout (snapshot saved for this tab). Official file PDF: Playwright capture or browser
+          print from that page.
+        </p>
       </div>
     </div>
   );

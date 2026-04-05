@@ -3,7 +3,7 @@ import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { generateLionCritical } from "@cb/lion-verdict";
 
 export type PdfNarrativeContext = {
-  modelType?: string;
+  modelType?: "FOREVER" | "HEALTH" | "STRESS" | "IE";
   clientName?: string;
   lionScore?: number;
   depletionPressure?: string | number;

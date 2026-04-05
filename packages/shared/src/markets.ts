@@ -313,3 +313,55 @@ export function persistAdvisoryMarketPreference(market: MarketId): void {
     /* private mode / quota */
   }
 }
+
+/** IANA zone for Forever / advisory PDF audit timestamps (`profiles.advisory_market`). */
+const MARKET_REPORT_EXPORT_TIME_ZONE: Record<MarketId, string> = {
+  MY: "Asia/Kuala_Lumpur",
+  SG: "Asia/Singapore",
+  TH: "Asia/Bangkok",
+  PH: "Asia/Manila",
+  US: "America/New_York",
+  AU: "Australia/Sydney",
+  CN: "Asia/Shanghai",
+  HK: "Asia/Hong_Kong",
+  VN: "Asia/Ho_Chi_Minh",
+};
+
+export function marketIdToReportExportTimeZone(marketId: MarketId): string {
+  return MARKET_REPORT_EXPORT_TIME_ZONE[marketId] ?? MARKET_REPORT_EXPORT_TIME_ZONE.MY;
+}
+
+/** Offset string at `at` (e.g. GMT+8) for the given IANA zone. */
+export function formatReportExportGmtOffset(timeZone: string, at: Date): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      timeZoneName: "shortOffset",
+    }).formatToParts(at);
+    const raw = parts.find((p) => p.type === "timeZoneName")?.value?.trim();
+    if (raw) return raw.replace(/^UTC/i, "GMT");
+  } catch {
+    /* ignore */
+  }
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      timeZoneName: "longOffset",
+    }).formatToParts(at);
+    const raw = parts.find((p) => p.type === "timeZoneName")?.value?.trim();
+    if (raw) return raw;
+  } catch {
+    /* ignore */
+  }
+  return "GMT";
+}
+
+/** Audit line: market code + offset, e.g. `SG · GMT+8`. */
+export function formatAdvisoryReportExportZoneLabel(
+  marketId: MarketId,
+  timeZone: string,
+  at: Date,
+): string {
+  const code = MARKET_LABELS[marketId] ?? marketId;
+  return `${code} · ${formatReportExportGmtOffset(timeZone, at)}`;
+}

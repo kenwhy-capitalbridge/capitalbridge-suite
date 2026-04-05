@@ -85,6 +85,7 @@ async function main() {
     modelCode: "FOREVER",
     userDisplayName: "SampleClient",
     now: new Date("2026-03-28T12:00:00.000Z"),
+    foreverV6Export: { planSlug: "forever-income", advisoryMarketId: "MY" },
   });
   stampAllPdfPagesWithAudit(doc, audit);
 
