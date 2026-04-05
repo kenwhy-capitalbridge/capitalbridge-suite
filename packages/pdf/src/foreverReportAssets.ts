@@ -2,9 +2,11 @@
  * Forever Income v6 PDF — STEP 2 asset resolver (Node / Playwright pipelines only).
  *
  * Resolution order per asset:
- * 1) Hardcoded absolute paths (developer machine; spec paths)
- * 2) Paths under CB_CAPITALBRIDGE_SUITE_ROOT (optional env), if set
- * 3) Paths under auto-detected monorepo root (walk up from this file for package.json name capitalbridge-suite)
+ * 1) CB_CAPITALBRIDGE_SUITE_ROOT + repo-relative path (optional env)
+ * 2) Forever deploy: `public/brand/*.svg` under `process.cwd()` (Vercel Root Directory = apps/forever)
+ *    or `apps/forever/public/brand` when cwd is monorepo root
+ * 3) Auto-detected monorepo root + repo-relative path
+ * 4) Developer-machine absolutes (last — avoid misleading “Tried” on Linux servers)
  *
  * No network or SharePoint. Throws with full attempted path list on failure.
  */
@@ -70,6 +72,23 @@ function envSuiteRoot(): string | null {
   return v && v.length > 0 ? v : null;
 }
 
+/** Same filenames as `apps/forever/public/brand/` (shipped with the Forever app). */
+const PUBLIC_BRAND_FILE: Record<ForeverReportAssetKind, string | null> = {
+  lionCopy: null,
+  logoFooter: "CapitalBridgeLogo_Green.svg",
+  logoCover: "Full_CapitalBridge_Green.svg",
+};
+
+function publicBrandCandidates(kind: ForeverReportAssetKind): string[] {
+  const file = PUBLIC_BRAND_FILE[kind];
+  if (!file) return [];
+  const cwd = process.cwd();
+  return [
+    join(cwd, "public", "brand", file),
+    join(cwd, "apps", "forever", "public", "brand", file),
+  ];
+}
+
 /**
  * All candidate paths for an asset in resolution order (for errors / debugging).
  */
@@ -77,19 +96,23 @@ export function foreverReportAssetCandidatePaths(kind: ForeverReportAssetKind): 
   const rel = FOREVER_REPORT_REPO_RELATIVE[kind];
   const out: string[] = [];
 
-  for (const p of ABSOLUTE_PRIMARY[kind]) {
-    out.push(p);
-  }
-
   const envRoot = envSuiteRoot();
   if (envRoot) {
     out.push(join(envRoot, rel));
   }
 
+  for (const p of publicBrandCandidates(kind)) {
+    out.push(p);
+  }
+
   try {
     out.push(join(findCapitalbridgeSuiteRoot(), rel));
   } catch {
-    /* findCapitalbridgeSuiteRoot failed — only absolutes + env remain */
+    /* findCapitalbridgeSuiteRoot failed */
+  }
+
+  for (const p of ABSOLUTE_PRIMARY[kind]) {
+    out.push(p);
   }
 
   return [...new Set(out)];
