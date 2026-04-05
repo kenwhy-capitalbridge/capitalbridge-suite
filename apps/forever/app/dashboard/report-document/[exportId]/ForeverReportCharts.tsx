@@ -43,7 +43,7 @@ export function ChartFrame({
   caption: ReactNode;
 }) {
   return (
-    <div className="cb-chart-block cb-report-chart-wrap cb-forever-chart-frame cb-forever-doc-chart-block mt-2">
+    <div className="cb-chart-block cb-report-chart-wrap cb-forever-chart-frame cb-forever-doc-chart-block mt-2 overflow-visible">
       <h3
         className="cb-forever-chart-title m-0 text-[11pt] font-bold leading-tight text-[#0d3a1d]"
         style={{ fontFamily: '"Roboto Serif", Georgia, serif' }}
@@ -51,14 +51,14 @@ export function ChartFrame({
         {title}
       </h3>
       <p className="cb-chart-why mt-1 mb-2 text-[9.5pt] leading-snug text-[rgba(13,58,29,0.78)]">{subtitle}</p>
-      <div className="relative flex gap-1">
+      <div className="relative flex gap-1 overflow-visible">
         <span
           className="flex w-[2.25em] flex-shrink-0 items-center justify-center text-[8pt] font-semibold leading-tight text-[#0d3a1d]"
           style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
         >
           {yAxisLabel}
         </span>
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="cb-forever-chart-svg-wrap min-w-0 flex-1 overflow-visible">{children}</div>
       </div>
       <div className="mt-1 text-center text-[8pt] font-semibold text-[#0d3a1d]">{xAxisLabel}</div>
       {caption}
@@ -115,10 +115,10 @@ export function NeedSupportedGapBars({
   formatMoney: MoneyFmt;
 }) {
   const maxY = niceMax([need, supported, gap]);
-  const W = 480;
+  const W = 520;
   const H = 200;
-  const padL = 52;
-  const padR = 16;
+  const padL = 72;
+  const padR = 28;
   const padT = 12;
   const padB = 44;
   const innerW = W - padL - padR;
@@ -143,7 +143,7 @@ export function NeedSupportedGapBars({
         return (
           <g key={t}>
             <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(13,58,29,0.12)" strokeWidth={1} />
-            <text x={padL - 6} y={y + 4} textAnchor="end" fontSize={9} fill={muted}>
+            <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={9} fill={muted}>
               {formatMoney(maxY * t)}
             </text>
           </g>
@@ -197,10 +197,10 @@ export function WaterfallChart({
   netAnnualDraw: number;
   formatMoney: MoneyFmt;
 }) {
-  const W = 520;
+  const W = 540;
   const H = 220;
-  const padL = 40;
-  const padR = 16;
+  const padL = 48;
+  const padR = 28;
   const padT = 12;
   const padB = 56;
   const innerW = W - padL - padR;
@@ -288,15 +288,15 @@ export function StackedAccessibilityBar({
 }) {
   const total = liquid + semi + illiquid;
   const denom = total > 0 ? total : 1;
-  const W = 480;
+  const W = 520;
   const H = 72;
-  const inner = W - 8;
+  const inner = W - 24;
   const parts = [
     { v: liquid, label: "Liquid (cash)", color: "#55b685" },
     { v: semi, label: "Semi-liquid (investments)", color: "#8fcf7a" },
     { v: illiquid, label: "Property / illiquid", color: greenMid },
   ];
-  let x = 4;
+  let x = 12;
   return (
     <svg viewBox={`0 0 ${W} ${H + 40}`} className="h-auto w-full max-w-full" role="img" aria-label="Stacked capital bar">
       <rect width={W} height={H + 40} fill="#fff" />
@@ -330,10 +330,10 @@ export function CapitalRunwayLineChart({
   depletionYear: number | null;
   formatMoney: MoneyFmt;
 }) {
-  const W = 500;
+  const W = 520;
   const H = 220;
-  const padL = 56;
-  const padR = 16;
+  const padL = 72;
+  const padR = 28;
   const padT = 12;
   const padB = 36;
   const innerW = W - padL - padR;
@@ -354,7 +354,7 @@ export function CapitalRunwayLineChart({
         return (
           <g key={t}>
             <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(13,58,29,0.1)" strokeWidth={1} />
-            <text x={padL - 6} y={y + 4} textAnchor="end" fontSize={9} fill={muted}>
+            <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={9} fill={muted}>
               {formatMoney(maxY * t)}
             </text>
           </g>
@@ -449,10 +449,10 @@ export function SensitivityLineChart({
 }: {
   points: { label: string; years: number | null }[];
 }) {
-  const W = 480;
+  const W = 510;
   const H = 200;
-  const padL = 44;
-  const padR = 12;
+  const padL = 58;
+  const padR = 22;
   const padT = 16;
   const padB = 48;
   const innerW = W - padL - padR;
@@ -482,7 +482,7 @@ export function SensitivityLineChart({
         return (
           <g key={t}>
             <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(13,58,29,0.1)" strokeWidth={1} />
-            <text x={padL - 4} y={y + 3} textAnchor="end" fontSize={8} fill={muted}>
+            <text x={padL - 6} y={y + 3} textAnchor="end" fontSize={8} fill={muted}>
               {(maxY * t).toFixed(0)}y
             </text>
           </g>

@@ -206,7 +206,7 @@ export function LionWatermarkBackdrop() {
   }, [pathname]);
 
   return (
-    <div className={`${styles.root} print:hidden`} aria-hidden>
+    <div className={`${styles.root} print:hidden`} data-cb-lion-watermark aria-hidden>
       {marks.map((m, i) => {
         const filterParts: string[] = [];
         if (m.blurPx > 0.05) filterParts.push(`blur(${m.blurPx.toFixed(2)}px)`);
