@@ -61,6 +61,7 @@ export type { ReportHeadingProps } from './ReportHeading';
 export { ReportHeading } from './ReportHeading';
 export type { ReportProseProps } from './ReportProse';
 export { ReportProse } from './ReportProse';
+export { ReportTrialSnapshotCaption } from './ReportTrialSnapshotCaption';
 export type { ReportBulletListProps } from './ReportBulletList';
 export { ReportBulletList } from './ReportBulletList';
 export type { ReportCalloutProps } from './ReportCallout';

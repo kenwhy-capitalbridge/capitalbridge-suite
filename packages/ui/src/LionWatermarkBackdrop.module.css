@@ -70,3 +70,10 @@
   user-select: none;
   mix-blend-mode: soft-light;
 }
+
+/* PDF / browser print: never rely on app Tailwind `print:hidden` (purge may omit it for this package). */
+@media print {
+  .root {
+    display: none !important;
+  }
+}

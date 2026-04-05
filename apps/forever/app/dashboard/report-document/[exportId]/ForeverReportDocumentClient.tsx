@@ -7,8 +7,17 @@ import {
   CB_PDF_FOOTER_DOM_VERSION_ATTR,
 } from "@cb/shared/reportPdfPlaywright";
 import { CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY } from "@cb/shared/legalMonocopy";
+import { pricingReturnModelDashboardUrl } from "@cb/shared/urls";
 import type { ReportAuditMeta } from "@cb/shared/reportTraceability";
-import { ReportHeading, ReportKeyValueGrid, ReportProse, ReportSection } from "@cb/advisory-graph/reports";
+import {
+  REPORT_FONT_BODY,
+  REPORT_FONT_DISPLAY,
+  ReportHeading,
+  ReportKeyValueGrid,
+  ReportProse,
+  ReportSection,
+  ReportTrialSnapshotCaption,
+} from "@cb/advisory-graph/reports";
 import { ReportPrintChrome } from "@cb/ui";
 
 import { ProgressBarTile } from "./ForeverReportCharts";
@@ -216,6 +225,9 @@ export function ForeverReportDocumentClient({
     return `Target capital (real terms): ${need}. Runway: ${c.runway}.`;
   }, [derived, formatMoneyBound]);
 
+  const incomeEngineeringDashboardUrl =
+    pricingReturnModelDashboardUrl("incomeengineering") ?? "https://incomeengineering.thecapitalbridge.com/dashboard";
+
   return (
     <div
       className="cb-report-root cb-forever-doc-report print-report-root min-h-screen text-[#0d3a1d]"
@@ -227,43 +239,67 @@ export function ForeverReportDocumentClient({
     >
       <ReportPrintChrome audit={audit} printFooterText={shortFooterLegal} />
 
-      <section className="cb-page cb-forever-doc-cover cb-report-executive-summary--page-break-after print:pb-4">
-        <div className="mb-5 flex justify-center md:mb-6">
-          <img
-            src="/brand/Full_CapitalBridge_Green.svg"
-            alt="Capital Bridge"
-            className="h-14 w-auto max-w-[260px] object-contain md:h-16 md:max-w-[280px]"
-          />
-        </div>
-        <ReportHeading level={2} variant="sectionSmall">
-          Forever Income — strategic wealth report
-        </ReportHeading>
-        <ReportProse lead className="text-[#0d3a1d]">
-          Prepared for: <strong className="text-[#0d3a1d]">{preparedForName}</strong>
-        </ReportProse>
-        <ReportProse className="text-[#0d3a1d]">
-          Generated: <strong className="text-[#0d3a1d]">{audit.generatedAtLabel}</strong>
-        </ReportProse>
-        <div className="mt-4 max-w-[44em] border-t border-[rgba(13,58,29,0.15)] pt-3">
-          <p className="mb-1.5 text-[8pt] font-bold uppercase tracking-wide text-[#0d3a1d]">Contents</p>
-          <div className="space-y-2 text-[8pt] leading-snug text-[rgba(13,58,29,0.88)]">
-            {TOC_STRUCTURE.map((block) => (
-              <div key={block.title}>
-                <p className="mb-0.5 font-semibold text-[#0d3a1d]">{block.title}</p>
-                {block.items && block.items.length > 0 ? (
-                  <ul className="mb-0 list-disc space-y-0.5 pl-4">
-                    {block.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ))}
+      <section className="cb-page cb-forever-doc-cover cb-report-executive-summary--page-break-after flex flex-col print:pb-4">
+        <div className="cb-forever-doc-cover-body flex min-h-0 flex-1 flex-col">
+          <div className="mb-6 flex justify-center print:mb-10 md:mb-8">
+            <img
+              src="/brand/Full_CapitalBridge_Green.svg"
+              alt="Capital Bridge"
+              className="cb-forever-doc-cover-logo mx-auto block h-auto w-[56%] max-w-[400px] min-w-[220px] object-contain object-center"
+            />
+          </div>
+          <h1
+            className="m-0 mb-5 block w-full text-center text-[12.5pt] font-bold leading-tight tracking-[0.06em] text-[#0d3a1d] print:mb-6 print:text-[12.5pt]"
+            style={{ fontFamily: REPORT_FONT_DISPLAY }}
+          >
+            FOREVER INCOME — STRATEGIC WEALTH REPORT
+          </h1>
+          <p
+            className="m-0 mb-3 block w-full text-[11pt] leading-normal text-[#0d3a1d]"
+            style={{ fontFamily: REPORT_FONT_BODY, marginBottom: "0.65em" }}
+          >
+            Prepared for: <strong className="font-semibold text-[#0d3a1d]">{preparedForName}</strong>
+          </p>
+          <p
+            className="m-0 block w-full max-w-[44em] break-inside-avoid text-[11pt] leading-normal text-[#0d3a1d]"
+            style={{ fontFamily: REPORT_FONT_BODY, marginBottom: "1.35em" }}
+          >
+            Generated: <strong className="font-semibold text-[#0d3a1d]">{audit.generatedAtLabel}</strong>
+          </p>
+          <div className="mt-2 block w-full max-w-[44em] border-t border-[rgba(13,58,29,0.15)] pt-5 print:mt-3 print:pt-6">
+            <h2
+              className="m-0 mb-2 block w-full text-[8pt] font-bold uppercase tracking-wide text-[#0d3a1d]"
+              style={{ fontFamily: REPORT_FONT_BODY }}
+            >
+              Contents
+            </h2>
+            <div className="space-y-2 text-[8pt] leading-snug text-[rgba(13,58,29,0.88)]">
+              {TOC_STRUCTURE.map((block) => (
+                <div key={block.title} className="block w-full">
+                  <p className="mb-0.5 font-semibold text-[#0d3a1d]">{block.title}</p>
+                  {block.items && block.items.length > 0 ? (
+                    <ul className="mb-0 list-disc space-y-0.5 pl-4">
+                      {block.items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <ReportProse className="cb-report-option-b-full-ip mt-4 text-[9pt] leading-relaxed text-[#2b2b2b] md:mt-5">
-          {CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY}
-        </ReportProse>
+        <div className="cb-forever-doc-cover-legal mt-10 block w-full shrink-0 print:mt-auto print:pt-10">
+          <p
+            className="cb-report-option-b-full-ip m-0 max-w-none text-[7.5pt] leading-snug"
+            style={{
+              fontFamily: REPORT_FONT_BODY,
+              color: "rgba(13, 58, 29, 0.7)",
+            }}
+          >
+            {CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY}
+          </p>
+        </div>
       </section>
 
       <section className="cb-page cb-break-before-page">
@@ -291,6 +327,7 @@ export function ForeverReportDocumentClient({
       {derived && isTrial ? (
         <ReportSection className="cb-module cb-forever-doc-page-1">
           <div className="cb-print-stage-label cb-forever-doc-stage-label">Sustainability snapshot</div>
+          <ReportTrialSnapshotCaption isTrial={isTrial} />
           <ReportProse lead className="text-[#0d3a1d]">
             Model inputs and headline outcomes at export. Following pages chart the same snapshot.
           </ReportProse>
@@ -364,6 +401,32 @@ export function ForeverReportDocumentClient({
           <ReportProse className="cb-report-option-b-full-ip mt-4 text-[9pt] leading-relaxed text-[#2b2b2b]">
             {CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY}
           </ReportProse>
+          <div className="cb-forever-doc-ie-cta cb-keep-together mt-8 border-t border-[rgba(13,58,29,0.18)] pt-6">
+            <div className="mb-4 h-0.5 w-10 rounded-sm bg-[#0d3a1d]" aria-hidden />
+            <h3
+              className="cb-avoid-orphan-heading m-0 text-[11pt] font-bold leading-tight text-[#0d3a1d]"
+              style={{ fontFamily: '"Roboto Serif", Georgia, serif' }}
+            >
+              Recommended Next Step — Income Engineering
+            </h3>
+            <p className="mt-3 text-[10pt] leading-relaxed text-[#0d3a1d]" style={{ marginBottom: "0.75em" }}>
+              Your Forever Income snapshot highlights the structural gap between lifestyle need and what capital sustainably supports
+              under stated assumptions. Income Engineering helps you build a repeatable income engine so lifestyle is funded by inflows —
+              not depletion.
+            </p>
+            <ul className="my-0 mb-4 list-disc space-y-2 pl-5 text-[10pt] leading-snug text-[#0d3a1d]">
+              <li>Confirm your minimum viable lifestyle (the spend you can live with if needed)</li>
+              <li>List reliable income offsets you can sustain (salary/family/rental/business)</li>
+              <li>Choose one lever you will commit to in the next 30 days</li>
+            </ul>
+            <p className="m-0 text-[10pt] font-semibold leading-snug text-[#0d3a1d]">
+              Next:{" "}
+              <a href={incomeEngineeringDashboardUrl} className="text-[#0d3a1d] underline underline-offset-2">
+                Run Income Engineering
+              </a>{" "}
+              to close the gap at the source.
+            </p>
+          </div>
         </div>
       </section>
     </div>
