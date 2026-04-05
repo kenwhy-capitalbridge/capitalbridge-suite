@@ -54,6 +54,134 @@
   color: #ffffff;
 }
 
+/* Forever v6 PDF document — green keys in KV grids; module sections may split across pages */
+.cb-forever-doc-report .cb-forever-kv-grid strong {
+  color: #0d3a1d !important;
+}
+
+.cb-forever-doc-stage-label.cb-print-stage-label,
+.cb-forever-doc-report .cb-print-stage-label.cb-forever-doc-stage-label {
+  color: #0d3a1d !important;
+  border-bottom-color: rgba(13, 58, 29, 0.2) !important;
+}
+
+.cb-forever-doc-section-divider {
+  margin: 0 0 20px 0;
+}
+
+.cb-forever-doc-section-divider .cb-forever-doc-section-divider-title {
+  margin-top: 6px !important;
+  margin-bottom: 0 !important;
+  color: #0d3a1d !important;
+}
+
+/* Page container + shared print utilities (Forever report document only) */
+.cb-forever-doc-report.cb-report-root {
+  background: #f6f5f1;
+  color: #0d3a1d;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+}
+
+.cb-forever-doc-report .cb-page {
+  box-sizing: border-box;
+  padding: 28px 32px 84px 32px;
+}
+
+.cb-module {
+  margin: 0 0 24px 0;
+}
+
+/* Only these should force a new page (plus .cb-report-section--page-break from ReportSection). */
+.cb-section-start,
+.cb-break-before-page,
+.cb-report-section--page-break {
+  break-before: page;
+  page-break-before: always;
+}
+
+.cb-keep-together {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cb-avoid-orphan-heading {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.cb-chart-block {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cb-chart-caption {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
+/* Option A — forced breaks only at boundaries; modules with .cb-keep-together stay intact */
+@media print {
+  .cb-forever-doc-report.cb-report-root {
+    background: #fff !important;
+  }
+
+  .cb-forever-doc-report .cb-page {
+    padding: 28px 32px 84px 32px;
+  }
+
+  .cb-forever-doc-report .cb-module.cb-keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cb-module.cb-forever-doc-closing,
+  .cb-report-section.cb-module.cb-forever-doc-closing,
+  .cb-report-section.cb-module.cb-forever-doc-page-1,
+  .cb-report-section.cb-module.cb-forever-doc-parse-error {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .cb-chart-block,
+  .cb-forever-doc-chart-block,
+  .cb-report-chart-wrap.cb-forever-chart-frame {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cb-forever-doc-card-grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cb-avoid-orphan-heading,
+  .cb-forever-doc-module-heading,
+  .cb-forever-doc-chart-block .cb-forever-chart-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .cb-chart-caption,
+  .cb-forever-doc-chart-caption {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
+  .cb-forever-doc-page-1 .cb-forever-doc-progress-tile {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cb-forever-doc-section-divider {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+}
+
 /* Step 5 — Playwright / browser print: only the main column; site chrome is screen-only */
 @media print {
   .cb-forever-site-shell > :not(.cb-forever-main) {
