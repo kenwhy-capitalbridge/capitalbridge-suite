@@ -59,6 +59,37 @@ export type { PlaywrightPdfFooterContext };
 
 const DEFAULT_MARGIN_MM = "12mm";
 
+/**
+ * Local / CI: Playwright downloads Chromium to `~/.cache/ms-playwright` (`npx playwright install chromium`).
+ * Vercel & AWS Lambda: no cache — use `@sparticuz/chromium` (bundled brotli binary extracted to /tmp).
+ * Override: set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to any Chrome/Chromium binary.
+ */
+async function chromiumLaunchOptions(): Promise<Parameters<typeof chromium.launch>[0]> {
+  const fromEnv = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  if (fromEnv) {
+    return { headless: true, executablePath: fromEnv };
+  }
+
+  const serverless =
+    process.env.VERCEL === "1" ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    process.env.PLAYWRIGHT_USE_BUNDLED_CHROMIUM === "1";
+
+  if (serverless) {
+    const ServerlessChromium = (await import("@sparticuz/chromium")).default;
+    /** Skip SwiftShader unpack for smaller cold start; PDF print backgrounds still rasterise. */
+    ServerlessChromium.setGraphicsMode = false;
+    const executablePath = await ServerlessChromium.executablePath();
+    return {
+      headless: true,
+      executablePath,
+      args: ServerlessChromium.args,
+    };
+  }
+
+  return { headless: true };
+}
+
 async function waitForFonts(page: import("playwright").Page): Promise<void> {
   await page.evaluate(async () => {
     if (typeof document === "undefined" || !document.fonts) return;
@@ -84,7 +115,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     throw new Error("renderPdf: pass only one of playwrightFooter or playwrightFooterFromDom");
   }
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch(await chromiumLaunchOptions());
   try {
     const context = await browser.newContext(
       options.storageStatePath ? { storageState: options.storageStatePath } : {},

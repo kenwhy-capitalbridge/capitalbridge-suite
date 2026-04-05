@@ -12,5 +12,7 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   transpilePackages: ["@cb/ui"],
+  /** Playwright + serverless Chromium ship native/unpack logic — must not be webpack-bundled. */
+  serverExternalPackages: ["playwright", "@sparticuz/chromium"],
 };
 export default nextConfig;
