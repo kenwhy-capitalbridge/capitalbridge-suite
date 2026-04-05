@@ -52,8 +52,9 @@
   color: #0d3a1d !important;
 }
 
-.cb-advisory-doc-stage-label.cb-print-stage-label,
-.cb-forever-doc-report .cb-print-stage-label.cb-advisory-doc-stage-label {
+/* Stage ribbons inside report body only — appendix title omits .cb-print-stage-label to avoid a full-width green rule on the last page. */
+.cb-advisory-doc-stage-label.cb-print-stage-label:not(.cb-advisory-doc-appendix-stage),
+.cb-forever-doc-report .cb-print-stage-label.cb-advisory-doc-stage-label:not(.cb-advisory-doc-appendix-stage) {
   border-bottom-color: rgba(13, 58, 29, 0.2) !important;
 }
 

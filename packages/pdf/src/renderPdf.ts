@@ -16,7 +16,8 @@ import { loadForeverReportLogoFooterDataUri } from "./foreverReportAssets";
 import {
   buildPlaywrightPdfFooterTemplate,
   PLAYWRIGHT_PDF_EMPTY_HEADER_TEMPLATE,
-  PLAYWRIGHT_PDF_FOOTER_MARGIN_BOTTOM_PX,
+  PLAYWRIGHT_PDF_FOOTER_RESERVED_MM,
+  PLAYWRIGHT_PDF_HEADER_RESERVED_MM,
   type PlaywrightPdfFooterContext,
 } from "./playwrightPdfFooter";
 
@@ -188,10 +189,10 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       headerTemplate: useFooter ? PLAYWRIGHT_PDF_EMPTY_HEADER_TEMPLATE : undefined,
       footerTemplate: useFooter && footerCtx ? buildPlaywrightPdfFooterTemplate(footerCtx) : undefined,
       margin: {
-        top: DEFAULT_MARGIN_MM,
-        right: DEFAULT_MARGIN_MM,
-        bottom: useFooter ? `${PLAYWRIGHT_PDF_FOOTER_MARGIN_BOTTOM_PX}px` : DEFAULT_MARGIN_MM,
-        left: DEFAULT_MARGIN_MM,
+        top: useFooter ? `${PLAYWRIGHT_PDF_HEADER_RESERVED_MM}mm` : DEFAULT_MARGIN_MM,
+        right: useFooter ? "13mm" : DEFAULT_MARGIN_MM,
+        bottom: useFooter ? `${PLAYWRIGHT_PDF_FOOTER_RESERVED_MM}mm` : DEFAULT_MARGIN_MM,
+        left: useFooter ? "13mm" : DEFAULT_MARGIN_MM,
       },
     });
 

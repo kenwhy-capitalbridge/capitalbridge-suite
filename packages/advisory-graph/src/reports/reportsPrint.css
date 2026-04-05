@@ -206,10 +206,10 @@
   /*
    * STEP 4 (Forever v6 / Playwright footer): `renderPdf({ playwrightFooter })` adds
    * `cb-report-pdf-playwright-footer` on <html>. Band height must stay aligned with
-   * PLAYWRIGHT_PDF_FOOTER_MARGIN_BOTTOM_PX in @cb/pdf/playwright-pdf-footer.
+   * PLAYWRIGHT_PDF_FOOTER_RESERVED_MM in @cb/pdf/playwright-pdf-footer.
    */
   html.cb-report-pdf-playwright-footer {
-    --cb-playwright-pdf-footer-reserved: 72px;
+    --cb-playwright-pdf-footer-reserved: 12mm;
   }
 
   html.cb-report-pdf-playwright-footer .cb-report-print-footer {

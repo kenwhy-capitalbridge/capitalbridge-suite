@@ -17,12 +17,27 @@
   background: #f6f5f1;
   color: #0d3a1d;
   font-family: "Inter", Arial, Helvetica, sans-serif;
-  --cb-print-header-gap: 6px;
+  --cb-print-header-gap: 0px;
+  --cb-advisory-print-header-height: 18mm;
+  --cb-advisory-print-footer-reserved: 12mm;
 }
 
 /* No gold/yellow on white — overrides shared print.css (#ffcc6a) and inline REPORT_ACCENT on headings/KV keys. */
 .cb-advisory-pdf-doc .cb-print-stage-label {
   color: #0d3a1d !important;
+}
+
+/* Last-page appendix title: same rhythm as stage labels but no rule / box (avoids green rectangular bar in PDF). */
+.cb-advisory-pdf-doc .cb-advisory-doc-appendix-stage {
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0d3a1d;
+  margin: 0 0 0.85em;
+  padding: 0;
+  border: none;
+  box-shadow: none;
 }
 
 .cb-advisory-pdf-doc h2 {
@@ -102,13 +117,11 @@
 
 @media print {
   /*
-   * Fixed .cb-report-print-header sits at top:0 on every sheet. margin-top clears header + air.
-   * Named page shared by all model Playwright PDFs.
+   * Fixed .cb-report-print-header: explicit 18mm band. @page + Playwright margins use same top/bottom.
    */
   @page advisory-pdf-doc {
     size: A4;
-    /* Tighter top margin matches shorter fixed print header band */
-    margin: 32mm 13mm 30mm 13mm;
+    margin: 18mm 13mm 12mm 13mm;
   }
 
   .cb-advisory-pdf-doc.cb-report-root {
@@ -117,32 +130,43 @@
   }
 
   .cb-advisory-pdf-doc.cb-report-root > .cb-report-print-header {
-    padding: 1.4mm 12mm 1.2mm !important;
+    height: var(--cb-advisory-print-header-height) !important;
+    min-height: var(--cb-advisory-print-header-height) !important;
+    max-height: var(--cb-advisory-print-header-height) !important;
+    box-sizing: border-box !important;
+    padding: 1mm 10mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    overflow: hidden !important;
     border-bottom-width: 0.35pt !important;
   }
 
   .cb-advisory-pdf-doc .cb-report-print-header-inner {
-    gap: 8px;
+    gap: 6px;
+    flex: 1;
+    min-height: 0;
+    align-items: center;
   }
 
   .cb-advisory-pdf-doc .cb-report-print-header-model {
-    font-size: 7.75pt !important;
-    line-height: 1.15 !important;
+    font-size: 7.5pt !important;
+    line-height: 1.12 !important;
   }
 
   .cb-advisory-pdf-doc .cb-report-print-header-meta {
-    font-size: 6.25pt !important;
-    line-height: 1.22 !important;
+    font-size: 6pt !important;
+    line-height: 1.15 !important;
   }
 
   .cb-advisory-pdf-doc.cb-report-root:has(> .cb-report-print-header),
   .cb-advisory-pdf-doc.print-report-root:has(> .cb-report-print-header) {
-    padding-top: calc(7mm + var(--cb-print-header-gap)) !important;
+    padding-top: 0 !important;
     box-sizing: border-box;
   }
 
   .cb-advisory-pdf-doc .cb-page {
-    padding: 40px 24px 84px 24px;
+    padding: 40px 24px 16px 24px;
   }
 
   .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) {
@@ -205,15 +229,17 @@
   .cb-advisory-pdf-doc .cb-advisory-doc-appendix-stage {
     display: block !important;
     margin-bottom: 10pt !important;
-    padding-bottom: 0 !important;
+    padding: 0 !important;
     line-height: 1.3 !important;
-    /* Remove green “rule” bar (shared .cb-print-stage-label border) on last page */
-    border-bottom: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 
   .cb-advisory-pdf-doc .cb-advisory-doc-appendix-cta {
-    border-top: none !important;
-    padding-top: 10pt !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding-top: 8pt !important;
     margin-top: 0 !important;
   }
 
