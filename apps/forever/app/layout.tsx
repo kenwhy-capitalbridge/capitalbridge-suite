@@ -57,7 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ForeverCalculatorProvider>
             <ModelMetricSpineProvider>
-              <div className="cb-forever-site-shell flex min-h-screen flex-col">
+              <div className="cb-advisory-model-site-shell cb-forever-site-shell flex min-h-screen flex-col">
                 <ModelAppHeader
                   titleDesktop="FOREVER INCOME"
                   titleMobile="FOREVER INC."
@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     ) : null
                   }
                 />
-                <div className="cb-forever-main flex min-h-0 flex-1 flex-col">{children}</div>
+                <div className="cb-advisory-model-main cb-forever-main flex min-h-0 flex-1 flex-col">{children}</div>
                 <CbLegalSiteFooter />
               </div>
             </ModelMetricSpineProvider>

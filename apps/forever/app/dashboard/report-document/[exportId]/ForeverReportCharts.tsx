@@ -13,7 +13,7 @@ export function ChartCaptionBlock({
   notice: string;
 }) {
   return (
-    <div className="cb-chart-caption cb-forever-chart-caption cb-forever-doc-chart-caption mt-3 max-w-[48em] text-[9pt] leading-snug text-[#0d3a1d]">
+    <div className="cb-chart-caption cb-advisory-chart-caption cb-advisory-doc-chart-caption mt-3 max-w-[48em] text-[9pt] leading-snug text-[#0d3a1d]">
       <p className="mb-1.5">
         <strong>What this shows:</strong> {what}
       </p>
@@ -43,22 +43,22 @@ export function ChartFrame({
   caption: ReactNode;
 }) {
   return (
-    <div className="cb-chart-block cb-report-chart-wrap cb-forever-chart-frame cb-forever-doc-chart-block mt-2 overflow-visible">
+    <div className="cb-chart-block cb-report-chart-wrap cb-advisory-chart-frame cb-advisory-doc-chart-block mt-2 overflow-visible">
       <h3
-        className="cb-forever-chart-title m-0 text-[11pt] font-bold leading-tight text-[#0d3a1d]"
+        className="cb-advisory-chart-title m-0 text-[11pt] font-bold leading-tight text-[#0d3a1d]"
         style={{ fontFamily: '"Roboto Serif", Georgia, serif' }}
       >
         {title}
       </h3>
       <p className="cb-chart-why mt-1 mb-2 text-[9.5pt] leading-snug text-[rgba(13,58,29,0.78)]">{subtitle}</p>
-      <div className="relative flex gap-1 overflow-visible">
+      <div className="cb-advisory-chart-plot-row relative flex gap-1 overflow-visible">
         <span
-          className="flex w-[2.25em] flex-shrink-0 items-center justify-center text-[8pt] font-semibold leading-tight text-[#0d3a1d]"
+          className="flex w-[3em] flex-shrink-0 items-center justify-center text-[8pt] font-semibold leading-tight text-[#0d3a1d]"
           style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
         >
           {yAxisLabel}
         </span>
-        <div className="cb-forever-chart-svg-wrap min-w-0 flex-1 overflow-visible">{children}</div>
+        <div className="cb-advisory-chart-svg-wrap min-w-0 flex-1 overflow-visible">{children}</div>
       </div>
       <div className="mt-1 text-center text-[8pt] font-semibold text-[#0d3a1d]">{xAxisLabel}</div>
       {caption}
@@ -77,7 +77,7 @@ export function ProgressBarTile({
 }) {
   const p = Math.min(100, Math.max(0, percent));
   return (
-    <div className="cb-forever-progress-tile cb-forever-doc-progress-tile cb-keep-together mt-3 rounded-md border border-[rgba(13,58,29,0.2)] bg-[#f7faf7] p-3 print:border-[rgba(13,58,29,0.25)]">
+    <div className="cb-advisory-progress-tile cb-advisory-doc-progress-tile cb-keep-together mt-3 rounded-md border border-[rgba(13,58,29,0.2)] bg-[#f7faf7] p-3 print:border-[rgba(13,58,29,0.25)]">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[9pt] font-semibold text-[#0d3a1d]">{label}</span>
         <span className="text-[11pt] font-bold tabular-nums text-[#0d3a1d]">{p.toFixed(1)}%</span>
@@ -115,10 +115,10 @@ export function NeedSupportedGapBars({
   formatMoney: MoneyFmt;
 }) {
   const maxY = niceMax([need, supported, gap]);
-  const W = 520;
+  const W = 600;
   const H = 200;
-  const padL = 72;
-  const padR = 28;
+  const padL = 102;
+  const padR = 48;
   const padT = 12;
   const padB = 44;
   const innerW = W - padL - padR;
@@ -143,7 +143,7 @@ export function NeedSupportedGapBars({
         return (
           <g key={t}>
             <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(13,58,29,0.12)" strokeWidth={1} />
-            <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={9} fill={muted}>
+            <text x={padL - 6} y={y + 4} textAnchor="end" fontSize={8.5} fill={muted}>
               {formatMoney(maxY * t)}
             </text>
           </g>
@@ -168,9 +168,9 @@ export function NeedSupportedGapBars({
             </text>
             <text
               x={x + barW / 2}
-              y={H - 18}
+              y={H - 14}
               textAnchor="middle"
-              fontSize={9}
+              fontSize={8}
               fontWeight={600}
               fill={green}
             >
@@ -197,12 +197,12 @@ export function WaterfallChart({
   netAnnualDraw: number;
   formatMoney: MoneyFmt;
 }) {
-  const W = 540;
-  const H = 220;
-  const padL = 48;
-  const padR = 28;
+  const W = 620;
+  const H = 228;
+  const padL = 72;
+  const padR = 44;
   const padT = 12;
-  const padB = 56;
+  const padB = 62;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const p1 = lifestyleAnnual;
@@ -266,7 +266,7 @@ export function WaterfallChart({
           <text x={b.x + b.w / 2} y={b.y - 4} textAnchor="middle" fontSize={8} fontWeight={700} fill={green}>
             {b.val}
           </text>
-          <text x={b.x + b.w / 2} y={H - 32} textAnchor="middle" fontSize={7.5} fontWeight={600} fill={green}>
+          <text x={b.x + b.w / 2} y={H - 28} textAnchor="middle" fontSize={7} fontWeight={600} fill={green}>
             {b.label}
           </text>
         </g>
@@ -288,28 +288,42 @@ export function StackedAccessibilityBar({
 }) {
   const total = liquid + semi + illiquid;
   const denom = total > 0 ? total : 1;
-  const W = 520;
+  const W = 580;
   const H = 72;
-  const inner = W - 24;
+  const inner = W - 48;
   const parts = [
     { v: liquid, label: "Liquid (cash)", color: "#55b685" },
     { v: semi, label: "Semi-liquid (investments)", color: "#8fcf7a" },
     { v: illiquid, label: "Property / illiquid", color: greenMid },
   ];
-  let x = 12;
+  let x = 22;
   return (
-    <svg viewBox={`0 0 ${W} ${H + 40}`} className="h-auto w-full max-w-full" role="img" aria-label="Stacked capital bar">
-      <rect width={W} height={H + 40} fill="#fff" />
+    <svg viewBox={`0 0 ${W} ${H + 44}`} className="h-auto w-full max-w-full" role="img" aria-label="Stacked capital bar">
+      <rect width={W} height={H + 44} fill="#fff" />
       {parts.map((p) => {
         const w = (p.v / denom) * inner;
         const cx = x + w / 2;
+        const narrow = w < 56;
         const el = (
           <g key={p.label}>
             <rect x={x} y={12} width={Math.max(0, w)} height={H - 24} fill={p.color} rx={2} />
-            <text x={cx} y={H + 8} textAnchor="middle" fontSize={8} fill={green}>
+            <text
+              x={cx}
+              y={H + 8}
+              textAnchor={narrow ? "start" : "middle"}
+              fontSize={7.5}
+              fill={green}
+            >
               {p.label}
             </text>
-            <text x={cx} y={H + 22} textAnchor="middle" fontSize={8} fontWeight={700} fill={green}>
+            <text
+              x={cx}
+              y={H + 24}
+              textAnchor={narrow ? "start" : "middle"}
+              fontSize={7.5}
+              fontWeight={700}
+              fill={green}
+            >
               {formatMoney(p.v)}
             </text>
           </g>
@@ -330,12 +344,12 @@ export function CapitalRunwayLineChart({
   depletionYear: number | null;
   formatMoney: MoneyFmt;
 }) {
-  const W = 520;
+  const W = 580;
   const H = 220;
-  const padL = 72;
-  const padR = 28;
+  const padL = 100;
+  const padR = 48;
   const padT = 12;
-  const padB = 36;
+  const padB = 42;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const maxY = niceMax(series.map((s) => s.balance));
@@ -346,6 +360,12 @@ export function CapitalRunwayLineChart({
 
   const d = series.map((s, i) => `${i === 0 ? "M" : "L"} ${px(s.year).toFixed(1)} ${py(s.balance).toFixed(1)}`).join(" ");
 
+  const depletionX = depletionYear !== null && depletionYear <= maxX ? px(depletionYear) : null;
+  const depletionAnchor =
+    depletionX !== null && depletionX > W - padR - 78 ? "end" : "start";
+  const depletionTx =
+    depletionX !== null ? (depletionAnchor === "end" ? depletionX - 4 : depletionX + 4) : 0;
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full max-w-full" role="img" aria-label="Capital over time">
       <rect width={W} height={H} fill="#fff" />
@@ -354,7 +374,7 @@ export function CapitalRunwayLineChart({
         return (
           <g key={t}>
             <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(13,58,29,0.1)" strokeWidth={1} />
-            <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={9} fill={muted}>
+            <text x={padL - 6} y={y + 4} textAnchor="end" fontSize={8.5} fill={muted}>
               {formatMoney(maxY * t)}
             </text>
           </g>
@@ -364,20 +384,21 @@ export function CapitalRunwayLineChart({
       {series.map((s) => (
         <circle key={s.year} cx={px(s.year)} cy={py(s.balance)} r={3} fill={greenMid} />
       ))}
-      {depletionYear !== null && depletionYear <= maxX ? (
+      {depletionYear !== null && depletionYear <= maxX && depletionX !== null ? (
         <g>
           <line
-            x1={px(depletionYear)}
+            x1={depletionX}
             y1={padT}
-            x2={px(depletionYear)}
+            x2={depletionX}
             y2={padT + innerH}
             stroke={gapBarColor}
             strokeDasharray="4 3"
             strokeWidth={1.5}
           />
           <text
-            x={px(depletionYear) + 4}
+            x={depletionTx}
             y={padT + 14}
+            textAnchor={depletionAnchor}
             fontSize={8}
             fontWeight={700}
             fill={gapBarColor}
@@ -403,17 +424,18 @@ export function LiquidityHaircutBars({
   rows: { pct: number; effective: number }[];
   formatMoney: MoneyFmt;
 }) {
-  const W = 480;
+  const W = 560;
   const H = 200;
-  const padL = 48;
-  const padR = 12;
+  const padL = 82;
+  const padR = 40;
   const padT = 8;
-  const padB = 40;
+  const padB = 46;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const maxY = niceMax(rows.map((r) => r.effective));
   const barW = (innerW / rows.length) * 0.55;
   const step = innerW / rows.length;
+  const n = rows.length;
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full max-w-full" role="img" aria-label="Effective capital by property access">
@@ -428,13 +450,23 @@ export function LiquidityHaircutBars({
         const h = maxY > 0 ? (r.effective / maxY) * innerH : 0;
         const x = padL + i * step + (step - barW) / 2;
         const y = padT + innerH - h;
+        const cx = x + barW / 2;
+        const bottomAnchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+        const bottomDx = i === 0 ? 2 : i === n - 1 ? -2 : 0;
         return (
           <g key={r.pct}>
             <rect x={x} y={y} width={barW} height={h} rx={3} fill={i === rows.length - 1 ? greenMid : "rgba(27,77,62,0.55)"} />
-            <text x={x + barW / 2} y={y - 4} textAnchor="middle" fontSize={8} fontWeight={700} fill={green}>
+            <text x={cx} y={y - 4} textAnchor="middle" fontSize={8} fontWeight={700} fill={green}>
               {formatMoney(r.effective)}
             </text>
-            <text x={x + barW / 2} y={H - 18} textAnchor="middle" fontSize={9} fontWeight={600} fill={green}>
+            <text
+              x={cx + bottomDx}
+              y={H - 14}
+              textAnchor={bottomAnchor}
+              fontSize={8}
+              fontWeight={600}
+              fill={green}
+            >
               {Math.round(r.pct * 100)}% access
             </text>
           </g>
@@ -449,12 +481,12 @@ export function SensitivityLineChart({
 }: {
   points: { label: string; years: number | null }[];
 }) {
-  const W = 510;
+  const W = 560;
   const H = 200;
-  const padL = 58;
-  const padR = 22;
+  const padL = 78;
+  const padR = 40;
   const padT = 16;
-  const padB = 48;
+  const padB = 56;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const numeric = points.map((p) => p.years).filter((y): y is number => y !== null && Number.isFinite(y));
@@ -482,30 +514,43 @@ export function SensitivityLineChart({
         return (
           <g key={t}>
             <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(13,58,29,0.1)" strokeWidth={1} />
-            <text x={padL - 6} y={y + 3} textAnchor="end" fontSize={8} fill={muted}>
+            <text x={padL - 8} y={y + 3} textAnchor="end" fontSize={8} fill={muted}>
               {(maxY * t).toFixed(0)}y
             </text>
           </g>
         );
       })}
       <path d={d} fill="none" stroke={greenMid} strokeWidth={2} />
-      {coords.map((c) => (
-        <g key={c.label}>
-          <circle cx={c.x} cy={c.y} r={4} fill={greenMid} />
-          <text x={c.x} y={H - 20} textAnchor="middle" fontSize={8} fontWeight={600} fill={green}>
-            {c.label}
-          </text>
-          {c.perpetual ? (
-            <text x={c.x} y={c.y - 10} textAnchor="middle" fontSize={8} fill={muted}>
-              Perpetual
+      {coords.map((c, i) => {
+        const bottomAnchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+        const bottomDx = i === 0 ? 2 : i === n - 1 ? -2 : 0;
+        const topAnchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+        const topDx = i === 0 ? 2 : i === n - 1 ? -2 : 0;
+        return (
+          <g key={c.label}>
+            <circle cx={c.x} cy={c.y} r={4} fill={greenMid} />
+            <text
+              x={c.x + bottomDx}
+              y={H - 16}
+              textAnchor={bottomAnchor}
+              fontSize={8}
+              fontWeight={600}
+              fill={green}
+            >
+              {c.label}
             </text>
-          ) : (
-            <text x={c.x} y={c.y - 10} textAnchor="middle" fontSize={8} fontWeight={700} fill={green}>
-              {c.years!.toFixed(1)} yrs
-            </text>
-          )}
-        </g>
-      ))}
+            {c.perpetual ? (
+              <text x={c.x + topDx} y={c.y - 10} textAnchor={topAnchor} fontSize={8} fill={muted}>
+                Perpetual
+              </text>
+            ) : (
+              <text x={c.x + topDx} y={c.y - 10} textAnchor={topAnchor} fontSize={8} fontWeight={700} fill={green}>
+                {c.years!.toFixed(1)} yrs
+              </text>
+            )}
+          </g>
+        );
+      })}
     </svg>
   );
 }

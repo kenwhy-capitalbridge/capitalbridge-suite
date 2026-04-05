@@ -9,7 +9,6 @@ import { CbLegalSiteFooter, LionWatermarkShell, ModelAppHeader, ModelMetricSpine
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
-import "@cb/advisory-graph/reports/print.css";
 
 export const metadata: Metadata = {
   title: "Capital Stress | Capital Bridge",
@@ -48,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
-              <div className="flex min-h-screen flex-col">
+              <div className="cb-advisory-model-site-shell flex min-h-screen flex-col">
                 <ModelAppHeader
                   titleDesktop="CAPITAL STRESS"
                   titleMobile="CAP. STRESS"
@@ -63,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     ) : null
                   }
                 />
-                <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+                <div className="cb-advisory-model-main flex min-h-0 flex-1 flex-col">{children}</div>
                 <CbLegalSiteFooter />
               </div>
             </ModelMetricSpineProvider>

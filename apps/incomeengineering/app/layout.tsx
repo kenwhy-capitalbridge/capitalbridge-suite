@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
-              <div className="flex min-h-screen flex-col">
+              <div className="cb-advisory-model-site-shell flex min-h-screen flex-col">
                 <ModelAppHeader
                   titleDesktop="INCOME ENGINEERING"
                   titleMobile="INCOME ENGINE"
@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     ) : null
                   }
                 />
-                <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+                <div className="cb-advisory-model-main flex min-h-0 flex-1 flex-col">{children}</div>
                 <CbLegalSiteFooter />
               </div>
             </ModelMetricSpineProvider>

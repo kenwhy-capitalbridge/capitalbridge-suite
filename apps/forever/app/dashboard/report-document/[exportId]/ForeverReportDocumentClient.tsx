@@ -2,14 +2,10 @@
 
 import { useEffect, useMemo } from "react";
 import { beginReportReadyCycle, completeReportReadyCycle } from "@cb/pdf/report-ready";
-import {
-  CB_PDF_FOOTER_DOM_REPORT_ID_ATTR,
-  CB_PDF_FOOTER_DOM_VERSION_ATTR,
-} from "@cb/shared/reportPdfPlaywright";
-import { CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY } from "@cb/shared/legalMonocopy";
 import { pricingReturnModelDashboardUrl } from "@cb/shared/urls";
 import type { ReportAuditMeta } from "@cb/shared/reportTraceability";
 import {
+  AdvisoryReportPdfDocumentRoot,
   REPORT_FONT_BODY,
   REPORT_FONT_DISPLAY,
   ReportHeading,
@@ -18,7 +14,6 @@ import {
   ReportSection,
   ReportTrialSnapshotCaption,
 } from "@cb/advisory-graph/reports";
-import { ReportPrintChrome } from "@cb/ui";
 
 import { ProgressBarTile } from "./ForeverReportCharts";
 import { deriveForeverReportModel } from "./foreverReportDerived";
@@ -229,45 +224,39 @@ export function ForeverReportDocumentClient({
     pricingReturnModelDashboardUrl("incomeengineering") ?? "https://incomeengineering.thecapitalbridge.com/dashboard";
 
   return (
-    <div
-      className="cb-report-root cb-forever-doc-report print-report-root min-h-screen text-[#0d3a1d]"
-      data-cb-forever-report-document
-      {...{
-        [CB_PDF_FOOTER_DOM_REPORT_ID_ATTR]: audit.reportId,
-        [CB_PDF_FOOTER_DOM_VERSION_ATTR]: audit.versionLabel,
-      }}
+    <AdvisoryReportPdfDocumentRoot
+      audit={audit}
+      shortFooterLegal={shortFooterLegal}
+      modelSurfaceClass="cb-forever-doc-report"
     >
-      <ReportPrintChrome audit={audit} printFooterText={shortFooterLegal} />
-
-      <section className="cb-page cb-forever-doc-cover cb-report-executive-summary--page-break-after">
-        <div className="cb-forever-doc-cover-frame">
-          <div className="cb-forever-doc-cover-main">
-            <div className="mb-5 flex justify-center print:mb-4 md:mb-6">
+      <section className="cb-page cb-advisory-doc-cover cb-report-executive-summary--page-break-after">
+        <div className="cb-advisory-doc-cover-main">
+            <div className="mb-5 flex justify-center print:mb-5 md:mb-6">
               <img
                 src="/brand/Full_CapitalBridge_Green.svg"
                 alt="Capital Bridge"
-                className="cb-forever-doc-cover-logo mx-auto block h-auto w-[52%] max-w-[380px] min-w-[200px] object-contain object-center"
+                className="cb-advisory-doc-cover-logo mx-auto block h-auto w-[72%] max-w-[min(100%,420px)] min-w-0 object-contain object-center print:w-[78%] print:max-w-[min(100%,440px)]"
               />
             </div>
             <h1
-              className="cb-forever-doc-cover-title m-0 mb-4 block w-full text-center text-[12.5pt] font-bold leading-tight tracking-[0.06em] text-[#0d3a1d] print:mb-3 print:text-[12pt]"
+              className="cb-advisory-doc-cover-title m-0 mb-4 block w-full text-center text-[12.5pt] font-bold leading-tight tracking-[0.06em] text-[#0d3a1d] print:mb-3 print:text-[12pt]"
               style={{ fontFamily: REPORT_FONT_DISPLAY }}
             >
               FOREVER INCOME — STRATEGIC WEALTH REPORT
             </h1>
             <p
-              className="cb-forever-doc-cover-prepared m-0 block w-full text-[11pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
+              className="cb-advisory-doc-cover-prepared m-0 block w-full text-[11pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
               style={{ fontFamily: REPORT_FONT_BODY, marginBottom: "0.75em" }}
             >
               Prepared for: <strong className="font-semibold text-[#0d3a1d]">{preparedForName}</strong>
             </p>
             <p
-              className="cb-forever-doc-cover-generated m-0 block w-full max-w-[44em] text-[11pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
+              className="cb-advisory-doc-cover-generated m-0 block w-full max-w-[44em] text-[11pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
               style={{ fontFamily: REPORT_FONT_BODY, marginBottom: "1.25em" }}
             >
               Generated: <strong className="font-semibold text-[#0d3a1d]">{audit.generatedAtLabel}</strong>
             </p>
-            <div className="cb-forever-doc-cover-contents mt-1 block w-full max-w-[44em] border-t border-[rgba(13,58,29,0.15)] pt-4 print:mt-2 print:pt-5">
+            <div className="cb-advisory-doc-cover-contents mt-1 block w-full max-w-[44em] border-t border-[rgba(13,58,29,0.15)] pt-4 print:mt-2 print:pt-5">
               <h2
                 className="m-0 mb-2 block w-full text-[8pt] font-bold uppercase leading-normal tracking-wide text-[#0d3a1d] print:mb-2.5"
                 style={{ fontFamily: REPORT_FONT_BODY }}
@@ -289,144 +278,129 @@ export function ForeverReportDocumentClient({
                 ))}
               </div>
             </div>
-          </div>
-          <aside className="cb-forever-doc-cover-legal-abs" aria-label="Copyright and intellectual property">
-            <p
-              className="cb-report-option-b-full-ip m-0 max-w-none text-[7pt] leading-[1.35] print:text-[7pt] print:leading-[1.35]"
-              style={{
-                fontFamily: REPORT_FONT_BODY,
-                color: "rgba(13, 58, 29, 0.72)",
-              }}
-            >
-              {CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY}
-            </p>
-          </aside>
         </div>
       </section>
 
-      <section className="cb-page cb-break-before-page">
-      {!derived && calculator ? (
-        <ReportSection className="cb-module cb-forever-doc-parse-error">
-          <ReportProse>Calculator data could not be parsed for charts. Inputs may be incomplete for this export.</ReportProse>
-          {snap ? (
-            <>
-              <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading">
-                Raw snapshot
-              </ReportHeading>
-              <ReportKeyValueGrid rows={snap.inputRows} className="cb-forever-kv-grid" />
-              <ReportKeyValueGrid rows={snap.outcomeRows} className="cb-forever-kv-grid" />
-            </>
-          ) : null}
-        </ReportSection>
-      ) : null}
+      {/* Sibling `cb-page` sections (not nested) so print fragmentation and `break-before: page` behave predictably. */}
+      <section className="cb-page cb-advisory-doc-opening">
+        {!derived && calculator ? (
+          <ReportSection className="cb-module cb-advisory-doc-parse-error">
+            <ReportProse>Calculator data could not be parsed for charts. Inputs may be incomplete for this export.</ReportProse>
+            {snap ? (
+              <>
+                <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading">
+                  Raw snapshot
+                </ReportHeading>
+                <ReportKeyValueGrid rows={snap.inputRows} className="cb-forever-kv-grid" />
+                <ReportKeyValueGrid rows={snap.outcomeRows} className="cb-forever-kv-grid" />
+              </>
+            ) : null}
+          </ReportSection>
+        ) : null}
 
-      {!calculator ? (
-        <ReportSection className="cb-module cb-forever-doc-parse-error">
-          <ReportProse>No calculator snapshot was stored for this export.</ReportProse>
-        </ReportSection>
-      ) : null}
+        {!calculator ? (
+          <ReportSection className="cb-module cb-advisory-doc-parse-error">
+            <ReportProse>No calculator snapshot was stored for this export.</ReportProse>
+          </ReportSection>
+        ) : null}
 
-      {derived && isTrial ? (
-        <ReportSection className="cb-module cb-forever-doc-page-1">
-          <div className="cb-print-stage-label cb-forever-doc-stage-label">Sustainability snapshot</div>
-          <ReportTrialSnapshotCaption isTrial={isTrial} />
-          <ReportProse lead className="text-[#0d3a1d]">
-            Model inputs and headline outcomes at export. Following pages chart the same snapshot.
-          </ReportProse>
-          <ProgressBarTile
-            label="Progress to target (assets vs capital required)"
-            percent={derived.computed.progressPercent}
-            formatHint={progressHint}
-          />
-          <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading">
-            Model inputs
-          </ReportHeading>
-          <ReportKeyValueGrid rows={snap!.inputRows} className="cb-forever-kv-grid" />
-          <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading">
-            Key outcomes
-          </ReportHeading>
-          <ReportKeyValueGrid rows={snap!.outcomeRows} className="cb-forever-kv-grid" />
-        </ReportSection>
-      ) : null}
+        {derived && isTrial ? (
+          <ReportSection className="cb-module cb-advisory-doc-page-1">
+            <div className="cb-print-stage-label cb-advisory-doc-stage-label">Sustainability snapshot</div>
+            <ReportTrialSnapshotCaption isTrial={isTrial} />
+            <ReportProse lead className="text-[#0d3a1d]">
+              Model inputs and headline outcomes at export. Following pages chart the same snapshot.
+            </ReportProse>
+            <ProgressBarTile
+              label="Progress to target (assets vs capital required)"
+              percent={derived.computed.progressPercent}
+              formatHint={progressHint}
+            />
+            <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading">
+              Model inputs
+            </ReportHeading>
+            <ReportKeyValueGrid rows={snap!.inputRows} className="cb-forever-kv-grid" />
+            <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading">
+              Key outcomes
+            </ReportHeading>
+            <ReportKeyValueGrid rows={snap!.outcomeRows} className="cb-forever-kv-grid" />
+          </ReportSection>
+        ) : null}
 
-      {derived && !isTrial && lion ? (
-        <ReportSection className="cb-module cb-forever-doc-page-1">
-          <div className="cb-print-stage-label cb-forever-doc-stage-label">The Lion&apos;s Verdict</div>
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <span className={tierChipClass(lion.verdictTier)}>{tierDisplay(lion.verdictTier)}</span>
-          </div>
-          <ReportProse className="text-[#0d3a1d]">
-            <strong className="text-[#0d3a1d]">{lion.headlineText}</strong>
-          </ReportProse>
-          <ReportProse className="text-[rgba(43,43,43,0.95)]">{lion.guidanceText}</ReportProse>
-          <ProgressBarTile
-            label="Progress to target (assets vs capital required)"
-            percent={derived.computed.progressPercent}
-            formatHint={progressHint}
-          />
-        </ReportSection>
-      ) : null}
+        {derived && !isTrial && lion ? (
+          <ReportSection className="cb-module cb-advisory-doc-page-1">
+            <div className="cb-print-stage-label cb-advisory-doc-stage-label">The Lion&apos;s Verdict</div>
+            <div className="mb-3 flex flex-wrap items-center gap-3">
+              <span className={tierChipClass(lion.verdictTier)}>{tierDisplay(lion.verdictTier)}</span>
+            </div>
+            <ReportProse className="text-[#0d3a1d]">
+              <strong className="text-[#0d3a1d]">{lion.headlineText}</strong>
+            </ReportProse>
+            <ReportProse className="text-[rgba(43,43,43,0.95)]">{lion.guidanceText}</ReportProse>
+            <ProgressBarTile
+              label="Progress to target (assets vs capital required)"
+              percent={derived.computed.progressPercent}
+              formatHint={progressHint}
+            />
+          </ReportSection>
+        ) : null}
 
-      {derived && !isTrial && !lion ? (
-        <ReportSection className="cb-module cb-forever-doc-page-1">
-          <div className="cb-print-stage-label cb-forever-doc-stage-label">Model snapshot</div>
-          <ReportProse className="text-[#0d3a1d]">
-            Lion narrative was not stored for this export. Headline numbers below match the charts in this PDF; full input tables
-            are in Section C (Assumptions &amp; definitions).
-          </ReportProse>
-          <ProgressBarTile
-            label="Progress to target (assets vs capital required)"
-            percent={derived.computed.progressPercent}
-            formatHint={progressHint}
-          />
-        </ReportSection>
-      ) : null}
+        {derived && !isTrial && !lion ? (
+          <ReportSection className="cb-module cb-advisory-doc-page-1">
+            <div className="cb-print-stage-label cb-advisory-doc-stage-label">Model snapshot</div>
+            <ReportProse className="text-[#0d3a1d]">
+              Lion narrative was not stored for this export. Headline numbers below match the charts in this PDF; full input tables
+              are in Section C (Assumptions &amp; definitions).
+            </ReportProse>
+            <ProgressBarTile
+              label="Progress to target (assets vs capital required)"
+              percent={derived.computed.progressPercent}
+              formatHint={progressHint}
+            />
+          </ReportSection>
+        ) : null}
       </section>
 
       {derived ? <ForeverReportModuleSections derived={derived} formatMoney={formatMoneyBound} /> : null}
 
       <section className="cb-page cb-break-before-page" aria-label="Appendix and closing">
-        <div className="cb-module cb-forever-doc-closing">
-          <div className="cb-forever-doc-appendix-stage cb-print-stage-label cb-forever-doc-stage-label">
+        <div className="cb-module cb-advisory-doc-closing">
+          <div className="cb-advisory-doc-appendix-stage cb-print-stage-label cb-advisory-doc-stage-label">
             Appendix &amp; closing
           </div>
           <ReportHeading
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-appendix-disclosures-h cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-appendix-disclosures-h cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Disclosures &amp; how to use this report
           </ReportHeading>
-          <ReportProse className="cb-forever-doc-appendix-lead text-[#0d3a1d]">
+          <ReportProse className="cb-advisory-doc-appendix-lead text-[#0d3a1d]">
             This report is generated by the Capital Bridge Forever Income model for discussion with your adviser. It is not
             personal advice.
           </ReportProse>
-          <ReportProse className="cb-report-option-b-full-ip cb-forever-doc-appendix-ip mt-4 text-[9pt] leading-relaxed text-[#2b2b2b]">
-            {CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY}
-          </ReportProse>
-          <div className="cb-forever-doc-ie-cta cb-forever-doc-appendix-cta cb-keep-together mt-8 border-t border-[rgba(13,58,29,0.18)] pt-6">
-            <div className="mb-4 h-0.5 w-10 rounded-sm bg-[#0d3a1d]" aria-hidden />
+          <div className="cb-advisory-doc-model-cta cb-advisory-doc-appendix-cta cb-keep-together mt-8 border-t border-[rgba(13,58,29,0.18)] pt-6">
             <h3
-              className="cb-forever-doc-cta-title cb-avoid-orphan-heading m-0 text-[11pt] font-bold leading-normal text-[#0d3a1d] print:leading-normal"
+              className="cb-advisory-doc-cta-title cb-avoid-orphan-heading m-0 text-[11pt] font-bold leading-normal text-[#0d3a1d] print:leading-normal"
               style={{ fontFamily: '"Roboto Serif", Georgia, serif' }}
             >
               Recommended Next Step — Income Engineering
             </h3>
             <p
-              className="cb-forever-doc-cta-body mt-3 text-[10pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
+              className="cb-advisory-doc-cta-body mt-3 text-[10pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
               style={{ marginBottom: "0.75em" }}
             >
               Your Forever Income snapshot highlights the structural gap between lifestyle need and what capital sustainably supports
               under stated assumptions. Income Engineering helps you build a repeatable income engine so lifestyle is funded by inflows —
               not depletion.
             </p>
-            <ul className="cb-forever-doc-cta-bullets my-0 mb-4 list-disc space-y-2 pl-5 text-[10pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed">
+            <ul className="cb-advisory-doc-cta-bullets my-0 mb-4 list-disc space-y-2 pl-5 text-[10pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed">
               <li>Confirm your minimum viable lifestyle (the spend you can live with if needed)</li>
               <li>List reliable income offsets you can sustain (salary/family/rental/business)</li>
               <li>Choose one lever you will commit to in the next 30 days</li>
             </ul>
-            <p className="cb-forever-doc-cta-nextline m-0 text-[10pt] font-semibold leading-normal text-[#0d3a1d] print:leading-normal">
+            <p className="cb-advisory-doc-cta-nextline m-0 text-[10pt] font-semibold leading-normal text-[#0d3a1d] print:leading-normal">
               Next:{"\u00a0"}
               <a href={incomeEngineeringDashboardUrl} className="text-[#0d3a1d] underline underline-offset-2">
                 Run Income Engineering
@@ -436,6 +410,6 @@ export function ForeverReportDocumentClient({
           </div>
         </div>
       </section>
-    </div>
+    </AdvisoryReportPdfDocumentRoot>
   );
 }

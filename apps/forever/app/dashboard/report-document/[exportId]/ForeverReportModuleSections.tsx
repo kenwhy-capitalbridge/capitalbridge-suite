@@ -14,7 +14,8 @@ import {
 
 type MoneyFmt = (n: number) => string;
 
-const MODULE_CLASS = "cb-module cb-keep-together";
+/** Chart-heavy modules allow page breaks between blocks; use `cb-keep-together` only on compact units (card grid, appendix CTA). */
+const MODULE_CLASS = "cb-module";
 
 export function ForeverReportModuleSections({
   derived,
@@ -48,9 +49,9 @@ export function ForeverReportModuleSections({
   return (
     <>
       <section className="cb-page cb-section-start" aria-label="Section B — Advisor Read">
-        <header className="cb-forever-doc-section-divider">
-          <div className="cb-print-stage-label cb-forever-doc-stage-label">Section B — Advisor Read</div>
-          <ReportHeading level={2} variant="sectionSmall" className="cb-forever-doc-section-divider-title">
+        <header className="cb-advisory-doc-section-divider">
+          <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section B — Advisor Read</div>
+          <ReportHeading level={2} variant="sectionSmall" className="cb-advisory-doc-section-divider-title">
             Advisor Read
           </ReportHeading>
         </header>
@@ -59,7 +60,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Your retirement system (in one view)
           </ReportHeading>
@@ -97,14 +98,14 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Next 30 days: pick one lever
           </ReportHeading>
           <ReportProse className="text-[#0d3a1d]">
             Use this as a facilitation frame: one deliberate change in the next month beats unfocused optimisation.
           </ReportProse>
-          <div className="cb-forever-doc-card-grid cb-keep-together mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="cb-advisory-doc-card-grid cb-keep-together mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {levers.map((L) => (
               <div
                 key={L.title}
@@ -122,7 +123,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Inputs that drive the outcome
           </ReportHeading>
@@ -161,7 +162,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Capital stack &amp; accessibility
           </ReportHeading>
@@ -190,7 +191,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Runway curve (capital over time)
           </ReportHeading>
@@ -227,7 +228,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Levers ranked (adviser framing)
           </ReportHeading>
@@ -258,7 +259,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Where to go next
           </ReportHeading>
@@ -273,9 +274,9 @@ export function ForeverReportModuleSections({
       </section>
 
       <section className="cb-page cb-section-start" aria-label="Section C — Pro Mode (Evidence and Sensitivity)">
-        <header className="cb-forever-doc-section-divider">
-          <div className="cb-print-stage-label cb-forever-doc-stage-label">Section C — Pro Mode (Evidence &amp; Sensitivity)</div>
-          <ReportHeading level={2} variant="sectionSmall" className="cb-forever-doc-section-divider-title">
+        <header className="cb-advisory-doc-section-divider">
+          <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section C — Pro Mode (Evidence &amp; Sensitivity)</div>
+          <ReportHeading level={2} variant="sectionSmall" className="cb-advisory-doc-section-divider-title">
             Pro Mode
           </ReportHeading>
         </header>
@@ -284,7 +285,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Assumptions &amp; definitions (audit panel)
           </ReportHeading>
@@ -295,7 +296,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="inline"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Model inputs
           </ReportHeading>
@@ -328,7 +329,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="inline"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Key outcomes
           </ReportHeading>
@@ -360,7 +361,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Liquidity haircut analysis
           </ReportHeading>
@@ -389,7 +390,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Sensitivity: return (±1% p.a.)
           </ReportHeading>
@@ -418,7 +419,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Sensitivity: inflation (±1% p.a.)
           </ReportHeading>
@@ -447,7 +448,7 @@ export function ForeverReportModuleSections({
             level={3}
             variant="sectionSmall"
             keepWithNext
-            className="cb-forever-doc-module-heading cb-avoid-orphan-heading"
+            className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
             Methodology &amp; scope
           </ReportHeading>

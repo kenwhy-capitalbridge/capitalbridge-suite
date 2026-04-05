@@ -1,0 +1,307 @@
+/**
+ * Shared Playwright / print layout for model strategic reports (Forever, Income Engineering,
+ * Capital Health, Capital Stress). Import after `reports/print.css` in each app’s globals.
+ *
+ * Document root: `.cb-advisory-pdf-doc.cb-report-root` + `data-cb-advisory-report-document`.
+ * Site shell: outer layout adds `cb-advisory-model-site-shell`; main column adds `cb-advisory-model-main`.
+ */
+
+@media screen {
+  .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]) > header,
+  .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]) > footer[role="contentinfo"] {
+    display: none !important;
+  }
+}
+
+.cb-advisory-pdf-doc.cb-report-root {
+  background: #f6f5f1;
+  color: #0d3a1d;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  --cb-print-header-gap: 12px;
+}
+
+/* No gold/yellow on white — overrides shared print.css (#ffcc6a) and inline REPORT_ACCENT on headings/KV keys. */
+.cb-advisory-pdf-doc .cb-print-stage-label {
+  color: #0d3a1d !important;
+}
+
+.cb-advisory-pdf-doc h2 {
+  color: #0d3a1d !important;
+}
+
+.cb-advisory-pdf-doc [class*="-kv-grid"] strong {
+  color: #0d3a1d !important;
+}
+
+.cb-advisory-pdf-doc .cb-page {
+  box-sizing: border-box;
+  padding: 28px 32px 84px 32px;
+}
+
+.cb-advisory-doc-cover-main {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.cb-module {
+  margin: 0 0 24px 0;
+}
+
+.cb-section-start,
+.cb-break-before-page,
+.cb-report-section--page-break {
+  break-before: page;
+  page-break-before: always;
+}
+
+.cb-keep-together {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cb-avoid-orphan-heading {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.cb-chart-block {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  overflow: visible;
+}
+
+.cb-advisory-pdf-doc .cb-report-chart-wrap,
+.cb-advisory-pdf-doc .cb-advisory-chart-frame,
+.cb-advisory-pdf-doc .cb-advisory-chart-svg-wrap {
+  overflow: visible;
+}
+
+.cb-advisory-pdf-doc .cb-advisory-chart-svg-wrap svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+@media print {
+  .cb-advisory-pdf-doc .cb-advisory-chart-svg-wrap {
+    padding-left: 20px;
+    padding-right: 20px;
+    box-sizing: border-box;
+  }
+}
+
+.cb-advisory-pdf-doc .cb-chart-caption,
+.cb-advisory-pdf-doc .cb-advisory-chart-caption,
+.cb-advisory-pdf-doc .cb-advisory-doc-chart-caption {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
+@media print {
+  /*
+   * Fixed .cb-report-print-header sits at top:0 on every sheet. margin-top clears header + air.
+   * Named page shared by all model Playwright PDFs.
+   */
+  @page advisory-pdf-doc {
+    size: A4;
+    margin: 39mm 13mm 30mm 13mm;
+  }
+
+  .cb-advisory-pdf-doc.cb-report-root {
+    background: #fff !important;
+    page: advisory-pdf-doc;
+  }
+
+  .cb-advisory-pdf-doc.cb-report-root > .cb-report-print-header {
+    padding: 2.5mm 14mm 2mm !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-report-print-header-inner {
+    gap: 12px;
+  }
+
+  .cb-advisory-pdf-doc .cb-report-print-header-model {
+    font-size: 8.5pt !important;
+    line-height: 1.22 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-report-print-header-meta {
+    font-size: 7pt !important;
+    line-height: 1.28 !important;
+  }
+
+  .cb-advisory-pdf-doc.cb-report-root:has(> .cb-report-print-header),
+  .cb-advisory-pdf-doc.print-report-root:has(> .cb-report-print-header) {
+    padding-top: calc(10mm + var(--cb-print-header-gap)) !important;
+    box-sizing: border-box;
+  }
+
+  .cb-advisory-pdf-doc .cb-page {
+    padding: 40px 24px 84px 24px;
+  }
+
+  .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) {
+    padding-top: 11mm !important;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover.cb-page {
+    padding: 8px 8px 12px 8px !important;
+    overflow: visible;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-main {
+    padding: 0;
+    overflow: visible;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-logo {
+    max-height: none !important;
+    object-fit: contain;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-title,
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-prepared,
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-generated,
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-contents {
+    display: block !important;
+    width: 100% !important;
+    float: none !important;
+    clear: both !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-generated {
+    margin-bottom: 14pt !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-cover-contents {
+    margin-top: 10pt !important;
+    padding-top: 12pt !important;
+  }
+
+  body:has([data-cb-advisory-report-document]) [data-cb-lion-watermark],
+  body:has([data-cb-advisory-report-document]) [data-cb-lion-shell] > [data-cb-lion-watermark],
+  .cb-advisory-pdf-doc.cb-report-root [data-watermark],
+  .cb-advisory-pdf-doc.cb-report-root .watermark,
+  .cb-advisory-pdf-doc.cb-report-root .backdrop,
+  .cb-advisory-pdf-doc.cb-report-root .lion-backdrop,
+  .cb-advisory-pdf-doc.cb-report-root .lion-watermark {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-closing {
+    background: #fff !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-stage {
+    display: block !important;
+    margin-bottom: 12pt !important;
+    padding-bottom: 6pt !important;
+    line-height: 1.3 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-disclosures-h {
+    display: block !important;
+    margin-top: 0 !important;
+    margin-bottom: 10pt !important;
+    line-height: 1.35 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-lead {
+    display: block !important;
+    margin-bottom: 0.75em !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-ip {
+    display: block !important;
+    margin-top: 12pt !important;
+    margin-bottom: 12pt !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-cta .cb-advisory-doc-cta-title {
+    display: block !important;
+    margin-bottom: 10pt !important;
+    line-height: 1.35 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-cta .cb-advisory-doc-cta-body {
+    display: block !important;
+    margin-top: 10pt !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-cta .cb-advisory-doc-cta-bullets {
+    display: block !important;
+    margin-top: 8pt !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-appendix-cta .cb-advisory-doc-cta-nextline {
+    display: block !important;
+    margin-top: 12pt !important;
+    white-space: normal !important;
+    word-spacing: normal !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-chart-block.cb-report-chart-wrap {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-chart-plot-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cb-module.cb-advisory-doc-closing,
+  .cb-report-section.cb-module.cb-advisory-doc-closing,
+  .cb-report-section.cb-module.cb-advisory-doc-page-1,
+  .cb-report-section.cb-module.cb-advisory-doc-parse-error {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-card-grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cb-avoid-orphan-heading,
+  .cb-advisory-pdf-doc .cb-advisory-doc-module-heading,
+  .cb-advisory-pdf-doc .cb-advisory-doc-chart-block .cb-advisory-chart-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-page-1 .cb-advisory-doc-progress-tile {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-section-divider {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+}
+
+@media print {
+  .cb-advisory-model-site-shell > :not(.cb-advisory-model-main) {
+    display: none !important;
+  }
+
+  .cb-advisory-model-main {
+    display: block !important;
+  }
+
+  body:has([data-cb-advisory-report-document]) {
+    background: #fff !important;
+    color: #0d3a1d !important;
+  }
+}

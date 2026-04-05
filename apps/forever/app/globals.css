@@ -1,5 +1,6 @@
 @import "@cb/ui/cb-model-base.css";
 @import "@cb/advisory-graph/reports/print.css";
+@import "@cb/advisory-graph/reports/pdf-template.css";
 
 @tailwind base;
 @tailwind components;
@@ -11,14 +12,6 @@
     font-size: var(--cb-body-font-size);
     line-height: var(--cb-body-line-height);
     font-weight: var(--cb-body-font-weight);
-  }
-}
-
-/* Dedicated report PDF document: hide fixed header / site legal footer on screen (Playwright still uses @media print). */
-@media screen {
-  .cb-forever-site-shell:has([data-cb-forever-report-document]) > header,
-  .cb-forever-site-shell:has([data-cb-forever-report-document]) > footer[role="contentinfo"] {
-    display: none !important;
   }
 }
 
@@ -54,322 +47,22 @@
   color: #ffffff;
 }
 
-/* Forever v6 PDF document — green keys in KV grids; module sections may split across pages */
+/* Forever-only accents on top of shared advisory PDF template */
 .cb-forever-doc-report .cb-forever-kv-grid strong {
   color: #0d3a1d !important;
 }
 
-.cb-forever-doc-stage-label.cb-print-stage-label,
-.cb-forever-doc-report .cb-print-stage-label.cb-forever-doc-stage-label {
-  color: #0d3a1d !important;
+.cb-advisory-doc-stage-label.cb-print-stage-label,
+.cb-forever-doc-report .cb-print-stage-label.cb-advisory-doc-stage-label {
   border-bottom-color: rgba(13, 58, 29, 0.2) !important;
 }
 
-.cb-forever-doc-section-divider {
+.cb-advisory-doc-section-divider {
   margin: 0 0 20px 0;
 }
 
-.cb-forever-doc-section-divider .cb-forever-doc-section-divider-title {
+.cb-advisory-doc-section-divider .cb-advisory-doc-section-divider-title {
   margin-top: 6px !important;
   margin-bottom: 0 !important;
   color: #0d3a1d !important;
-}
-
-/* Page container + shared print utilities (Forever report document only) */
-.cb-forever-doc-report.cb-report-root {
-  background: #f6f5f1;
-  color: #0d3a1d;
-  font-family: "Inter", Arial, Helvetica, sans-serif;
-  /* Canonical print header reservation (see @media print — padding-top uses gap only; @page clears band) */
-  --cb-print-header-height: 15mm;
-  --cb-print-header-gap: 12px;
-}
-
-.cb-forever-doc-report .cb-page {
-  box-sizing: border-box;
-  padding: 28px 32px 84px 32px;
-}
-
-/* Cover — one screen page box; print uses fixed content height + bottom-anchored legal */
-.cb-forever-doc-cover-frame {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.cb-forever-doc-cover-main {
-  position: relative;
-  z-index: 0;
-  box-sizing: border-box;
-}
-
-.cb-forever-doc-cover-legal-abs {
-  box-sizing: border-box;
-}
-
-.cb-module {
-  margin: 0 0 24px 0;
-}
-
-/* Only these should force a new page (plus .cb-report-section--page-break from ReportSection). */
-.cb-section-start,
-.cb-break-before-page,
-.cb-report-section--page-break {
-  break-before: page;
-  page-break-before: always;
-}
-
-.cb-keep-together {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-.cb-avoid-orphan-heading {
-  break-after: avoid;
-  page-break-after: avoid;
-}
-
-.cb-chart-block {
-  break-inside: avoid;
-  page-break-inside: avoid;
-  overflow: visible;
-}
-
-.cb-forever-doc-report .cb-report-chart-wrap,
-.cb-forever-doc-report .cb-forever-chart-frame,
-.cb-forever-doc-report .cb-forever-chart-svg-wrap {
-  overflow: visible;
-}
-
-.cb-forever-doc-report .cb-forever-chart-svg-wrap svg {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-}
-
-.cb-chart-caption {
-  break-inside: avoid;
-  page-break-inside: avoid;
-  break-before: avoid;
-  page-break-before: avoid;
-}
-
-/* Option A — forced breaks only at boundaries; modules with .cb-keep-together stay intact */
-@media print {
-  /* Scoped A4 margins for this report only (avoids fighting advisory @page for other Forever prints) */
-  @page forever-doc {
-    size: A4;
-    margin: 24mm 14mm 28mm 14mm;
-  }
-
-  .cb-forever-doc-report.cb-report-root {
-    background: #fff !important;
-    page: forever-doc;
-  }
-
-  /*
-   * Fixed print header overlaps the page top; @page margin-top clears it. Root padding is only a small gap
-   * (do not stack 19mm + large @page — that double-reserved and shrank the cover body, pushing IP to page 2).
-   */
-  .cb-forever-doc-report.cb-report-root:has(> .cb-report-print-header),
-  .cb-forever-doc-report.print-report-root:has(> .cb-report-print-header) {
-    padding-top: var(--cb-print-header-gap) !important;
-    box-sizing: border-box;
-  }
-
-  .cb-forever-doc-report .cb-page {
-    padding: 40px 28px 84px 28px;
-  }
-
-  /* Cover: single fixed-height sheet inside the page margin box; legal absolutely anchored — never flows to page 2 */
-  .cb-forever-doc-report .cb-forever-doc-cover.cb-page {
-    padding: 6px 0 8px 0 !important;
-    overflow: hidden;
-    break-after: page;
-    page-break-after: always;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-cover-frame {
-    position: relative;
-    width: 100%;
-    height: calc(297mm - 24mm - 28mm);
-    max-height: calc(297mm - 24mm - 28mm);
-    overflow: hidden;
-    box-sizing: border-box;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-cover-main {
-    height: 100%;
-    max-height: 100%;
-    padding: 2mm 2mm 52mm 2mm;
-    box-sizing: border-box;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-cover-logo {
-    max-height: 20mm;
-    width: auto !important;
-    max-width: min(56%, 100mm) !important;
-    min-width: 0 !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-cover-title,
-  .cb-forever-doc-report .cb-forever-doc-cover-prepared,
-  .cb-forever-doc-report .cb-forever-doc-cover-generated,
-  .cb-forever-doc-report .cb-forever-doc-cover-contents {
-    display: block !important;
-    width: 100% !important;
-    float: none !important;
-    clear: both !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-cover-generated {
-    margin-bottom: 14pt !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-cover-contents {
-    margin-top: 10pt !important;
-    padding-top: 12pt !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-cover-legal-abs {
-    position: absolute;
-    left: 2mm;
-    right: 2mm;
-    bottom: calc(14mm + 6mm);
-    z-index: 2;
-  }
-
-  html.cb-report-pdf-playwright-footer .cb-forever-doc-report .cb-forever-doc-cover-legal-abs {
-    bottom: calc(72px + 6mm);
-  }
-
-  /* Lion watermark sits outside .cb-report-root — hide when printing this route */
-  body:has([data-cb-forever-report-document]) [data-cb-lion-watermark],
-  .cb-forever-doc-report.cb-report-root [data-watermark],
-  .cb-forever-doc-report.cb-report-root .watermark,
-  .cb-forever-doc-report.cb-report-root .backdrop,
-  .cb-forever-doc-report.cb-report-root .lion-backdrop,
-  .cb-forever-doc-report.cb-report-root .lion-watermark {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-closing {
-    background: #fff !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-stage {
-    display: block !important;
-    margin-bottom: 12pt !important;
-    padding-bottom: 6pt !important;
-    line-height: 1.3 !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-disclosures-h {
-    display: block !important;
-    margin-top: 0 !important;
-    margin-bottom: 10pt !important;
-    line-height: 1.35 !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-lead {
-    display: block !important;
-    margin-bottom: 0.75em !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-ip {
-    display: block !important;
-    margin-top: 12pt !important;
-    margin-bottom: 12pt !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-cta .cb-forever-doc-cta-title {
-    display: block !important;
-    margin-bottom: 10pt !important;
-    line-height: 1.35 !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-cta .cb-forever-doc-cta-body {
-    display: block !important;
-    margin-top: 10pt !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-cta .cb-forever-doc-cta-bullets {
-    display: block !important;
-    margin-top: 8pt !important;
-  }
-
-  .cb-forever-doc-report .cb-forever-doc-appendix-cta .cb-forever-doc-cta-nextline {
-    display: block !important;
-    margin-top: 12pt !important;
-    white-space: normal !important;
-    word-spacing: normal !important;
-  }
-
-  .cb-forever-doc-report .cb-module.cb-keep-together {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .cb-module.cb-forever-doc-closing,
-  .cb-report-section.cb-module.cb-forever-doc-closing,
-  .cb-report-section.cb-module.cb-forever-doc-page-1,
-  .cb-report-section.cb-module.cb-forever-doc-parse-error {
-    break-inside: auto;
-    page-break-inside: auto;
-  }
-
-  .cb-chart-block,
-  .cb-forever-doc-chart-block,
-  .cb-report-chart-wrap.cb-forever-chart-frame {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .cb-forever-doc-card-grid {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .cb-avoid-orphan-heading,
-  .cb-forever-doc-module-heading,
-  .cb-forever-doc-chart-block .cb-forever-chart-title {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  .cb-chart-caption,
-  .cb-forever-doc-chart-caption {
-    break-before: avoid;
-    page-break-before: avoid;
-  }
-
-  .cb-forever-doc-page-1 .cb-forever-doc-progress-tile {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .cb-forever-doc-section-divider {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-}
-
-/* Step 5 — Playwright / browser print: only the main column; site chrome is screen-only */
-@media print {
-  .cb-forever-site-shell > :not(.cb-forever-main) {
-    display: none !important;
-  }
-
-  .cb-forever-main {
-    display: block !important;
-  }
-
-  body {
-    background: #fff !important;
-    color: #0d3a1d !important;
-  }
 }

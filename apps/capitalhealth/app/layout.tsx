@@ -47,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LionWatermarkShell>
           <ModelSaveHandlersProvider>
             <ModelMetricSpineProvider>
-              <div className="flex min-h-screen flex-col">
+              <div className="cb-advisory-model-site-shell flex min-h-screen flex-col">
                 <ModelAppHeader
                   titleDesktop="CAPITAL HEALTH"
                   titleMobile="CAP. HEALTH"
@@ -62,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     ) : null
                   }
                 />
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                <div className="cb-advisory-model-main flex min-h-0 min-w-0 flex-1 flex-col">
                   {/* Same 1280px column + horizontal rhythm as ModelAppHeader inner grid */}
                   <div className="mx-auto box-border flex min-h-0 min-w-0 w-full max-w-[1280px] flex-1 flex-col px-3 sm:px-4 md:px-[clamp(0.65rem,1.8vw,1.1rem)]">
                     {children}

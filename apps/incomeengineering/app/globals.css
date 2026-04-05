@@ -1,5 +1,6 @@
 @import "@cb/ui/cb-model-base.css";
 @import "@cb/advisory-graph/reports/print.css";
+@import "@cb/advisory-graph/reports/pdf-template.css";
 
 @tailwind base;
 @tailwind components;

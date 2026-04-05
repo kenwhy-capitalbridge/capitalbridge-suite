@@ -8,7 +8,7 @@ import { LionWatermarkBackdrop } from "./LionWatermarkBackdrop";
  */
 export function LionWatermarkShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen" data-cb-lion-shell>
       <LionWatermarkBackdrop />
       <div className="relative z-10">{children}</div>
     </div>

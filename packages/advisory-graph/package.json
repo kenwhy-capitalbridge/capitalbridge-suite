@@ -21,6 +21,7 @@
     "./lionsVerdict/client.schema.json": "./src/lionsVerdict/lionVerdictClient.schema.json",
     "./reports": "./src/reports/index.ts",
     "./reports/print.css": "./src/reports/reportsPrint.css",
+    "./reports/pdf-template.css": "./src/reports/advisoryReportPdfTemplate.css",
     "./clientScoreDashboard": "./src/clientScoreDashboard/index.ts"
   },
   "dependencies": {

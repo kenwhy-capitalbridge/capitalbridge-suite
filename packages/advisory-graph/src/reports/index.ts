@@ -51,6 +51,8 @@ export { ReportBrandMark } from './ReportBrandMark';
 export type { ReportInteriorHeaderProps } from './ReportInteriorHeader';
 export { ReportInteriorHeader } from './ReportInteriorHeader';
 
+export type { AdvisoryReportPdfDocumentRootProps } from './AdvisoryReportPdfDocumentRoot';
+export { AdvisoryReportPdfDocumentRoot } from './AdvisoryReportPdfDocumentRoot';
 export type { ReportDocumentProps } from './ReportDocument';
 export { ReportDocument } from './ReportDocument';
 export type { ReportSectionProps } from './ReportSection';
