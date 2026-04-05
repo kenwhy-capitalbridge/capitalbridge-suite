@@ -18,7 +18,8 @@
   color: #0d3a1d;
   font-family: "Inter", Arial, Helvetica, sans-serif;
   --cb-print-header-gap: 0px;
-  --cb-advisory-print-header-height: 18mm;
+  /* Fixed print header band (model line + meta). Playwright top margin + @page top stay 18mm so body starts at 18mm. */
+  --cb-advisory-print-header-height: 12mm;
   --cb-advisory-print-footer-reserved: 12mm;
 }
 
@@ -100,8 +101,8 @@
 
 @media print {
   .cb-advisory-pdf-doc .cb-advisory-chart-svg-wrap {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 0;
+    padding-right: 0;
     box-sizing: border-box;
   }
 }
@@ -117,7 +118,7 @@
 
 @media print {
   /*
-   * Fixed .cb-report-print-header: explicit 18mm band. @page + Playwright margins use same top/bottom.
+   * Fixed .cb-report-print-header: 12mm band. @page top + Playwright top margin = 18mm (first body line at 18mm).
    */
   @page advisory-pdf-doc {
     size: A4;
@@ -127,6 +128,7 @@
   .cb-advisory-pdf-doc.cb-report-root {
     background: #fff !important;
     page: advisory-pdf-doc;
+    min-height: 0 !important;
   }
 
   .cb-advisory-pdf-doc.cb-report-root > .cb-report-print-header {
@@ -134,7 +136,7 @@
     min-height: var(--cb-advisory-print-header-height) !important;
     max-height: var(--cb-advisory-print-header-height) !important;
     box-sizing: border-box !important;
-    padding: 1mm 10mm !important;
+    padding: 1mm 13mm !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
@@ -165,18 +167,19 @@
     box-sizing: border-box;
   }
 
+  /* Horizontal inset comes from @page (13mm); keep left/right symmetric with Chromium footer padding. */
   .cb-advisory-pdf-doc .cb-page {
-    padding: 40px 24px 16px 24px;
+    padding: 40px 0 16px 0;
   }
 
   .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) {
-    padding-top: 11mm !important;
+    padding-top: 12mm !important;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
 
   .cb-advisory-pdf-doc .cb-advisory-doc-cover.cb-page {
-    padding: 8px 8px 12px 8px !important;
+    padding: 8px 0 12px 0 !important;
     overflow: visible;
     break-after: page;
     page-break-after: always;
@@ -334,6 +337,24 @@
 
   .cb-advisory-model-main {
     display: block !important;
+  }
+
+  /* Defensive: site legal footer is dark green — must not appear in the PDF page stack (last-page slab). */
+  .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]) > footer[role="contentinfo"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .cb-advisory-model-main:has([data-cb-advisory-report-document]) {
+    flex: none !important;
+    background: #fff !important;
   }
 
   body:has([data-cb-advisory-report-document]) {

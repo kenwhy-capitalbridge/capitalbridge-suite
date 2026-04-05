@@ -30,9 +30,11 @@ function escapeHtmlText(s: string): string {
 
 /**
  * Top / bottom margin when Playwright footer is active — keep in sync with `renderPdf` margin and
- * `@page` in `advisoryReportPdfTemplate.css` (fixed header height 18mm, footer band 12mm).
+ * `@page` in `advisoryReportPdfTemplate.css` (top margin 18mm, fixed header band 12mm, footer band 12mm).
  */
 export const PLAYWRIGHT_PDF_HEADER_RESERVED_MM = 18;
+/** Matches `--cb-advisory-print-header-height` (fixed `.cb-report-print-header` band). */
+export const PLAYWRIGHT_PDF_FIXED_PRINT_HEADER_BAND_MM = 12;
 export const PLAYWRIGHT_PDF_FOOTER_RESERVED_MM = 12;
 
 /**
@@ -44,7 +46,7 @@ export function buildPlaywrightPdfFooterTemplate(ctx: PlaywrightPdfFooterContext
   const ver = escapeHtmlText(ctx.versionLabel);
   const logo = ctx.logoDataUri;
 
-  return `<div style="box-sizing:border-box;width:100%;min-height:12mm;height:12mm;max-height:12mm;padding:2px 20px;overflow:hidden;font-size:7.5px;line-height:1.3;color:#2B2B2B;font-family:Inter,Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+  return `<div style="box-sizing:border-box;width:100%;min-height:12mm;height:12mm;max-height:12mm;padding:2px 13mm;overflow:hidden;font-size:7.5px;line-height:1.3;color:#2B2B2B;font-family:Inter,Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:space-between;gap:10px;">
   <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
     <img src="${logo}" alt="" style="height:16px;width:auto;max-width:100px;object-fit:contain;object-position:left center;flex-shrink:0;display:block;" />
     <span style="flex:1;min-width:0;">${legal}</span>
