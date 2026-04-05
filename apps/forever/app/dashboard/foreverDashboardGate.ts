@@ -3,6 +3,7 @@ import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import {
+  marketIdToReportExportTimeZone,
   marketToModelCurrencyPrefix,
   normalizeMarketId,
   type MarketId,
@@ -13,8 +14,10 @@ export type ForeverDashboardAuthContext = {
   userId: string;
   /** `plans.slug` for the active membership (e.g. trial, forever-income). */
   planSlug: string;
-  /** `profiles.advisory_market` — PDF audit timezone + zone label. */
+  /** Pricing region code (MY|SG|…) from profile — model currency + report local time IANA zone. */
   advisoryMarketId: MarketId;
+  /** IANA zone for Forever report cover/filename local time (from pricing region). */
+  reportTimeZoneIana: string;
   reportClientDisplayName: string;
   modelCurrencyPrefix: string | null;
   lionAccessUser: LionAccessUser;
@@ -44,6 +47,7 @@ export async function requireForeverDashboardAuth(): Promise<ForeverDashboardAut
     .maybeSingle();
 
   const advisoryMarketId = normalizeMarketId(profile?.advisory_market);
+  const reportTimeZoneIana = marketIdToReportExportTimeZone(advisoryMarketId);
 
   const modelCurrencyPrefix =
     typeof profile?.advisory_market === "string"
@@ -89,6 +93,7 @@ export async function requireForeverDashboardAuth(): Promise<ForeverDashboardAut
     userId,
     planSlug,
     advisoryMarketId,
+    reportTimeZoneIana,
     reportClientDisplayName,
     modelCurrencyPrefix,
     lionAccessUser,

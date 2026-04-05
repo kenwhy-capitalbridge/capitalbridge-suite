@@ -1,9 +1,9 @@
 /**
- * Forever `/dashboard/print` → PDF via Playwright (STEP 9).
+ * Forever report document → PDF via Playwright (authenticated session).
  *
- * Prereq: `npx playwright install chromium`, Forever dev server, valid session.
+ * Prereq: `npx playwright install chromium`, Forever dev server, valid session, existing `exportId`.
  *
- *   FOREVER_PRINT_URL=http://localhost:3006/dashboard/print \\
+ *   FOREVER_PRINT_URL=http://localhost:3006/dashboard/report-document/<exportId> \\
  *   PLAYWRIGHT_STORAGE_STATE=../../e2e/.auth/storage.json \\
  *   PDF_OUTPUT=./forever-print.pdf \\
  *   npm run render:print-pdf -w @cb/forever
@@ -16,7 +16,7 @@ const outputPath = process.env.PDF_OUTPUT?.trim() || process.argv[3] || "forever
 const storageStatePath = process.env.PLAYWRIGHT_STORAGE_STATE?.trim();
 
 if (!url) {
-  console.error("Set FOREVER_PRINT_URL or pass the print page URL as the first argument.");
+  console.error("Set FOREVER_PRINT_URL or pass the report-document URL (with exportId) as the first argument.");
   process.exit(1);
 }
 

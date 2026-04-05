@@ -14,6 +14,46 @@
   }
 }
 
+/* Dedicated report PDF document: hide fixed header / site legal footer on screen (Playwright still uses @media print). */
+@media screen {
+  .cb-forever-site-shell:has([data-cb-forever-report-document]) > header,
+  .cb-forever-site-shell:has([data-cb-forever-report-document]) > footer[role="contentinfo"] {
+    display: none !important;
+  }
+}
+
+/* Forever Income v6 — Lion verdict tier chip (paid PDF; matches app colours) */
+.cb-forever-tier-chip {
+  display: inline-block;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+.cb-forever-tier-chip--strong {
+  background: #55b685;
+  color: #ffffff;
+}
+.cb-forever-tier-chip--stable {
+  background: #8fcf7a;
+  color: #0d3a1d;
+}
+.cb-forever-tier-chip--fragile {
+  background: #f3af56;
+  color: #0d3a1d;
+}
+.cb-forever-tier-chip--at-risk {
+  background: #cfcbbf;
+  color: #0d3a1d;
+}
+.cb-forever-tier-chip--not-sustainable {
+  background: #cd5b52;
+  color: #ffffff;
+}
+
 /* Step 5 — Playwright / browser print: only the main column; site chrome is screen-only */
 @media print {
   .cb-forever-site-shell > :not(.cb-forever-main) {

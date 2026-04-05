@@ -10,7 +10,15 @@ import { CB_REPORT_LEGAL_NOTICE } from "@cb/shared/reportTraceability";
  * Playwright PDF with `renderPdf({ playwrightFooter })` adds a class on `<html>` that hides
  * this in-page footer (Chromium supplies the short legal band instead).
  */
-export function ReportPrintChrome({ audit }: { audit: ReportAuditMeta }) {
+export function ReportPrintChrome({
+  audit,
+  /** Default: full site IP block. Forever v6 report PDF uses the short Playwright-aligned line. */
+  printFooterText,
+}: {
+  audit: ReportAuditMeta;
+  printFooterText?: string;
+}) {
+  const footer = printFooterText ?? CB_REPORT_LEGAL_NOTICE;
   return (
     <>
       <div className="cb-report-print-header" aria-hidden>
@@ -24,7 +32,7 @@ export function ReportPrintChrome({ audit }: { audit: ReportAuditMeta }) {
           </div>
         </div>
       </div>
-      <div className="cb-report-print-footer">{CB_REPORT_LEGAL_NOTICE}</div>
+      <div className="cb-report-print-footer">{footer}</div>
     </>
   );
 }

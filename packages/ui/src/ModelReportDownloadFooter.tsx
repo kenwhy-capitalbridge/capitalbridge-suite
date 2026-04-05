@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 const DISCLAIMER =
   "This calculator is for advisory purposes only. Projections are based on your assumptions and do not guarantee future performance.";
-const RECORDS_LINE = "Please save or print a copy for your records.";
+const RECORDS_LINE = "Please keep a PDF copy for your records.";
 export const MODEL_REPORT_DOWNLOAD_CTA_LABEL = "DOWNLOAD REPORT";
 
 function PrinterGlyph({ className }: { className?: string }) {

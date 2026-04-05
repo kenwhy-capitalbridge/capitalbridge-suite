@@ -34,10 +34,7 @@ import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdi
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import { ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
-import {
-  FOREVER_PRINT_SNAPSHOT_STORAGE_KEY,
-  type ForeverPrintSnapshotV1,
-} from "@/app/dashboard/print/foreverPrintSnapshot";
+import type { ForeverPrintSnapshotV1 } from "@/app/dashboard/print/foreverPrintSnapshot";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -238,6 +235,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
   const foreverLionTier = foreverLionReport.verdict.status as Tier;
   const foreverLionRiskTolerance = useMemo(() => results.progressPercent / 100, [results.progressPercent]);
   const [lionCopyPayload, setLionCopyPayload] = useState<GetLionVerdictOutput | null>(null);
+  const [savePdfBusy, setSavePdfBusy] = useState(false);
   useEffect(() => {
     if (!lionAccessEnabled) {
       setLionCopyPayload(null);
@@ -417,14 +415,48 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
     },
   });
 
-  const goToV6PrintReport = () => {
-    if (!results.isSustainable) return;
+  const saveForeverReportPdf = async () => {
+    if (!results.isSustainable || savePdfBusy) return;
+    setSavePdfBusy(true);
     try {
-      sessionStorage.setItem(FOREVER_PRINT_SNAPSHOT_STORAGE_KEY, JSON.stringify(buildPrintSnapshot()));
-    } catch {
-      /* quota / private mode */
+      const snapshot = buildPrintSnapshot();
+      const startRes = await fetch("/api/forever/report-export/start", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ snapshot, verdictTier: foreverLionTier }),
+      });
+      if (!startRes.ok) {
+        const err = await startRes.json().catch(() => ({}));
+        console.error("[forever] report-export/start failed", startRes.status, err);
+        return;
+      }
+      const { exportId } = (await startRes.json()) as { exportId?: string };
+      if (!exportId) return;
+      const pdfRes = await fetch(`/api/forever/report-pdf/${exportId}`, {
+        credentials: "same-origin",
+      });
+      if (!pdfRes.ok) {
+        console.error("[forever] report-pdf failed", pdfRes.status);
+        return;
+      }
+      const blob = await pdfRes.blob();
+      const cd = pdfRes.headers.get("Content-Disposition");
+      let filename = "Forever-Income-Model-Report.pdf";
+      const m = cd?.match(/filename="([^"]+)"/);
+      if (m?.[1]) filename = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setSavePdfBusy(false);
     }
-    window.location.assign("/dashboard/print");
   };
 
   const status = useMemo(() => {
@@ -629,19 +661,15 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
 
       <div className="w-full max-w-[900px] px-3 sm:px-5 lg:px-10">
         <ModelReportDownloadFooter
-          onDownload={goToV6PrintReport}
-          disabled={!results.isSustainable}
-          buttonLabel="OPEN PRINT REPORT"
+          onDownload={() => void saveForeverReportPdf()}
+          disabled={!results.isSustainable || savePdfBusy}
+          buttonLabel={savePdfBusy ? "GENERATING…" : "SAVE REPORT"}
           buttonClassName={
             results.isSustainable
               ? undefined
               : "mx-auto flex min-h-[2.5rem] w-full max-w-[min(100%,28rem)] cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-bold text-gray-500 shadow-none"
           }
         />
-        <p className="mt-3 text-center text-[10px] font-normal text-gray-500 px-2">
-          Opens the v6 print layout (snapshot saved for this tab). Official file PDF: Playwright capture or browser
-          print from that page.
-        </p>
       </div>
     </div>
   );

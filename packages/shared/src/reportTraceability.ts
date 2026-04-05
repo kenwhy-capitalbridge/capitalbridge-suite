@@ -114,6 +114,90 @@ export function buildForeverV6CapitalBridgePdfFilename(args: {
   return trial ? `Trial_${core}` : core;
 }
 
+/** Cover line — user local wall time only; no timezone name shown. */
+export function formatForeverCoverGeneratedLabel(d: Date, timeZone: string): string {
+  const tz = timeZone.trim() || "UTC";
+  try {
+    const datePart = d.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: tz,
+    });
+    const timePart = d.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: tz,
+    });
+    return `${datePart} at ${timePart}`;
+  } catch {
+    const datePart = d.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+    const timePart = d.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "UTC",
+    });
+    return `${datePart} at ${timePart}`;
+  }
+}
+
+/**
+ * Forever Income v6 report PDF filename (locked spec).
+ * Trial: `Trial_Forever-Income-Model-YYYY-MM-DD_HHmm-Report.pdf`
+ * Paid: `Forever-Income-Model-YYYY-MM-DD_HHmm-Report.pdf`
+ */
+export function buildForeverIncomeModelReportFilename(args: {
+  planSlug: string;
+  createdAt: Date;
+  timeZone: string;
+}): string {
+  const tz = args.timeZone.trim() || "UTC";
+  const isTrial = String(args.planSlug ?? "").toLowerCase().trim() === "trial";
+  let y = "";
+  let mo = "";
+  let day = "";
+  let h = "";
+  let min = "";
+  try {
+    const dtf = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const parts = dtf.formatToParts(args.createdAt);
+    const m: Record<string, string> = {};
+    for (const p of parts) {
+      if (p.type !== "literal") m[p.type] = p.value;
+    }
+    y = m.year ?? "";
+    mo = m.month ?? "";
+    day = m.day ?? "";
+    h = m.hour ?? "";
+    min = m.minute ?? "";
+  } catch {
+    const u = args.createdAt.toISOString();
+    y = u.slice(0, 4);
+    mo = u.slice(5, 7);
+    day = u.slice(8, 10);
+    h = u.slice(11, 13);
+    min = u.slice(14, 16);
+  }
+  const stamp = `${y}-${mo}-${day}_${h}${min}`;
+  const base = `Forever-Income-Model-${stamp}-Report.pdf`;
+  return isTrial ? `Trial_${base}` : base;
+}
+
 export function buildCapitalBridgePdfFilename(args: {
   modelCode: CbReportModelCode;
   userDisplayName: string;

@@ -6,7 +6,7 @@ import { createAppServerClient } from "@cb/supabase/server";
 
 export async function insertForeverReportExportRow(
   supabase: Awaited<ReturnType<typeof createAppServerClient>>,
-  args: { userId: string; reportId: string; tier: string },
+  args: { userId: string; reportId: string; tier: string; lionConfig?: Record<string, unknown> },
 ): Promise<string | null> {
   const { data, error } = await supabase
     .from("report_exports")
@@ -14,7 +14,7 @@ export async function insertForeverReportExportRow(
       user_id: args.userId,
       report_id: args.reportId,
       tier: args.tier.length > 0 ? args.tier : null,
-      lion_config: {},
+      lion_config: args.lionConfig ?? {},
     })
     .select("id")
     .single();

@@ -22,10 +22,14 @@ import {
 
 export type PdfPageFormat = "A4" | "Letter";
 
+export type PlaywrightCookieParam = { name: string; value: string; url: string };
+
 export type RenderPdfOptions = {
   url: string;
   outputPath?: string;
   format?: PdfPageFormat;
+  /** Forward session cookies for authenticated `page.goto` (same-origin PDF capture). */
+  playwrightCookies?: PlaywrightCookieParam[];
   /** Navigation + readiness wait (ms). Default 120_000. */
   timeoutMs?: number;
   /**
@@ -86,6 +90,9 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       options.storageStatePath ? { storageState: options.storageStatePath } : {},
     );
     const page = await context.newPage();
+    if (options.playwrightCookies?.length) {
+      await context.addCookies(options.playwrightCookies);
+    }
     await page.goto(options.url, {
       waitUntil: "networkidle",
       timeout: timeoutMs,

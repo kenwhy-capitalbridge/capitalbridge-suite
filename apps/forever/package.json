@@ -12,6 +12,7 @@
   "dependencies": {
     "@cb/advisory-graph": "*",
     "@cb/db-types": "*",
+    "@cb/lion-verdict": "*",
     "@cb/pdf": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
