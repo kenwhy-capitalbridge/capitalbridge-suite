@@ -166,7 +166,7 @@ const TOC_STRUCTURE: { title: string; items?: readonly string[] }[] = [
   {
     title: "Section B — Advisor Read",
     items: [
-      "Your retirement system (in one view)",
+      "Your Forever Income (in one view)",
       "Next 30 days: pick one lever",
       "Inputs that drive the outcome",
       "Capital stack & accessibility",

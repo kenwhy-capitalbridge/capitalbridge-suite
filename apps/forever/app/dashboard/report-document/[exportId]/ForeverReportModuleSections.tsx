@@ -62,7 +62,7 @@ export function ForeverReportModuleSections({
             keepWithNext
             className="cb-advisory-doc-module-heading cb-avoid-orphan-heading"
           >
-            Your retirement system (in one view)
+            Your Forever Income (in one view)
           </ReportHeading>
           <ReportProse className="text-[#0d3a1d]">
             Compare what you need each month against what portfolio real returns can sustainably support, and the remaining gap (if any).
