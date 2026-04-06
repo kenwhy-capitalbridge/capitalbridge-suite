@@ -34,7 +34,6 @@ export function AdvisoryReportPdfDocumentRoot({
         "cb-report-root",
         "cb-advisory-pdf-doc",
         "print-report-root",
-        "min-h-screen",
         "text-[#0d3a1d]",
         modelSurfaceClass,
         className,

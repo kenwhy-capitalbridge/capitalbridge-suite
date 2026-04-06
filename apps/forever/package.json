@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 3006",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "render:print-pdf": "node ../../node_modules/tsx/dist/cli.mjs scripts/render-print-pdf.ts"
+    "render:print-pdf": "node ../../node_modules/tsx/dist/cli.mjs scripts/render-print-pdf.ts",
+    "render:mock-pdf": "node ../../node_modules/tsx/dist/cli.mjs scripts/render-mock-report-pdf.ts"
   },
   "dependencies": {
     "@cb/advisory-graph": "*",

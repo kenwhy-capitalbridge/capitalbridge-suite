@@ -53,7 +53,11 @@
 
 .cb-advisory-pdf-doc .cb-page {
   box-sizing: border-box;
-  padding: 28px 32px 84px 32px;
+  max-width: 720px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 28px 0 84px 0;
 }
 
 .cb-advisory-doc-cover-main {
@@ -115,7 +119,7 @@
 @media print {
   .cb-advisory-pdf-doc .cb-chart-container {
     box-sizing: border-box;
-    padding: 0 10px;
+    padding: 0;
   }
 
   .cb-advisory-pdf-doc .cb-chart-container svg {
@@ -135,28 +139,88 @@
 @media print {
   /*
    * Master PDF frame: physical margins = Playwright only (@page margin 0).
-   * Per-page top/bottom clearance uses .cb-page padding + box-decoration-break: clone (fragments repeat band).
+   * Readable column = max-width on .cb-page. Per-fragment top/bottom = padding + box-decoration-break: clone.
    */
   @page advisory-pdf-doc {
     size: A4;
     margin: 0;
   }
 
-  body:has([data-cb-advisory-report-document]) .cb-advisory-pdf-doc,
-  body:has([data-cb-advisory-report-document]) .cb-advisory-pdf-doc * {
-    background-image: none !important;
+  html:has([data-cb-advisory-report-document]),
+  body:has([data-cb-advisory-report-document]) {
+    background: #ffffff !important;
+    height: auto !important;
+    min-height: 0 !important;
   }
 
   [data-cb-advisory-report-document],
   .cb-advisory-pdf-doc.cb-report-root {
     background: #ffffff !important;
-    min-height: auto !important;
+    min-height: 0 !important;
+    height: auto !important;
   }
 
   .cb-advisory-pdf-doc.cb-report-root {
     page: advisory-pdf-doc;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* Forever PDF: strip stray fills (last-page green slab); other models omit cb-forever-doc-report. */
+  .cb-advisory-pdf-doc.cb-forever-doc-report * {
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-report-print-header,
+  .cb-advisory-pdf-doc .cb-report-print-footer {
+    background-color: #ffffff !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-advisory-doc-progress-tile {
+    background-color: #f7faf7 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-pdf-progress-track {
+    background-color: rgba(13, 58, 29, 0.12) !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-pdf-progress-fill {
+    background-color: #1b4d3e !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-pdf-lever-card {
+    background-color: #fafbf9 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-forever-tier-chip--strong {
+    background: #55b685 !important;
+    color: #ffffff !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-forever-tier-chip--stable {
+    background: #8fcf7a !important;
+    color: #0d3a1d !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-forever-tier-chip--fragile {
+    background: #f3af56 !important;
+    color: #0d3a1d !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-forever-tier-chip--at-risk {
+    background: #cfcbbf !important;
+    color: #0d3a1d !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-forever-tier-chip--not-sustainable {
+    background: #cd5b52 !important;
+    color: #ffffff !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-report-print-footer {
+    z-index: 20 !important;
+    background: #ffffff !important;
   }
 
   .cb-advisory-pdf-doc.cb-report-root > .cb-report-print-header {
@@ -184,7 +248,7 @@
     max-width: 100%;
     padding: 0 13mm;
     gap: 6px;
-    flex: 1;
+    flex: none;
     min-height: 0;
     align-items: center;
   }
@@ -209,7 +273,12 @@
   /* Content zone: reserve header + 6mm breathing, footer band + 6mm breathing (repeats each fragment). */
   .cb-advisory-pdf-doc .cb-page {
     box-sizing: border-box;
-    margin: 0;
+    max-width: 720px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0;
+    margin-bottom: 0;
     padding-left: 0;
     padding-right: 0;
     padding-top: calc(var(--cb-header-height) + 6mm);
@@ -220,6 +289,10 @@
 
   .cb-advisory-pdf-doc .cb-appendix.cb-page {
     margin-bottom: 0 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-appendix.cb-page::after {
+    content: none !important;
   }
 
   .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) h1,
@@ -400,7 +473,29 @@
     display: block !important;
   }
 
-  /* Defensive: site legal footer is dark green — must not appear in the PDF page stack (last-page slab). */
+  /* Collapse outer app chrome height (min-h-screen / flex-1) so nothing paints below the report. */
+  body:has([data-cb-advisory-report-document]) [data-cb-lion-shell] {
+    min-height: 0 !important;
+    height: auto !important;
+    background: #ffffff !important;
+    flex: none !important;
+  }
+
+  body:has([data-cb-advisory-report-document]) [data-cb-lion-shell] > div {
+    min-height: 0 !important;
+    height: auto !important;
+    background: #ffffff !important;
+  }
+
+  body:has([data-cb-advisory-report-document]) .cb-advisory-model-site-shell {
+    min-height: 0 !important;
+    height: auto !important;
+    background: #ffffff !important;
+    flex: none !important;
+  }
+
+  /* Defensive: site legal footer is dark green — hide everywhere in body when printing a report PDF. */
+  body:has([data-cb-advisory-report-document]) footer[role="contentinfo"],
   .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]) > footer[role="contentinfo"] {
     display: none !important;
     visibility: hidden !important;
@@ -411,10 +506,14 @@
     margin: 0 !important;
     border: none !important;
     background: transparent !important;
+    pointer-events: none !important;
   }
 
   .cb-advisory-model-main:has([data-cb-advisory-report-document]) {
     flex: none !important;
+    flex-grow: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
     background: #fff !important;
   }
 

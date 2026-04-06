@@ -91,11 +91,45 @@ async function chromiumLaunchOptions(): Promise<Parameters<typeof chromium.launc
   return { headless: true };
 }
 
-async function waitForFonts(page: import("playwright").Page): Promise<void> {
-  await page.evaluate(async () => {
+/**
+ * Playwright serializes `page.evaluate` callbacks into the page. Bundlers (e.g. tsx/esbuild) can inject
+ * `__name(...)` into transpiled functions, which throws in the browser. `new Function` bodies are plain
+ * strings and serialize cleanly; string `evaluate("...")` is an expression, not an invoked callback.
+ */
+const evalResizeForPrint = new Function(`
+  window.dispatchEvent(new Event("resize"));
+`) as () => void;
+
+const evalWaitFontsReady = new Function(`
+  return (async () => {
     if (typeof document === "undefined" || !document.fonts) return;
     await document.fonts.ready;
-  });
+  })();
+`) as () => Promise<void>;
+
+const evalReadFooterDomAttrs = new Function(
+  "tuple",
+  `
+  const idAttr = tuple[0];
+  const verAttr = tuple[1];
+  const byRoot = document.querySelector(".cb-report-root[" + idAttr + "]");
+  const el = byRoot || document.querySelector("[" + idAttr + "]");
+  const rid = el && el.getAttribute(idAttr);
+  const ver = el && el.getAttribute(verAttr);
+  return {
+    reportId: (rid && rid.trim()) || "",
+    versionLabel: (ver && ver.trim()) || "",
+  };
+`,
+) as (tuple: [string, string]) => { reportId: string; versionLabel: string };
+
+const evalAddHtmlClass = new Function(
+  "cls",
+  `document.documentElement.classList.add(cls);`,
+) as (cls: string) => void;
+
+async function waitForFonts(page: import("playwright").Page): Promise<void> {
+  await page.evaluate(evalWaitFontsReady);
 }
 
 /**
@@ -131,9 +165,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     });
 
     await page.emulateMedia({ media: "print" });
-    await page.evaluate(() => {
-      window.dispatchEvent(new Event("resize"));
-    });
+    await page.evaluate(evalResizeForPrint);
 
     await waitForFonts(page);
 
@@ -148,23 +180,10 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
 
     let footerCtx: PlaywrightPdfFooterContext | undefined = options.playwrightFooter;
     if (options.playwrightFooterFromDom) {
-      const dom = await page.evaluate(
-        ([idAttr, verAttr]) => {
-          const pick = () => {
-            const byRoot = document.querySelector(
-              `.cb-report-root[${idAttr}]`,
-            ) as HTMLElement | null;
-            if (byRoot) return byRoot;
-            return document.querySelector(`[${idAttr}]`) as HTMLElement | null;
-          };
-          const el = pick();
-          return {
-            reportId: el?.getAttribute(idAttr)?.trim() ?? "",
-            versionLabel: el?.getAttribute(verAttr)?.trim() ?? "",
-          };
-        },
-        [CB_PDF_FOOTER_DOM_REPORT_ID_ATTR, CB_PDF_FOOTER_DOM_VERSION_ATTR],
-      );
+      const dom = await page.evaluate(evalReadFooterDomAttrs, [
+        CB_PDF_FOOTER_DOM_REPORT_ID_ATTR,
+        CB_PDF_FOOTER_DOM_VERSION_ATTR,
+      ]);
       footerCtx = {
         reportId: dom.reportId.length > 0 ? dom.reportId : "CB-UNKNOWN",
         versionLabel: dom.versionLabel.length > 0 ? dom.versionLabel : "v0.0",
@@ -175,9 +194,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     const useFooter = Boolean(footerCtx);
 
     if (useFooter) {
-      await page.evaluate((cls) => {
-        document.documentElement.classList.add(cls);
-      }, CB_REPORT_PDF_PLAYWRIGHT_FOOTER_HTML_CLASS);
+      await page.evaluate(evalAddHtmlClass, CB_REPORT_PDF_PLAYWRIGHT_FOOTER_HTML_CLASS);
     }
 
     const pdf = await page.pdf({

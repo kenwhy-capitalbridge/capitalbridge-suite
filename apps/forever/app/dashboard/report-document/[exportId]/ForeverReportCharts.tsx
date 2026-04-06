@@ -82,9 +82,9 @@ export function ProgressBarTile({
         <span className="text-[9pt] font-semibold text-[#0d3a1d]">{label}</span>
         <span className="text-[11pt] font-bold tabular-nums text-[#0d3a1d]">{p.toFixed(1)}%</span>
       </div>
-      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-[rgba(13,58,29,0.12)]">
+      <div className="cb-pdf-progress-track mt-2 h-2.5 w-full overflow-hidden rounded-full bg-[rgba(13,58,29,0.12)]">
         <div
-          className="h-full rounded-full bg-[#1B4D3E]"
+          className="cb-pdf-progress-fill h-full rounded-full bg-[#1B4D3E]"
           style={{ width: `${p}%` }}
           role="presentation"
         />

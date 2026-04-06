@@ -109,7 +109,7 @@ export function ForeverReportModuleSections({
             {levers.map((L) => (
               <div
                 key={L.title}
-                className="rounded-md border border-[rgba(13,58,29,0.18)] bg-[#fafbf9] p-3 text-[9.5pt] leading-snug text-[#0d3a1d]"
+                className="cb-pdf-lever-card rounded-md border border-[rgba(13,58,29,0.18)] bg-[#fafbf9] p-3 text-[9.5pt] leading-snug text-[#0d3a1d]"
               >
                 <p className="m-0 font-bold text-[#0d3a1d]">{L.title}</p>
                 <p className="mt-1.5 mb-0 text-[rgba(43,43,43,0.95)]">{L.body}</p>

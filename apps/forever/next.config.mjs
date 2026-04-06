@@ -8,6 +8,11 @@ loadEnvConfig(monorepoRoot, false);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  /**
+   * Mock PDF / Playwright use `FOREVER_DEV_URL=http://127.0.0.1:3006`; Next dev otherwise treats
+   * `/_next/*` as cross-origin vs the default `localhost` allowlist and logs a warning (future: block).
+   */
+  allowedDevOrigins: ["127.0.0.1"],
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },

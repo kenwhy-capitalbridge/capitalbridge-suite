@@ -20,11 +20,15 @@ if (!url) {
   process.exit(1);
 }
 
-await renderPdf({
-  url,
-  outputPath,
-  storageStatePath: storageStatePath || undefined,
-  playwrightFooterFromDom: true,
+void (async () => {
+  await renderPdf({
+    url,
+    outputPath,
+    storageStatePath: storageStatePath || undefined,
+    playwrightFooterFromDom: true,
+  });
+  console.log(`Wrote ${outputPath}`);
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });
-
-console.log(`Wrote ${outputPath}`);
