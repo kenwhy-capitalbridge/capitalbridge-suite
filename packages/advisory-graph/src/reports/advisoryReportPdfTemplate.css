@@ -18,9 +18,11 @@
   color: #0d3a1d;
   font-family: "Inter", Arial, Helvetica, sans-serif;
   --cb-print-header-gap: 0px;
-  /* Fixed print header band (model line + meta). Playwright top margin + @page top stay 18mm so body starts at 18mm. */
-  --cb-advisory-print-header-height: 12mm;
-  --cb-advisory-print-footer-reserved: 12mm;
+  --cb-header-height: 18mm;
+  --cb-footer-height: 16mm;
+  --cb-advisory-print-header-height: var(--cb-header-height);
+  /* Aligns with Playwright bottom margin when footer template is active */
+  --cb-advisory-print-footer-reserved: 20mm;
 }
 
 /* No gold/yellow on white — overrides shared print.css (#ffcc6a) and inline REPORT_ACCENT on headings/KV keys. */
@@ -63,6 +65,17 @@
   margin: 0 0 24px 0;
 }
 
+/* Major section starts only — use `cb-page-break` / `cb-page-break-after` on cover in consuming apps. */
+.cb-page-break {
+  break-before: page;
+  page-break-before: always;
+}
+
+.cb-page-break-after {
+  break-after: page;
+  page-break-after: always;
+}
+
 .cb-section-start,
 .cb-break-before-page,
 .cb-report-section--page-break {
@@ -100,10 +113,13 @@
 }
 
 @media print {
-  .cb-advisory-pdf-doc .cb-advisory-chart-svg-wrap {
-    padding-left: 0;
-    padding-right: 0;
+  .cb-advisory-pdf-doc .cb-chart-container {
     box-sizing: border-box;
+    padding: 0 10px;
+  }
+
+  .cb-advisory-pdf-doc .cb-chart-container svg {
+    overflow: visible !important;
   }
 }
 
@@ -118,33 +134,55 @@
 
 @media print {
   /*
-   * Fixed .cb-report-print-header: 12mm band. @page top + Playwright top margin = 18mm (first body line at 18mm).
+   * Master PDF frame: physical margins = Playwright only (@page margin 0).
+   * Per-page top/bottom clearance uses .cb-page padding + box-decoration-break: clone (fragments repeat band).
    */
   @page advisory-pdf-doc {
     size: A4;
-    margin: 18mm 13mm 12mm 13mm;
+    margin: 0;
+  }
+
+  body:has([data-cb-advisory-report-document]) .cb-advisory-pdf-doc,
+  body:has([data-cb-advisory-report-document]) .cb-advisory-pdf-doc * {
+    background-image: none !important;
+  }
+
+  [data-cb-advisory-report-document],
+  .cb-advisory-pdf-doc.cb-report-root {
+    background: #ffffff !important;
+    min-height: auto !important;
   }
 
   .cb-advisory-pdf-doc.cb-report-root {
-    background: #fff !important;
     page: advisory-pdf-doc;
-    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .cb-advisory-pdf-doc.cb-report-root > .cb-report-print-header {
-    height: var(--cb-advisory-print-header-height) !important;
-    min-height: var(--cb-advisory-print-header-height) !important;
-    max-height: var(--cb-advisory-print-header-height) !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 10 !important;
+    height: var(--cb-header-height) !important;
+    min-height: var(--cb-header-height) !important;
+    max-height: var(--cb-header-height) !important;
     box-sizing: border-box !important;
-    padding: 1mm 13mm !important;
+    padding: 1mm 0 !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     overflow: hidden !important;
-    border-bottom-width: 0.35pt !important;
+    background: #fff !important;
+    border-bottom: 0.35pt solid rgba(13, 58, 29, 0.1) !important;
   }
 
   .cb-advisory-pdf-doc .cb-report-print-header-inner {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 13mm;
     gap: 6px;
     flex: 1;
     min-height: 0;
@@ -164,25 +202,45 @@
   .cb-advisory-pdf-doc.cb-report-root:has(> .cb-report-print-header),
   .cb-advisory-pdf-doc.print-report-root:has(> .cb-report-print-header) {
     padding-top: 0 !important;
+    padding-bottom: 0 !important;
     box-sizing: border-box;
   }
 
-  /* Horizontal inset comes from @page (13mm); keep left/right symmetric with Chromium footer padding. */
+  /* Content zone: reserve header + 6mm breathing, footer band + 6mm breathing (repeats each fragment). */
   .cb-advisory-pdf-doc .cb-page {
-    padding: 40px 0 16px 0;
-  }
-
-  .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) {
-    padding-top: 12mm !important;
+    box-sizing: border-box;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: calc(var(--cb-header-height) + 6mm);
+    padding-bottom: calc(var(--cb-footer-height) + 6mm);
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
 
+  .cb-advisory-pdf-doc .cb-appendix.cb-page {
+    margin-bottom: 0 !important;
+  }
+
+  .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) h1,
+  .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) h2,
+  .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) h3 {
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+
+  .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) p,
+  .cb-advisory-pdf-doc .cb-page:not(.cb-advisory-doc-cover) ul {
+    margin-bottom: 10px;
+  }
+
+  .cb-advisory-pdf-doc .cb-section {
+    display: block;
+    margin-bottom: 16px;
+  }
+
   .cb-advisory-pdf-doc .cb-advisory-doc-cover.cb-page {
-    padding: 8px 0 12px 0 !important;
     overflow: visible;
-    break-after: page;
-    page-break-after: always;
   }
 
   .cb-advisory-pdf-doc .cb-advisory-doc-cover-main {
@@ -244,6 +302,8 @@
     box-shadow: none !important;
     padding-top: 8pt !important;
     margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
   }
 
   .cb-advisory-pdf-doc .cb-advisory-doc-appendix-disclosures-h {
@@ -283,13 +343,14 @@
   .cb-advisory-pdf-doc .cb-advisory-doc-appendix-cta .cb-advisory-doc-cta-nextline {
     display: block !important;
     margin-top: 12pt !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
     white-space: normal !important;
     word-spacing: normal !important;
   }
 
-  .cb-advisory-pdf-doc .cb-advisory-doc-chart-block.cb-report-chart-wrap {
-    break-inside: auto;
-    page-break-inside: auto;
+  .cb-advisory-pdf-doc .cb-advisory-chart-svg-wrap {
+    overflow: visible !important;
   }
 
   .cb-advisory-pdf-doc .cb-advisory-chart-plot-row {

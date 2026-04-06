@@ -1,32 +1,30 @@
 # Cursor handover
 
 **Generated:** 2026-03-28  
-**Updated:** 2026-04-01 (brand shell, legal footer, header `<picture>`, handover expansion)  
+**Updated:** 2026-04-22 (Forever Playwright PDF stack, print layout spec, handover continuation block)  
 **Purpose:** Start a new chat from this file to avoid long, laggy threads. Paste or @-mention this file when opening a new session.
 
 ---
 
 ## Snapshot: where `main` should be (this session)
 
-Recent `origin/main` / local `main` included at least these **brand and shell** commits (newest first):
+Recent **`origin/main`** includes **Forever strategic report PDF (DOM + Playwright)** work (newest first):
 
 | Commit | Summary |
 |--------|---------|
-| `4823edc` | style(ui): polish premium footer rhythm and desktop logo ladder |
-| `88bf5b1` | feat(brand): dynamic header logo hierarchy + wider legal footer gutters |
-| `74cd2e4` | feat(brand): switch wide header lockup to BiggerFont asset |
-| `afcc997` | fix(ui): constrain legal footer width; lion-only header below 1280px |
-| `085a38a` | feat(brand): Large-Full gold lockup + responsive header picture |
-| `4d4ca13` | fix(ui): reliable header logos via `HeaderBrandPicture` |
-| `3d1c671` | fix(ui): restore header logos + gold gradient legal rule |
-| `0e99bca` | fix(ui): header logo scale, responsive wordmark/lion, visible legal footer |
+| `2662132` | **fix(pdf):** align advisory print layout — **12mm** fixed header band, **18mm** top margin unchanged; **13mm** horizontal symmetry (`.cb-page` print horizontal padding 0, header/footer/footerTemplate); last-page **green slab** mitigations (hide site `CbLegalSiteFooter` in print, `min-height: 0` on PDF root, `flex: none` + white bg on main when report present). |
+| `8270af4` | **fix(pdf):** explicit **18mm** header reservation + **12mm** footer; last-page green bar work (appendix stage label, borders). |
+| `5a13f19` | **fix(pdf):** compact print header; last-page green bars. |
+| `6dca3e6` | **feat(reports):** shared Playwright PDF template + Forever report polish (`AdvisoryReportPdfDocumentRoot`, `advisoryReportPdfTemplate.css`, wired IE / Health / Stress layouts). |
 
-Earlier product work still on history:
+Earlier chain (still in history): `3535726`, `809aeba`, `5b1e413`, `247ab93` — Forever v6 report modules, charts, cover, logos from `apps/forever/public/brand`.
+
+Older **brand and shell** commits (reference):
 
 | Commit | Summary |
 |--------|---------|
-| `69b2529` | Capital Stress: **Monte Carlo path count** in CAPITAL DIAGNOSIS intro (`simulationCount`, gold bold serif). |
-| `9d248c2` | Capital Stress: second **EXPAND ALL / COLLAPSE ALL** above **Structural Stability Map** (`toggleExpandAllSections` shared with lower control). |
+| `4823edc` … `0e99bca` | Header `HeaderBrandPicture`, legal footer, login/platform chrome — see **Brand chrome** section below. |
+| `69b2529`, `9d248c2` | Capital Stress: Monte Carlo path count copy; EXPAND ALL above Structural Stability Map. |
 
 **Verify current tip:**
 
@@ -34,7 +32,7 @@ Earlier product work still on history:
 git fetch origin && git log -1 --oneline origin/main
 ```
 
-**Local working tree (as of last check):** there may be **uncommitted** edits under `apps/login/tailwind.config.ts`, `packages/ui/src/ModelAppHeader.module.css`, `packages/ui/src/index.ts`, plus **untracked** preview PNGs (`.preview-*.png`) and extra assets under `packages/ui/src/assets/` (e.g. alternate logos, `lionhead_Gold_no_tm.*`). Confirm with `git status` before assuming a clean tree.
+**Local working tree:** confirm with `git status`. There may still be **uncommitted** edits (e.g. `apps/login/tailwind.config.ts`, `packages/ui`) and **untracked** assets under `packages/ui/src/assets/` — do not assume a clean tree.
 
 ---
 
@@ -90,6 +88,21 @@ Return with `git checkout restore-point-2026-03-28` or `git checkout eee0b61` if
   - Client helpers: `packages/pdf/src/reportReady.ts` — `beginReportReadyCycle`, `completeReportReadyCycle`, optional `subscribeReportReadyOnPrint`.
 - **Shared tokens:** `packages/shared/src/cbReportTemplate.ts` (margins, brand paths, firm lines); `packages/advisory-graph/src/reports/tokens.ts` (print typography/colours). *Update the comment in `cbReportTemplate.ts` when react-pdf is no longer primary.*
 - **Per app:** dedicated **print-only route** + `@media print` / shared `print.css`; Capital Stress already has patterns: `PrintReport.tsx`, `@cb/advisory-graph/reports/print.css`, `apps/capitalstress/app/docs/sample-report/page.tsx`.
+
+### 4. Forever strategic report PDF — **implemented on `main` (Apr 2026)**
+
+- **Route:** `apps/forever/app/dashboard/report-document/[exportId]/` — server page + `ForeverReportDocumentClient.tsx` (Lion verdict, trial vs paid, calculator snapshot, appendix CTA to Income Engineering).
+- **Export pipeline:** `report_exports` row + lion config; PDF generation uses **`renderPdf`** with **`playwrightFooterFromDom`** (or explicit footer ctx) — `packages/pdf/src/renderPdf.ts`, `packages/pdf/src/playwrightPdfFooter.ts`.
+- **Document shell:** `AdvisoryReportPdfDocumentRoot` (`packages/advisory-graph/src/reports/AdvisoryReportPdfDocumentRoot.tsx`) — `data-cb-advisory-report-document`, `ReportPrintChrome`, DOM attrs `CB_PDF_FOOTER_DOM_*` for Chromium footer (`@cb/shared/reportPdfPlaywright`).
+- **Shared CSS:** import order in model apps — `reports/print.css` → `reports/pdf-template.css` (maps to **`advisoryReportPdfTemplate.css`**). Named page **`advisory-pdf-doc`**, `@page` margins, fixed `.cb-report-print-header`, appendix/closing print rules (no green stage rule on appendix).
+- **Layout spec (as shipped in `2662132`):**
+  - **18mm** Playwright top margin + **`@page` top 18mm** — first body column starts at **18mm** from sheet top.
+  - **12mm** fixed in-document header band (`--cb-advisory-print-header-height`); constant **`PLAYWRIGHT_PDF_FIXED_PRINT_HEADER_BAND_MM`** documents sync with CSS.
+  - **12mm** Chromium footer band (`PLAYWRIGHT_PDF_FOOTER_RESERVED_MM`); **`html.cb-report-pdf-playwright-footer`** hides in-page `ReportPrintChrome` footer.
+  - **13mm** left/right: `@page`, Playwright `margin`, fixed print header horizontal padding, footer template horizontal padding; interior **`.cb-page` print horizontal padding 0** so margins are not doubled/asymmetric.
+- **Last-page green rectangle:** Mitigated by stripping appendix stage label styling that drew a full-width rule, print border resets on CTA, and **print-only** hide of **`CbLegalSiteFooter`** when the PDF doc is present (dark `#0d3a1d` bar was leaking into the paginated stack); plus **`min-height: 0`** on `.cb-advisory-pdf-doc.cb-report-root` and **`flex: none` + white background** on `.cb-advisory-model-main:has([data-cb-advisory-report-document])`.
+- **Charts / modules:** `ForeverReportCharts.tsx`, `ForeverReportModuleSections.tsx` — `ProgressBarTile` uses `#1B4D3E` fill (only on opening snapshot, not appendix).
+- **Still not done (broader PDF migration):** Income Engineering jsPDF, Health react-pdf primary, Capital Stress download→Playwright — see **Action items**.
 
 ---
 
@@ -166,8 +179,8 @@ flowchart LR
 ## Action items for the next session (suggested)
 
 1. **PDF migration (large):**  
+   - **Forever:** **dashboard export PDF** uses DOM + Playwright + shared advisory template (`report-document/[exportId]`). **Legacy** `apps/forever/legacy/foreverPdfBuild.ts` (jsPDF) may still exist for older flows — confirm product source of truth.  
    - **Income Engineering:** move off `jsPDF` in `App.tsx` / `PrintReportView` toward a print URL + Playwright.  
-   - **Forever:** same vs `foreverPdfBuild.ts`.  
    - **Capital Health:** add DOM print route mirroring `CapitalGrowthReport` sections; deprecate or secondary **@react-pdf/renderer** for “official” PDF.  
    - **Capital Stress:** ensure **download** path can target print URL + Playwright where server/CI PDF is needed; keep `window.print()` if product wants browser print too.
 
@@ -190,7 +203,10 @@ flowchart LR
 | Capital Stress dashboard UI | `apps/capitalstress/legacy/App.tsx` |
 | Capital Stress print layout | `apps/capitalstress/legacy/PrintReport.tsx` |
 | Monte Carlo / `simulationCount` | `apps/capitalstress/legacy/services/mathUtils.ts` (`getSimulationCount`, `runMonteCarlo`) |
-| Playwright PDF | `packages/pdf/src/renderPdf.ts`, `scripts/generate-pdf.ts` |
+| Playwright PDF | `packages/pdf/src/renderPdf.ts`, `packages/pdf/src/playwrightPdfFooter.ts`, `scripts/generate-pdf.ts` |
+| Forever dashboard report PDF (DOM) | `apps/forever/app/dashboard/report-document/[exportId]/` (`page.tsx`, `ForeverReportDocumentClient.tsx`, `ForeverReportCharts.tsx`, `ForeverReportModuleSections.tsx`) |
+| Shared advisory PDF print CSS | `packages/advisory-graph/src/reports/advisoryReportPdfTemplate.css` (import as `@cb/advisory-graph/reports/pdf-template.css`), `reportsPrint.css` |
+| Report PDF DOM / Playwright tokens | `packages/shared/src/reportPdfPlaywright.ts`, `packages/shared/src/reportTraceability.ts` |
 | Report ready flag | `packages/pdf/src/reportReady.ts` |
 | Model footer / download CTA | `packages/ui/src/ModelReportDownloadFooter.tsx` |
 | Shared print CSS tokens (apps) | `packages/ui/src/cb-model-base.css`, `packages/advisory-graph/src/reports/` |
@@ -207,7 +223,7 @@ flowchart LR
 | Model app header chrome | `packages/ui/src/ModelAppHeader.tsx`, `ModelAppHeader.module.css` |
 | IE print | `apps/incomeengineering/legacy/components/PrintReportView.tsx` |
 | Health PDF (react-pdf today) | `apps/capitalhealth/legacy/CapitalGrowthReport.tsx` |
-| Forever PDF (jsPDF today) | `apps/forever/legacy/foreverPdfBuild.ts` |
+| Forever PDF legacy (jsPDF) | `apps/forever/legacy/foreverPdfBuild.ts` |
 | Lion | `packages/lion-verdict/` |
 
 Other notes in repo: `gpthandover.md`, `Cursor-handover.txt`, `lapsap.txt` (if present).
@@ -376,6 +392,29 @@ Next step in new chat:
   - concise
   - actionable
   - no fluff
+
+---
+
+## Handoff: paste into a new chat (context continuation)
+
+Copy everything inside the block below into your next Cursor message (or `@Cursor_Handover.md` and point to this section).
+
+```
+This GPT chat is now too long and laggy. You will be continuing this entire conversation in a new chat. Please read @Cursor_Handover.md (especially Snapshot, §4 Forever strategic report PDF, Action items, and the Gitex section if relevant).
+
+PASTE CONTEXT AND SUMMARY:
+
+- Repo: capitalbridge-suite. Branch: main. Latest pushed PDF work: commit 2662132 (and chain 8270af4 → 6dca3e6) — Forever strategic report uses DOM print + Playwright; shared advisoryReportPdfTemplate.css + AdvisoryReportPdfDocumentRoot; 12mm fixed print header band, 18mm top margin, 13mm horizontal symmetry, 12mm footer; mitigations for last-page green slab (hide CbLegalSiteFooter in print, min-height/flex on report main).
+- User had annotated PDFs: header rhythm, equal L/R margins body+footer, remove green block on last page — addressed in 2662132 unless QA finds regressions.
+- Forever report code: apps/forever/app/dashboard/report-document/[exportId]/; lion config / report_exports API paths in repo as of that branch; see Handover paths table.
+- Other threads in same file: Gitex pre-launch, El-Capitan / website chatbot AI layer — do not redo completed product work; next steps there are scenario simulations and JSON artifacts unless user redirects.
+- Local tree may still have uncommitted UI/assets; always git status before assuming clean.
+
+Your role:
+- Pick up exactly where the previous discussion left off.
+- Assume the summary above is accurate; if unclear, ask targeted questions instead of guessing.
+- Be concise and action-oriented; no reply required until the user gives further instructions.
+```
 
 ---
 

@@ -58,7 +58,7 @@ export function ChartFrame({
         >
           {yAxisLabel}
         </span>
-        <div className="cb-advisory-chart-svg-wrap min-w-0 flex-1 overflow-visible">{children}</div>
+        <div className="cb-chart-container cb-advisory-chart-svg-wrap min-w-0 flex-1 overflow-visible">{children}</div>
       </div>
       <div className="mt-1 text-center text-[8pt] font-semibold text-[#0d3a1d]">{xAxisLabel}</div>
       {caption}

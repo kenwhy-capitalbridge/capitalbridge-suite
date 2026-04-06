@@ -9,4 +9,4 @@ export const CAPITAL_BRIDGE_SITE_LEGAL_MONOCOPY =
  * Full IP paragraph appears on cover + appendix only — not in this band.
  */
 export const CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER =
-  "© Capital Bridge. All rights reserved. Capital Bridge™ is proprietary.";
+  "© Capital Bridge. All rights reserved. Unauthorised use or distribution of proprietary content and outputs is prohibited.";

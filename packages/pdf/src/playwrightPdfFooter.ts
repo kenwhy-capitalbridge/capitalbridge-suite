@@ -29,13 +29,15 @@ function escapeHtmlText(s: string): string {
 }
 
 /**
- * Top / bottom margin when Playwright footer is active — keep in sync with `renderPdf` margin and
- * `@page` in `advisoryReportPdfTemplate.css` (top margin 18mm, fixed header band 12mm, footer band 12mm).
+ * Playwright PDF margins are the single physical inset (CSS `@page` for advisory doc uses 0).
+ * Fixed header/footer bands in HTML + footer template align to these values.
  */
-export const PLAYWRIGHT_PDF_HEADER_RESERVED_MM = 18;
-/** Matches `--cb-advisory-print-header-height` (fixed `.cb-report-print-header` band). */
-export const PLAYWRIGHT_PDF_FIXED_PRINT_HEADER_BAND_MM = 12;
-export const PLAYWRIGHT_PDF_FOOTER_RESERVED_MM = 12;
+export const PLAYWRIGHT_PDF_HEADER_RESERVED_MM = 20;
+/** Matches `--cb-header-height` / fixed `.cb-report-print-header` band inside the content viewport. */
+export const PLAYWRIGHT_PDF_FIXED_PRINT_HEADER_BAND_MM = 18;
+/** Chromium footer template min band; Playwright bottom margin should be ≥ this for readable text. */
+export const PLAYWRIGHT_PDF_FOOTER_TEMPLATE_MIN_MM = 16;
+export const PLAYWRIGHT_PDF_FOOTER_RESERVED_MM = 20;
 
 /**
  * Single-line footer: small wordmark + short legal (left) · report meta + page x/y (right).
@@ -46,12 +48,12 @@ export function buildPlaywrightPdfFooterTemplate(ctx: PlaywrightPdfFooterContext
   const ver = escapeHtmlText(ctx.versionLabel);
   const logo = ctx.logoDataUri;
 
-  return `<div style="box-sizing:border-box;width:100%;min-height:12mm;height:12mm;max-height:12mm;padding:2px 13mm;overflow:hidden;font-size:7.5px;line-height:1.3;color:#2B2B2B;font-family:Inter,Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-  <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
-    <img src="${logo}" alt="" style="height:16px;width:auto;max-width:100px;object-fit:contain;object-position:left center;flex-shrink:0;display:block;" />
-    <span style="flex:1;min-width:0;">${legal}</span>
+  return `<div style="box-sizing:border-box;width:100%;min-height:${PLAYWRIGHT_PDF_FOOTER_TEMPLATE_MIN_MM}mm;padding:2px 13mm;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;font-size:9px;line-height:1.4;color:#2B2B2B;font-family:Inter,Arial,Helvetica,sans-serif;">
+  <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;flex:1;">
+    <img src="${logo}" alt="" style="height:16px;width:auto;max-width:100px;object-fit:contain;object-position:left top;flex-shrink:0;display:block;margin-top:1px;" />
+    <span style="flex:1;min-width:0;white-space:normal;">${legal}</span>
   </div>
-  <div style="flex-shrink:0;text-align:right;white-space:nowrap;font-size:7px;">
+  <div style="flex-shrink:0;text-align:right;white-space:nowrap;font-size:8px;line-height:1.35;margin-top:1px;">
     ${rid} · ${ver} · Page <span class="pageNumber"></span> / <span class="totalPages"></span>
   </div>
 </div>`;

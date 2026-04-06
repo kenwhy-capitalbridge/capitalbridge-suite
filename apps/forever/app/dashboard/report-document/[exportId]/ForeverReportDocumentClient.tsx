@@ -176,7 +176,7 @@ const TOC_STRUCTURE: { title: string; items?: readonly string[] }[] = [
     ],
   },
   {
-    title: "Section C — Pro Mode (Evidence & Sensitivity)",
+    title: "Section C — DEEPER ANALYSIS (Evidence & Sensitivity)",
     items: [
       "Assumptions & definitions",
       "Liquidity haircut analysis",
@@ -229,7 +229,7 @@ export function ForeverReportDocumentClient({
       shortFooterLegal={shortFooterLegal}
       modelSurfaceClass="cb-forever-doc-report"
     >
-      <section className="cb-page cb-advisory-doc-cover cb-report-executive-summary--page-break-after">
+      <section className="cb-page cb-advisory-doc-cover cb-page-break-after">
         <div className="cb-advisory-doc-cover-main">
             <div className="mb-5 flex justify-center print:mb-5 md:mb-6">
               <img
@@ -350,7 +350,7 @@ export function ForeverReportDocumentClient({
             <div className="cb-print-stage-label cb-advisory-doc-stage-label">Model snapshot</div>
             <ReportProse className="text-[#0d3a1d]">
               Lion narrative was not stored for this export. Headline numbers below match the charts in this PDF; full input tables
-              are in Section C (Assumptions &amp; definitions).
+              are in DEEPER ANALYSIS (Assumptions &amp; definitions).
             </ReportProse>
             <ProgressBarTile
               label="Progress to target (assets vs capital required)"
@@ -363,7 +363,7 @@ export function ForeverReportDocumentClient({
 
       {derived ? <ForeverReportModuleSections derived={derived} formatMoney={formatMoneyBound} /> : null}
 
-      <section className="cb-page cb-break-before-page" aria-label="Appendix and closing">
+      <section className="cb-page cb-appendix cb-page-break" aria-label="Appendix and closing">
         <div className="cb-module cb-advisory-doc-closing">
           <div className="cb-advisory-doc-appendix-stage cb-advisory-doc-stage-label">
             Appendix &amp; closing

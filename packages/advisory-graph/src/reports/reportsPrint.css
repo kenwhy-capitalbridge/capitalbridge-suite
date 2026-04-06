@@ -192,24 +192,26 @@
     left: 0;
     right: 0;
     z-index: 10000;
-    padding: 2mm 16mm 3mm;
     box-sizing: border-box;
+    height: 16mm;
+    min-height: 16mm;
+    max-height: 16mm;
+    padding: 2mm 13mm 2mm;
     font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: 5.25pt;
-    line-height: 1.2;
-    color: #6b7280;
+    font-size: 9px;
+    line-height: 1.4;
+    color: #2b2b2b;
     text-align: justify;
     background: #fff;
-    border-top: 0.5pt solid rgba(13, 58, 29, 0.1);
+    border-top: 0.35pt solid rgba(13, 58, 29, 0.1);
+    overflow: hidden;
   }
 
   /*
-   * STEP 4 (Forever v6 / Playwright footer): `renderPdf({ playwrightFooter })` adds
-   * `cb-report-pdf-playwright-footer` on <html>. Band height must stay aligned with
-   * PLAYWRIGHT_PDF_FOOTER_RESERVED_MM in @cb/pdf/playwright-pdf-footer.
+   * Playwright PDF: physical bottom margin reserves the footer band; do not add second padding on the root.
    */
   html.cb-report-pdf-playwright-footer {
-    --cb-playwright-pdf-footer-reserved: 12mm;
+    --cb-playwright-pdf-footer-reserved: 20mm;
   }
 
   html.cb-report-pdf-playwright-footer .cb-report-print-footer {
@@ -219,7 +221,7 @@
   html.cb-report-pdf-playwright-footer .print-report-root,
   html.cb-report-pdf-playwright-footer .cb-report-root,
   html.cb-report-pdf-playwright-footer #print-report {
-    padding-bottom: var(--cb-playwright-pdf-footer-reserved);
+    padding-bottom: 0 !important;
     box-sizing: border-box;
   }
 }

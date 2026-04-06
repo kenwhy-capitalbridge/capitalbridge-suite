@@ -15,7 +15,7 @@ import {
 type MoneyFmt = (n: number) => string;
 
 /** Chart-heavy modules allow page breaks between blocks; use `cb-keep-together` only on compact units (card grid, appendix CTA). */
-const MODULE_CLASS = "cb-module";
+const MODULE_CLASS = "cb-module cb-section";
 
 export function ForeverReportModuleSections({
   derived,
@@ -38,17 +38,17 @@ export function ForeverReportModuleSections({
     },
     {
       title: "Liquidity & property access",
-      body: `Property is ${formatMoney(stack.illiquid)} of ${formatMoney(computed.currentAssets)} total. Haircuts on realisable value (see liquidity analysis in Section C) change effective capital available for planning.`,
+      body: `Property is ${formatMoney(stack.illiquid)} of ${formatMoney(computed.currentAssets)} total. Haircuts on realisable value (see liquidity analysis in DEEPER ANALYSIS) change effective capital available for planning.`,
     },
     {
       title: "Return & inflation assumptions",
-      body: `Stated nominal return ${baseReturn.toFixed(1)}% and inflation ${baseInflation.toFixed(1)}% imply ~${computed.realReturnRate.toFixed(2)}% real. Section C includes ±1% sensitivity charts on runway.`,
+      body: `Stated nominal return ${baseReturn.toFixed(1)}% and inflation ${baseInflation.toFixed(1)}% imply ~${computed.realReturnRate.toFixed(2)}% real. DEEPER ANALYSIS includes ±1% sensitivity charts on runway.`,
     },
   ];
 
   return (
     <>
-      <section className="cb-page cb-section-start" aria-label="Section B — Advisor Read">
+      <section className="cb-page cb-page-break" aria-label="Section B — Advisor Read">
         <header className="cb-advisory-doc-section-divider">
           <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section B — Advisor Read</div>
           <ReportHeading level={2} variant="sectionSmall" className="cb-advisory-doc-section-divider-title">
@@ -178,7 +178,7 @@ export function ForeverReportModuleSections({
               <ChartCaptionBlock
                 what="One horizontal stacked bar: cash, investments, and property / illiquid capital."
                 why="Advisers stress-test whether liquid buffers match the monthly gap and refinancing flexibility."
-                notice="Illiquid capital may not be available at par — see the liquidity haircut analysis later in Section C."
+                notice="Illiquid capital may not be available at par — see the liquidity haircut analysis later in DEEPER ANALYSIS."
               />
             }
           >
@@ -237,7 +237,7 @@ export function ForeverReportModuleSections({
           </ReportProse>
           <ol className="mt-2 list-decimal space-y-2 pl-5 text-[10pt] leading-snug text-[#0d3a1d]">
             <li>
-              <strong>Validate assumptions</strong> — return and inflation drive capital required; small changes move runway (see sensitivity charts in Section C).
+              <strong>Validate assumptions</strong> — return and inflation drive capital required; small changes move runway (see sensitivity charts in DEEPER ANALYSIS).
             </li>
             <li>
               <strong>Close the monthly gap</strong> —{" "}
@@ -273,11 +273,11 @@ export function ForeverReportModuleSections({
         </div>
       </section>
 
-      <section className="cb-page cb-section-start" aria-label="Section C — Pro Mode (Evidence and Sensitivity)">
+      <section className="cb-page cb-page-break" aria-label="Section C — DEEPER ANALYSIS (Evidence and Sensitivity)">
         <header className="cb-advisory-doc-section-divider">
-          <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section C — Pro Mode (Evidence &amp; Sensitivity)</div>
+          <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section C — DEEPER ANALYSIS (Evidence &amp; Sensitivity)</div>
           <ReportHeading level={2} variant="sectionSmall" className="cb-advisory-doc-section-divider-title">
-            Pro Mode
+            DEEPER ANALYSIS
           </ReportHeading>
         </header>
         <div className={MODULE_CLASS}>
