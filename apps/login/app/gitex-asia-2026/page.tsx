@@ -1,7 +1,7 @@
 import { GitexAsia2026Client } from "./GitexAsia2026Client";
 
 export const metadata = {
-  title: "GITEX Asia 2026 — Preferred Access | Capital Bridge",
+  title: "GITEX Asia 2026 — Preferred and Extended Access | Capital Bridge",
   description: "Redeem your GITEX coupon for guided Capital Bridge access.",
 };
 

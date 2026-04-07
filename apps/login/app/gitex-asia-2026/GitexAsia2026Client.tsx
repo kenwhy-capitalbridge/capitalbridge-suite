@@ -63,20 +63,23 @@ export function GitexAsia2026Client() {
         Capital Bridge
       </p>
       <h1 className="mb-4 text-center font-serif text-2xl font-bold leading-snug text-cb-gold md:text-3xl">
-        GITEX ASIA 2026 — Preferred Access
+        GITEX ASIA 2026 — Preferred and Extended Access
       </h1>
       <p className="mb-6 text-center text-sm leading-relaxed text-cb-cream">Build your Forever Income.</p>
-      <p className="mb-3 text-sm font-medium text-cb-cream">This experience introduces how your capital is:</p>
-      <ul className="mb-6 list-disc space-y-1 pl-5 text-sm leading-relaxed text-cb-cream">
-        <li>evaluated for sustainability</li>
-        <li>structured for growth</li>
-        <li>tested under stress</li>
-      </ul>
-      <p className="mb-2 text-sm font-medium text-cb-cream">Choose your access:</p>
-      <ul className="mb-8 list-none space-y-1 text-sm leading-relaxed text-cb-cream">
-        <li>• 15cm Lion → 7-Day Access</li>
-        <li>• 25cm Lion → 14-Day Access</li>
-      </ul>
+      <div className="mb-8 space-y-3 text-sm leading-relaxed text-cb-cream">
+        <p>This experience introduces how your capital is:</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Evaluated for sustainability</li>
+          <li>Structured for growth</li>
+          <li>Tested under stress</li>
+        </ul>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>15cm Lion → 7-Day Access (Preferred Access)</li>
+          <li>25cm Lion → 14-Day Access (Extended Access)</li>
+        </ul>
+        <p>Redeem before 30 April 2026.</p>
+        <p>Each coupon is only valid for one-time usage.</p>
+      </div>
 
       {done ? (
         <div
