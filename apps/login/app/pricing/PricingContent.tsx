@@ -400,6 +400,56 @@ function PlanCard({
   return <div className="h-full">{cardShell}</div>;
 }
 
+/** GITEX Singapore — event tier; dark panel + gold/cream typography (readable on page green). */
+function GitexPricingCard({ accessLine }: { accessLine: string }) {
+  return (
+    <div className="h-full">
+      <div className="flex h-full flex-col rounded-2xl border-2 border-cb-gold/45 bg-[#122018] p-4 shadow-lg sm:p-6">
+        <h3 className="font-serif text-lg font-semibold leading-snug text-cb-gold sm:text-xl">
+          GITEX ASIA 2026 Singapore
+        </h3>
+        <p className="mt-2 font-serif text-base font-semibold leading-snug text-cb-gold">{accessLine}</p>
+        <p className="mt-4 font-sans text-sm font-semibold text-cb-cream">Build your Forever Income.</p>
+        <p className="mt-3 font-sans text-sm leading-relaxed text-cb-cream">
+          This experience introduces how your capital is:
+        </p>
+        <ul className="mt-2 space-y-1.5 font-sans text-sm leading-relaxed text-cb-cream">
+          <li className="flex gap-2">
+            <span className="shrink-0 text-cb-gold" aria-hidden>
+              •
+            </span>
+            Evaluated for sustainability
+          </li>
+          <li className="flex gap-2">
+            <span className="shrink-0 text-cb-gold" aria-hidden>
+              •
+            </span>
+            Structured for growth
+          </li>
+          <li className="flex gap-2">
+            <span className="shrink-0 text-cb-gold" aria-hidden>
+              •
+            </span>
+            Tested under stress
+          </li>
+        </ul>
+        <p className="mt-4 font-sans text-sm leading-relaxed text-cb-cream/95">Redeem before 30 April 2026.</p>
+        <p className="mt-1 font-sans text-sm leading-relaxed text-cb-cream/95">
+          Each coupon is only valid for one-time usage.
+        </p>
+        <div className="mt-6">
+          <Link
+            href="/gitex-asia-2026"
+            className="cb-btn-primary block w-full text-center font-semibold uppercase tracking-wide"
+          >
+            START NOW
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PricingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -439,14 +489,6 @@ export function PricingContent() {
   return (
     <main className="min-h-0 flex-1 bg-[#0D3A1D]">
       <div className="mx-auto max-w-5xl px-4 pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-10 sm:pb-10 md:py-14 md:pb-14">
-        <div className="mb-6 rounded-lg border border-cb-gold/35 bg-cb-cream/10 px-4 py-3 text-center sm:mb-8">
-          <Link
-            href="/gitex-asia-2026"
-            className="text-sm font-semibold tracking-wide text-cb-gold underline-offset-4 hover:underline"
-          >
-            GITEX ASIA 2026 — Preferred Access
-          </Link>
-        </div>
         {/* Value Anchor Section */}
         <section className="text-center">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">
@@ -608,14 +650,14 @@ export function PricingContent() {
                 *Full advisory interpretation is available with platform access.
               </p>
               <div className="mt-8 rounded-xl border border-cb-gold/30 bg-cb-cream/5 p-5 text-center">
-                <h3 className="font-serif text-lg font-semibold text-cb-cream">
+                <h3 className="font-serif text-lg font-semibold text-cb-gold">
                   Try the Capital Bridge Framework
                 </h3>
-                <p className="mt-2 text-sm text-cb-cream/80">
+                <p className="mt-2 font-sans text-sm text-cb-cream">
                   Understand how your capital structure performs under different withdrawal
                   strategies and market conditions.
                 </p>
-                <p className="mt-2 text-sm text-cb-cream/70">
+                <p className="mt-2 font-sans text-sm text-cb-cream/90">
                   Many users uncover important risks in their first analysis — insights that
                   often go unnoticed until stress testing reveals them.
                 </p>
@@ -748,6 +790,8 @@ export function PricingContent() {
                   isLoggedIn={isLoggedIn}
                 />
               ))}
+              <GitexPricingCard accessLine="Preferred Access (15cm Lion → 7-Day Access)" />
+              <GitexPricingCard accessLine="Extended Access (25cm Lion → 14-Day Access)" />
             </div>
           </div>
         </section>
