@@ -1,3 +1,4 @@
+// STANDARD: TEMPORARY WAIVER — migrate to PdfLayout pipeline
 import { Font } from "@react-pdf/renderer";
 import { registerCapitalHealthPdfHyphenation } from "./capitalHealthPdfFontHyphenation";
 
