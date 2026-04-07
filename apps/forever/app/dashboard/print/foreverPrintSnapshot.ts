@@ -1,7 +1,8 @@
 /**
  * STEP 7 — handoff from dashboard ForeverApp to `/dashboard/print` (same browser tab).
  * STEP 8 — full calculator snapshot + structured Lion block stored in `lion_config` (schema v2).
- * SessionStorage only; DB persistence goes through PATCH `lion_config`.
+ * `report-export/start` persists `calculator` on the row; paid rows merge server-chosen lines at the root of
+ * `lion_config`. The report-document page also accepts nested `lion` (PATCH shape) and `results.lionCopy` fallback.
  */
 
 export const FOREVER_PRINT_SNAPSHOT_STORAGE_KEY = "cb_forever_print_snapshot_v1";

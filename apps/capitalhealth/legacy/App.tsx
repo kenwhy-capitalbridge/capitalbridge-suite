@@ -20,7 +20,7 @@ import {
 import { applyPreset } from './calculator-engine';
 import { useCalculatorResults } from './src/hooks/useCalculatorResults';
 import { TapToReveal, TapToRevealProvider } from './src/components/TapToReveal';
-import { MID_RETURN_WARN_PCT, EPS_MONEY, EPS_RETURN } from './src/lib/constants';
+import { ADVISORY_REQUIRED_RETURN_DISPLAY_CAP_PCT, MID_RETURN_WARN_PCT, EPS_MONEY, EPS_RETURN } from './src/lib/constants';
 import { exportCapitalHealthReport } from './src/lib/exportCapitalHealthReport';
 import { SECTIONS, getHealthScoreCopy } from './src/lib/capitalHealthCopy';
 import {
@@ -39,6 +39,7 @@ import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
 import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
 import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
+import { pricingReturnModelDashboardUrl } from '@cb/shared/urls';
 
 /** Coloured rectangular risk badge: label only (e.g. Critical). Institutional, no tier numbers. */
 function RiskTierBadge({ tier, label }: { tier: number; label: string }) {
@@ -1247,6 +1248,9 @@ const CalculatorScreen = forwardRef<
                 const addCapNoOp = !s.addCapital.feasible || Math.abs(inputs.startingCapital - s.addCapital.requiredStart) <= EPS_MONEY;
                 const reduceIncomeNoOp = !s.reduceIncome.feasible || Math.abs(inputs.targetMonthlyIncome - s.reduceIncome.targetMonthly) <= EPS_MONEY;
                 const incReturnNoOp = !s.increaseReturn.feasible || Math.abs(inputs.expectedAnnualReturnPct - s.increaseReturn.requiredAnnualPct) <= EPS_RETURN;
+                const returnOverAdvisoryCap =
+                  s.increaseReturn.feasible && s.increaseReturn.requiredAnnualPct > ADVISORY_REQUIRED_RETURN_DISPLAY_CAP_PCT;
+                const incReturnApplyBlocked = incReturnNoOp || returnOverAdvisoryCap;
                 const applyReduceIncome = () => {
                   if (!s.reduceIncome.feasible) return;
                   update({ targetMonthlyIncome: Math.round(s.reduceIncome.targetMonthly * 100) / 100 });
@@ -1260,7 +1264,7 @@ const CalculatorScreen = forwardRef<
                   setTimeout(() => setToast(null), 2500);
                 };
                 const applyIncreaseReturn = () => {
-                  if (!s.increaseReturn.feasible) return;
+                  if (!s.increaseReturn.feasible || returnOverAdvisoryCap) return;
                   update({ expectedAnnualReturnPct: Math.round(s.increaseReturn.requiredAnnualPct * 10) / 10 });
                   scrollToInput('input-expected-return');
                   setToast('Applied: Increase Return');
@@ -1306,9 +1310,29 @@ const CalculatorScreen = forwardRef<
               </div>
                             </td>
                             <td className="py-1.5 px-2 align-top min-h-[4rem] text-center">
-                              <div className="flex flex-col justify-between items-center min-h-[3.5rem]">
-                                <span>{s.increaseReturn.feasible ? `${formatNum(s.increaseReturn.requiredAnnualPct, 1)}%` : '—'}</span>
-                                <button type="button" onClick={applyIncreaseReturn} disabled={incReturnNoOp} className="mt-1 shrink-0 text-[#FFCC6A] hover:underline disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] border border-[#FFCC6A] rounded-md px-2 py-0.5 text-[8px] sm:text-[9px] w-fit">Apply</button>
+                              <div className="flex flex-col justify-between items-center min-h-[3.5rem] gap-1">
+                                <span className="leading-snug px-0.5 flex flex-col items-center gap-0.5">
+                                  {s.increaseReturn.feasible ? (
+                                    <>
+                                      <span className="tabular-nums font-medium">{formatNum(s.increaseReturn.requiredAnnualPct, 1)}%</span>
+                                      {returnOverAdvisoryCap ? (
+                                        <span className="text-[8px] sm:text-[9px] text-white/55 leading-tight max-w-[9rem]">
+                                          Diagnostic only — unlikely sustainable; prefer 6–10% range plus income/capital levers.
+                                        </span>
+                                      ) : null}
+                                    </>
+                                  ) : (
+                                    '—'
+                                  )}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={applyIncreaseReturn}
+                                  disabled={incReturnApplyBlocked}
+                                  className="mt-1 shrink-0 text-[#FFCC6A] hover:underline disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] border border-[#FFCC6A] rounded-md px-2 py-0.5 text-[8px] sm:text-[9px] w-fit"
+                                >
+                                  Apply
+                                </button>
                 </div>
                             </td>
                             <td className="py-1.5 px-2 align-top min-h-[4rem] text-center">
@@ -1329,6 +1353,18 @@ const CalculatorScreen = forwardRef<
                         </tbody>
                       </table>
               </div>
+                    <p className="text-[8px] sm:text-[9px] text-white/55 mt-2 max-w-xl leading-snug">
+                      Figures are illustrative diagnostics, not targets. Implied returns above ~{ADVISORY_REQUIRED_RETURN_DISPLAY_CAP_PCT}% are shown for transparency but Apply is disabled — combine realistic return assumptions (e.g. 6–10%) with withdrawal and capital pathways. Additional capital is usually built over time; see{' '}
+                      <a
+                        href={pricingReturnModelDashboardUrl('incomeengineering') ?? '#'}
+                        className="text-[#FFCC6A] underline underline-offset-2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Income Engineering
+                      </a>{' '}
+                      for practical pathways.
+                    </p>
                     <div className="mt-2 mb-16 sm:mb-24 flex justify-start">
                       <button
                         type="button"

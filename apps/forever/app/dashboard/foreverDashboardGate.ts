@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
-import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { LOGIN_APP_URL, PLATFORM_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { isGitexGuidedAccess } from "@cb/shared/gitexCampaign";
 import {
   marketIdToReportExportTimeZone,
   marketToModelCurrencyPrefix,
@@ -42,9 +43,13 @@ export async function requireForeverDashboardAuth(): Promise<ForeverDashboardAut
   const { data: profile } = await supabase
     .schema("public")
     .from("profiles")
-    .select("first_name, last_name, advisory_market")
+    .select("first_name, last_name, advisory_market, access_type")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (isGitexGuidedAccess(profile?.access_type as string | null | undefined)) {
+    redirect(`${PLATFORM_APP_URL.replace(/\/+$/, "")}/`);
+  }
 
   const advisoryMarketId = normalizeMarketId(profile?.advisory_market);
   const reportTimeZoneIana = marketIdToReportExportTimeZone(advisoryMarketId);

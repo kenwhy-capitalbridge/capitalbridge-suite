@@ -15,6 +15,8 @@ export type AdvisoryReportPdfDocumentRootProps = {
   /** Optional model-specific surface class for accents (e.g. `cb-forever-doc-report`). */
   modelSurfaceClass?: string;
   className?: string;
+  /** e.g. `print-report` — legacy print CSS / Playwright resize targets `#print-report`. */
+  documentRootId?: string;
 };
 
 /**
@@ -27,9 +29,11 @@ export function AdvisoryReportPdfDocumentRoot({
   children,
   modelSurfaceClass,
   className = "",
+  documentRootId,
 }: AdvisoryReportPdfDocumentRootProps) {
   return (
     <div
+      id={documentRootId}
       className={[
         "cb-report-root",
         "cb-advisory-pdf-doc",

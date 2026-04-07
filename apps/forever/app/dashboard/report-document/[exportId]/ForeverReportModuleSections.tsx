@@ -1,10 +1,10 @@
+import { PdfAdvisorySectionLead, PdfChartBlock, PdfSection } from "@cb/pdf/shared";
 import { ReportHeading, ReportKeyValueGrid, ReportProse } from "@cb/advisory-graph/reports";
 import { ExpenseType } from "@/legacy/types";
 import type { ForeverDerivedModel } from "./foreverReportDerived";
 import {
   CapitalRunwayLineChart,
-  ChartCaptionBlock,
-  ChartFrame,
+  ChartPlotFrame,
   LiquidityHaircutBars,
   NeedSupportedGapBars,
   SensitivityLineChart,
@@ -13,6 +13,11 @@ import {
 } from "./ForeverReportCharts";
 
 type MoneyFmt = (n: number) => string;
+
+function foreverChartWhy(subtitle: string, captionWhy: string): string {
+  const stripped = subtitle.replace(/^Why this matters:\s*/i, "").trim();
+  return stripped ? `${stripped} ${captionWhy}` : captionWhy;
+}
 
 /** Chart-heavy modules allow page breaks between blocks; use `cb-keep-together` only on compact units (card grid, appendix CTA). */
 const MODULE_CLASS = "cb-module cb-section";
@@ -48,13 +53,13 @@ export function ForeverReportModuleSections({
 
   return (
     <>
-      <section className="cb-page cb-page-break" aria-label="Section B — Advisor Read">
-        <header className="cb-advisory-doc-section-divider">
-          <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section B — Advisor Read</div>
-          <ReportHeading level={2} variant="sectionSmall" className="cb-advisory-doc-section-divider-title">
-            Advisor Read
-          </ReportHeading>
-        </header>
+      <PdfSection className="cb-page-break" aria-label="Section B — Advisor Read">
+        <PdfAdvisorySectionLead
+          stageLabel="Section B — Advisor Read"
+          title="Advisor Read"
+          whatThisShows="Charts and tables that turn your stated inputs into monthly need versus sustainable draw, capital stack, runway, levers, and liquidity trade-offs."
+          whyThisMatters="The adviser's working view — enough structure to decide what to discuss next without wading through every assumption at once."
+        />
         <div className={MODULE_CLASS}>
           <ReportHeading
             level={3}
@@ -67,30 +72,31 @@ export function ForeverReportModuleSections({
           <ReportProse className="text-[#0d3a1d]">
             Compare what you need each month against what portfolio real returns can sustainably support, and the remaining gap (if any).
           </ReportProse>
-          <ChartFrame
+          <PdfChartBlock
             title="Monthly need vs supported draw vs gap"
-            subtitle="Why this matters: this is the cash-flow spine of the Forever Income model — it connects lifestyle, offsets, and capital market assumptions."
-            yAxisLabel="Monthly amount"
-            xAxisLabel="Category"
-            caption={
-              <ChartCaptionBlock
-                what="Three bars: required monthly draw after offsets, estimated sustainable draw from stated real return, and the shortfall."
-                why="Advisers use this to prioritise levers (spend, contribution, liquidity, assumptions) before tactical portfolio moves."
-                notice={
-                  derived.monthlyGap > 0
-                    ? "A positive gap means current capital, at stated real return, does not fully fund the monthly draw."
-                    : "No monthly gap on these assumptions — sustainability still depends on inputs holding and capital staying invested."
-                }
-              />
+            whatThisShows="Three bars: required monthly draw after offsets, estimated sustainable draw from stated real return, and the shortfall."
+            whyThisMatters={foreverChartWhy(
+              "Why this matters: this is the cash-flow spine of the Forever Income model — it connects lifestyle, offsets, and capital market assumptions.",
+              "Advisers use this to prioritise levers (spend, contribution, liquidity, assumptions) before tactical portfolio moves.",
+            )}
+            interpretation={
+              <>
+                <strong>What to notice:</strong>{" "}
+                {derived.monthlyGap > 0
+                  ? "A positive gap means current capital, at stated real return, does not fully fund the monthly draw."
+                  : "No monthly gap on these assumptions — sustainability still depends on inputs holding and capital staying invested."}
+              </>
             }
           >
-            <NeedSupportedGapBars
-              need={derived.monthlyNeed}
-              supported={derived.monthlySupported}
-              gap={derived.monthlyGap}
-              formatMoney={formatMoney}
-            />
-          </ChartFrame>
+            <ChartPlotFrame yAxisLabel="Monthly amount" xAxisLabel="Category">
+              <NeedSupportedGapBars
+                need={derived.monthlyNeed}
+                supported={derived.monthlySupported}
+                gap={derived.monthlyGap}
+                formatMoney={formatMoney}
+              />
+            </ChartPlotFrame>
+          </PdfChartBlock>
         </div>
 
         <div className={MODULE_CLASS}>
@@ -103,7 +109,7 @@ export function ForeverReportModuleSections({
             Next 30 days: pick one lever
           </ReportHeading>
           <ReportProse className="text-[#0d3a1d]">
-            Use this as a facilitation frame: one deliberate change in the next month beats unfocused optimisation.
+            One deliberate change in the next thirty days usually beats scattering effort across many small tweaks.
           </ReportProse>
           <div className="cb-advisory-doc-card-grid cb-keep-together mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {levers.map((L) => (
@@ -130,31 +136,32 @@ export function ForeverReportModuleSections({
           <ReportProse className="text-[#0d3a1d]">
             Annual lifestyle spend, property financing, and household contributions combine into the net draw the portfolio must sustain.
           </ReportProse>
-          <ChartFrame
+          <PdfChartBlock
             title="Spend + financing − offsets = net annual draw"
-            subtitle="Why this matters: the model's capital requirement is driven by this net figure and your real return assumption."
-            yAxisLabel="Annual amount"
-            xAxisLabel="Build-up step"
-            caption={
-              <ChartCaptionBlock
-                what="Waterfall from lifestyle spend, add property financing, subtract family contribution, to net annual draw."
-                why="Clients often underestimate how financing and offsets move the true burden on capital."
-                notice={
-                  waterfall.propertyAnnual > 0
-                    ? "Property financing adds to gross spend before contributions reduce the net draw."
-                    : "With no financing line in the model, net draw is driven mainly by lifestyle and contributions."
-                }
-              />
+            whatThisShows="Waterfall from lifestyle spend, add property financing, subtract family contribution, to net annual draw."
+            whyThisMatters={foreverChartWhy(
+              "Why this matters: the model's capital requirement is driven by this net figure and your real return assumption.",
+              "Clients often underestimate how financing and offsets move the true burden on capital.",
+            )}
+            interpretation={
+              <>
+                <strong>What to notice:</strong>{" "}
+                {waterfall.propertyAnnual > 0
+                  ? "Property financing adds to gross spend before contributions reduce the net draw."
+                  : "With no financing line in the model, net draw is driven mainly by lifestyle and contributions."}
+              </>
             }
           >
-            <WaterfallChart
-              lifestyleAnnual={waterfall.lifestyleAnnual}
-              propertyAnnual={waterfall.propertyAnnual}
-              contributionAnnual={waterfall.contributionAnnual}
-              netAnnualDraw={waterfall.netAnnualDraw}
-              formatMoney={formatMoney}
-            />
-          </ChartFrame>
+            <ChartPlotFrame yAxisLabel="Annual amount" xAxisLabel="Build-up step">
+              <WaterfallChart
+                lifestyleAnnual={waterfall.lifestyleAnnual}
+                propertyAnnual={waterfall.propertyAnnual}
+                contributionAnnual={waterfall.contributionAnnual}
+                netAnnualDraw={waterfall.netAnnualDraw}
+                formatMoney={formatMoney}
+              />
+            </ChartPlotFrame>
+          </PdfChartBlock>
         </div>
 
         <div className={MODULE_CLASS}>
@@ -169,21 +176,24 @@ export function ForeverReportModuleSections({
           <ReportProse className="text-[#0d3a1d]">
             Liquid, semi-liquid, and illiquid buckets affect how quickly capital can respond to cash-flow stress.
           </ReportProse>
-          <ChartFrame
+          <PdfChartBlock
             title="How capital is stacked today"
-            subtitle="Why this matters: accessibility shapes resilience even when headline net worth looks adequate."
-            yAxisLabel="Share of total"
-            xAxisLabel="Capital type (100% = total assets)"
-            caption={
-              <ChartCaptionBlock
-                what="One horizontal stacked bar: cash, investments, and property / illiquid capital."
-                why="Advisers stress-test whether liquid buffers match the monthly gap and refinancing flexibility."
-                notice="Illiquid capital may not be available at par — see the liquidity haircut analysis later in DEEPER ANALYSIS."
-              />
+            whatThisShows="One horizontal stacked bar: cash, investments, and property / illiquid capital."
+            whyThisMatters={foreverChartWhy(
+              "Why this matters: accessibility shapes resilience even when headline net worth looks adequate.",
+              "Advisers stress-test whether liquid buffers match the monthly gap and refinancing flexibility.",
+            )}
+            interpretation={
+              <>
+                <strong>What to notice:</strong> Illiquid capital may not be available at par — see the liquidity haircut analysis later in DEEPER
+                ANALYSIS.
+              </>
             }
           >
-            <StackedAccessibilityBar liquid={stack.liquid} semi={stack.semi} illiquid={stack.illiquid} formatMoney={formatMoney} />
-          </ChartFrame>
+            <ChartPlotFrame yAxisLabel="Share of total" xAxisLabel="Capital type (100% = total assets)">
+              <StackedAccessibilityBar liquid={stack.liquid} semi={stack.semi} illiquid={stack.illiquid} formatMoney={formatMoney} />
+            </ChartPlotFrame>
+          </PdfChartBlock>
         </div>
 
         <div className={MODULE_CLASS}>
@@ -198,29 +208,26 @@ export function ForeverReportModuleSections({
           <ReportProse className="text-[#0d3a1d]">
             A simplified projection: capital compounds at the stated real rate while funding the net annual draw. Not a forecast — a mechanical illustration of stated inputs.
           </ReportProse>
-          <ChartFrame
+          <PdfChartBlock
             title="Capital balance vs years (illustrative)"
-            subtitle="Why this matters: shows how quickly the stack would decline if assumptions held and draws continued."
-            yAxisLabel="Capital balance"
-            xAxisLabel="Years from today"
-            caption={
-              <ChartCaptionBlock
-                what="Line connects year-end balances after growth minus the annual draw from the model."
-                why="Pairs with the headline runway figure for a visual sense of trajectory."
-                notice={
-                  depletionYear !== null
-                    ? `Approximate depletion marker around year ${depletionYear} on these static assumptions.`
-                    : "Balance does not hit zero within the illustrated horizon — check headline runway for 'Perpetual' or longer horizons."
-                }
-              />
+            whatThisShows="Line connects year-end balances after growth minus the annual draw from the model."
+            whyThisMatters={foreverChartWhy(
+              "Why this matters: shows how quickly the stack would decline if assumptions held and draws continued.",
+              "Pairs with the headline runway figure for a visual sense of trajectory.",
+            )}
+            interpretation={
+              <>
+                <strong>What to notice:</strong>{" "}
+                {depletionYear !== null
+                  ? `Approximate depletion marker around year ${depletionYear} on these static assumptions.`
+                  : "Balance does not hit zero within the illustrated horizon — check headline runway for 'Perpetual' or longer horizons."}
+              </>
             }
           >
-            <CapitalRunwayLineChart
-              series={capitalCurve}
-              depletionYear={depletionYear}
-              formatMoney={formatMoney}
-            />
-          </ChartFrame>
+            <ChartPlotFrame yAxisLabel="Capital balance" xAxisLabel="Years from today">
+              <CapitalRunwayLineChart series={capitalCurve} depletionYear={depletionYear} formatMoney={formatMoney} />
+            </ChartPlotFrame>
+          </PdfChartBlock>
         </div>
 
         <div className={MODULE_CLASS}>
@@ -271,15 +278,15 @@ export function ForeverReportModuleSections({
             The Forever Income model is illustrative. It does not replace cash-flow modelling, tax, estate, or product advice — it orients the conversation before those layers.
           </ReportProse>
         </div>
-      </section>
+      </PdfSection>
 
-      <section className="cb-page cb-page-break" aria-label="Section C — DEEPER ANALYSIS (Evidence and Sensitivity)">
-        <header className="cb-advisory-doc-section-divider">
-          <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section C — DEEPER ANALYSIS (Evidence &amp; Sensitivity)</div>
-          <ReportHeading level={2} variant="sectionSmall" className="cb-advisory-doc-section-divider-title">
-            DEEPER ANALYSIS
-          </ReportHeading>
-        </header>
+      <PdfSection className="cb-page-break" aria-label="Section C — DEEPER ANALYSIS (Evidence and Sensitivity)">
+        <PdfAdvisorySectionLead
+          stageLabel="Section C — DEEPER ANALYSIS (Evidence & Sensitivity)"
+          title="Deeper analysis"
+          whatThisShows="Evidence behind the headline view: the assumptions on file, liquidity haircuts, and small moves (±1%) in return and inflation."
+          whyThisMatters="Checks whether the Section B story still holds if markets or spending drift — a conversation starter, not a prediction."
+        />
         <div className={MODULE_CLASS}>
           <ReportHeading
             level={3}
@@ -368,21 +375,24 @@ export function ForeverReportModuleSections({
           <ReportProse className="text-[#0d3a1d]">
             Effective capital if only a fraction of property value were accessible (illustrative haircuts on the property bucket only).
           </ReportProse>
-          <ChartFrame
+          <PdfChartBlock
             title="Effective capital under property access scenarios"
-            subtitle="Why this matters: planning on full property value can overstate flexibility in stress."
-            yAxisLabel="Effective capital"
-            xAxisLabel="Property realisation %"
-            caption={
-              <ChartCaptionBlock
-                what="Bars show cash + investments + (property × access %) for 60%, 70%, 80%, and 100%."
-                why="Stress-tests how much capital is actually available without selling other sleeves."
-                notice="Compare effective capital to capital required in the assumptions panel above when property is a large share of the stack."
-              />
+            whatThisShows="Bars show cash + investments + (property × access %) for 60%, 70%, 80%, and 100%."
+            whyThisMatters={foreverChartWhy(
+              "Why this matters: planning on full property value can overstate flexibility in stress.",
+              "Stress-tests how much capital is actually available without selling other sleeves.",
+            )}
+            interpretation={
+              <>
+                <strong>What to notice:</strong> Compare effective capital to capital required in the assumptions panel above when property is a large
+                share of the stack.
+              </>
             }
           >
-            <LiquidityHaircutBars rows={liquidityHaircuts} formatMoney={formatMoney} />
-          </ChartFrame>
+            <ChartPlotFrame yAxisLabel="Effective capital" xAxisLabel="Property realisation %">
+              <LiquidityHaircutBars rows={liquidityHaircuts} formatMoney={formatMoney} />
+            </ChartPlotFrame>
+          </PdfChartBlock>
         </div>
 
         <div className={MODULE_CLASS}>
@@ -397,21 +407,23 @@ export function ForeverReportModuleSections({
           <ReportProse className="text-[#0d3a1d]">
             Nominal return shifted ±1 point around your input; inflation held constant. Runway is recomputed from the same engine as the dashboard.
           </ReportProse>
-          <ChartFrame
+          <PdfChartBlock
             title="Runway vs nominal return"
-            subtitle="Why this matters: return assumptions dominate capital-required maths in withdrawal models."
-            yAxisLabel="Illustrative runway (years)"
-            xAxisLabel="Nominal return scenario"
-            caption={
-              <ChartCaptionBlock
-                what="Points show model runway at −1%, base, and +1% nominal return."
-                why="Shows how sensitive the headline horizon is to a single input."
-                notice="Wide swings suggest spending more time validating capital market expectations with the client."
-              />
+            whatThisShows="Points show model runway at −1%, base, and +1% nominal return."
+            whyThisMatters={foreverChartWhy(
+              "Why this matters: return assumptions dominate capital-required maths in withdrawal models.",
+              "Shows how sensitive the headline horizon is to a single input.",
+            )}
+            interpretation={
+              <>
+                <strong>What to notice:</strong> Wide swings suggest spending more time validating capital market expectations with the client.
+              </>
             }
           >
-            <SensitivityLineChart points={sensitivityReturn} />
-          </ChartFrame>
+            <ChartPlotFrame yAxisLabel="Illustrative runway (years)" xAxisLabel="Nominal return scenario">
+              <SensitivityLineChart points={sensitivityReturn} />
+            </ChartPlotFrame>
+          </PdfChartBlock>
         </div>
 
         <div className={MODULE_CLASS}>
@@ -426,21 +438,23 @@ export function ForeverReportModuleSections({
           <ReportProse className="text-[#0d3a1d]">
             Inflation shifted ±1 point around your input; nominal return held constant.
           </ReportProse>
-          <ChartFrame
+          <PdfChartBlock
             title="Runway vs inflation"
-            subtitle="Why this matters: higher inflation erodes real return and shortens sustainable runway for the same nominal portfolio."
-            yAxisLabel="Illustrative runway (years)"
-            xAxisLabel="Inflation scenario"
-            caption={
-              <ChartCaptionBlock
-                what="Points show model runway at −1%, base, and +1% inflation."
-                why="Pairs with the return chart to show two largest macro levers in this simple engine."
-                notice="If both sensitivities look fragile, the base case may be too optimistic for planning."
-              />
+            whatThisShows="Points show model runway at −1%, base, and +1% inflation."
+            whyThisMatters={foreverChartWhy(
+              "Why this matters: higher inflation erodes real return and shortens sustainable runway for the same nominal portfolio.",
+              "Pairs with the return chart to show two largest macro levers in this simple engine.",
+            )}
+            interpretation={
+              <>
+                <strong>What to notice:</strong> If both sensitivities look fragile, the base case may be too optimistic for planning.
+              </>
             }
           >
-            <SensitivityLineChart points={sensitivityInflation} />
-          </ChartFrame>
+            <ChartPlotFrame yAxisLabel="Illustrative runway (years)" xAxisLabel="Inflation scenario">
+              <SensitivityLineChart points={sensitivityInflation} />
+            </ChartPlotFrame>
+          </PdfChartBlock>
         </div>
 
         <div className={MODULE_CLASS}>
@@ -461,7 +475,7 @@ export function ForeverReportModuleSections({
             outcomes.
           </ReportProse>
         </div>
-      </section>
+      </PdfSection>
     </>
   );
 }

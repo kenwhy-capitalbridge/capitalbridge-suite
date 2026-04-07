@@ -11,10 +11,17 @@
     "./playwright-pdf-footer": "./src/playwrightPdfFooter.ts",
     "./render": "./src/renderPdf.ts",
     "./report-ready": "./src/reportReady.ts",
+    "./shared": "./src/shared/index.ts",
+    "./shared/pdf-advisory-cover-presets": "./src/shared/pdfAdvisoryCoverPresets.ts",
     "./templates/BaseReport": "./src/templates/BaseReport.tsx"
   },
+  "peerDependencies": {
+    "react": "^18"
+  },
   "dependencies": {
+    "@cb/advisory-graph": "*",
     "@cb/shared": "*",
+    "@cb/ui": "*",
     "@sparticuz/chromium": "^143.0.4",
     "playwright": "^1.51.1"
   }

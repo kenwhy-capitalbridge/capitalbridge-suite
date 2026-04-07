@@ -1,22 +1,30 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import {
+  PdfAdvisoryCoverPage,
+  PdfAdvisorySectionLead,
+  PdfLayout,
+  PdfLionsVerdictBlock,
+  PdfSection,
+  PDF_TOC_FOREVER_INCOME,
+} from "@cb/pdf/shared";
 import { beginReportReadyCycle, completeReportReadyCycle } from "@cb/pdf/report-ready";
 import { pricingReturnModelDashboardUrl } from "@cb/shared/urls";
 import type { ReportAuditMeta } from "@cb/shared/reportTraceability";
 import {
-  AdvisoryReportPdfDocumentRoot,
-  REPORT_FONT_BODY,
-  REPORT_FONT_DISPLAY,
   ReportHeading,
   ReportKeyValueGrid,
   ReportProse,
   ReportSection,
   ReportTrialSnapshotCaption,
 } from "@cb/advisory-graph/reports";
+import { formatLionPublicStatusLabel, type LionPublicVerdictStatus } from "@cb/advisory-graph/lionsVerdict";
 
 import { ProgressBarTile } from "./ForeverReportCharts";
 import { deriveForeverReportModel } from "./foreverReportDerived";
+
+type ForeverDerivedNonNull = NonNullable<ReturnType<typeof deriveForeverReportModel>>;
 import { ForeverReportModuleSections } from "./ForeverReportModuleSections";
 
 type LionChosen = {
@@ -77,6 +85,56 @@ function tierChipClass(tier: string): string {
 function tierDisplay(tier: string): string {
   return tier.replace(/_/g, " ");
 }
+
+/** Mid-band score for PDF score line when only Forever tier is stored on export. */
+const FOREVER_TIER_MID_SCORE: Record<LionPublicVerdictStatus, number> = {
+  NOT_SUSTAINABLE: 19,
+  AT_RISK: 47,
+  FRAGILE: 66,
+  STABLE: 83,
+  STRONG: 95,
+};
+
+function foreverTierToPublicStatus(tier: string): LionPublicVerdictStatus {
+  const u = tier.toUpperCase().replace(/\s+/g, "_");
+  if (
+    u === "STRONG" ||
+    u === "STABLE" ||
+    u === "FRAGILE" ||
+    u === "AT_RISK" ||
+    u === "NOT_SUSTAINABLE"
+  ) {
+    return u;
+  }
+  return "FRAGILE";
+}
+
+function foreverDisplayScore0to100(tier: string): number {
+  return FOREVER_TIER_MID_SCORE[foreverTierToPublicStatus(tier)] ?? 66;
+}
+
+function foreverWhyThisIsHappening(derived: ForeverDerivedNonNull, fmt: (n: number) => string): string {
+  const { monthlyGap, monthlyNeed, monthlySupported, computed } = derived;
+  if (computed.isSustainable && monthlyGap <= 0) {
+    return "On these inputs, stated real return and your capital stack support the normalised monthly dependency.";
+  }
+  if (monthlyGap > 0) {
+    return `Supported cash-flow from the portfolio is about ${fmt(monthlySupported)} per month versus a normalised need of ${fmt(monthlyNeed)} — the shortfall is structural on this snapshot.`;
+  }
+  return "Outcomes hinge on real return, inflation, and balance-sheet mix — small shifts in any lever move the picture.";
+}
+
+function foreverSystemStateLine(derived: ForeverDerivedNonNull): string {
+  const c = derived.computed;
+  const sus = c.isSustainable ? "Yes" : "No";
+  return `Progress to target: ${c.progressPercent.toFixed(1)}%. Runway: ${c.runway}. Sustainable on stated assumptions: ${sus}.`;
+}
+
+const FOREVER_LION_NEXT_ACTIONS = [
+  "Review structure and levers in Section B (waterfall, stack, sensitivity).",
+  "Stress assumptions in Section C before changing portfolio or spending.",
+  "Re-export after material life, tax, or market shifts and discuss with your adviser.",
+] as const;
 
 function buildSnapshotRows(calculator: NonNullable<Props["calculator"]>) {
   const { inputs, results } = calculator;
@@ -158,36 +216,6 @@ function buildSnapshotRows(calculator: NonNullable<Props["calculator"]>) {
   return { inputRows, outcomeRows, cur };
 }
 
-const TOC_STRUCTURE: { title: string; items?: readonly string[] }[] = [
-  {
-    title: "Opening",
-    items: ["Trial: sustainability snapshot, or paid: The Lion’s Verdict"],
-  },
-  {
-    title: "Section B — Advisor Read",
-    items: [
-      "Your Forever Income (in one view)",
-      "Next 30 days: pick one lever",
-      "Inputs that drive the outcome",
-      "Capital stack & accessibility",
-      "Runway curve (capital over time)",
-      "Levers ranked",
-      "Where to go next",
-    ],
-  },
-  {
-    title: "Section C — DEEPER ANALYSIS (Evidence & Sensitivity)",
-    items: [
-      "Assumptions & definitions",
-      "Liquidity haircut analysis",
-      "Sensitivity: return (±1%)",
-      "Sensitivity: inflation (±1%)",
-      "Methodology & scope",
-    ],
-  },
-  { title: "Appendix & closing (full legal)" },
-];
-
 export function ForeverReportDocumentClient({
   audit,
   shortFooterLegal,
@@ -224,68 +252,28 @@ export function ForeverReportDocumentClient({
     pricingReturnModelDashboardUrl("incomeengineering") ?? "https://incomeengineering.thecapitalbridge.com/dashboard";
 
   return (
-    <AdvisoryReportPdfDocumentRoot
-      audit={audit}
-      shortFooterLegal={shortFooterLegal}
-      modelSurfaceClass="cb-forever-doc-report"
-    >
-      <section className="cb-page cb-advisory-doc-cover cb-page-break-after">
-        <div className="cb-advisory-doc-cover-main">
-            <div className="mb-5 flex justify-center print:mb-5 md:mb-6">
-              <img
-                src="/brand/Full_CapitalBridge_Green.svg"
-                alt="Capital Bridge"
-                className="cb-advisory-doc-cover-logo mx-auto block h-auto w-[72%] max-w-[min(100%,420px)] min-w-0 object-contain object-center print:w-[78%] print:max-w-[min(100%,440px)]"
-              />
-            </div>
-            <h1
-              className="cb-advisory-doc-cover-title m-0 mb-4 block w-full text-center text-[12.5pt] font-bold leading-tight tracking-[0.06em] text-[#0d3a1d] print:mb-3 print:text-[12pt]"
-              style={{ fontFamily: REPORT_FONT_DISPLAY }}
-            >
-              FOREVER INCOME — STRATEGIC WEALTH REPORT
-            </h1>
-            <p
-              className="cb-advisory-doc-cover-prepared m-0 block w-full text-[11pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
-              style={{ fontFamily: REPORT_FONT_BODY, marginBottom: "0.75em" }}
-            >
-              Prepared for: <strong className="font-semibold text-[#0d3a1d]">{preparedForName}</strong>
-            </p>
-            <p
-              className="cb-advisory-doc-cover-generated m-0 block w-full max-w-[44em] text-[11pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed"
-              style={{ fontFamily: REPORT_FONT_BODY, marginBottom: "1.25em" }}
-            >
-              Generated: <strong className="font-semibold text-[#0d3a1d]">{audit.generatedAtLabel}</strong>
-            </p>
-            <div className="cb-advisory-doc-cover-contents mt-1 block w-full max-w-[44em] border-t border-[rgba(13,58,29,0.15)] pt-4 print:mt-2 print:pt-5">
-              <h2
-                className="m-0 mb-2 block w-full text-[8pt] font-bold uppercase leading-normal tracking-wide text-[#0d3a1d] print:mb-2.5"
-                style={{ fontFamily: REPORT_FONT_BODY }}
-              >
-                Contents
-              </h2>
-              <div className="space-y-1.5 text-[7.5pt] leading-[1.45] text-[rgba(13,58,29,0.88)] print:text-[7.5pt] print:leading-[1.45]">
-                {TOC_STRUCTURE.map((block) => (
-                  <div key={block.title} className="block w-full">
-                    <p className="mb-0.5 font-semibold text-[#0d3a1d]">{block.title}</p>
-                    {block.items && block.items.length > 0 ? (
-                      <ul className="mb-0 list-disc space-y-0.5 pl-4">
-                        {block.items.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-        </div>
-      </section>
+    <PdfLayout audit={audit} shortFooterLegal={shortFooterLegal} modelSurfaceClass="cb-forever-doc-report">
+      <PdfSection className="cb-advisory-doc-cover cb-page-break-after">
+        <PdfAdvisoryCoverPage
+          title="FOREVER INCOME — STRATEGIC WEALTH REPORT"
+          subtitle="Structural sustainability snapshot under your stated assumptions — income need, capital stack, and levers."
+          preparedForName={preparedForName}
+          generatedAtLabel={audit.generatedAtLabel}
+          toc={PDF_TOC_FOREVER_INCOME}
+        />
+      </PdfSection>
 
       {/* Sibling `cb-page` sections (not nested) so print fragmentation and `break-before: page` behave predictably. */}
-      <section className="cb-page cb-advisory-doc-opening">
+      <PdfSection className="cb-advisory-doc-opening">
+        <PdfAdvisorySectionLead
+          stageLabel="Section A — Opening"
+          title="Opening"
+          whatThisShows="Your position on this report: a trial sustainability snapshot, or the full Lion’s Verdict and progress view — the same scenario the charts in Section B are built from."
+          whyThisMatters="Sets context before structure and sensitivity, so story and numbers stay on one agreed set of assumptions."
+        />
         {!derived && calculator ? (
           <ReportSection className="cb-module cb-advisory-doc-parse-error">
-            <ReportProse>Calculator data could not be parsed for charts. Inputs may be incomplete for this export.</ReportProse>
+            <ReportProse>Some inputs could not be read for charting. The snapshot below may be incomplete — your adviser can help reconcile this with the live model.</ReportProse>
             {snap ? (
               <>
                 <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading">
@@ -300,7 +288,7 @@ export function ForeverReportDocumentClient({
 
         {!calculator ? (
           <ReportSection className="cb-module cb-advisory-doc-parse-error">
-            <ReportProse>No calculator snapshot was stored for this export.</ReportProse>
+            <ReportProse>No scenario snapshot was included with this report.</ReportProse>
           </ReportSection>
         ) : null}
 
@@ -309,7 +297,7 @@ export function ForeverReportDocumentClient({
             <div className="cb-print-stage-label cb-advisory-doc-stage-label">Sustainability snapshot</div>
             <ReportTrialSnapshotCaption isTrial={isTrial} />
             <ReportProse lead className="text-[#0d3a1d]">
-              Model inputs and headline outcomes at export. Following pages chart the same snapshot.
+              Model inputs and headline outcomes for this snapshot. The following pages chart the same scenario.
             </ReportProse>
             <ProgressBarTile
               label="Progress to target (assets vs capital required)"
@@ -330,13 +318,16 @@ export function ForeverReportDocumentClient({
         {derived && !isTrial && lion ? (
           <ReportSection className="cb-module cb-advisory-doc-page-1">
             <div className="cb-print-stage-label cb-advisory-doc-stage-label">The Lion&apos;s Verdict</div>
-            <div className="mb-3 flex flex-wrap items-center gap-3">
-              <span className={tierChipClass(lion.verdictTier)}>{tierDisplay(lion.verdictTier)}</span>
-            </div>
-            <ReportProse className="text-[#0d3a1d]">
-              <strong className="text-[#0d3a1d]">{lion.headlineText}</strong>
-            </ReportProse>
-            <ReportProse className="text-[rgba(43,43,43,0.95)]">{lion.guidanceText}</ReportProse>
+            <PdfLionsVerdictBlock
+              className="cb-lion-verdict-pdf lion-verdict"
+              tierChip={<span className={tierChipClass(lion.verdictTier)}>{tierDisplay(lion.verdictTier)}</span>}
+              scoreAndStatusLine={`Lion score: ${foreverDisplayScore0to100(lion.verdictTier)} / 100 · ${formatLionPublicStatusLabel(foreverTierToPublicStatus(lion.verdictTier))}`}
+              narrativeQuote={lion.headlineText}
+              summary={lion.guidanceText}
+              whyThisIsHappening={foreverWhyThisIsHappening(derived, formatMoneyBound)}
+              systemState={foreverSystemStateLine(derived)}
+              nextActions={[...FOREVER_LION_NEXT_ACTIONS]}
+            />
             <ProgressBarTile
               label="Progress to target (assets vs capital required)"
               percent={derived.computed.progressPercent}
@@ -349,8 +340,8 @@ export function ForeverReportDocumentClient({
           <ReportSection className="cb-module cb-advisory-doc-page-1">
             <div className="cb-print-stage-label cb-advisory-doc-stage-label">Model snapshot</div>
             <ReportProse className="text-[#0d3a1d]">
-              Lion narrative was not stored for this export. Headline numbers below match the charts in this PDF; full input tables
-              are in DEEPER ANALYSIS (Assumptions &amp; definitions).
+              Lion narrative was not included on this report. Headline numbers still match the charts below; full input tables are in DEEPER ANALYSIS
+              (Assumptions &amp; definitions).
             </ReportProse>
             <ProgressBarTile
               label="Progress to target (assets vs capital required)"
@@ -359,15 +350,18 @@ export function ForeverReportDocumentClient({
             />
           </ReportSection>
         ) : null}
-      </section>
+      </PdfSection>
 
       {derived ? <ForeverReportModuleSections derived={derived} formatMoney={formatMoneyBound} /> : null}
 
-      <section className="cb-page cb-appendix cb-page-break" aria-label="Appendix and closing">
+      <PdfSection className="cb-appendix cb-page-break" aria-label="Appendix and closing">
+        <PdfAdvisorySectionLead
+          stageLabel="Appendix & closing"
+          title="Disclosures and next steps"
+          whatThisShows="How to use this report, regulatory context, and a sensible next step in the Capital Bridge journey."
+          whyThisMatters="Closes with a clear handoff: what this document is for, and where to go next with your adviser."
+        />
         <div className="cb-module cb-advisory-doc-closing">
-          <div className="cb-advisory-doc-appendix-stage cb-advisory-doc-stage-label">
-            Appendix &amp; closing
-          </div>
           <ReportHeading
             level={3}
             variant="sectionSmall"
@@ -377,9 +371,16 @@ export function ForeverReportDocumentClient({
             Disclosures &amp; how to use this report
           </ReportHeading>
           <ReportProse className="cb-advisory-doc-appendix-lead text-[#0d3a1d]">
-            This report is generated by the Capital Bridge Forever Income model for discussion with your adviser. It is not
-            personal advice.
+            This document comes from the Capital Bridge Forever Income model and is meant for discussion with your adviser. It is not personal advice. The footer on each page carries the full legal notice.
           </ReportProse>
+          <ReportHeading level={3} variant="sectionSmall" keepWithNext className="cb-avoid-orphan-heading mt-5">
+            How to use this report
+          </ReportHeading>
+          <ul className="my-0 mb-1 list-disc space-y-2 pl-5 text-[10pt] leading-relaxed text-[#0d3a1d] print:leading-relaxed">
+            <li>Review it in a client meeting alongside your live model inputs.</li>
+            <li>Treat illustrations as scenario-based, not guaranteed outcomes.</li>
+            <li>Re-export after material changes to income, capital stack, or return assumptions.</li>
+          </ul>
           <div className="cb-advisory-doc-model-cta cb-advisory-doc-appendix-cta cb-keep-together mt-6 pt-2">
             <h3
               className="cb-advisory-doc-cta-title cb-avoid-orphan-heading m-0 text-[11pt] font-bold leading-normal text-[#0d3a1d] print:leading-normal"
@@ -405,11 +406,11 @@ export function ForeverReportDocumentClient({
               <a href={incomeEngineeringDashboardUrl} className="text-[#0d3a1d] underline underline-offset-2">
                 Run Income Engineering
               </a>
-              {"\u00a0"}to close the gap at the source.
+              {"\u00a0"}to continue your advisory journey.
             </p>
           </div>
         </div>
-      </section>
-    </AdvisoryReportPdfDocumentRoot>
+      </PdfSection>
+    </PdfLayout>
   );
 }

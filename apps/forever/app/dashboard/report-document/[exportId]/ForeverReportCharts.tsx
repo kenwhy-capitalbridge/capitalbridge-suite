@@ -3,54 +3,21 @@ import { FOREVER_REPORT_CHART_COLORS } from "./foreverReportDerived";
 
 const { green, muted, support, need: needBarColor, gap: gapBarColor, greenMid } = FOREVER_REPORT_CHART_COLORS;
 
-export function ChartCaptionBlock({
-  what,
-  why,
-  notice,
-}: {
-  what: string;
-  why: string;
-  notice: string;
-}) {
-  return (
-    <div className="cb-chart-caption cb-advisory-chart-caption cb-advisory-doc-chart-caption mt-3 max-w-[48em] text-[9pt] leading-snug text-[#0d3a1d]">
-      <p className="mb-1.5">
-        <strong>What this shows:</strong> {what}
-      </p>
-      <p className="mb-1.5">
-        <strong>Why this matters:</strong> {why}
-      </p>
-      <p className="mb-0">
-        <strong>What to notice:</strong> {notice}
-      </p>
-    </div>
-  );
-}
-
-export function ChartFrame({
-  title,
-  subtitle,
+/**
+ * Plot chrome only (axes + SVG). Pair with `PdfChartBlock` from `@cb/pdf/shared` for
+ * title → what → why → figure → interpretation (STEP 5 chart system).
+ */
+export function ChartPlotFrame({
   yAxisLabel,
   xAxisLabel,
   children,
-  caption,
 }: {
-  title: string;
-  subtitle: string;
   yAxisLabel: string;
   xAxisLabel: string;
   children: ReactNode;
-  caption: ReactNode;
 }) {
   return (
-    <div className="cb-chart-block cb-report-chart-wrap cb-advisory-chart-frame cb-advisory-doc-chart-block mt-2 overflow-visible">
-      <h3
-        className="cb-advisory-chart-title m-0 text-[11pt] font-bold leading-tight text-[#0d3a1d]"
-        style={{ fontFamily: '"Roboto Serif", Georgia, serif' }}
-      >
-        {title}
-      </h3>
-      <p className="cb-chart-why mt-1 mb-2 text-[9.5pt] leading-snug text-[rgba(13,58,29,0.78)]">{subtitle}</p>
+    <div className="cb-chart-block cb-report-chart-wrap cb-advisory-chart-frame cb-advisory-doc-chart-block mt-0 overflow-visible">
       <div className="cb-advisory-chart-plot-row relative flex gap-1 overflow-visible">
         <span
           className="flex w-[3em] flex-shrink-0 items-center justify-center text-[8pt] font-semibold leading-tight text-[#0d3a1d]"
@@ -61,7 +28,6 @@ export function ChartFrame({
         <div className="cb-chart-container cb-advisory-chart-svg-wrap min-w-0 flex-1 overflow-visible">{children}</div>
       </div>
       <div className="mt-1 text-center text-[8pt] font-semibold text-[#0d3a1d]">{xAxisLabel}</div>
-      {caption}
     </div>
   );
 }

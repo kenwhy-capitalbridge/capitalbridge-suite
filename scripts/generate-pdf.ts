@@ -9,8 +9,8 @@
  * Forever v6 footer (STEP 3): set PDF_FOOTER=1 and optional PDF_FOOTER_REPORT_ID, PDF_FOOTER_VERSION
  * (loads footer wordmark from repo via @cb/pdf/forever-report-assets).
  *
- * Forever v6 print URL (STEP 5): `/dashboard/print` on the Forever app (e.g. http://localhost:3006/dashboard/print).
- * Requires an authenticated session cookie in the browser profile Playwright uses (or e2e storage state).
+ * Forever v6 report URL: `/dashboard/report-document/[exportId]` (legacy `/dashboard/print` redirects to `/dashboard`).
+ * Requires an authenticated session (or use `apps/forever/scripts/render-mock-report-pdf.ts` for layout smoke tests).
  * STEP 6: that page inserts `public.report_exports` and sets `document.documentElement.dataset.cbForeverExportId`.
  * STEP 7: dashboard “Open print layout (PDF v6)” stores a session snapshot; print PATCHes `lion_config` via
  * `/api/forever/report-export/lion-config` (requires `report_exports_update_own` RLS policy).

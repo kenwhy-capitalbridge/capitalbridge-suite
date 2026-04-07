@@ -1,9 +1,11 @@
+import { isGitexGuidedAccess } from "@cb/shared/gitexCampaign";
 import { getServerUserAndMembership } from "@/lib/auth";
 import { PaymentGate } from "./components/PaymentGate";
 import { PersonaHeader } from "./dashboard/components/PersonaHeader";
 import { DashboardTiles } from "./dashboard/components/DashboardTiles";
 import { FrameworkStaticLanding } from "./components/FrameworkStaticLanding";
 import { PlatformFrameworkHeader } from "./components/PlatformFrameworkHeader";
+import { ElfsightChatbot } from "./components/ElfsightChatbot";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +36,32 @@ export default async function Page({
           membershipPlanSlug={membership?.plan ?? null}
         />
         <PaymentGate userId={user.id} plan={sp?.plan ?? null} />
+      </>
+    );
+  }
+
+  if (isGitexGuidedAccess(user.access_type ?? null)) {
+    return (
+      <>
+        <div
+          style={{
+            width: "100%",
+            padding: "0.65rem 1rem",
+            backgroundColor: "rgba(13, 58, 29, 0.08)",
+            borderBottom: "1px solid rgba(13, 58, 29, 0.15)",
+            textAlign: "center",
+            fontSize: "0.875rem",
+            color: "#0d3a1d",
+          }}
+        >
+          GITEX Asia 2026 — Guided access: explore the framework below and use the chat. Full analytical models and PDF
+          reports require a standard membership.
+        </div>
+        <FrameworkStaticLanding
+          userEmail={user.email}
+          membershipPlanSlug={membership?.plan ?? null}
+        />
+        <ElfsightChatbot />
       </>
     );
   }

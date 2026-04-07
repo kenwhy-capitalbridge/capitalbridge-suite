@@ -2,6 +2,9 @@
  * Shared advisory report layout system.
  * Use the same primitives and `STANDARD_REPORT_SECTION_IDS` for all four model reports.
  * (No report copy lives here — only structure, tokens, and print hooks.)
+ *
+ * Next.js / Playwright PDF reports should compose `@cb/pdf/shared` (`PdfLayout`, `PdfSection`, `PdfChartBlock`)
+ * rather than mounting `AdvisoryReportPdfDocumentRoot` directly — Forever Income is the reference app.
  */
 
 export type {

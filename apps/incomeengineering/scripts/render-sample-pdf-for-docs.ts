@@ -24,7 +24,13 @@ async function main() {
   mkdirSync(dirname(outPath), { recursive: true });
 
   await waitForHttpOk(reportUrl);
-  await renderPdf({ url: reportUrl, outputPath: outPath });
+  await renderPdf({
+    url: reportUrl,
+    outputPath: outPath,
+    /** Sample app: report-ready can race hydration; settle after `#print-report` is attached. */
+    waitForReportReadySignal: false,
+    settleMsBeforePdf: 6000,
+  });
 
   console.log(`Wrote ${outPath}`);
 }

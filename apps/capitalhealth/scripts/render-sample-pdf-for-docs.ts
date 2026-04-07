@@ -2,7 +2,7 @@
  * Writes docs/samples/capital-health-report.pdf at repo root (design review).
  * Run from repo root: npx tsx apps/capitalhealth/scripts/render-sample-pdf-for-docs.ts
  *
- * Embeds green brand marks as PNG data URLs (no dev server) so the cover matches the in-app PDF.
+ * Embeds green full lockup as PNG data URL (rasterised from SVG; no dev server) so the cover matches production brand.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -48,13 +48,10 @@ const sampleInputs: CalculatorInputs = {
 async function main() {
   const scriptDir = fileURLToPath(new URL(".", import.meta.url));
   const repoRoot = join(scriptDir, "..", "..", "..");
-  const uiAssets = join(repoRoot, "packages", "ui", "src", "assets");
+  /** Synced brand asset (see `npm run brand:sync`); matches `/brand/Full_CapitalBridge_Green.svg` in apps. */
+  const brandSvg = join(repoRoot, "apps", "platform", "public", "brand", "Full_CapitalBridge_Green.svg");
 
-  const brandFullLockupPngDataUrl = await svgFileToPngDataUrl(
-    join(uiAssets, "Full_CapitalBridge_Green.svg"),
-    360,
-    72,
-  );
+  const brandFullLockupPngDataUrl = await svgFileToPngDataUrl(brandSvg, 540, 108);
 
   const result = buildCalculatorResults(sampleInputs);
   const snaps = result.monthlySnapshots;

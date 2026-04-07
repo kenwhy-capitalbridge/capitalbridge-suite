@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@cb/pdf": "*",
     "@cb/advisory-graph": "*",
     "@cb/db-types": "*",
     "@cb/shared": "*",

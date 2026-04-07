@@ -138,6 +138,9 @@ function normalizePlan(v: unknown): Plan | null {
 
   if (s.includes("strategic")) return "strategic";
 
+  /** Event / campaign guided passes — same entitlement tier as trial for modelling gates. */
+  if (s.startsWith("gitex_")) return "trial";
+
   return null;
 }
 

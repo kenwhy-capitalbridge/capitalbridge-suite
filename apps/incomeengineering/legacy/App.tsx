@@ -282,7 +282,15 @@ const AppInner = forwardRef<
   );
 
   useLayoutEffect(() => {
-    reportReadyTokenRef.current = beginReportReadyCycle();
+    const token = beginReportReadyCycle();
+    reportReadyTokenRef.current = token;
+    // If print is already active (Playwright `emulateMedia` or Strict Mode remount), `matchMedia('change')`
+    // will not fire again — complete this cycle immediately so `__REPORT_READY__` is not stuck false.
+    if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
+      queueMicrotask(() => {
+        void completeReportReadyCycle(token);
+      });
+    }
   }, [reportStableKey]);
 
   const scheduleReportReady = useCallback(() => {

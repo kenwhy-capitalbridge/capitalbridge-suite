@@ -1,0 +1,21 @@
+name: PDF Standard
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pdf-standard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enforce Capital Bridge PDF STANDARD
+        run: npm run verify:pdf-standard

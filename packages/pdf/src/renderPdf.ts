@@ -39,6 +39,11 @@ export type RenderPdfOptions = {
    */
   waitForReportReadySignal?: boolean;
   /**
+   * After print emulation + fonts, wait this many ms before `page.pdf` (e.g. sample routes when
+   * `__REPORT_READY__` is flaky). Only applied when `waitForReportReadySignal` is false.
+   */
+  settleMsBeforePdf?: number;
+  /**
    * Playwright `storageState` JSON path (saved auth). Same pattern as e2e `storageState` option.
    */
   storageStatePath?: string;
@@ -121,7 +126,7 @@ const evalReadFooterDomAttrs = new Function(
     versionLabel: (ver && ver.trim()) || "",
   };
 `,
-) as (tuple: [string, string]) => { reportId: string; versionLabel: string };
+) as (tuple: string[]) => { reportId: string; versionLabel: string };
 
 const evalAddHtmlClass = new Function(
   "cls",
@@ -145,6 +150,7 @@ async function waitForFonts(page: import("playwright").Page): Promise<void> {
 export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
   const timeoutMs = options.timeoutMs ?? 120_000;
   const waitReady = options.waitForReportReadySignal !== false;
+  const settleMs = options.settleMsBeforePdf ?? 0;
 
   if (options.playwrightFooter && options.playwrightFooterFromDom) {
     throw new Error("renderPdf: pass only one of playwrightFooter or playwrightFooterFromDom");
@@ -170,9 +176,14 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     await waitForFonts(page);
 
     if (waitReady) {
-      await page.waitForFunction(() => window.__REPORT_READY__ === true, {
+      // Playwright signature is (pageFunction, arg, options) — do not pass options as the second argument.
+      await page.waitForFunction(() => window.__REPORT_READY__ === true, undefined, {
         timeout: timeoutMs,
       });
+      await waitForFonts(page);
+    } else if (settleMs > 0) {
+      await page.waitForSelector("#print-report", { timeout: timeoutMs });
+      await page.waitForTimeout(settleMs);
       await waitForFonts(page);
     }
 

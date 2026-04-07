@@ -12,6 +12,12 @@ export const EPS_MONEY = 50;
 /** Treat return deltas below this (% points) as "same" for disabling Apply chip. */
 export const EPS_RETURN = 0.05;
 
+/**
+ * Client-facing PDF and optimiser UI: required return above this is not shown as a raw target;
+ * show caution copy instead (typical long-term portfolio range is often discussed around 8–12% p.a.).
+ */
+export const ADVISORY_REQUIRED_RETURN_DISPLAY_CAP_PCT = 12;
+
 export type ReturnSuggestionClass = 'invalid' | 'ok' | 'warn' | 'block';
 
 /**

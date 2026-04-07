@@ -16,6 +16,7 @@
     "./legalMonocopy": "./src/legalMonocopy.ts",
     "./reportTrialCopy": "./src/reportTrialCopy.ts",
     "./formatCurrency": "./src/formatCurrency.ts",
-    "./markets": "./src/markets.ts"
+    "./markets": "./src/markets.ts",
+    "./gitexCampaign": "./src/gitexCampaign.ts"
   }
 }

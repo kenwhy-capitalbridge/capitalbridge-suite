@@ -29,6 +29,13 @@ export {
 } from "./ModelReportDownloadFooter";
 export { ChromeSpinnerGlyph, type ChromeSpinnerGlyphProps } from "./ChromeSpinnerGlyph";
 export { ChromePendingNavLink } from "./ChromePendingNavLink";
-export { ReportPrintChrome } from "./ReportPrintChrome";
+export {
+  ReportPrintChrome,
+  ReportPrintFooter,
+  ReportPrintHeader,
+  type ReportPrintChromeProps,
+  type ReportPrintFooterProps,
+  type ReportPrintHeaderProps,
+} from "./ReportPrintChrome";
 export { stampAllPdfPagesWithAudit } from "./stampPdfAuditMeta";
 export { CbLegalSiteFooter, type CbLegalSiteFooterProps } from "./CbLegalSiteFooter";

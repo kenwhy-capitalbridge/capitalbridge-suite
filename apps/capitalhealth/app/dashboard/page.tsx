@@ -2,7 +2,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
-import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { LOGIN_APP_URL, PLATFORM_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { isGitexGuidedAccess } from "@cb/shared/gitexCampaign";
 import { marketToModelCurrencyPrefix, normalizeMarketId } from "@cb/shared/markets";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
@@ -31,9 +32,13 @@ export default async function CapitalHealthDashboard() {
   const { data: profile } = await supabase
     .schema("public")
     .from("profiles")
-    .select("first_name, last_name, advisory_market")
+    .select("first_name, last_name, advisory_market, access_type")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (isGitexGuidedAccess(profile?.access_type as string | null | undefined)) {
+    redirect(`${PLATFORM_APP_URL.replace(/\/+$/, "")}/`);
+  }
 
   const defaultCurrencyCode =
     typeof profile?.advisory_market === "string"

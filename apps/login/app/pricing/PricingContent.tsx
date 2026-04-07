@@ -439,6 +439,14 @@ export function PricingContent() {
   return (
     <main className="min-h-0 flex-1 bg-[#0D3A1D]">
       <div className="mx-auto max-w-5xl px-4 pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-10 sm:pb-10 md:py-14 md:pb-14">
+        <div className="mb-6 rounded-lg border border-cb-gold/35 bg-cb-cream/10 px-4 py-3 text-center sm:mb-8">
+          <Link
+            href="/gitex-asia-2026"
+            className="text-sm font-semibold tracking-wide text-cb-gold underline-offset-4 hover:underline"
+          >
+            GITEX ASIA 2026 — Preferred Access
+          </Link>
+        </div>
         {/* Value Anchor Section */}
         <section className="text-center">
           <div className="-mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6">

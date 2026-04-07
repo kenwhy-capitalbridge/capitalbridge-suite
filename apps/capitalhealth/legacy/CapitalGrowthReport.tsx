@@ -1,6 +1,8 @@
+// STANDARD: TEMPORARY WAIVER — migrate to PdfLayout pipeline
 import React from 'react';
 import {
   Document,
+  Link,
   Page,
   View,
   Text,
@@ -32,28 +34,37 @@ Font.register({
     },
   ],
 });
+
+Font.register({
+  family: "Inter",
+  fonts: [
+    {
+      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZg.ttf",
+      fontWeight: 400,
+    },
+    {
+      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZg.ttf",
+      fontWeight: 700,
+    },
+  ],
+});
 import type { CalculatorInputs, SimulationResult, StatusKind } from './calculator-types';
 import { runSimulation } from './calculator-engine';
-import { TIER_COLORS, type RiskTierKey } from './src/lib/statusCopy';
 import { getRiskTier } from './src/lib/riskTier';
 import type { ScenarioAdjustments } from './src/lib/capitalHealthTypes';
 import { APP_NAME } from './src/lib/capitalHealthCopy';
 import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
-import { advisoryFrameworkPdfIntro } from '@cb/shared/advisoryFramework';
 import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
-import { formatReportGeneratedAtLabel, reportPreparedForLine } from '@cb/shared/reportIdentity';
+import { formatReportGeneratedAtLabel } from '@cb/shared/reportIdentity';
 import { createReportAuditMeta, CB_REPORT_LEGAL_NOTICE, type ReportAuditMeta } from '@cb/shared/reportTraceability';
+import { PDF_TOC_CAPITAL_HEALTH } from '@cb/pdf/shared/pdf-advisory-cover-presets';
 import {
   CB_REPORT_BODY_MUTED,
   CB_REPORT_BRAND_FULL_GREEN_PATH,
-  CB_REPORT_FIRM_ADDRESS_LINES,
   CB_REPORT_FOOTER_RESERVE_PT,
-  CB_REPORT_FRAME_BORDER_PT,
   CB_REPORT_FRAME_PADDING_PT,
-  CB_REPORT_GOLD,
   CB_REPORT_INK_GREEN,
   CB_REPORT_PAGE_MARGIN_MM,
-  CB_REPORT_SOFT_PANEL_BG,
   cbReportMmToPt,
 } from '@cb/shared/cbReportTemplate';
 import {
@@ -62,12 +73,22 @@ import {
   lionPublicStatusFromScore0to100,
   lionStrongEligibilityFromHealthTier,
 } from '@cb/advisory-graph/lionsVerdict';
-
+import { pricingReturnModelDashboardUrl } from '@cb/shared/urls';
 /** CSS break-* for react-pagination; cast to `Style` so arrays like `[sheetStyle, this]` type-check. */
 const PDF_BREAK_INSIDE_AVOID = {
   breakInside: 'avoid' as const,
   pageBreakInside: 'avoid' as const,
 } as Style;
+
+/** Section blocks: prefer moving to next page over splitting awkwardly (Forever-style flow). */
+const PDF_CB_BLOCK = PDF_BREAK_INSIDE_AVOID;
+
+/** Base body size (pt); adjust ±~1 for density without changing layout components. */
+const PDF_BODY_PT = 10;
+const PDF_BODY_LH = 1.5;
+const PDF_TITLE_SERIF_PT = 18;
+const PDF_TITLE_SERIF_LH = 1.2;
+const PDF_FOOTER_PAGE_PT = 7.5;
 
 /** Extended result when report is generated from the app (useCalculatorResults); uses app status messaging. */
 export type ReportResult = SimulationResult & {
@@ -88,18 +109,9 @@ const ADVISORY_LONG: Record<StatusKind, string> = {
     'On these settings, spending is likely to outpace what the portfolio can replace. That can wear down savings faster than people expect — it is maths, not a judgement. Before chasing higher returns, consider lowering withdrawals, adding capital, or extending your horizon. Sort stability first.',
 };
 
-const GOLD = CB_REPORT_GOLD;
 const GREEN = CB_REPORT_INK_GREEN;
 const DARK = CB_REPORT_INK_GREEN;
 const MUTED = CB_REPORT_BODY_MUTED;
-const SOFT_PANEL = CB_REPORT_SOFT_PANEL_BG;
-const SOFT_BORDER = 'rgba(255, 204, 106, 0.42)';
-const STATUS_COLORS: Record<StatusKind, string> = {
-  sustainable: '#11B981',
-  plausible: '#D97706',
-  unsustainable: '#DC2626',
-};
-
 function formatNum(n: number, decimals = 0): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
@@ -126,7 +138,6 @@ const BAR_COUNT = 48;
 
 const REPORT_PAGE_OUTER = cbReportMmToPt(CB_REPORT_PAGE_MARGIN_MM);
 const CONTENT_PADDING = 12;
-const BORDER_RADIUS = 8;
 const SECTION_SPACING = 40;
 const SUBSECTION_SPACING = 22;
 const CHART_SPACING = 28;
@@ -135,18 +146,14 @@ const LOGO_TITLE_GAP = 12;
 
 const styles = StyleSheet.create({
   warningPanel: {
-    borderWidth: 2,
-    borderColor: '#CD5B52',
-    borderRadius: 8,
-    padding: 20,
-    backgroundColor: 'rgba(205,91,82,0.08)',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
     marginBottom: SECTION_SPACING,
   },
   pageContent: {
     padding: CONTENT_PADDING,
     paddingTop: 0,
   },
-  /** Full width inside border; sits slightly below gold line so it doesn't cover it. */
   coverImageWrapper: {
     width: '100%',
     marginTop: 10,
@@ -164,34 +171,37 @@ const styles = StyleSheet.create({
     color: DARK,
     textAlign: 'center',
     marginBottom: 2,
+    fontFamily: 'Inter',
   },
   reportSubtitle: {
     fontSize: 9,
     color: MUTED,
     textAlign: 'center',
     marginBottom: 16,
+    fontFamily: 'Inter',
+    lineHeight: PDF_BODY_LH,
   },
   section: {
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: SOFT_BORDER,
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: SOFT_PANEL,
+    marginBottom: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
   },
   sectionTitle: {
     fontSize: 9,
     fontWeight: 'bold',
     letterSpacing: 0.5,
-    color: GOLD,
+    color: GREEN,
     marginBottom: 8,
     textTransform: 'uppercase',
+    fontFamily: 'Roboto Serif',
   },
   bodyText: {
     color: DARK,
-    fontSize: 11,
+    fontSize: PDF_BODY_PT,
     marginBottom: 4,
     textAlign: 'left',
+    fontFamily: 'Inter',
+    lineHeight: PDF_BODY_LH,
   },
   assumptionRow: {
     flexDirection: 'row',
@@ -203,51 +213,50 @@ const styles = StyleSheet.create({
     fontSize: 9,
     width: '38%',
     paddingRight: 8,
+    fontFamily: 'Inter',
+    lineHeight: PDF_BODY_LH,
   },
   assumptionValue: {
     color: DARK,
-    fontSize: 11,
+    fontSize: PDF_BODY_PT,
     flex: 1,
+    fontFamily: 'Inter',
+    lineHeight: PDF_BODY_LH,
   },
   card: {
-    backgroundColor: SOFT_PANEL,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: SOFT_BORDER,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    marginBottom: 8,
   },
   cardLabel: {
     fontSize: 8,
     color: MUTED,
-    marginBottom: 2,
+    marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontFamily: 'Inter',
   },
   cardValue: {
-    fontSize: 11,
+    fontSize: PDF_BODY_PT,
     fontWeight: 'bold',
     color: DARK,
+    fontFamily: 'Inter',
+    lineHeight: PDF_BODY_LH,
   },
   chartSection: {
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: SOFT_BORDER,
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: SOFT_PANEL,
+    marginBottom: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 0,
   },
   chartTitle: {
-    fontSize: 16,
+    fontSize: PDF_TITLE_SERIF_PT,
     fontWeight: 'bold',
     letterSpacing: 0.5,
     color: GREEN,
-    marginBottom: 8,
+    marginBottom: 12,
     textTransform: 'uppercase',
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: GOLD,
     fontFamily: 'Roboto Serif',
+    lineHeight: PDF_TITLE_SERIF_LH,
   },
   chartContainer: {
     flexDirection: 'row',
@@ -257,23 +266,19 @@ const styles = StyleSheet.create({
   },
   chartBar: {
     flex: 1,
-    backgroundColor: GOLD,
-    borderRadius: 1,
+    backgroundColor: 'rgba(13, 58, 29, 0.5)',
     minHeight: 2,
   },
   advisoryBox: {
-    borderWidth: 1,
-    borderColor: GOLD,
-    borderRadius: 6,
     padding: 12,
-    backgroundColor: 'transparent',
     marginBottom: 14,
   },
   advisoryText: {
     color: DARK,
-    fontSize: 10,
-    lineHeight: 1.5,
+    fontSize: PDF_BODY_PT,
+    lineHeight: PDF_BODY_LH,
     marginBottom: 6,
+    fontFamily: 'Inter',
   },
   slogan: {
     color: MUTED,
@@ -281,15 +286,16 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     textTransform: 'uppercase',
+    fontFamily: 'Inter',
   },
   disclaimer: {
     fontSize: 8,
     color: MUTED,
-    textAlign: 'center',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: `${GOLD}80`,
+    textAlign: 'left',
+    marginTop: 12,
+    paddingTop: 8,
+    fontFamily: 'Inter',
+    lineHeight: PDF_BODY_LH,
   },
   row: {
     flexDirection: 'row',
@@ -301,7 +307,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 4,
     fontSize: 8,
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -318,63 +323,131 @@ const styles = StyleSheet.create({
   titleBlock: { flex: 1, textAlign: 'left', marginBottom: SECTION_SPACING },
   mainTitle: { fontSize: 28, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4, textAlign: 'left', fontFamily: 'Roboto Serif' },
   coverTitleBlock: { marginBottom: 12, textAlign: 'left' },
-  /** Single-line cover title; smaller font so "CLIENT ADVISORY REPORT" fits on one line. */
   coverMainTitle: { fontSize: 17, fontWeight: 'bold', color: GREEN, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 0, textAlign: 'left', fontFamily: 'Roboto Serif', paddingRight: 12 },
-  coverDivider: { borderBottomWidth: 1, borderBottomColor: GOLD, marginTop: 10, marginBottom: 16 },
+  coverDivider: { marginTop: 14, marginBottom: 18 },
   coverMetadata: { marginBottom: 18 },
-  coverMetadataLine: { fontSize: 10, color: DARK, marginBottom: 4, textAlign: 'left' },
-  coverFirmBlock: { fontSize: 9, color: DARK, lineHeight: 1.5, textAlign: 'left' },
-  subTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: 2, textAlign: 'left' },
-  generatedDate: { fontSize: 9, color: MUTED, marginBottom: 6, textAlign: 'left' },
-  titleDescription: { fontSize: 11, color: MUTED, fontStyle: 'italic', textAlign: 'left' },
-  verdictDivider: { borderBottomWidth: 1, borderBottomColor: GOLD, marginVertical: 10 },
-  /** Keeps entire Lion's Verdict block on one page; pair with PDF_BREAK_INSIDE_AVOID on the View. */
+  coverMetadataLine: { fontSize: 10, color: DARK, marginBottom: 4, textAlign: 'left', fontFamily: 'Inter' },
+  coverFirmBlock: { fontSize: 9, color: DARK, lineHeight: PDF_BODY_LH, textAlign: 'left', fontFamily: 'Inter' },
+  subTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: 2, textAlign: 'left', fontFamily: 'Roboto Serif' },
+  generatedDate: { fontSize: 9, color: MUTED, marginBottom: 6, textAlign: 'left', fontFamily: 'Inter' },
+  titleDescription: { fontSize: PDF_BODY_PT, color: MUTED, fontStyle: 'italic', textAlign: 'left', fontFamily: 'Inter', lineHeight: PDF_BODY_LH },
+  verdictSpacer: { marginVertical: 12 },
   verdictSectionWrap: { marginBottom: SECTION_SPACING },
   sectionWrap: { marginBottom: SECTION_SPACING },
-  sectionTitleLarge: { fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5, color: GREEN, marginBottom: 6, textTransform: 'uppercase', textAlign: 'left', paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: GOLD, fontFamily: 'Roboto Serif' },
-  /** THE LION'S VERDICT — Roboto Serif (registered above). */
-  sectionTitleLionVerdict: {
-    fontSize: 16,
+  sectionTitleLarge: {
+    fontSize: PDF_TITLE_SERIF_PT,
     fontWeight: 'bold',
     letterSpacing: 0.5,
     color: GREEN,
-    marginBottom: 6,
+    marginBottom: 10,
     textTransform: 'uppercase',
     textAlign: 'left',
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: GOLD,
-    fontFamily: "Roboto Serif",
+    fontFamily: 'Roboto Serif',
+    lineHeight: PDF_TITLE_SERIF_LH,
+  },
+  sectionTitleLionVerdict: {
+    fontSize: PDF_TITLE_SERIF_PT,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    color: GREEN,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    textAlign: 'left',
+    fontFamily: 'Roboto Serif',
+    lineHeight: PDF_TITLE_SERIF_LH,
   },
   verdictDynamicHeadline: {
-    fontFamily: "Roboto Serif",
-    fontSize: 11,
-    fontStyle: "italic",
-    fontWeight: "bold",
+    fontFamily: 'Roboto Serif',
+    fontSize: PDF_BODY_PT,
+    fontStyle: 'italic',
+    fontWeight: 'bold',
     color: DARK,
     marginBottom: SUBSECTION_SPACING,
-    lineHeight: 1.5,
-    textTransform: "capitalize",
+    lineHeight: PDF_BODY_LH,
+    textTransform: 'capitalize',
   },
-  subsectionTitle: { fontSize: 13, fontWeight: 'bold', color: DARK, marginBottom: SUBSECTION_SPACING, textAlign: 'left', fontFamily: 'Roboto Serif' },
+  lionsVerdictLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: GREEN,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 4,
+    fontFamily: 'Roboto Serif',
+  },
+  lionsVerdictBody: {
+    fontSize: PDF_BODY_PT,
+    color: DARK,
+    lineHeight: PDF_BODY_LH,
+    marginBottom: SUBSECTION_SPACING,
+    fontFamily: 'Inter',
+  },
+  lionsVerdictBullet: {
+    fontSize: PDF_BODY_PT,
+    color: DARK,
+    lineHeight: PDF_BODY_LH,
+    marginBottom: 6,
+    marginLeft: 6,
+    fontFamily: 'Inter',
+  },
+  subsectionTitle: { fontSize: 12, fontWeight: 'bold', color: DARK, marginBottom: 8, textAlign: 'left', fontFamily: 'Roboto Serif' },
   confidenceBarWrap: { marginBottom: 8 },
-  confidenceBar: { height: 12, backgroundColor: '#e5e7eb', borderRadius: 6, overflow: 'hidden', flexDirection: 'row' },
-  confidenceFill: { height: '100%', borderRadius: 6 },
-  confidenceLabel: { fontSize: 8, color: MUTED, marginTop: 4 },
+  confidenceBar: { height: 12, backgroundColor: '#e8ebe9', overflow: 'hidden', flexDirection: 'row' },
+  confidenceFill: { height: '100%' },
+  confidenceLabel: { fontSize: 8, color: MUTED, marginTop: 4, fontFamily: 'Inter' },
   summaryRow: { flexDirection: 'row', gap: 12, marginBottom: CARD_SPACING },
-  summaryCard: { flex: 1, padding: 10, borderWidth: 1, borderColor: SOFT_BORDER, borderRadius: 8, backgroundColor: SOFT_PANEL },
-  summaryCardLabel: { fontSize: 8, color: MUTED, marginBottom: 4, textTransform: 'uppercase' },
-  summaryCardValue: { fontSize: 11, fontWeight: 'bold', color: DARK },
-  stressTable: { width: '100%', borderWidth: 1, borderColor: SOFT_BORDER, borderRadius: 8 },
-  stressTableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', paddingVertical: 6, paddingHorizontal: 8 },
-  stressTableHeader: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: GREEN, paddingVertical: 6, paddingHorizontal: 8, backgroundColor: '#f5f5f4' },
-  stressTableCol1: { width: '40%', fontSize: 9, color: DARK },
-  stressTableCol2: { width: '30%', fontSize: 9, color: DARK },
-  stressTableCol3: { width: '30%', fontSize: 9, color: DARK, textAlign: 'right' },
-  highlightBox: { borderWidth: 2, borderColor: GOLD, borderRadius: 8, padding: 20, backgroundColor: 'rgba(255,204,106,0.12)', marginTop: 12 },
-  highlightTitle: { fontSize: 9, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 },
+  summaryCard: { flex: 1, paddingVertical: 8, paddingHorizontal: 4 },
+  summaryCardLabel: { fontSize: 8, color: MUTED, marginBottom: 4, textTransform: 'uppercase', fontFamily: 'Inter' },
+  summaryCardValue: { fontSize: PDF_BODY_PT, fontWeight: 'bold', color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH },
+  stressTable: { width: '100%', marginBottom: 8 },
+  stressTableRow: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 0 },
+  stressTableHeader: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 0, marginBottom: 4 },
+  stressTableCol1: { width: '40%', fontSize: 9, color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH },
+  stressTableCol2: { width: '30%', fontSize: 9, color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH },
+  stressTableCol3: { width: '30%', fontSize: 9, color: DARK, textAlign: 'right', fontFamily: 'Inter', lineHeight: PDF_BODY_LH },
+  highlightBox: { paddingVertical: 16, paddingHorizontal: 0, marginTop: 16 },
+  highlightTitle: { fontSize: 9, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Roboto Serif' },
   actionList: { marginLeft: 8, marginBottom: 6 },
-  actionItem: { fontSize: 9, color: DARK, marginBottom: 4, lineHeight: 1.4 },
+  actionItem: { fontSize: 9, color: DARK, marginBottom: 6, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' },
+  pdfCoverRoot: { width: '100%', alignItems: 'center', paddingTop: 4, paddingBottom: 12 },
+  pdfCoverLogo: { width: 360, height: 80, objectFit: 'contain', marginBottom: 20 },
+  pdfCoverH1: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: GREEN,
+    textAlign: 'center',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    fontFamily: 'Roboto Serif',
+    marginBottom: 8,
+    maxWidth: 440,
+    lineHeight: PDF_TITLE_SERIF_LH,
+  },
+  pdfCoverSubtitle: {
+    fontSize: 9,
+    color: DARK,
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: PDF_BODY_LH,
+    maxWidth: 380,
+    paddingHorizontal: 12,
+    fontFamily: 'Inter',
+  },
+  pdfCoverMeta: { fontSize: 10, color: DARK, textAlign: 'center', marginBottom: 4, fontFamily: 'Inter' },
+  pdfCoverSpacer: { marginTop: 14, marginBottom: 14 },
+  pdfCoverContents: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: GREEN,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+    textAlign: 'center',
+    fontFamily: 'Roboto Serif',
+  },
+  pdfCoverTocBlock: { width: '100%', maxWidth: 400, marginBottom: 10, alignSelf: 'center' },
+  pdfCoverTocTitle: { fontSize: 9, fontWeight: 'bold', color: DARK, marginBottom: 4, fontFamily: 'Inter' },
+  pdfCoverTocItem: { fontSize: 8, color: DARK, marginLeft: 10, marginBottom: 3, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' },
 });
 
 export interface ChartPoint {
@@ -401,17 +474,14 @@ function ReportPage({
       style={{
         backgroundColor: '#ffffff',
         padding: REPORT_PAGE_OUTER,
-        fontFamily: 'Helvetica',
-        fontSize: 11,
+        fontFamily: 'Inter',
+        fontSize: PDF_BODY_PT,
       }}
     >
       <View
         style={{
           width: frameW,
           minHeight: frameH,
-          borderWidth: CB_REPORT_FRAME_BORDER_PT,
-          borderColor: CB_REPORT_GOLD,
-          borderRadius: 10,
           paddingTop: 20,
           paddingLeft: CB_REPORT_FRAME_PADDING_PT,
           paddingRight: CB_REPORT_FRAME_PADDING_PT,
@@ -445,9 +515,9 @@ function ReportPage({
             {audit.modelDisplayName}
           </Text>
           <View style={{ alignItems: 'flex-end', maxWidth: '48%' }}>
-            <Text style={{ fontSize: 7, color: '#4b5563', textAlign: 'right', lineHeight: 1.35 }}>Report ID: {audit.reportId}</Text>
-            <Text style={{ fontSize: 7, color: '#4b5563', textAlign: 'right', lineHeight: 1.35 }}>{audit.generatedAtLabel}</Text>
-            <Text style={{ fontSize: 7, color: '#4b5563', textAlign: 'right', lineHeight: 1.35 }}>Version: {audit.versionLabel}</Text>
+            <Text style={{ fontSize: 8, color: '#4b5563', textAlign: 'right', lineHeight: 1.35, fontFamily: 'Inter' }}>Report ID: {audit.reportId}</Text>
+            <Text style={{ fontSize: 8, color: '#4b5563', textAlign: 'right', lineHeight: 1.35, fontFamily: 'Inter' }}>{audit.generatedAtLabel}</Text>
+            <Text style={{ fontSize: 8, color: '#4b5563', textAlign: 'right', lineHeight: 1.35, fontFamily: 'Inter' }}>Version: {audit.versionLabel}</Text>
           </View>
         </View>
         <View style={{ flexGrow: 1, flexShrink: 0, marginTop: 14, minHeight: 0 }}>{children}</View>
@@ -459,10 +529,10 @@ function ReportPage({
             right: CB_REPORT_FRAME_PADDING_PT,
           }}
         >
-          <Text style={{ fontSize: 4.8, color: '#6b7280', textAlign: 'justify', lineHeight: 1.12, marginBottom: 5 }}>
+          <Text style={{ fontSize: PDF_FOOTER_PAGE_PT, color: '#6b7280', textAlign: 'justify', lineHeight: 1.2, marginBottom: 5, fontFamily: 'Inter' }}>
             {CB_REPORT_LEGAL_NOTICE}
           </Text>
-          <Text style={{ fontSize: 8, color: '#5f6b67', textAlign: 'center' }}>
+          <Text style={{ fontSize: PDF_FOOTER_PAGE_PT, color: '#5f6b67', textAlign: 'center', fontFamily: 'Inter' }}>
             Page {pageNumber} of {totalPages}
           </Text>
         </View>
@@ -536,6 +606,7 @@ function CapitalProjectionChart({
   yAxisLabel,
   xAxisLabel,
   lastPointCaption,
+  insightLabel,
   insight,
 }: {
   chartData: ChartPoint[];
@@ -543,6 +614,7 @@ function CapitalProjectionChart({
   yAxisLabel: string;
   xAxisLabel: string;
   lastPointCaption: string;
+  insightLabel?: string;
   insight: string;
 }) {
   if (!chartData.length) return null;
@@ -560,24 +632,26 @@ function CapitalProjectionChart({
         <View style={{ width: labelColW, marginRight: 2 }}>
           <Text
             style={{
-              fontSize: 7,
+              fontSize: 8,
               color: DARK,
               marginBottom: 4,
               width: labelColW - 2,
               textAlign: 'left',
+              fontFamily: 'Inter',
+              lineHeight: PDF_BODY_LH,
             }}
           >
             {yAxisLabel}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
             <View style={{ width: CHART_Y_AXIS_W, height: CHART_HEIGHT, justifyContent: 'space-between', paddingRight: 4 }}>
-              <Text style={{ fontSize: 7, color: DARK, textAlign: 'right' }} wrap={false}>
+              <Text style={{ fontSize: 8, color: DARK, textAlign: 'right', fontFamily: 'Inter' }} wrap={false}>
                 {formatY(yHi)}
               </Text>
-              <Text style={{ fontSize: 7, color: DARK, textAlign: 'right' }} wrap={false}>
+              <Text style={{ fontSize: 8, color: DARK, textAlign: 'right', fontFamily: 'Inter' }} wrap={false}>
                 {formatY(yMid)}
               </Text>
-              <Text style={{ fontSize: 7, color: DARK, textAlign: 'right' }} wrap={false}>
+              <Text style={{ fontSize: 8, color: DARK, textAlign: 'right', fontFamily: 'Inter' }} wrap={false}>
                 {formatY(yLo)}
               </Text>
             </View>
@@ -601,23 +675,41 @@ function CapitalProjectionChart({
               );
             })}
           </View>
-          <Text style={{ fontSize: 8, color: DARK, textAlign: 'center', marginTop: 6 }}>{xAxisLabel}</Text>
+          <Text style={{ fontSize: 8, color: DARK, textAlign: 'center', marginTop: 6, fontFamily: 'Inter' }}>{xAxisLabel}</Text>
         </View>
       </View>
-      <View
-        style={{
-          marginTop: 8,
-          padding: 8,
-          borderWidth: 1,
-          borderColor: GOLD,
-          borderRadius: 6,
-          backgroundColor: 'rgba(255, 252, 245, 0.95)',
-        }}
-      >
-        <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 2 }}>Latest value (end of series)</Text>
-        <Text style={{ fontSize: 9, color: DARK }}>{lastPointCaption}</Text>
+      <View style={{ marginTop: 12, paddingVertical: 6 }}>
+        <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, fontFamily: 'Roboto Serif' }}>Latest value (end of series)</Text>
+        <Text style={{ fontSize: PDF_BODY_PT, color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH }}>{lastPointCaption}</Text>
       </View>
-      <Text style={{ fontSize: 9, color: DARK, marginTop: 8, lineHeight: 1.45 }}>{insight}</Text>
+      {insightLabel ? (
+        <Text style={{ fontSize: PDF_BODY_PT, fontWeight: 'bold', color: DARK, marginTop: 10, marginBottom: 4, fontFamily: 'Inter' }}>{insightLabel}</Text>
+      ) : null}
+      <Text style={{ fontSize: PDF_BODY_PT, color: DARK, marginTop: insightLabel ? 0 : 10, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' }}>{insight}</Text>
+    </View>
+  );
+}
+
+/** Section A/B/C opener — matches Html PDF `PdfAdvisorySectionLead` rhythm. */
+function CapitalHealthAdvisorySectionLead({
+  stage,
+  title,
+  whatThisShows,
+  whyThisMatters,
+}: {
+  stage: string;
+  title: string;
+  whatThisShows: string;
+  whyThisMatters: string;
+}) {
+  return (
+    <View style={[{ marginBottom: 14, width: '100%' }, PDF_CB_BLOCK]}>
+      <Text style={{ fontSize: 8, letterSpacing: 1, textTransform: 'uppercase', color: MUTED, marginBottom: 6, fontFamily: 'Inter' }}>{stage}</Text>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: GREEN, fontFamily: 'Roboto Serif', marginBottom: 10, lineHeight: PDF_TITLE_SERIF_LH }}>{title}</Text>
+      <Text style={{ fontSize: 9, fontWeight: 'bold', color: DARK, marginBottom: 4, fontFamily: 'Inter' }}>What this shows</Text>
+      <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 8, fontFamily: 'Inter' }}>{whatThisShows}</Text>
+      <Text style={{ fontSize: 9, fontWeight: 'bold', color: DARK, marginBottom: 4, fontFamily: 'Inter' }}>Why this matters</Text>
+      <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>{whyThisMatters}</Text>
     </View>
   );
 }
@@ -638,7 +730,6 @@ export function CapitalGrowthReport({
   const symbol = inputs.currency.symbol;
   const formatCurrency = (val: number) => formatCurrencyDisplayNoDecimals(val, symbol);
   const generatedAtStr = formatReportGeneratedAtLabel();
-  const preparedForStr = reportPreparedForLine(reportClientDisplayName);
   const horizonYears = inputs.timeHorizonYears;
   const horizonYearsFormatted = horizonYears % 1 === 0 ? String(Math.round(horizonYears)) : horizonYears.toFixed(1);
   const sustainableMonthly = (result as ReportResult & { sustainableIncomeMonthly?: number }).sustainableIncomeMonthly
@@ -663,18 +754,21 @@ export function CapitalGrowthReport({
       lionStrongEligibilityFromHealthTier(riskTierClamped, inputs.mode, healthVarsForStrong),
     ),
   );
-  const statusColor = tier >= 1 && tier <= 5 ? TIER_COLORS[tier as RiskTierKey] : STATUS_COLORS[result.status];
-  const confidenceColor = tier >= 4 ? '#CD5B52' : tier === 3 ? '#F3AF56' : '#55B685';
+  const confidenceColor = tier >= 4 ? '#B45309' : tier === 3 ? '#D97706' : '#55B685';
   const stressRows = computeStressScenarios(inputs);
   const adj = result.scenarioAdjustments;
   const recommendedIncome = adj?.reduceIncome?.targetMonthly ?? 0;
   const requiredCapital = adj?.addCapital?.requiredStart ?? 0;
   const requiredReturn = adj?.increaseReturn?.requiredAnnualPct ?? 0;
+  const increaseReturnFeasible = adj?.increaseReturn?.feasible ?? false;
   const step = chartData.length <= BAR_COUNT ? 1 : Math.max(1, Math.floor(chartData.length / BAR_COUNT));
   const chartPoints = chartData.filter((_, i) => i % step === 0).slice(0, BAR_COUNT);
   const reviewDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 1); return d.toLocaleDateString(undefined, { dateStyle: 'long' }); })();
 
-  const healthFrameworkIntro = advisoryFrameworkPdfIntro('capital_structure_health');
+  const capitalStressDashboardUrl =
+    pricingReturnModelDashboardUrl('capitalstress') ?? 'https://capitalstress.thecapitalbridge.com/dashboard';
+  const incomeEngineeringDashboardUrl =
+    pricingReturnModelDashboardUrl('incomeengineering') ?? 'https://incomeengineering.thecapitalbridge.com/dashboard';
 
   const executiveSummary =
     inputs.mode === 'withdrawal'
@@ -688,94 +782,158 @@ export function CapitalGrowthReport({
     ? (incomeGap > 0 ? `Withdrawals of ${formatCurrency(inputs.targetMonthlyIncome)}/month exceed sustainable portfolio returns of ${formatCurrency(sustainableMonthly)}/month, creating a structural income gap of ${formatCurrency(incomeGap)}.` : `The withdrawal structure is supported by sustainable returns under current assumptions.`)
     : `Progress to target capital: ${formatNum(healthScore, 1)}% of goal.`;
   const primaryRiskDriver = tier >= 4 ? 'Withdrawals exceed sustainable portfolio returns; capital depletion is projected.' : tier === 3 ? 'Moderate pressure on capital; adjustments recommended to improve resilience.' : 'Structure is within sustainable limits under current assumptions.';
-  const stabilisationPathway = verdictNarrative;
+  const lionsVerdictNarrativeQuote = verdictHeadline ?? verdictNarrative;
+  const lionsVerdictSummary = structuralDiagnosis;
+  const lionsVerdictWhy = primaryRiskDriver;
+  const depletionSystemLine =
+    depletionMo != null && depletionMo < 1200
+      ? `Income structure projected to deplete capital in ${runwayYearsText}.`
+      : "Income structure is sustainable under current assumptions.";
+  const lionsVerdictSystemState = `Structural band: ${riskTierLabel}. ${depletionSystemLine}`;
+  const lionsVerdictNextActions = [
+    inputs.mode === 'withdrawal' && incomeGap > 0 && adj?.reduceIncome?.feasible && recommendedIncome > 0
+      ? `Review withdrawal levels with your adviser — the model highlights approximately ${formatCurrency(recommendedIncome)}/month as one path toward sustainability under current assumptions.`
+      : inputs.mode === 'withdrawal' && incomeGap > 0
+        ? 'Review withdrawal levels with your adviser — aligning draw with sustainable portfolio income can extend runway on these assumptions.'
+        : 'Maintain withdrawal discipline and reassess after material assumption or life changes.',
+    adj?.addCapital?.feasible && requiredCapital > 0
+      ? `Strengthen the capital base progressively — an estimated ${formatCurrency(requiredCapital)} would materially extend runway, typically built over time via income surplus or capital optimisation (relook at Income Engineering Model).`
+      : 'Strengthen the capital base over time where needed — Income Engineering can help structure pathways to unlock or build capital progressively.',
+    increaseReturnFeasible && requiredReturn > 0
+      ? `Review return assumptions — while higher returns improve outcomes, the diagnostic implied rate to close the gap purely via return is approximately ${formatNum(requiredReturn, 1)}%; focus on realistic ranges (e.g. 6–10%) and combine with structural adjustments rather than relying on return alone.`
+      : 'Review return assumptions — while higher returns improve outcomes, focus on realistic ranges and combine with structural adjustments rather than relying on return alone.',
+  ];
 
-  /** Must equal the number of <Page> components in this document. Update when adding or removing pages. */
-  const TOTAL_PAGES = 8;
+  const balancedIncomePct = adj?.balancedAdjustment?.incomeReductionPct ?? 0;
+  const balancedCapPct = adj?.balancedAdjustment?.capitalIncreasePct ?? 0;
+  const balancedFeasible = adj?.balancedAdjustment?.feasible ?? false;
+
+  /** Must equal the number of <ReportPage> components. */
+  const TOTAL_PAGES = includeLionsVerdict ? 13 : 12;
+
+  const coverLogo =
+    brandFullLockupPngDataUrl ? (
+      <Image src={brandFullLockupPngDataUrl} style={styles.pdfCoverLogo} />
+    ) : brandLionPngDataUrl && brandWordmarkPngDataUrl ? (
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+        <Image src={brandLionPngDataUrl} style={{ height: 44, width: 44, marginRight: 6, objectFit: 'contain' }} />
+        <Image src={brandWordmarkPngDataUrl} style={{ width: 148, height: 40, objectFit: 'contain' }} />
+      </View>
+    ) : baseUrl ? (
+      <Image src={`${baseUrl}${CB_REPORT_BRAND_FULL_GREEN_PATH}`} style={styles.pdfCoverLogo} />
+    ) : (
+      <Text style={{ fontSize: 11, fontWeight: 'bold', color: GREEN, marginBottom: 16 }}>Capital Bridge</Text>
+    );
+
   return (
     <Document>
-      {/* Page 1: Executive Summary */}
+      {/* Page 1: Standard advisory cover + contents (Forever-aligned) */}
       <ReportPage pageNumber={1} totalPages={TOTAL_PAGES} audit={reportAudit}>
-          <View style={[styles.headerRow, PDF_BREAK_INSIDE_AVOID]}>
-            <View style={styles.headerLeft}>
-              {brandFullLockupPngDataUrl ? (
-                <Image
-                  src={brandFullLockupPngDataUrl}
-                  style={{ width: 220, height: 44, objectFit: 'contain' }}
-                />
-              ) : brandLionPngDataUrl && brandWordmarkPngDataUrl ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image
-                    src={brandLionPngDataUrl}
-                    style={{ height: 44, width: 44, marginRight: 6, objectFit: 'contain' }}
-                  />
-                  <Image
-                    src={brandWordmarkPngDataUrl}
-                    style={{ width: 148, height: 40, objectFit: 'contain' }}
-                  />
-                </View>
-              ) : baseUrl ? (
-                <Image
-                  src={`${baseUrl}${CB_REPORT_BRAND_FULL_GREEN_PATH}`}
-                  style={{ width: 220, height: 44, objectFit: 'contain' }}
-                />
-              ) : (
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: GREEN }}>Capital Bridge</Text>
-              )}
+        <View style={[styles.pdfCoverRoot, PDF_BREAK_INSIDE_AVOID]}>
+          {coverLogo}
+          <Text style={styles.pdfCoverH1}>CAPITAL HEALTH — STRATEGIC WEALTH REPORT</Text>
+          <Text style={styles.pdfCoverSubtitle}>
+            Withdrawal sustainability and capital trajectory under your stated assumptions.
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 4 }}>
+            <Text style={styles.pdfCoverMeta}>Prepared for: </Text>
+            <Text style={[styles.pdfCoverMeta, { fontWeight: 'bold' }]}>{reportClientDisplayName}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 4 }}>
+            <Text style={styles.pdfCoverMeta}>Generated: </Text>
+            <Text style={[styles.pdfCoverMeta, { fontWeight: 'bold' }]}>{generatedAtStr}</Text>
+          </View>
+          <View style={styles.pdfCoverSpacer} />
+          <Text style={styles.pdfCoverContents}>Contents</Text>
+          {PDF_TOC_CAPITAL_HEALTH.map((block) => (
+            <View key={block.title} style={styles.pdfCoverTocBlock}>
+              <Text style={styles.pdfCoverTocTitle}>{block.title}</Text>
+              {block.items?.map((item) => (
+                <Text key={item} style={styles.pdfCoverTocItem}>
+                  • {item}
+                </Text>
+              ))}
             </View>
-            <View style={[styles.titleBlock, { flex: 1, paddingRight: 8 }]}>
-              <View style={styles.coverTitleBlock}>
-                <Text style={styles.coverMainTitle}>{'CLIENT\u00A0ADVISORY\u00A0REPORT'}</Text>
-              </View>
-              <View style={styles.coverDivider} />
-              <View style={styles.coverMetadata}>
-                <Text style={[styles.coverMetadataLine, { fontWeight: 'bold', fontSize: 11 }]}>Capital Health Model Analysis</Text>
-                <Text style={styles.coverMetadataLine}>{preparedForStr}</Text>
-                <Text style={styles.coverMetadataLine}>Report generated: {generatedAtStr}</Text>
-                <Text style={styles.coverMetadataLine}>Prepared by Capital Bridge — Capital Health Model</Text>
-              </View>
-              <View style={styles.coverFirmBlock}>
-                {CB_REPORT_FIRM_ADDRESS_LINES.map((line) => (
-                  <Text key={line}>{line}</Text>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          <View
-            style={[
-              styles.sectionWrap,
-              PDF_BREAK_INSIDE_AVOID,
-              {
-                marginBottom: 12,
-                padding: 10,
-                borderLeftWidth: 3,
-                borderLeftColor: GOLD,
-                backgroundColor: 'rgba(255, 252, 245, 0.95)',
-              },
-            ]}
-          >
-            <Text style={{ fontSize: 8, color: MUTED, marginBottom: 4, textTransform: 'uppercase' }}>
-              {healthFrameworkIntro.eyebrow}
-            </Text>
-            <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 4 }}>
-              {healthFrameworkIntro.title}
-            </Text>
-            <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 6 }}>
-              {healthFrameworkIntro.youAreHere}
-            </Text>
-            <Text style={{ fontSize: 9, color: MUTED, lineHeight: 1.45 }}>{healthFrameworkIntro.body}</Text>
-          </View>
-
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
-            <Text style={styles.sectionTitleLarge}>EXECUTIVE SUMMARY</Text>
-            <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6 }]}>Overall Structural Status: {riskTierLabel}</Text>
-            <Text style={[styles.bodyText, { lineHeight: 1.5 }]}>{executiveSummary}</Text>
-          </View>
+          ))}
+        </View>
       </ReportPage>
 
-      {/* Page 2: Capital Structure Diagnosis, Structural Confidence, Capital Health Summary */}
+      {/* Page 2: Section A — journey only (executive summary starts on next page) */}
       <ReportPage pageNumber={2} totalPages={TOTAL_PAGES} audit={reportAudit}>
+        <CapitalHealthAdvisorySectionLead
+          stage="Section A — Opening"
+          title="Opening"
+          whatThisShows="Step 2 in the Capital Bridge journey — structural durability after Income Engineering — then your executive summary on the following page."
+          whyThisMatters="Sets context before diagnosis and charts so the PDF reads as one advisory thread, consistent with Forever, Income Engineering, and Capital Stress-Test."
+        />
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK, { marginBottom: 12, paddingVertical: 4 }]}>
+          <Text style={{ fontSize: 11, fontWeight: 'bold', color: DARK, marginBottom: 6, letterSpacing: 0.4, fontFamily: 'Roboto Serif' }}>
+            CAPITAL BRIDGE ADVISORY JOURNEY
+          </Text>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 8, fontFamily: 'Inter' }}>How to read this report</Text>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 6, fontFamily: 'Inter' }}>
+            Step 2 — Is your structure strong enough?
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 6, fontFamily: 'Inter' }}>
+            This report follows Income Engineering (Step 1B), where income and capital flow are structured.
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>At this stage, the question becomes:</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>• Is the structure sustainable over time?</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>• Do withdrawals exceed what the portfolio can support?</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 10, fontFamily: 'Inter' }}>• How long can capital last under current assumptions?</Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: 'Roboto Serif' }}>
+            What this model does
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>
+            The Capital Health Model evaluates the interaction between:
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 2, fontFamily: 'Inter' }}>• withdrawals</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 2, fontFamily: 'Inter' }}>• capital base</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 6, fontFamily: 'Inter' }}>• expected returns</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 10, fontFamily: 'Inter' }}>over time. It focuses on structural durability, not short-term outcomes.</Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: 'Roboto Serif' }}>
+            Why this matters
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 6, fontFamily: 'Inter' }}>
+            Even strong income structures can fail if withdrawals exceed sustainable returns.
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>This model allows:</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>
+            • the sustainability of withdrawals to be assessed
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>
+            • capital depletion risk to be identified early
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 10, fontFamily: 'Inter' }}>
+            • structural gaps to be addressed before they compound
+          </Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: 'Roboto Serif' }}>
+            What happens next
+          </Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>From here:</Text>
+          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' }}>
+            • Capital Stress → tests how this structure behaves under changing market conditions
+          </Text>
+        </View>
+      </ReportPage>
+
+      {/* Page 3: Executive summary (own page) */}
+      <ReportPage pageNumber={3} totalPages={TOTAL_PAGES} audit={reportAudit}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>EXECUTIVE SUMMARY</Text>
+          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 8 }]}>Overall Structural Status: {riskTierLabel}</Text>
+          <Text style={styles.bodyText}>{executiveSummary}</Text>
+        </View>
+      </ReportPage>
+
+      {/* Page 4: Capital Structure Diagnosis, Structural Confidence, Capital Health Summary */}
+      <ReportPage pageNumber={4} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <CapitalHealthAdvisorySectionLead
+            stage="Section B — Advisor Read"
+            title="Advisor Read"
+            whatThisShows="Diagnosis, confidence strip, and summary cards built from the same withdrawal and return assumptions you entered."
+            whyThisMatters="This is the shared fact base for the meeting — clear numbers before optional Lion narrative and scenario pages."
+          />
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
             <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
@@ -822,8 +980,8 @@ export function CapitalGrowthReport({
           </View>
       </ReportPage>
 
-      {/* Page 3: Structure Overview, Capital Projection Chart */}
-      <ReportPage pageNumber={3} totalPages={TOTAL_PAGES} audit={reportAudit}>
+      {/* Page 5: Structure Overview, Capital Projection Chart */}
+      <ReportPage pageNumber={5} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURE OVERVIEW</Text>
             <Text style={styles.bodyText}>Desired Monthly Income {formatCurrency(inputs.targetMonthlyIncome)}</Text>
@@ -834,25 +992,40 @@ export function CapitalGrowthReport({
           </View>
 
           {chartPoints.length > 0 ? (
-            <View style={[styles.chartSection, { marginBottom: CHART_SPACING }, PDF_BREAK_INSIDE_AVOID]}>
+            <View style={[styles.chartSection, { marginBottom: CHART_SPACING }, PDF_CB_BLOCK]}>
               <Text style={styles.chartTitle}>CAPITAL PROJECTION OVER TIME</Text>
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>What this shows</Text>
+              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginBottom: 6, lineHeight: 1.45 }]}>
+                Modelled portfolio capital through time under your withdrawal and return assumptions — the same story as Section B, in one strip.
+              </Text>
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Why this matters</Text>
+              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginBottom: 8, lineHeight: 1.45 }]}>
+                A flat or rising strip supports the sustainability narrative; a clear downward trend signals depletion pressure worth discussing with your adviser.
+              </Text>
               <CapitalProjectionChart
                 chartData={chartPoints}
                 formatY={(n) => formatCurrencyDisplayNoDecimals(Math.round(n), symbol)}
-                yAxisLabel={`Y-axis: portfolio capital (${inputs.currency.code})`}
-                xAxisLabel="X-axis: time (month index along the projection; bars are sampled across the horizon)"
+                yAxisLabel={`Portfolio capital (${inputs.currency.code})`}
+                xAxisLabel="Time along the projection (sampled months)"
                 lastPointCaption={(() => {
                   const last = chartPoints[chartPoints.length - 1];
                   return `Month ${last.month}: ${formatCurrency(last.nominal)} — compare to starting capital and sustainable return assumptions.`;
                 })()}
-                insight="Each bar shows modelled portfolio capital at that month. Use this strip to see whether balances trend flat, rise, or fall toward depletion. The right-hand side reflects outcomes late in the horizon under your withdrawal and return settings."
+                insightLabel="Interpretation"
+                insight="Each bar is modelled portfolio capital at that month. Read left to right for the trend: flat or rising suggests more room; a steady decline signals depletion pressure to discuss with your adviser. The right-hand side reflects the late horizon under your withdrawal and return settings."
               />
             </View>
           ) : null}
       </ReportPage>
 
-      {/* Page 4: Model Assumptions */}
-      <ReportPage pageNumber={4} totalPages={TOTAL_PAGES} audit={reportAudit}>
+      {/* Page 6: Model Assumptions */}
+      <ReportPage pageNumber={6} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <CapitalHealthAdvisorySectionLead
+            stage="Section C — Deeper analysis"
+            title="Deeper analysis"
+            whatThisShows="Explicit assumptions, structure detail, optimiser logic, and stress context behind the Section B headline."
+            whyThisMatters="Lets you stress-test the story: which inputs would change the conclusion, and what the model did with your settings."
+          />
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTIONS</Text>
             <View style={styles.row}>
@@ -875,8 +1048,8 @@ export function CapitalGrowthReport({
           </View>
       </ReportPage>
 
-      {/* Page 5: Key Outcomes, Outcome Optimiser */}
-      <ReportPage pageNumber={5} totalPages={TOTAL_PAGES} audit={reportAudit}>
+      {/* Page 7: Key Outcomes, Outcome Optimiser */}
+      <ReportPage pageNumber={7} totalPages={TOTAL_PAGES} audit={reportAudit}>
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>KEY OUTCOMES</Text>
             <View style={[styles.row, { marginBottom: 4 }]}>
@@ -901,30 +1074,58 @@ export function CapitalGrowthReport({
             </View>
           </View>
 
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLarge}>OUTCOME OPTIMISER</Text>
             <View style={styles.section}>
-              <Text style={[styles.bodyText, { marginBottom: 10 }]}>Reduce Income: Suggested: {formatCurrency(recommendedIncome)}</Text>
-              <Text style={[styles.bodyText, { marginBottom: 10 }]}>Add Capital: Suggested: {formatCurrency(requiredCapital)}</Text>
-              <Text style={[styles.bodyText, { marginBottom: 10 }]}>Increase Return: Required: {formatNum(requiredReturn, 1)}%</Text>
-              <Text style={[styles.bodyText, { marginBottom: 10 }]}>Balanced Adjustment: Income -30% and Capital +30%</Text>
-              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>These adjustments illustrate potential paths to improve sustainability while maintaining income flexibility.</Text>
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Withdrawal adjustment</Text>
+              <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+                {adj?.reduceIncome?.feasible && recommendedIncome > 0
+                  ? `Aligning draw with sustainable portfolio income may extend runway. For context, the model illustrates approximately ${formatCurrency(recommendedIncome)} per month — confirm with your adviser; it is not a fixed instruction.`
+                  : 'No single illustrative withdrawal level was isolated under this solve — review the structure holistically with your adviser.'}
+              </Text>
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Capital adjustment</Text>
+              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+                {adj?.addCapital?.feasible && requiredCapital > 0
+                  ? `Additional capital of approximately ${formatCurrency(requiredCapital)} may improve sustainability under current assumptions.`
+                  : 'Additional capital may improve sustainability where there is a structural gap under these assumptions.'}
+              </Text>
+              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+                This is typically built progressively through income surplus, asset optimisation, or structured capital deployment. Refer to Income Engineering for pathways to unlock or build capital over time.
+              </Text>
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Return adjustment</Text>
+              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+                {increaseReturnFeasible && requiredReturn > 0
+                  ? `The model indicates that significantly higher returns (e.g. ~${formatNum(requiredReturn, 1)}%) would be required to fully close the gap.`
+                  : 'The model did not isolate a single implied return adjustment under this solve — review assumptions holistically with your adviser.'}
+              </Text>
+              <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+                In practice, very high implied returns are unlikely to be sustainable. Portfolio strategy may be reviewed to optimise within realistic ranges (e.g. 6–10%), while combining capital and income adjustments.
+              </Text>
+              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Balanced pathway</Text>
+              <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+                {balancedFeasible && (balancedIncomePct > 0 || balancedCapPct > 0)
+                  ? `One illustrative combined adjustment is income −${formatNum(balancedIncomePct, 0)}% and capital +${formatNum(balancedCapPct, 0)}% (from the live model) — use for discussion, not as a mandate.`
+                  : 'Combined income and capital adjustments can be explored in the live model with your adviser; avoid treating any single pathway as a standalone mandate.'}
+              </Text>
+              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>
+                These rows illustrate structural trade-offs for discussion — not prescriptive advice.
+              </Text>
             </View>
           </View>
       </ReportPage>
 
-      {/* Page 6: Stress Test, Capital Protection Warning, optional Lion's Verdict */}
-      <ReportPage pageNumber={6} totalPages={TOTAL_PAGES} audit={reportAudit}>
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+      {/* Page 8: Stress test + warning only */}
+      <ReportPage pageNumber={8} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRESS TEST</Text>
-            <View style={[styles.stressTable, PDF_BREAK_INSIDE_AVOID]}>
+            <View style={[styles.stressTable, PDF_CB_BLOCK]}>
               <View style={styles.stressTableHeader}>
                 <Text style={[styles.stressTableCol1, { fontWeight: 'bold' }]}>Scenario</Text>
                 <Text style={[styles.stressTableCol2, { fontWeight: 'bold' }]}>Annual Return</Text>
                 <Text style={[styles.stressTableCol3, { fontWeight: 'bold' }]}>Capital Survival Age</Text>
               </View>
               {stressRows.map((row, i) => (
-                <View key={i} style={[styles.stressTableRow, PDF_BREAK_INSIDE_AVOID]}>
+                <View key={i} style={[styles.stressTableRow, PDF_CB_BLOCK]}>
                   <Text style={styles.stressTableCol1}>{row.scenario}</Text>
                   <Text style={styles.stressTableCol2}>{formatNum(row.returnPct, 1)}%</Text>
                   <Text style={styles.stressTableCol3}>{row.runwayText}</Text>
@@ -935,62 +1136,91 @@ export function CapitalGrowthReport({
           </View>
 
           {incomeGap > 0 && depletionMo != null ? (
-            <View style={[styles.warningPanel, PDF_BREAK_INSIDE_AVOID]}>
-              <Text style={[styles.sectionTitleLarge, { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 8 }]}>CAPITAL PROTECTION WARNING</Text>
+            <View style={[styles.warningPanel, PDF_CB_BLOCK]}>
+              <Text style={[styles.sectionTitleLarge, { marginBottom: 10 }]}>CAPITAL PROTECTION WARNING</Text>
               <Text style={styles.bodyText}>Current withdrawal levels exceed sustainable portfolio returns.</Text>
               <Text style={styles.bodyText}>Without structural adjustments, capital depletion is projected within {runwayYearsText}.</Text>
               <Text style={styles.bodyText}>Investors should review withdrawal levels, capital base, or portfolio return assumptions to prevent long-term erosion of capital.</Text>
             </View>
           ) : null}
-
-          {includeLionsVerdict ? (
-            <View style={[styles.verdictSectionWrap, PDF_BREAK_INSIDE_AVOID]}>
-              <Text style={[styles.subsectionTitle, { marginBottom: 4 }]}>STRUCTURAL STATUS: {riskTierLabel}</Text>
-              <View style={styles.verdictDivider} />
-              <Text style={styles.sectionTitleLionVerdict}>THE LION&apos;S VERDICT</Text>
-              <View style={styles.verdictDivider} />
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6, fontSize: 12 }]}>
-                Lion score: {lionScorePdf} / 100 · {lionStatusPdf}
-              </Text>
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 8 }]} wrap={false}>
-                {depletionMo != null && depletionMo < 1200
-                  ? `Income structure projected to deplete capital in ${runwayYearsText}.`
-                  : 'Income structure is sustainable under current assumptions.'}
-              </Text>
-              <Text style={styles.subsectionTitle}>Verdict</Text>
-              <Text style={styles.verdictDynamicHeadline}>{verdictHeadline ?? verdictNarrative}</Text>
-              <Text style={styles.subsectionTitle}>Structural Diagnosis</Text>
-              <Text style={[styles.bodyText, { marginBottom: SUBSECTION_SPACING }]}>{structuralDiagnosis}</Text>
-              <Text style={styles.subsectionTitle}>Primary Risk Driver</Text>
-              <Text style={[styles.bodyText, { marginBottom: SUBSECTION_SPACING }]}>{primaryRiskDriver}</Text>
-              <Text style={styles.subsectionTitle}>Stabilisation Pathway</Text>
-              <Text style={styles.bodyText}>{stabilisationPathway}</Text>
-            </View>
-          ) : null}
       </ReportPage>
 
-      {/* Page 7: Advisory Action Plan, Primary Structural Adjustment, Model Assumption Transparency, Advisor Notes */}
-      <ReportPage pageNumber={7} totalPages={TOTAL_PAGES} audit={reportAudit}>
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+      {includeLionsVerdict ? (
+        <ReportPage pageNumber={9} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <View style={[styles.verdictSectionWrap, PDF_CB_BLOCK]}>
+            <Text style={styles.sectionTitleLionVerdict}>THE LION&apos;S VERDICT</Text>
+            <View style={styles.verdictSpacer} />
+            <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6, fontSize: PDF_BODY_PT }]}>
+              Lion score: {lionScorePdf} / 100 · {lionStatusPdf}
+            </Text>
+            <Text style={styles.verdictDynamicHeadline}>&ldquo;{lionsVerdictNarrativeQuote}&rdquo;</Text>
+            <Text style={styles.lionsVerdictLabel}>Summary</Text>
+            <Text style={styles.lionsVerdictBody}>{lionsVerdictSummary}</Text>
+            <Text style={styles.lionsVerdictLabel}>Why this is happening</Text>
+            <Text style={styles.lionsVerdictBody}>{lionsVerdictWhy}</Text>
+            <Text style={styles.lionsVerdictLabel}>System state</Text>
+            <Text style={styles.lionsVerdictBody}>{lionsVerdictSystemState}</Text>
+            <Text style={styles.lionsVerdictLabel}>What you should do next</Text>
+            {lionsVerdictNextActions.map((line, i) => (
+              <Text key={i} style={styles.lionsVerdictBullet}>
+                • {line}
+              </Text>
+            ))}
+          </View>
+        </ReportPage>
+      ) : null}
+
+      {/* Advisory action plan + notes (own page) */}
+      <ReportPage pageNumber={includeLionsVerdict ? 10 : 9} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLarge}>ADVISORY ACTION PLAN</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Recommended Next Steps</Text>
-            <Text style={styles.actionItem}>1. Review withdrawal strategy — Reducing withdrawals to {formatCurrency(recommendedIncome)} may improve sustainability.</Text>
-            <Text style={styles.actionItem}>2. Strengthen capital base — Additional capital of approximately {formatCurrency(requiredCapital)} may extend capital runway.</Text>
-            <Text style={styles.actionItem}>3. Optimise investment strategy — Improving portfolio return toward {formatNum(requiredReturn, 1)}% could stabilise the structure.</Text>
+            <Text style={styles.actionItem}>
+              1. Review withdrawal strategy — Aligning draw with sustainable portfolio income can extend runway on these assumptions
+              {adj?.reduceIncome?.feasible && recommendedIncome > 0
+                ? ` (one illustrative level the model highlights is around ${formatCurrency(recommendedIncome)} per month).`
+                : '.'}
+            </Text>
+            <Text style={styles.actionItem}>
+              2. Strengthen capital base over time —{' '}
+              {adj?.addCapital?.feasible && requiredCapital > 0
+                ? `An estimated ${formatCurrency(requiredCapital)} would materially extend runway under these assumptions; typically built progressively (see Income Engineering for pathways).`
+                : 'Additional capital may improve sustainability when built progressively or through income and asset optimisation (see Income Engineering for pathways).'}
+            </Text>
+            <Text style={styles.actionItem}>
+              3. Review return assumptions —{' '}
+              {increaseReturnFeasible && requiredReturn > 0
+                ? `The diagnostic implied rate to close the gap purely via return is approximately ${formatNum(requiredReturn, 1)}%; treat cautiously, stay within realistic ranges (e.g. 6–10%), and combine with structural adjustments.`
+                : 'Ensure expected returns remain realistic and aligned with portfolio strategy; avoid relying on outsized return assumptions to close structural gaps.'}
+            </Text>
             <Text style={styles.actionItem}>4. Conduct periodic review — Reassess assumptions annually or when circumstances change.</Text>
 
             {inputs.mode === 'withdrawal' && recommendedIncome > 0 ? (
-              <View style={[styles.highlightBox, PDF_BREAK_INSIDE_AVOID]}>
-                <Text style={styles.highlightTitle}>PRIMARY STRUCTURAL ADJUSTMENT</Text>
-                <Text style={[styles.subsectionTitle, { marginBottom: 2 }]}>Recommended Adjustment</Text>
-                <Text style={styles.bodyText}>Reduce Monthly Withdrawal to {formatCurrency(recommendedIncome)}</Text>
-                <Text style={[styles.subsectionTitle, { marginTop: 8, marginBottom: 2 }]}>Expected Impact</Text>
-                <Text style={styles.bodyText}>Capital runway improves materially when withdrawals are reduced.</Text>
+              <View style={[styles.highlightBox, PDF_CB_BLOCK]}>
+                <Text style={styles.highlightTitle}>PRIMARY DISCUSSION POINT</Text>
+                <Text style={[styles.subsectionTitle, { marginBottom: 2 }]}>Withdrawal alignment (illustrative)</Text>
+                <Text style={styles.bodyText}>
+                  The model highlights approximately {formatCurrency(recommendedIncome)} per month as one path toward sustainability — confirm suitability with your adviser and your broader plan.
+                </Text>
+                <Text style={[styles.subsectionTitle, { marginTop: 8, marginBottom: 2 }]}>Why it matters</Text>
+                <Text style={styles.bodyText}>Lower draw reduces depletion pressure and can materially extend runway under the same return assumptions.</Text>
               </View>
             ) : null}
           </View>
 
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+            <Text style={styles.sectionTitleLarge}>ADVISOR INTERPRETATION NOTES</Text>
+            <Text style={styles.bodyText}>Recommendations should be evaluated within the client&apos;s broader financial plan:</Text>
+            <Text style={styles.actionItem}>• Exploring withdrawal alignment with sustainable portfolio returns</Text>
+            <Text style={styles.actionItem}>• Building or redeploying capital over time to extend runway (Income Engineering)</Text>
+            <Text style={styles.actionItem}>• Reviewing portfolio strategy and return assumptions within realistic ranges</Text>
+            <Text style={styles.actionItem}>• Extending the investment horizon where appropriate</Text>
+          </View>
+      </ReportPage>
+
+      {/* Model assumption transparency — own page */}
+      <ReportPage pageNumber={includeLionsVerdict ? 11 : 10} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTION TRANSPARENCY</Text>
             <View style={[styles.section, { marginBottom: 8 }]}>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Expected Portfolio Return</Text><Text style={styles.assumptionValue}>{formatNum(inputs.expectedAnnualReturnPct, 1)}%</Text></View>
@@ -1001,40 +1231,73 @@ export function CapitalGrowthReport({
             </View>
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>Model outputs depend heavily on the assumptions provided.</Text>
           </View>
-
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
-            <Text style={styles.sectionTitleLarge}>ADVISOR INTERPRETATION NOTES</Text>
-            <Text style={styles.bodyText}>Recommendations should be evaluated within the client's broader financial plan:</Text>
-            <Text style={styles.actionItem}>• Reducing withdrawals to align with sustainable portfolio returns</Text>
-            <Text style={styles.actionItem}>• Increasing capital allocation to extend runway</Text>
-            <Text style={styles.actionItem}>• Improving portfolio returns through strategy or risk tolerance review</Text>
-            <Text style={styles.actionItem}>• Extending the investment horizon where appropriate</Text>
-          </View>
       </ReportPage>
 
-      {/* Page 8: System Overview, Client Meeting Summary, Footer */}
-      <ReportPage pageNumber={8} totalPages={TOTAL_PAGES} audit={reportAudit}>
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+      {/* System overview, client summary, disclosures */}
+      <ReportPage pageNumber={includeLionsVerdict ? 12 : 11} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL BRIDGE SYSTEM OVERVIEW</Text>
             <Text style={styles.bodyText}>Capital Bridge functions as a financial modelling and diagnostic platform designed to evaluate capital sustainability and income resilience.</Text>
             <Text style={[styles.bodyText, { marginTop: 4 }]}>The system integrates capital projections, withdrawal modelling, and structural diagnostics to support advisory decision-making.</Text>
           </View>
 
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLarge}>CLIENT MEETING SUMMARY</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6 }]}>Key Discussion Points</Text>
             <View style={[styles.section, { marginBottom: 8 }]}>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Client Objective</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.targetMonthlyIncome)}</Text></View>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Sustainability Outcome</Text><Text style={styles.assumptionValue}>{runwayYearsText}</Text></View>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Primary Structural Risk</Text><Text style={styles.assumptionValue}>{formatCurrency(incomeGap)}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Recommended Adjustment</Text><Text style={styles.assumptionValue}>{formatCurrency(recommendedIncome)}</Text></View>
+              <View style={styles.assumptionRow}>
+                <Text style={styles.assumptionLabel}>Illustrative pathway</Text>
+                <Text style={styles.assumptionValue}>
+                  {adj?.reduceIncome?.feasible && recommendedIncome > 0
+                    ? `Withdrawal ~${formatCurrency(recommendedIncome)}/mo`
+                    : 'Review diagnostics with your adviser.'}
+                  {adj?.addCapital?.feasible && requiredCapital > 0
+                    ? `; capital discussion ~${formatCurrency(requiredCapital)}`
+                    : ''}
+                  {`. Income Engineering for build pathways.`}
+                </Text>
+              </View>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Next Review Date</Text><Text style={styles.assumptionValue}>{reviewDate}</Text></View>
             </View>
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>This summary provides a concise recap of the advisory discussion and recommended next steps.</Text>
           </View>
 
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+            <Text style={styles.sectionTitleLarge}>DISCLOSURES & HOW TO USE THIS REPORT</Text>
+            <Text style={styles.bodyText}>
+              This document is for advisory discussion only and is not personal advice. The full legal notice appears in the page footer.
+            </Text>
+            <Text style={[styles.bodyText, { marginTop: 6, fontWeight: 'bold' }]}>How to use this report</Text>
+            <Text style={styles.actionItem}>• Review structural diagnostics and charts with your adviser in a client meeting.</Text>
+            <Text style={styles.actionItem}>• Refresh the live model when withdrawals, returns, or horizon change materially.</Text>
+          </View>
+      </ReportPage>
+
+      {/* Recommended next step — Capital Stress (own page) */}
+      <ReportPage pageNumber={includeLionsVerdict ? 13 : 12} totalPages={TOTAL_PAGES} audit={reportAudit}>
+          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+            <Text style={styles.sectionTitleLarge}>RECOMMENDED NEXT STEP — CAPITAL STRESS</Text>
+            <Text style={styles.bodyText}>
+              Capital Stress tests capital across many simulated paths with withdrawals held constant — a useful check once the structural assumptions in this report are agreed.
+            </Text>
+            <Text style={[styles.bodyText, { marginTop: 6 }]}>Continue in Capital Stress (same Capital Bridge account):</Text>
+            <Link src={capitalStressDashboardUrl} style={{ fontSize: PDF_BODY_PT, color: GREEN, textDecoration: 'underline', marginTop: 4, fontFamily: 'Inter' }}>
+              {capitalStressDashboardUrl}
+            </Link>
+            <Text style={[styles.bodyText, { marginTop: 10 }]}>Income Engineering (pathways for income and capital structure):</Text>
+            <Link src={incomeEngineeringDashboardUrl} style={{ fontSize: PDF_BODY_PT, color: GREEN, textDecoration: 'underline', marginTop: 4, fontFamily: 'Inter' }}>
+              {incomeEngineeringDashboardUrl}
+            </Link>
+            <Text style={[styles.bodyText, { marginTop: 8, fontWeight: 'bold', color: GREEN }]}>
+              Next: Run Capital Stress to continue your advisory journey.
+            </Text>
+          </View>
+
           <View style={[styles.disclaimer, { marginTop: SECTION_SPACING }]}>
-            <Text style={{ textAlign: 'left', fontSize: 9, color: MUTED }}>This report is a structural projection tool for advisory discussions. Results depend entirely on the assumptions provided and do not guarantee future performance.</Text>
+            <Text style={{ textAlign: 'left', fontSize: 9, color: MUTED, fontFamily: 'Inter', lineHeight: PDF_BODY_LH }}>This report is a structural projection tool for advisory discussions. Results depend entirely on the assumptions provided and do not guarantee future performance.</Text>
           </View>
       </ReportPage>
     </Document>

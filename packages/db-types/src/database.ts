@@ -138,9 +138,44 @@ export type Database = {
           plan_change_intent: string | null;
           /** Advisory pricing region (MY|SG|…); from checkout or profile change after top-up */
           advisory_market: string | null;
+          /** Campaign access mode (e.g. gitex_trial). */
+          access_type: string | null;
+          campaign_source: string | null;
+          campaign_trial_ends_at: string | null;
+          converted_from_gitex_at: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
+      };
+      gitex_coupons: {
+        Row: {
+          id: string;
+          code: string;
+          type: string;
+          duration_days: number;
+          is_used: boolean;
+          used_at: string | null;
+          used_by_user_id: string | null;
+          expiry_date: string;
+          campaign_tag: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["gitex_coupons"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["gitex_coupons"]["Row"]>;
+        Relationships: [];
+      };
+      gitex_campaign_events: {
+        Row: {
+          id: string;
+          event_type: string;
+          user_id: string | null;
+          coupon_id: string | null;
+          meta: Record<string, unknown> | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["gitex_campaign_events"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["gitex_campaign_events"]["Row"]>;
         Relationships: [];
       };
       pending_bills: {

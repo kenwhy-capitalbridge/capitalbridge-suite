@@ -24,7 +24,12 @@ async function main() {
   mkdirSync(dirname(outPath), { recursive: true });
 
   await waitForHttpOk(reportUrl);
-  await renderPdf({ url: reportUrl, outputPath: outPath });
+  await renderPdf({
+    url: reportUrl,
+    outputPath: outPath,
+    waitForReportReadySignal: false,
+    settleMsBeforePdf: 6000,
+  });
 
   console.log(`Wrote ${outPath}`);
 }

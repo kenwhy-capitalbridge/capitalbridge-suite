@@ -9,7 +9,7 @@ import {
 } from "@cb/shared/reportTraceability";
 
 import { requireForeverDashboardAuth } from "../../foreverDashboardGate";
-import { isLionConfigChosen } from "@/lib/lionConfigChosen";
+import { resolveForeverReportDocumentLion } from "@/lib/lionConfigChosen";
 import { ForeverReportDocumentClient } from "./ForeverReportDocumentClient";
 
 export const dynamic = "force-dynamic";
@@ -51,13 +51,8 @@ export default async function ForeverReportDocumentPage({ params }: { params: Pr
   const tz = reportTimeZoneIana?.trim() || "UTC";
   const isTrial = String(row.tier ?? "").toLowerCase().trim() === "trial";
   const lc = row.lion_config as unknown;
-  const lion = !isTrial && isLionConfigChosen(lc)
-    ? {
-        verdictTier: lc.verdictTier,
-        headlineText: lc.headlineText,
-        guidanceText: lc.guidanceText,
-      }
-    : null;
+  const calculator = readCalculator(lc);
+  const lion = resolveForeverReportDocumentLion({ isTrial, lionConfig: lc, calculator });
 
   const audit: ReportAuditMeta = {
     reportId: row.report_id,
@@ -71,8 +66,6 @@ export default async function ForeverReportDocumentPage({ params }: { params: Pr
     generatedAtLabel: formatForeverCoverGeneratedLabel(createdAt, tz),
     modelDisplayName: CB_REPORT_MODEL_DISPLAY_NAME.FOREVER,
   };
-
-  const calculator = readCalculator(lc);
 
   return (
     <main className="min-h-0">

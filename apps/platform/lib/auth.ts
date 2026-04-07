@@ -27,6 +27,10 @@ export async function getServerUserAndMembership(): Promise<{
     firstName?: string | null;
     lastName?: string | null;
     advisory_market?: string | null;
+    /** Campaign / event access (e.g. gitex_trial). */
+    access_type?: string | null;
+    campaign_source?: string | null;
+    campaign_trial_ends_at?: string | null;
   } | null;
   membership: ServerMembership;
 }> {
@@ -40,7 +44,7 @@ export async function getServerUserAndMembership(): Promise<{
     const { data: profile } = await supabase
       .schema("public")
       .from("profiles")
-      .select("first_name, last_name, advisory_market")
+      .select("first_name, last_name, advisory_market, access_type, campaign_source, campaign_trial_ends_at")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -81,6 +85,10 @@ export async function getServerUserAndMembership(): Promise<{
         firstName,
         lastName,
         advisory_market: typeof profile?.advisory_market === "string" ? profile.advisory_market : null,
+        access_type: typeof profile?.access_type === "string" ? profile.access_type : null,
+        campaign_source: typeof profile?.campaign_source === "string" ? profile.campaign_source : null,
+        campaign_trial_ends_at:
+          typeof profile?.campaign_trial_ends_at === "string" ? profile.campaign_trial_ends_at : null,
       },
       membership: membership
         ? {
