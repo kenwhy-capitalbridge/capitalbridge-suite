@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
-import { LOGIN_APP_URL, PLATFORM_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { isGitexGuidedAccess } from "@cb/shared/gitexCampaign";
 import { marketToModelCurrencyPrefix, normalizeMarketId } from "@cb/shared/markets";
 import { CURRENCY_LIST, type CurrencyCode } from "../../legacy/config/currency";
@@ -36,9 +36,7 @@ export default async function IncomeEngineeringDashboard() {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (isGitexGuidedAccess(profile?.access_type as string | null | undefined)) {
-    redirect(`${PLATFORM_APP_URL.replace(/\/+$/, "")}/`);
-  }
+  const gitexGuided = isGitexGuidedAccess(profile?.access_type as string | null | undefined);
 
   const prefixFromProfile =
     typeof profile?.advisory_market === "string"
@@ -78,16 +76,35 @@ export default async function IncomeEngineeringDashboard() {
     .eq("id", membership.plan_id)
     .maybeSingle();
   const normalizedSlug = String(plan?.slug ?? "").toLowerCase().trim();
+  const trialLike = normalizedSlug === "trial" || normalizedSlug.startsWith("gitex_");
   const lionAccessUser: LionAccessUser = {
-    isPaid: normalizedSlug !== "trial",
+    isPaid: !trialLike,
     hasActiveTrialUpgrade: false,
   };
 
   return (
-    <IncomeEngineeringDashboardClient
-      lionAccessUser={lionAccessUser}
-      reportClientDisplayName={reportClientDisplayName}
-      initialCurrencyCode={initialCurrencyCode}
-    />
+    <>
+      {gitexGuided ? (
+        <div
+          style={{
+            width: "100%",
+            padding: "0.65rem 1rem",
+            backgroundColor: "rgba(13, 58, 29, 0.08)",
+            borderBottom: "1px solid rgba(13, 58, 29, 0.15)",
+            textAlign: "center",
+            fontSize: "0.875rem",
+            color: "#0d3a1d",
+          }}
+        >
+          GITEX Asia 2026 — Guided access: explore the model below. Full analytical depth and PDF reports require a
+          standard membership.
+        </div>
+      ) : null}
+      <IncomeEngineeringDashboardClient
+        lionAccessUser={lionAccessUser}
+        reportClientDisplayName={reportClientDisplayName}
+        initialCurrencyCode={initialCurrencyCode}
+      />
+    </>
   );
 }

@@ -2,9 +2,10 @@
  * Bulk-insert GITEX Asia 2026 coupons (service role required).
  *
  * Usage (repo root):
- *   NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npx tsx scripts/generateGitexCoupons.ts
+ *   NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npm run gitex:generate-coupons
  *
- * Generates 220 × type 15 (7-day) and 170 × type 25 (14-day), writes CSV to docs/samples/gitex-coupons.csv
+ * Optional: GITEX_COUNT_15 and GITEX_COUNT_25 (defaults: 220 and 170).
+ * Writes CSV to docs/samples/gitex-coupons.csv
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -12,8 +13,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
-const COUNT_15 = 220;
-const COUNT_25 = 170;
+function parseCount(raw: string | undefined, fallback: number): number {
+  const n = Number.parseInt(String(raw ?? "").trim(), 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+const COUNT_15 = parseCount(process.env.GITEX_COUNT_15, 220);
+const COUNT_25 = parseCount(process.env.GITEX_COUNT_25, 170);
 
 function randomSegment(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -55,6 +61,8 @@ async function main() {
       rows.push({ code, type, duration_days: durationDays });
     }
   }
+
+  console.log(`Generating ${COUNT_15} coupon(s) type 15 (7-day) and ${COUNT_25} type 25 (14-day).`);
 
   pushBatch("15", COUNT_15, 7);
   pushBatch("25", COUNT_25, 14);

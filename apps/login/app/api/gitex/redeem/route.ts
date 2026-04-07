@@ -6,15 +6,25 @@ import {
   GITEX_CAMPAIGN_TAG,
   normalizeGitexCouponCode,
 } from "@cb/shared/gitexCampaign";
+import { CHECKOUT_COUNTRIES, type MarketId } from "@cb/shared/markets";
 import { PLATFORM_APP_URL } from "@cb/shared/urls";
 
 export const dynamic = "force-dynamic";
 
 const PAID_SLUGS = new Set(["monthly", "quarterly", "yearly", "strategic"]);
 
+const ALLOWED_ADVISORY_MARKETS = new Set<MarketId>(CHECKOUT_COUNTRIES.map((c) => c.market));
+
+function parseAdvisoryMarket(raw: unknown): MarketId | null {
+  if (typeof raw !== "string") return null;
+  const m = raw.trim().toUpperCase();
+  return ALLOWED_ADVISORY_MARKETS.has(m as MarketId) ? (m as MarketId) : null;
+}
+
 type Body = {
   email?: string;
   couponCode?: string;
+  advisoryMarket?: string;
 };
 
 function planSlugForCouponType(type: string): "gitex_7" | "gitex_14" {
@@ -83,9 +93,13 @@ export async function POST(req: Request) {
   const emailRaw = typeof body.email === "string" ? body.email.trim() : "";
   const codeRaw = typeof body.couponCode === "string" ? body.couponCode : "";
   const couponCode = normalizeGitexCouponCode(codeRaw);
+  const advisoryMarket = parseAdvisoryMarket(body.advisoryMarket);
 
   if (!emailRaw || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
+  }
+  if (!advisoryMarket) {
+    return NextResponse.json({ error: "invalid_market" }, { status: 400 });
   }
   if (!couponCode || !couponCode.startsWith("CB-GITEX-")) {
     return NextResponse.json({ error: "invalid_code" }, { status: 400 });
@@ -186,6 +200,7 @@ export async function POST(req: Request) {
       campaign_source: GITEX_CAMPAIGN_TAG,
       campaign_trial_ends_at: expiresAt,
       email,
+      advisory_market: advisoryMarket,
     })
     .eq("id", userId);
 
@@ -213,7 +228,7 @@ export async function POST(req: Request) {
     event_type: "redeem",
     user_id: userId,
     coupon_id: row.id,
-    meta: { plan_slug: planSlug, email },
+    meta: { plan_slug: planSlug, email, advisory_market: advisoryMarket },
   });
 
   const platformOrigin = PLATFORM_APP_URL.replace(/\/+$/, "");

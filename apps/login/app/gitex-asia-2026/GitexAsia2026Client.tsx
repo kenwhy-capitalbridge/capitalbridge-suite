@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { CHECKOUT_COUNTRIES, MARKET_LABELS, type MarketId } from "@cb/shared/markets";
+
+const ADVISORY_MARKET_OPTIONS = CHECKOUT_COUNTRIES.map((c) => ({
+  value: c.market,
+  label: `${c.flag} ${c.label} (${MARKET_LABELS[c.market]})`,
+}));
 
 const ERROR_COPY: Record<string, string> = {
   invalid_email: "Enter a valid email address.",
+  invalid_market: "Select a valid country or region.",
   invalid_code: "Invalid code.",
   invalid_json: "Something went wrong. Try again.",
   already_used: "This code has already been used.",
@@ -20,6 +27,7 @@ const ERROR_COPY: Record<string, string> = {
 
 export function GitexAsia2026Client() {
   const [email, setEmail] = useState("");
+  const [advisoryMarket, setAdvisoryMarket] = useState<MarketId>("MY");
   const [couponCode, setCouponCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -33,7 +41,11 @@ export function GitexAsia2026Client() {
       const res = await fetch("/api/gitex/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), couponCode: couponCode.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          couponCode: couponCode.trim(),
+          advisoryMarket,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -105,6 +117,29 @@ export function GitexAsia2026Client() {
               onChange={(e) => setEmail(e.target.value)}
               className="cb-input w-full"
             />
+          </div>
+          <div>
+            <label htmlFor="gitex-advisory-market" className="mb-1 block text-sm font-medium text-cb-cream">
+              Country / region <span className="text-red-300">*</span>
+            </label>
+            <select
+              id="gitex-advisory-market"
+              name="advisoryMarket"
+              required
+              value={advisoryMarket}
+              onChange={(e) => setAdvisoryMarket(e.target.value as MarketId)}
+              className="cb-input w-full cursor-pointer"
+              aria-label="Advisory region and currency"
+            >
+              {ADVISORY_MARKET_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs leading-relaxed text-cb-cream/75">
+              Same list as profile: model apps use the currency for this region.
+            </p>
           </div>
           <div>
             <label htmlFor="gitex-code" className="mb-1 block text-sm font-medium text-cb-cream">
