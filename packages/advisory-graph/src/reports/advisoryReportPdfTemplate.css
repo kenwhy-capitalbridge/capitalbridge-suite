@@ -6,9 +6,18 @@
  * Site shell: outer layout adds `cb-advisory-model-site-shell`; main column adds `cb-advisory-model-main`.
  */
 
+/**
+ * Hide live chrome only for full-page / report-only views (e.g. Forever export page, Playwright).
+ *
+ * Income Engineering and Capital Stress mount `PdfLayout` with `documentRootId="print-report"` on the main
+ * dashboard; that node carries `data-cb-advisory-report-document`. Without this exception, the shared rule
+ * `shell:has([data-cb-advisory-report-document])` would hide ModelAppHeader for every normal dashboard load.
+ * If `#print-report` exists in the shell, treat the report as embedded — keep header + site footer visible.
+ */
 @media screen {
-  .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]) > header,
-  .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]) > footer[role="contentinfo"] {
+  .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]):not(:has(#print-report)) > header,
+  .cb-advisory-model-site-shell:has([data-cb-advisory-report-document]):not(:has(#print-report))
+    > footer[role="contentinfo"] {
     display: none !important;
   }
 }

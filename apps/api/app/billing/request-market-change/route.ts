@@ -83,6 +83,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "same_market" }, { status: 400 });
   }
 
+  /** GITEX passes — no paid regional price lock; allow free advisory_market updates (preview + apply). */
+  if (planSlug.toLowerCase().startsWith("gitex_")) {
+    if (previewOnly) {
+      return NextResponse.json({
+        ok: true as const,
+        preview: true as const,
+        from_market: fromMarket,
+        to_market: toMarket,
+        plan_slug: planSlug,
+        delta_sen: 0,
+        delta_myr: 0,
+        needs_payment: false,
+      });
+    }
+    const { error: updErr } = await svc
+      .schema("public")
+      .from("profiles")
+      .upsert(
+        { id: user.id, email: user.email, advisory_market: toMarket },
+        { onConflict: "id" }
+      );
+    if (updErr) {
+      return NextResponse.json({ error: "update_failed", detail: updErr.message }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true as const, mode: "updated" as const, to_market: toMarket });
+  }
+
   const deltaSen = computeMarketChangeDeltaSen(fromMarket, toMarket, planSlug);
   const deltaMyr = deltaSen / 100;
 
