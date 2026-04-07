@@ -350,7 +350,7 @@ const CalculatorScreen = forwardRef<
   }, []);
 
   const result = useCalculatorResults(inputs);
-  const lionAccessEnabled = canAccessLion(lionAccessUser);
+  const lionAccessEnabled = canAccessLion(lionAccessUser) && canSeeVerdict;
   const lionSeedUserId = useMemo(
     () => (typeof window !== 'undefined' ? window.location.hostname : 'capital-health'),
     [],

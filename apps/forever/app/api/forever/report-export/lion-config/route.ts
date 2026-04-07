@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAppServerClient } from "@cb/supabase/server";
 import type { Tier } from "@cb/lion-verdict/copy";
+import { planSlugDeniesLionsVerdict } from "@cb/lion-verdict/access";
 
 import { ensureForeverReportLionConfig } from "@/lib/ensureForeverReportLionConfig";
 
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const isTrial = String(pre.tier ?? "").toLowerCase().trim() === "trial";
+  const isTrial = planSlugDeniesLionsVerdict(String(pre.tier ?? ""));
   if (isTrial) {
     return NextResponse.json({ ok: true, skipped: "trial", lion_config: null });
   }

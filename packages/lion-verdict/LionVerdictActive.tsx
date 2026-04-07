@@ -96,6 +96,7 @@ export function LionVerdictActive({
   const persona = useMemo(() => mapPersona({ riskTolerance, surplusRatio }), [riskTolerance, surplusRatio]);
 
   const copy = useMemo(() => {
+    if (!hasAccess) return null;
     const result = getLionVerdict({
       userId,
       reportType,
@@ -127,6 +128,7 @@ export function LionVerdictActive({
     };
     return result;
   }, [
+    hasAccess,
     userId,
     reportType,
     tier,
@@ -157,11 +159,14 @@ export function LionVerdictActive({
     onCopyComputed(hasAccess ? copy : null);
   }, [copy, hasAccess, onCopyComputed]);
 
+  /** Trial / campaign passes: same shell position as Lion’s Verdict, pricing CTA to full access. */
+  if (!hasAccess && pricingReturnModel) {
+    return <SystemInsightLimited className={className} pricingReturnModel={pricingReturnModel} />;
+  }
+
   if (!copy) return null;
 
-  if (!hasAccess) {
-    return <SystemInsightLimited pricingReturnModel={pricingReturnModel} />;
-  }
+  if (!hasAccess) return null;
 
   return (
     <LionCopyPanel copy={copy} canSeeVerdict className={className} tier={tier} score={score} />

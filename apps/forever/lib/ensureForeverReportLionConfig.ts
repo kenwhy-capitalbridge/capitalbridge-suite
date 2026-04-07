@@ -1,3 +1,4 @@
+import { planSlugDeniesLionsVerdict } from "@cb/shared/plans";
 import { createAppServerClient } from "@cb/supabase/server";
 import { LION_COPY, type Tier } from "@cb/lion-verdict/copy";
 
@@ -78,8 +79,7 @@ export async function ensureForeverReportLionConfig(
     throw Object.assign(new Error("forbidden_or_missing"), { status: 403 });
   }
 
-  const isTrial = String(row.tier ?? "").toLowerCase().trim() === "trial";
-  if (isTrial) {
+  if (planSlugDeniesLionsVerdict(row.tier)) {
     return { ok: true, skipped: "trial", lion_config: null };
   }
 
@@ -100,6 +100,7 @@ export async function ensureForeverReportLionConfig(
     .neq("id", args.exportId)
     .like("report_id", "CB-FOREVER-%")
     .neq("tier", "trial")
+    .not("tier", "ilike", "gitex_%")
     .order("created_at", { ascending: false })
     .limit(HISTORY_LIMIT);
 

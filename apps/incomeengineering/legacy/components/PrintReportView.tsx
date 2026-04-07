@@ -24,10 +24,7 @@ import {
   PdfSection,
   PDF_TOC_INCOME_ENGINEERING,
 } from '@cb/pdf/shared';
-import {
-  SYSTEM_INSIGHT_LIMITED_LINES,
-  SYSTEM_INSIGHT_LIMITED_TITLE,
-} from '../../../../packages/lion-verdict/systemInsightCopy';
+import { ReportTrialSnapshotCaption } from '@cb/advisory-graph/reports';
 import { formatCurrency } from '../utils/format';
 import type { CurrencyCode } from '../config/currency';
 import type { SummaryKPIs } from '../types/calculator';
@@ -219,11 +216,6 @@ const sectionHeading: React.CSSProperties = {
   lineHeight: 1.35,
 };
 
-const lionVerdictSectionHeading: React.CSSProperties = {
-  ...sectionHeading,
-  fontFamily: CB_FONT_SERIF,
-};
-
 const sectionBlock: React.CSSProperties = {
   marginBottom: '22px',
   padding: '16px 18px',
@@ -381,9 +373,15 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <PdfAdvisorySectionLead
           stageLabel="Section A — Opening"
           title="Opening"
-          whatThisShows="Where Income Engineering sits in the Capital Bridge journey, then — when your plan includes it — the Lion’s Verdict on income structure, using the same numbers as Section B."
+          whatThisShows={
+            lionAccessEnabled
+              ? "Where Income Engineering sits in the Capital Bridge journey, then — when your plan includes it — the Lion’s Verdict on income structure, using the same numbers as Section B."
+              : "Where Income Engineering sits in the Capital Bridge journey and how to read the evidence in Section B — full Lion’s Verdict narrative is available on paid plans."
+          }
           whyThisMatters="Orientation and judgement come first, then the fact base, so the read follows a natural advisory sequence."
         />
+
+        {!lionAccessEnabled ? <ReportTrialSnapshotCaption isTrial /> : null}
 
         <section className="section" style={sectionBlock}>
           <PrintStageLabel>Capital Bridge framework</PrintStageLabel>
@@ -553,25 +551,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               />
             </section>
           </div>
-        ) : (
-          <div
-            className="lion-section lion-verdict"
-            data-cb-lion-print-wrap
-            style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
-          >
-            <section style={sectionBlock}>
-              <h2 style={{ ...lionVerdictSectionHeading, marginBottom: '12px' }}>{SYSTEM_INSIGHT_LIMITED_TITLE}</h2>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55, fontSize: '12px' }}>
-                {SYSTEM_INSIGHT_LIMITED_LINES.map((line) => (
-                  <li key={line} style={{ marginBottom: '8px' }}>{line}</li>
-                ))}
-              </ul>
-              <p style={{ margin: '12px 0 0', fontSize: '11px', color: '#6b7280', lineHeight: 1.45 }}>
-                Educational planning only — not a promise of outcomes.
-              </p>
-            </section>
-          </div>
-        )}
+        ) : null}
       </PdfSection>
 
         <PdfSection className="cb-page-break" aria-label="Section B — Advisor Read">

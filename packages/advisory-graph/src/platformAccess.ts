@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { normalizeAdvisoryPlanSlug } from "@cb/shared/plans";
 
 /** Plan slug from persona or default (`strategic` = catalog 365-day tier; same feature gates as `yearly`). */
 export type Plan = "trial" | "monthly" | "quarterly" | "yearly" | "strategic";
@@ -120,28 +121,7 @@ export async function fetchPersona(
 }
 
 function normalizePlan(v: unknown): Plan | null {
-  if (v == null) return null;
-  const s = String(v).toLowerCase().trim();
-  const squish = s.replace(/[\s_-]+/g, "");
-
-  if (
-    s === "trial" ||
-    s === "monthly" ||
-    s === "quarterly" ||
-    s === "yearly" ||
-    s === "strategic"
-  )
-    return s as Plan;
-
-  if (squish === "yearlyfull" || s === "yearly_full") return "strategic";
-  if (squish === "strategic365" || squish === "strategicyearly") return "strategic";
-
-  if (s.includes("strategic")) return "strategic";
-
-  /** Event / campaign guided passes — same entitlement tier as trial for modelling gates. */
-  if (s.startsWith("gitex_")) return "trial";
-
-  return null;
+  return normalizeAdvisoryPlanSlug(v) as Plan | null;
 }
 
 /**

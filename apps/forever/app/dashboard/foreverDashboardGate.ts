@@ -9,7 +9,7 @@ import {
   normalizeMarketId,
   type MarketId,
 } from "@cb/shared/markets";
-import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
+import { lionAccessUserFromPlanSlug, type LionAccessUser } from "../../../../packages/lion-verdict/access";
 
 export type ForeverDashboardAuthContext = {
   userId: string;
@@ -89,10 +89,7 @@ export async function requireForeverDashboardAuth(): Promise<ForeverDashboardAut
     .eq("id", membership.plan_id)
     .maybeSingle();
   const planSlug = String(plan?.slug ?? "").toLowerCase().trim();
-  const lionAccessUser: LionAccessUser = {
-    isPaid: planSlug !== "trial",
-    hasActiveTrialUpgrade: false,
-  };
+  const lionAccessUser = lionAccessUserFromPlanSlug(planSlug);
 
   return {
     userId,

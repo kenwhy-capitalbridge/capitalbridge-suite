@@ -252,7 +252,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const canSeeVerdict = props.canSeeVerdict ?? true;
   const lionAccessUser = props.lionAccessUser ?? DEFAULT_LION_ACCESS_USER;
   const reportClientDisplayName = props.reportClientDisplayName ?? 'Client';
-  const lionAccessEnabled = canAccessLion(lionAccessUser);
+  const lionAccessEnabled = canAccessLion(lionAccessUser) && canSeeVerdict;
   const [investment, setInvestment] = useState<number>(1000000);
   const [withdrawal, setWithdrawal] = useState<number>(0);
   const [lowerPct, setLowerPct] = useState<number>(-2.0);
@@ -1903,7 +1903,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             </div>
           )}
 
-          {/* 15. The Lion's Verdict — LionCopyPanel (paid) or SystemInsightLimited (trial); footer sits on page below */}
+          {/* 15. Lion area — paid: full verdict; trial after simulation: shared teaser; before run: run-simulation preface. */}
           <div className="mx-auto w-full max-w-3xl" style={{ opacity: canSeeVerdict ? 1 : 0.55 }}>
             {showLionActive ? (
               <LionVerdictActive

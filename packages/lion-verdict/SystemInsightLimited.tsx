@@ -67,11 +67,10 @@ export function SystemInsightLimited({
       <a
         href={href}
         rel="noopener noreferrer"
-        className="cb-gold-primary-cta mx-auto mb-7 w-full max-w-[min(100%,20rem)] !rounded-full px-5 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] sm:mb-8 sm:max-w-none sm:px-6 sm:text-sm sm:tracking-widest"
+        className="cb-gold-primary-cta mx-auto mb-7 w-full max-w-none !rounded-full px-4 py-3 text-center text-[10px] font-semibold uppercase leading-snug tracking-[0.08em] sm:mb-8 sm:px-6 sm:text-xs sm:tracking-[0.12em] md:text-sm md:tracking-widest"
         aria-label="See plans for full Lion Verdict access"
       >
-        <span className="sm:hidden">See plans</span>
-        <span className="hidden sm:inline">See plans for full Lion Verdict access</span>
+        See plans for full Lion Verdict access
       </a>
       <p className="mb-3 text-xs leading-relaxed text-white/60 sm:mb-4">
         Educational planning only — not a promise of outcomes.

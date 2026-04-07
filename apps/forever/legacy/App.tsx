@@ -653,7 +653,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
             sustainabilityYears={foreverLionHorizonYears}
             depletionPressure={foreverLionTier}
             modelType="FOREVER"
-            onCopyComputed={setLionCopyPayload}
+            onCopyComputed={lionAccessEnabled ? setLionCopyPayload : undefined}
             pricingReturnModel="forever"
           />
         </div>

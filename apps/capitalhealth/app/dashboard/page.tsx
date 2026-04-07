@@ -5,7 +5,7 @@ import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { LOGIN_APP_URL, PLATFORM_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { isGitexGuidedAccess } from "@cb/shared/gitexCampaign";
 import { marketToModelCurrencyPrefix, normalizeMarketId } from "@cb/shared/markets";
-import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
+import { lionAccessUserFromPlanSlug } from "../../../../packages/lion-verdict/access";
 import { deriveEntitlementsFromRawPlan } from "@cb/advisory-graph";
 import { CapitalHealthDashboardClient } from "./CapitalHealthDashboardClient";
 
@@ -75,10 +75,7 @@ export default async function CapitalHealthDashboard() {
     .maybeSingle();
   const ent = deriveEntitlementsFromRawPlan(plan?.slug ?? null);
   const normalizedSlug = String(plan?.slug ?? "").toLowerCase().trim();
-  const lionAccessUser: LionAccessUser = {
-    isPaid: normalizedSlug !== "trial",
-    hasActiveTrialUpgrade: false,
-  };
+  const lionAccessUser = lionAccessUserFromPlanSlug(normalizedSlug);
 
   return (
     <CapitalHealthDashboardClient

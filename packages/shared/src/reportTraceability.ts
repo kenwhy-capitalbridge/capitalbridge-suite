@@ -4,6 +4,7 @@ import {
   marketIdToReportExportTimeZone,
   type MarketId,
 } from "./markets";
+import { planSlugDeniesLionsVerdict } from "./plans";
 import { formatReportGeneratedAtLabel } from "./reportIdentity";
 
 export { CB_REPORT_EXPORT_TIMEZONE_KUALA_LUMPUR } from "./reportIdentity";
@@ -110,8 +111,8 @@ export function buildForeverV6CapitalBridgePdfFilename(args: {
   const user = sanitizePdfFilenameSegment(args.userDisplayName);
   const ver = args.versionLabel.startsWith("v") ? args.versionLabel : `v${args.versionLabel}`;
   const core = `CapitalBridge_${FOREVER_V6_MODEL_FILE_SEGMENT}_${user}_${datePart}_${timePart}_${ver}.pdf`;
-  const trial = args.planSlug.toLowerCase().trim() === "trial";
-  return trial ? `Trial_${core}` : core;
+  const limited = planSlugDeniesLionsVerdict(args.planSlug);
+  return limited ? `Trial_${core}` : core;
 }
 
 /** Cover line — user local wall time only; no timezone name shown. */
@@ -159,7 +160,7 @@ export function buildForeverIncomeModelReportFilename(args: {
   timeZone: string;
 }): string {
   const tz = args.timeZone.trim() || "UTC";
-  const isTrial = String(args.planSlug ?? "").toLowerCase().trim() === "trial";
+  const isLimitedPlan = planSlugDeniesLionsVerdict(args.planSlug);
   let y = "";
   let mo = "";
   let day = "";
@@ -195,7 +196,7 @@ export function buildForeverIncomeModelReportFilename(args: {
   }
   const stamp = `${y}-${mo}-${day}_${h}${min}`;
   const base = `Forever-Income-Model-${stamp}-Report.pdf`;
-  return isTrial ? `Trial_${base}` : base;
+  return isLimitedPlan ? `Trial_${base}` : base;
 }
 
 export function buildCapitalBridgePdfFilename(args: {

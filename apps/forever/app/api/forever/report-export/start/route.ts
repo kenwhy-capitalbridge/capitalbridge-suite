@@ -4,6 +4,7 @@ import { createAppServerClient } from "@cb/supabase/server";
 import { buildReportId } from "@cb/shared/reportTraceability";
 import type { Tier } from "@cb/lion-verdict/copy";
 
+import { planSlugDeniesLionsVerdict } from "@cb/lion-verdict/access";
 import { requireForeverDashboardAuth } from "@/app/dashboard/foreverDashboardGate";
 import { insertForeverReportExportRow } from "@/app/dashboard/print/insertForeverReportExport";
 import { ensureForeverReportLionConfig } from "@/lib/ensureForeverReportLionConfig";
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "insert_failed" }, { status: 500 });
   }
 
-  const isTrial = String(planSlug).toLowerCase().trim() === "trial";
+  const isTrial = planSlugDeniesLionsVerdict(planSlug);
   if (!isTrial) {
     try {
       await ensureForeverReportLionConfig(supabase, {

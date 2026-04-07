@@ -6,7 +6,7 @@ import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { isGitexGuidedAccess } from "@cb/shared/gitexCampaign";
 import { marketToModelCurrencyPrefix, normalizeMarketId } from "@cb/shared/markets";
 import { CURRENCY_LIST, type CurrencyCode } from "../../legacy/config/currency";
-import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
+import { lionAccessUserFromPlanSlug } from "../../../../packages/lion-verdict/access";
 import { IncomeEngineeringDashboardClient } from "./IncomeEngineeringDashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -76,11 +76,7 @@ export default async function IncomeEngineeringDashboard() {
     .eq("id", membership.plan_id)
     .maybeSingle();
   const normalizedSlug = String(plan?.slug ?? "").toLowerCase().trim();
-  const trialLike = normalizedSlug === "trial" || normalizedSlug.startsWith("gitex_");
-  const lionAccessUser: LionAccessUser = {
-    isPaid: !trialLike,
-    hasActiveTrialUpgrade: false,
-  };
+  const lionAccessUser = lionAccessUserFromPlanSlug(normalizedSlug);
 
   return (
     <>

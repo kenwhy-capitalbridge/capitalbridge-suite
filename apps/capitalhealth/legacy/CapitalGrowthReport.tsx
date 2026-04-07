@@ -57,6 +57,7 @@ import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
 import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 import { formatReportGeneratedAtLabel } from '@cb/shared/reportIdentity';
 import { createReportAuditMeta, CB_REPORT_LEGAL_NOTICE, type ReportAuditMeta } from '@cb/shared/reportTraceability';
+import { CB_REPORT_TRIAL_SNAPSHOT_CAPTION } from '@cb/shared/reportTrialCopy';
 import { PDF_TOC_CAPITAL_HEALTH } from '@cb/pdf/shared/pdf-advisory-cover-presets';
 import {
   CB_REPORT_BODY_MUTED,
@@ -810,6 +811,8 @@ export function CapitalGrowthReport({
 
   /** Must equal the number of <ReportPage> components. */
   const TOTAL_PAGES = includeLionsVerdict ? 13 : 12;
+  /** Trial PDFs: avoid “Lion” framing where the full Verdict section is omitted. */
+  const structuralScoreLabel = includeLionsVerdict ? 'Lion score' : 'Structural score';
 
   const coverLogo =
     brandFullLockupPngDataUrl ? (
@@ -866,6 +869,20 @@ export function CapitalGrowthReport({
           whatThisShows="Step 2 in the Capital Bridge journey — structural durability after Income Engineering — then your executive summary on the following page."
           whyThisMatters="Sets context before diagnosis and charts so the PDF reads as one advisory thread, consistent with Forever, Income Engineering, and Capital Stress-Test."
         />
+        {!includeLionsVerdict ? (
+          <View style={{ marginBottom: 10, paddingHorizontal: 2 }}>
+            <Text
+              style={{
+                fontSize: 9.5,
+                color: 'rgba(13, 58, 29, 0.75)',
+                lineHeight: 1.45,
+                fontFamily: 'Inter',
+              }}
+            >
+              {CB_REPORT_TRIAL_SNAPSHOT_CAPTION}
+            </Text>
+          </View>
+        ) : null}
         <View style={[styles.sectionWrap, PDF_CB_BLOCK, { marginBottom: 12, paddingVertical: 4 }]}>
           <Text style={{ fontSize: 11, fontWeight: 'bold', color: DARK, marginBottom: 6, letterSpacing: 0.4, fontFamily: 'Roboto Serif' }}>
             CAPITAL BRIDGE ADVISORY JOURNEY
@@ -938,7 +955,7 @@ export function CapitalGrowthReport({
             <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
             <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Structure Status</Text><Text style={[styles.assumptionValue, { fontWeight: 'bold' }]}>{riskTierLabel}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Lion score (0–100)</Text><Text style={styles.assumptionValue}>{lionScorePdf} · {lionStatusPdf}</Text></View>
+              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>{structuralScoreLabel} (0–100)</Text><Text style={styles.assumptionValue}>{lionScorePdf} · {lionStatusPdf}</Text></View>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Income Gap</Text><Text style={styles.assumptionValue}>{formatCurrency(incomeGap)}</Text></View>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Runway</Text><Text style={styles.assumptionValue}>{runwayYearsText}</Text></View>
             </View>
@@ -947,7 +964,7 @@ export function CapitalGrowthReport({
 
           <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURAL CONFIDENCE</Text>
-            <Text style={[styles.bodyText, { marginBottom: 6 }]}>Lion score: {lionScorePdf} / 100 · {lionStatusPdf}</Text>
+            <Text style={[styles.bodyText, { marginBottom: 6 }]}>{structuralScoreLabel}: {lionScorePdf} / 100 · {lionStatusPdf}</Text>
             <View style={styles.confidenceBarWrap}>
               <View style={styles.confidenceBar}>
                 <View style={[styles.confidenceFill, { width: `${Math.min(100, Math.max(0, lionScorePdf))}%`, backgroundColor: confidenceColor }]} />
@@ -955,8 +972,9 @@ export function CapitalGrowthReport({
               <Text style={styles.confidenceLabel}>STRONG · STABLE · FRAGILE · AT RISK · NOT SUSTAINABLE</Text>
             </View>
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>
-              Lion score is mapped from the model risk tier
-              {includeLionsVerdict ? "; same scale as Lion's Verdict in the app." : '.'}
+              {includeLionsVerdict
+                ? "Lion score is mapped from the model risk tier; same scale as Lion's Verdict in the app."
+                : 'Structural score is mapped from the model risk tier (same 0–100 scale as paid members; full Lion’s Verdict narrative is not included in this trial export).'}
             </Text>
           </View>
 

@@ -8,6 +8,7 @@ import {
   type ReportAuditMeta,
 } from "@cb/shared/reportTraceability";
 
+import { planSlugDeniesLionsVerdict } from "@cb/lion-verdict/access";
 import { requireForeverDashboardAuth } from "../../foreverDashboardGate";
 import { resolveForeverReportDocumentLion } from "@/lib/lionConfigChosen";
 import { ForeverReportDocumentClient } from "./ForeverReportDocumentClient";
@@ -49,8 +50,12 @@ export default async function ForeverReportDocumentPage({ params }: { params: Pr
 
   const createdAt = new Date(row.created_at);
   const tz = reportTimeZoneIana?.trim() || "UTC";
-  const isTrial = String(row.tier ?? "").toLowerCase().trim() === "trial";
   const lc = row.lion_config as unknown;
+  const lcObj = lc && typeof lc === "object" && !Array.isArray(lc) ? (lc as Record<string, unknown>) : null;
+  const planFromConfig = typeof lcObj?.planSlug === "string" ? lcObj.planSlug : null;
+  const tierStored = String(row.tier ?? "").toLowerCase().trim();
+  const isTrial =
+    planSlugDeniesLionsVerdict(tierStored) || planSlugDeniesLionsVerdict(planFromConfig);
   const calculator = readCalculator(lc);
   const lion = resolveForeverReportDocumentLion({ isTrial, lionConfig: lc, calculator });
 
