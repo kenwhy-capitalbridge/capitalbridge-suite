@@ -5,7 +5,13 @@ import {
   serverCanSaveFromMembership,
 } from "@cb/advisory-graph/server/membershipLayout";
 import { syncUserActiveSessionFromAccessToken } from "@cb/advisory-graph/server/userActiveSessionSync";
-import { CbLegalSiteFooter, LionWatermarkShell, ModelAppHeader, ModelMetricSpineProvider } from "@cb/ui";
+import {
+  CbLegalSiteFooter,
+  ElfsightChatbot,
+  LionWatermarkShell,
+  ModelAppHeader,
+  ModelMetricSpineProvider,
+} from "@cb/ui";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
@@ -68,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </ModelMetricSpineProvider>
           </ModelSaveHandlersProvider>
         </LionWatermarkShell>
+        <ElfsightChatbot />
       </body>
     </html>
   );

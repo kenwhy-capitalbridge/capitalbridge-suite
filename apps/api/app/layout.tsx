@@ -1,4 +1,4 @@
-import { CbLegalSiteFooter } from "@cb/ui";
+import { CbLegalSiteFooter, ElfsightChatbot } from "@cb/ui";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -6,6 +6,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <div className="flex-1">{children}</div>
         <CbLegalSiteFooter />
+        <ElfsightChatbot />
       </body>
     </html>
   );

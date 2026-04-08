@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ElfsightChatbot } from "@cb/ui";
 import Header from "@/components/Header";
 import { AuthHelpFooter } from "@/components/AuthHelpFooter";
 import { TabCloseSessionClear } from "@/components/TabCloseSessionClear";
@@ -21,6 +22,7 @@ export default function RootLayout({
         <Header />
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         <AuthHelpFooter />
+        <ElfsightChatbot />
       </body>
     </html>
   );

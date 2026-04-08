@@ -39,3 +39,4 @@ export {
 } from "./ReportPrintChrome";
 export { stampAllPdfPagesWithAudit } from "./stampPdfAuditMeta";
 export { CbLegalSiteFooter, type CbLegalSiteFooterProps } from "./CbLegalSiteFooter";
+export { ElfsightChatbot } from "./ElfsightChatbot";
