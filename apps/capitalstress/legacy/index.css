@@ -75,6 +75,20 @@ button {
   display: none !important;
 }
 
+/* Client-side PDF capture: html2canvas needs the report DOM visible off-screen */
+.cb-stress-pdf-capture-wrap {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 794px;
+  max-width: none;
+  pointer-events: none;
+}
+.cb-stress-pdf-capture-wrap #print-report {
+  display: block !important;
+  visibility: visible !important;
+}
+
 @media print {
   .no-print {
     display: none !important;

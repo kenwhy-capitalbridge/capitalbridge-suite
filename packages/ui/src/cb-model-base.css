@@ -652,3 +652,25 @@ a {
     animation-duration: 1.25s;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Elfsight / third-party chat widgets — never appear in printed reports or
+   Playwright PDF (print media). Scoped broadly because vendors inject fixed
+   layers and iframes outside the placeholder div.
+   --------------------------------------------------------------------------- */
+@media print {
+  .elfsight-app-bc21f872-cdf0-47f5-8d6c-aa5b37daf027,
+  [class*="elfsight-app-"],
+  [class*="eapps-cdn"],
+  [class*="eapps-widget"],
+  [id^="eapps-"],
+  iframe[src*="elfsight"],
+  iframe[src*="eapps-"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+}

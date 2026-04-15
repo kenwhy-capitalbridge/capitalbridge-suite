@@ -359,6 +359,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
       shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER}
       documentRootId="print-report"
     >
+      <div data-pdf-part="1">
       <PdfSection className="cb-advisory-doc-cover cb-page-break-after" aria-label="Cover">
         <PdfAdvisoryCoverPage
           title="INCOME ENGINEERING — STRATEGIC WEALTH REPORT"
@@ -829,6 +830,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           This report is for advisory purposes only. Illustrations rest on your assumptions and are not a guarantee of future outcomes.
           The footer on each page carries the full legal notice.
         </p>
+      </div>
       </div>
     </PdfLayout>
   );

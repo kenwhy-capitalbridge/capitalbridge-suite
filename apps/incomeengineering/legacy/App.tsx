@@ -354,6 +354,16 @@ const AppInner = forwardRef<
         backgroundColor: '#ffffff',
         windowWidth: partEl.scrollWidth,
         windowHeight: partEl.scrollHeight,
+        ignoreElements: (node) => {
+          if (!(node instanceof Element)) return false;
+          const cls = node.getAttribute('class') ?? '';
+          if (cls.includes('elfsight-app-') || cls.includes('eapps-')) return true;
+          if (node.tagName === 'IFRAME') {
+            const src = (node as HTMLIFrameElement).getAttribute('src') ?? '';
+            if (src.includes('elfsight') || src.includes('eapps-')) return true;
+          }
+          return false;
+        },
       });
       const imgWidthMm = contentWidth;
       const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;

@@ -373,6 +373,7 @@ export function PrintReport(props: PrintReportProps) {
   }, [scheduleReportReady]);
 
   return (
+    <div data-pdf-part="1">
     <PdfLayout
       audit={layoutAudit}
       shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER}
@@ -1396,5 +1397,6 @@ export function PrintReport(props: PrintReportProps) {
         </div>
       </PdfSection>
     </PdfLayout>
+    </div>
   );
 }

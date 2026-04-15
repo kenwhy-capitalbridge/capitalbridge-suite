@@ -44,7 +44,14 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { createReportAuditMeta, type ReportAuditMeta } from "@cb/shared/reportTraceability";
-import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import {
+  ChromeSpinnerGlyph,
+  ModelReportDownloadFooter,
+  stampAllPdfPagesWithAudit,
+  useModelMetricSpine,
+} from "@cb/ui";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
 
 const CURRENCIES = [
@@ -280,6 +287,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const [radarLabelTooltip, setRadarLabelTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
   const [printAuditMeta, setPrintAuditMeta] = useState<ReportAuditMeta | null>(null);
+  const [pdfDownloadBusy, setPdfDownloadBusy] = useState(false);
+  const stressReportPdfRef = useRef<HTMLDivElement>(null);
   const [hasStrategicInterest, setHasStrategicInterest] = useState(false);
   const [stressTimelineSaved, setStressTimelineSaved] = useState<CapitalTimelinePoint[] | undefined>(
     undefined,
@@ -552,7 +561,25 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     else if (rawValue === '') setWithdrawal(0);
   };
 
-  const handlePrint = () => {
+  const ignorePdfWidgetElements = useCallback((node: Element) => {
+    const cls = node.getAttribute("class") ?? "";
+    if (cls.includes("elfsight-app-") || cls.includes("eapps-")) return true;
+    if (node.tagName === "IFRAME") {
+      const src = (node as HTMLIFrameElement).getAttribute("src") ?? "";
+      if (src.includes("elfsight") || src.includes("eapps-")) return true;
+    }
+    return false;
+  }, []);
+
+  const handleDownloadPdf = async () => {
+    if (!mcResult || pdfDownloadBusy) return;
+    const wrap = stressReportPdfRef.current;
+    const partEl =
+      wrap?.querySelector<HTMLElement>('[data-pdf-part="1"]') ??
+      wrap?.querySelector<HTMLElement>("#print-report");
+    if (!partEl) return;
+
+    setPdfDownloadBusy(true);
     let audit!: ReportAuditMeta;
     flushSync(() => {
       audit = createReportAuditMeta({
@@ -561,15 +588,62 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       });
       setPrintAuditMeta(audit);
     });
-    const prevTitle = typeof document !== "undefined" ? document.title : "";
-    if (typeof document !== "undefined") {
-      document.title = audit.filename.replace(/\.pdf$/i, "");
+
+    try {
+      if (typeof document !== "undefined" && document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+    } catch {
+      /* ignore */
     }
-    window.print();
-    if (typeof document !== "undefined") {
-      requestAnimationFrame(() => {
-        document.title = prevTitle;
+
+    const margin = 12;
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const contentWidth = pageWidth - 2 * margin;
+    const contentHeight = pageHeight - 2 * margin;
+
+    const addPartToPdf = async (doc: jsPDF, el: HTMLElement): Promise<void> => {
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight,
+        ignoreElements: ignorePdfWidgetElements,
       });
+      const imgWidthMm = contentWidth;
+      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+      const sliceHeightPx = (contentHeight / imgHeightMm) * canvas.height;
+      const numPages = Math.ceil(imgHeightMm / contentHeight);
+      for (let pageIndex = 0; pageIndex < numPages; pageIndex++) {
+        const fromY = pageIndex * sliceHeightPx;
+        const sliceH = Math.min(sliceHeightPx, canvas.height - fromY);
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceH;
+        const ctx = sliceCanvas.getContext("2d");
+        if (!ctx) {
+          throw new Error("Failed to get 2d context for PDF page slice");
+        }
+        if (pageIndex > 0) doc.addPage();
+        ctx.drawImage(canvas, 0, fromY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+        const sliceData = sliceCanvas.toDataURL("image/png");
+        const sliceHeightMm = (sliceH / canvas.height) * imgHeightMm;
+        doc.addImage(sliceData, "PNG", margin, margin, imgWidthMm, sliceHeightMm);
+      }
+    };
+
+    try {
+      const doc = new jsPDF("p", "mm", "a4");
+      await addPartToPdf(doc, partEl);
+      stampAllPdfPagesWithAudit(doc, audit);
+      doc.save(audit.filename);
+    } catch (err) {
+      console.error("[capital-stress] PDF generation failed:", err);
+    } finally {
+      setPdfDownloadBusy(false);
     }
   };
 
@@ -1941,7 +2015,12 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           </div>
           )}
 
-          <ModelReportDownloadFooter onDownload={handlePrint} />
+          <ModelReportDownloadFooter
+            onDownload={() => void handleDownloadPdf()}
+            disabled={!mcResult || pdfDownloadBusy}
+            buttonLabel={pdfDownloadBusy ? "GENERATING…" : undefined}
+            buttonLeading={pdfDownloadBusy ? <ChromeSpinnerGlyph sizePx={16} /> : undefined}
+          />
 
         </section>
       </main>
@@ -2001,6 +2080,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           canSeeVerdict && lionAccessEnabled ? runLionVerdictEngineStress(advisoryInputs, formatCurrency) : null;
         const verdict = lionEnginePrint ? toVerdictNarrative(lionEnginePrint) : null;
         return (
+          <div ref={stressReportPdfRef} className="cb-stress-pdf-capture-wrap">
           <PrintReport
             mcResult={mcResult}
             depletionBarOutput={depletionBarOutput}
@@ -2033,6 +2113,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             capitalTimelinePrintPayload={capitalTimelinePrintPayload}
             hasStrategicInterest={hasStrategicInterest}
           />
+          </div>
         );
       })()}
               </>
