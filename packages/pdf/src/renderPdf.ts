@@ -42,6 +42,11 @@ export type RenderPdfOptions = {
   /** Navigation + readiness wait (ms). Default 120_000. */
   timeoutMs?: number;
   /**
+   * Playwright `page.goto` waitUntil. Default `"load"`.
+   * Avoid `"networkidle"` on production pages — analytics, chat widgets, and long-lived connections often prevent it from settling.
+   */
+  navigateWaitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit";
+  /**
    * When true (default), waits for `window.__REPORT_READY__ === true` after navigation.
    * Set false only for rare static pages that do not set the flag.
    */
@@ -179,7 +184,7 @@ async function waitForFonts(page: import("playwright").Page): Promise<void> {
 
 /**
  * STEP 1 pipeline (deterministic, UI-parity):
- * 1. `goto` — `waitUntil: "networkidle"`
+ * 1. `goto` — `waitUntil: "load"` (default; avoid `networkidle` in production)
  * 2. `emulateMedia({ media: "print" })` + `resize` — required before `__REPORT_READY__` for apps whose
  *    print report lives under `@media print` / `#print-report` (otherwise layout never stabilises).
  * 3. `document.fonts.ready`
@@ -187,10 +192,15 @@ async function waitForFonts(page: import("playwright").Page): Promise<void> {
  * 5. `document.fonts.ready` again after ready
  * 6. `page.pdf` — `printBackground`, `preferCSSPageSize` (honour `@page` from CSS), A4 fallback
  */
+const evalForceReportReady = new Function(`
+  window.__REPORT_READY__ = true;
+`) as () => void;
+
 export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
   const timeoutMs = options.timeoutMs ?? 120_000;
   const waitReady = options.waitForReportReadySignal !== false;
   const settleMs = options.settleMsBeforePdf ?? 0;
+  const navigateWaitUntil = options.navigateWaitUntil ?? "load";
 
   if (options.playwrightFooter && options.playwrightFooterFromDom) {
     throw new Error("renderPdf: pass only one of playwrightFooter or playwrightFooterFromDom");
@@ -206,7 +216,13 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       await context.addCookies(options.playwrightCookies);
     }
     await page.goto(options.url, {
-      waitUntil: "networkidle",
+      waitUntil: navigateWaitUntil,
+      timeout: timeoutMs,
+    });
+
+    // Client report roots mount after hydration; do not rely on networkidle (often never settles in prod).
+    await page.waitForSelector(".cb-report-root, #print-report", {
+      state: "attached",
       timeout: timeoutMs,
     });
 
@@ -217,9 +233,21 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
 
     if (waitReady) {
       // Playwright signature is (pageFunction, arg, options) — do not pass options as the second argument.
-      await page.waitForFunction(() => window.__REPORT_READY__ === true, undefined, {
-        timeout: timeoutMs,
-      });
+      try {
+        await page.waitForFunction(() => window.__REPORT_READY__ === true, undefined, {
+          timeout: timeoutMs,
+        });
+      } catch (readyErr) {
+        const hasRoot = await page.$("#print-report, .cb-report-root");
+        if (hasRoot) {
+          console.warn(
+            "[renderPdf] __REPORT_READY__ timed out; forcing ready after #print-report / .cb-report-root found",
+          );
+          await page.evaluate(evalForceReportReady);
+        } else {
+          throw readyErr;
+        }
+      }
       await waitForFonts(page);
     } else if (settleMs > 0) {
       await page.waitForSelector("#print-report", { timeout: timeoutMs });

@@ -593,9 +593,16 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         credentials: "same-origin",
       });
       if (!pdfRes.ok) {
-        console.error("[capital-stress] report-pdf failed", pdfRes.status);
+        const errBody = (await pdfRes.json().catch(() => ({}))) as { error?: unknown };
+        const detail =
+          typeof errBody.error === "string" && errBody.error.trim()
+            ? errBody.error.trim().slice(0, 400)
+            : "";
+        console.error("[capital-stress] report-pdf failed", pdfRes.status, detail || errBody);
         window.alert(
-          "Could not generate the PDF. Please try again. If the problem persists, contact support.",
+          detail
+            ? `Could not generate the PDF: ${detail}`
+            : "Could not generate the PDF. Please try again. If the problem persists, contact support.",
         );
         return;
       }

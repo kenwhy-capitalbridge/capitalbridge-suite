@@ -21,6 +21,7 @@ const html = `<!DOCTYPE html>
   <title>PDF smoke</title>
 </head>
 <body>
+  <div id="print-report" class="cb-report-root"></div>
   <p>Capital Bridge PDF render smoke (Playwright Chromium).</p>
 </body>
 </html>`;
@@ -33,7 +34,7 @@ function closeServer(server: http.Server): Promise<void> {
 
 void (async () => {
   const server = http.createServer((_, res) => {
-    // Close the connection so Playwright `networkidle` can settle (HTTP/1.1 keep-alive otherwise stays open).
+    // Close the connection so the response completes cleanly (HTTP/1.1 keep-alive otherwise stays open).
     res.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
       Connection: "close",
