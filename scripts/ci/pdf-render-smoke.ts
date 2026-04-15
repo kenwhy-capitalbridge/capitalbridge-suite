@@ -33,7 +33,11 @@ function closeServer(server: http.Server): Promise<void> {
 
 void (async () => {
   const server = http.createServer((_, res) => {
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    // Close the connection so Playwright `networkidle` can settle (HTTP/1.1 keep-alive otherwise stays open).
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      Connection: "close",
+    });
     res.end(html);
   });
 
