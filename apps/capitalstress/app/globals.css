@@ -14,3 +14,8 @@
     font-weight: var(--cb-body-font-weight);
   }
 }
+
+/* Site shell already uses min-h-screen; lion shell also used min-h-screen and could leave dead space below the legal footer. */
+body [data-cb-lion-shell] {
+  min-height: unset;
+}

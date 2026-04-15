@@ -802,7 +802,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           withdrawalDisplay={formatCurrency(withdrawal)}
           horizonDisplay={`${years} years`}
         />
-      <div className="cb-body bg-transparent text-cb-cream font-sans selection:bg-[#FFCC6A] selection:text-black pt-0 pb-4 md:pb-16">
+      <div className="cb-body bg-transparent text-cb-cream font-sans selection:bg-[#FFCC6A] selection:text-black pt-0 pb-4 md:pb-8">
         <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 lg:pt-14 space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
         {/* Module 3 note — standalone mode */}
         <div className="pt-6 pb-2 sm:pt-2 no-print">
