@@ -264,15 +264,15 @@ const AppInner = forwardRef<
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ snapshot }),
       });
+      const startPayload = (await startRes.json().catch(() => ({}))) as { exportId?: string; error?: unknown };
       if (!startRes.ok) {
-        const err = await startRes.json().catch(() => ({}));
-        console.error('[income-engineering] report-export/start failed', startRes.status, err);
+        console.error('[income-engineering] report-export/start failed', startRes.status, startPayload);
         window.alert(
           'Could not start PDF export. If this keeps happening, try again later or contact support.',
         );
         return;
       }
-      const { exportId } = (await startRes.json()) as { exportId?: string };
+      const { exportId } = startPayload;
       if (!exportId) {
         window.alert('PDF export could not be created. Please try again.');
         return;
@@ -281,12 +281,15 @@ const AppInner = forwardRef<
         credentials: 'same-origin',
       });
       if (!pdfRes.ok) {
-        const errBody = (await pdfRes.json().catch(() => ({}))) as { error?: unknown };
-        const detail =
-          typeof errBody.error === 'string' && errBody.error.trim()
-            ? errBody.error.trim().slice(0, 400)
-            : '';
-        console.error('[income-engineering] report-pdf failed', pdfRes.status, detail || errBody);
+        const raw = await pdfRes.text().catch(() => '');
+        let detail = '';
+        try {
+          const j = JSON.parse(raw) as { error?: unknown };
+          if (typeof j.error === 'string' && j.error.trim()) detail = j.error.trim().slice(0, 400);
+        } catch {
+          detail = raw.trim().slice(0, 320);
+        }
+        console.error('[income-engineering] report-pdf failed', pdfRes.status, detail || raw.slice(0, 200));
         window.alert(
           detail
             ? `Could not generate the PDF: ${detail}`

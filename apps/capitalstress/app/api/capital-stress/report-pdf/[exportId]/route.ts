@@ -3,6 +3,7 @@ import { createAppServerClient } from "@cb/supabase/server";
 import { buildCapitalBridgePdfFilename } from "@cb/shared/reportTraceability";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { signPdfCaptureToken } from "@cb/shared/pdfCaptureToken";
+import { getPdfCaptureSecret } from "@/lib/pdfCaptureEnv";
 import { renderPdf } from "@cb/pdf/render";
 
 import { cookiesForPlaywright } from "@/lib/cookiesForPlaywright";
@@ -60,13 +61,27 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ exportI
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "localhost:3003";
   const proto = request.headers.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
   const origin = `${proto}://${host}`;
-  const pdfToken = signPdfCaptureToken({ exportId: id, userId: user.id });
-  const docUrl = pdfToken
-    ? `${origin}/dashboard/stress-report-document/${id}?pdfCapture=${encodeURIComponent(pdfToken)}`
-    : `${origin}/dashboard/stress-report-document/${id}`;
   const cookieHeader = request.headers.get("cookie");
-  const playwrightCookies =
-    pdfToken ? [] : cookiesForPlaywright(cookieHeader, origin);
+  const pdfSecret = getPdfCaptureSecret();
+  let docUrl: string;
+  let playwrightCookies: ReturnType<typeof cookiesForPlaywright>;
+  if (pdfSecret) {
+    const pdfToken = signPdfCaptureToken({ exportId: id, userId: user.id }, pdfSecret);
+    docUrl = `${origin}/dashboard/stress-report-document/${id}?pdfCapture=${encodeURIComponent(pdfToken)}`;
+    playwrightCookies = [];
+  } else {
+    docUrl = `${origin}/dashboard/stress-report-document/${id}`;
+    playwrightCookies = cookiesForPlaywright(cookieHeader, origin);
+    if (playwrightCookies.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "PDF capture is not configured: set SUPABASE_SERVICE_ROLE_KEY or REPORT_PDF_CAPTURE_SECRET for this Vercel project.",
+        },
+        { status: 500 },
+      );
+    }
+  }
 
   let pdf: Buffer;
   try {
@@ -78,6 +93,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ exportI
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "render_failed";
+    console.error("[capital-stress] renderPdf failed:", e);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 

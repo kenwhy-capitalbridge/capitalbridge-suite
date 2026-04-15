@@ -9,6 +9,7 @@ import {
 import { marketIdToReportExportTimeZone, normalizeMarketId } from "@cb/shared/markets";
 import { formatReportGeneratedAtLabel, reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
 import { verifyPdfCaptureToken } from "@cb/shared/pdfCaptureToken";
+import { getPdfCaptureSecret } from "@/lib/pdfCaptureEnv";
 
 import { StressReportDocumentClient } from "./StressReportDocumentClient";
 import { isStressPrintSnapshotV1, type StressPrintSnapshotV1 } from "@/legacy/stressPrintSnapshot";
@@ -54,8 +55,11 @@ export default async function StressReportDocumentPage({
   let emailForName: string | null;
   let userMetadata: Record<string, unknown> | null;
 
+  const pdfSecret = getPdfCaptureSecret();
+
   if (pdfCapture) {
-    const v = verifyPdfCaptureToken(pdfCapture, id);
+    if (!pdfSecret) notFound();
+    const v = verifyPdfCaptureToken(pdfCapture, id, pdfSecret);
     if (!v) notFound();
     let svc: ReturnType<typeof createServiceClient>;
     try {

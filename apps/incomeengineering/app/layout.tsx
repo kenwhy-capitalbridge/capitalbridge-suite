@@ -73,8 +73,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     ) : null
                   }
                 />
-                <div className="cb-advisory-model-main flex min-h-0 flex-1 flex-col">{children}</div>
-                <CbLegalSiteFooter />
+                <div className="cb-advisory-model-main flex min-h-0 flex-col">{children}</div>
+                <CbLegalSiteFooter className="mt-auto" />
               </div>
             </ModelMetricSpineProvider>
           </ModelSaveHandlersProvider>
