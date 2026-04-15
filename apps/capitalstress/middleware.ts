@@ -7,6 +7,10 @@ import { withSuiteAuthCookieOptions } from "@cb/supabase/authCookieOptions";
 const PROTECTED_PATHS = ["/dashboard"];
 
 function isProtected(pathname: string): boolean {
+  /** Playwright PDF capture uses `?pdfCapture=` + signed token; page validates (no session cookies in headless). */
+  if (pathname.includes("/stress-report-document/")) {
+    return false;
+  }
   return PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 

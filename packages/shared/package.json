@@ -17,6 +17,7 @@
     "./reportTrialCopy": "./src/reportTrialCopy.ts",
     "./formatCurrency": "./src/formatCurrency.ts",
     "./markets": "./src/markets.ts",
-    "./gitexCampaign": "./src/gitexCampaign.ts"
+    "./gitexCampaign": "./src/gitexCampaign.ts",
+    "./pdfCaptureToken": "./src/pdfCaptureToken.ts"
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAppServerClient } from "@cb/supabase/server";
 import { buildCapitalBridgePdfFilename } from "@cb/shared/reportTraceability";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
+import { signPdfCaptureToken } from "@cb/shared/pdfCaptureToken";
 import { renderPdf } from "@cb/pdf/render";
 
 import { cookiesForPlaywright } from "@/lib/cookiesForPlaywright";
@@ -59,9 +60,13 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ exportI
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "localhost:3003";
   const proto = request.headers.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
   const origin = `${proto}://${host}`;
-  const docUrl = `${origin}/dashboard/stress-report-document/${id}`;
+  const pdfToken = signPdfCaptureToken({ exportId: id, userId: user.id });
+  const docUrl = pdfToken
+    ? `${origin}/dashboard/stress-report-document/${id}?pdfCapture=${encodeURIComponent(pdfToken)}`
+    : `${origin}/dashboard/stress-report-document/${id}`;
   const cookieHeader = request.headers.get("cookie");
-  const playwrightCookies = cookiesForPlaywright(cookieHeader, origin);
+  const playwrightCookies =
+    pdfToken ? [] : cookiesForPlaywright(cookieHeader, origin);
 
   let pdf: Buffer;
   try {

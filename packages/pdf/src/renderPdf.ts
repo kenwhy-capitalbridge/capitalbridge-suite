@@ -7,7 +7,9 @@
  * **Vercel / AWS Lambda:** uses `@sparticuz/chromium`
  * when `VERCEL=1` or lambda env — no `playwright install` on the serverless image.
  * **Next.js** apps that call `renderPdf` from API routes must set
- * `serverExternalPackages: ["playwright", "@sparticuz/chromium"]` (Forever + Capital Stress `next.config.mjs`).
+ * `serverExternalPackages: ["playwright", "@sparticuz/chromium"]` (Forever + model apps `next.config.mjs`).
+ * Income / Capital Stress: pass `?pdfCapture=` (HMAC from `@cb/shared/pdfCaptureToken`) so headless Chromium
+ * does not rely on replaying `Domain=.thecapitalbridge.com` session cookies.
  * Override: `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
  *
  * Always use `page.goto(realAppUrl)` — never `setContent` — so output matches hydration, fonts, and real app state.
