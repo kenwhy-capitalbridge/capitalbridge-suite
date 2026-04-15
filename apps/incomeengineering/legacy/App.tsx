@@ -267,15 +267,24 @@ const AppInner = forwardRef<
       if (!startRes.ok) {
         const err = await startRes.json().catch(() => ({}));
         console.error('[income-engineering] report-export/start failed', startRes.status, err);
+        window.alert(
+          'Could not start PDF export. If this keeps happening, try again later or contact support.',
+        );
         return;
       }
       const { exportId } = (await startRes.json()) as { exportId?: string };
-      if (!exportId) return;
+      if (!exportId) {
+        window.alert('PDF export could not be created. Please try again.');
+        return;
+      }
       const pdfRes = await fetch(`/api/income-engineering/report-pdf/${exportId}`, {
         credentials: 'same-origin',
       });
       if (!pdfRes.ok) {
         console.error('[income-engineering] report-pdf failed', pdfRes.status);
+        window.alert(
+          'Could not generate the PDF. Please try again. If the problem persists, contact support.',
+        );
         return;
       }
       const blob = await pdfRes.blob();
@@ -294,6 +303,7 @@ const AppInner = forwardRef<
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error('[income-engineering] PDF download failed:', e);
+      window.alert('PDF download failed. Please check your connection and try again.');
     } finally {
       setPdfDownloadBusy(false);
     }

@@ -579,15 +579,24 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       if (!startRes.ok) {
         const err = await startRes.json().catch(() => ({}));
         console.error("[capital-stress] report-export/start failed", startRes.status, err);
+        window.alert(
+          "Could not start PDF export. If this keeps happening, try again later or contact support.",
+        );
         return;
       }
       const { exportId } = (await startRes.json()) as { exportId?: string };
-      if (!exportId) return;
+      if (!exportId) {
+        window.alert("PDF export could not be created. Please try again.");
+        return;
+      }
       const pdfRes = await fetch(`/api/capital-stress/report-pdf/${exportId}`, {
         credentials: "same-origin",
       });
       if (!pdfRes.ok) {
         console.error("[capital-stress] report-pdf failed", pdfRes.status);
+        window.alert(
+          "Could not generate the PDF. Please try again. If the problem persists, contact support.",
+        );
         return;
       }
       const blob = await pdfRes.blob();
@@ -606,6 +615,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error("[capital-stress] PDF download failed:", e);
+      window.alert("PDF download failed. Please check your connection and try again.");
     } finally {
       setPdfDownloadBusy(false);
     }
@@ -792,7 +802,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           withdrawalDisplay={formatCurrency(withdrawal)}
           horizonDisplay={`${years} years`}
         />
-      <div className="cb-body min-h-screen bg-transparent text-cb-cream font-sans selection:bg-[#FFCC6A] selection:text-black pt-0 pb-4 md:pb-16">
+      <div className="cb-body bg-transparent text-cb-cream font-sans selection:bg-[#FFCC6A] selection:text-black pt-0 pb-4 md:pb-16">
         <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 lg:pt-14 space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
         {/* Module 3 note — standalone mode */}
         <div className="pt-6 pb-2 sm:pt-2 no-print">
