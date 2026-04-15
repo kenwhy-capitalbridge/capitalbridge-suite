@@ -9,6 +9,8 @@ export type PdfTocBlock = {
 };
 
 export type PdfAdvisoryCoverPageProps = {
+  /** Optional single line above the logo (e.g. short © notice on cover only). */
+  coverTopLegal?: string;
   /** Default: full green wordmark served from app `/public/brand`. */
   logoSrc?: string;
   logoAlt?: string;
@@ -27,6 +29,7 @@ export type PdfAdvisoryCoverPageProps = {
  * Parent should wrap in `PdfSection` with `cb-advisory-doc-cover cb-page-break-after` inside `.cb-advisory-pdf-doc`.
  */
 export function PdfAdvisoryCoverPage({
+  coverTopLegal,
   logoSrc = "/brand/Full_CapitalBridge_Green.svg",
   logoAlt = "Capital Bridge",
   title,
@@ -38,11 +41,19 @@ export function PdfAdvisoryCoverPage({
 }: PdfAdvisoryCoverPageProps) {
   return (
     <div className={["cb-advisory-doc-cover-main", className].filter(Boolean).join(" ")}>
+      {coverTopLegal ? (
+        <p
+          className="m-0 mb-3 w-full text-center text-[7.5pt] leading-snug text-[rgba(13,58,29,0.72)] print:mb-2.5 print:text-[7.5pt]"
+          style={{ fontFamily: REPORT_FONT_BODY }}
+        >
+          {coverTopLegal}
+        </p>
+      ) : null}
       <div className="mb-5 flex justify-center print:mb-5 md:mb-6">
         <img
           src={logoSrc}
           alt={logoAlt}
-          className="cb-advisory-doc-cover-logo mx-auto block h-auto w-[72%] max-w-[min(100%,420px)] min-w-0 object-contain object-center print:w-[78%] print:max-w-[min(100%,440px)]"
+          className="cb-advisory-doc-cover-logo mx-auto block h-[88px] w-auto max-w-[min(100%,440px)] min-w-0 object-contain object-center"
         />
       </div>
       <h1

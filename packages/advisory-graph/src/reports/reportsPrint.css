@@ -143,7 +143,8 @@
     padding: 3mm 16mm 2.5mm;
     box-sizing: border-box;
     background: #fff;
-    border-bottom: 0.5pt solid rgba(13, 58, 29, 0.1);
+    /* Match advisory PDF: no hairline under fixed header (avoids double rule with section borders). */
+    border-bottom: none;
   }
 
   .cb-report-print-header-inner {
@@ -213,7 +214,7 @@
    * Playwright PDF: physical bottom margin reserves the footer band; do not add second padding on the root.
    */
   html.cb-report-pdf-playwright-footer {
-    --cb-playwright-pdf-footer-reserved: 24mm;
+    --cb-playwright-pdf-footer-reserved: 26mm;
   }
 
   html.cb-report-pdf-playwright-footer .cb-report-print-footer {

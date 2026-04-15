@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
-import { CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER } from "@cb/shared/legalMonocopy";
+import { CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER } from "@cb/shared/legalMonocopy";
 import {
   buildForeverIncomeModelReportFilename,
   CB_REPORT_MODEL_DISPLAY_NAME,
@@ -70,13 +70,14 @@ export default async function ForeverReportDocumentPage({ params }: { params: Pr
     generatedAt: createdAt,
     generatedAtLabel: formatForeverCoverGeneratedLabel(createdAt, tz),
     modelDisplayName: CB_REPORT_MODEL_DISPLAY_NAME.FOREVER,
+    clientDisplayName: reportClientDisplayName,
   };
 
   return (
     <main className="min-h-0">
       <ForeverReportDocumentClient
         audit={audit}
-        shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER}
+        shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER}
         preparedForName={reportClientDisplayName}
         isTrial={isTrial}
         lion={lion}

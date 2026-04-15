@@ -2,35 +2,24 @@
 
 import React, {
   useMemo,
-  useRef,
   useState,
   forwardRef,
   useImperativeHandle,
   useLayoutEffect,
   useEffect,
-  useCallback,
 } from 'react';
-import { flushSync } from 'react-dom';
-import {
-  beginReportReadyCycle,
-  completeReportReadyCycle,
-  subscribeReportReadyOnPrint,
-} from '@cb/pdf';
 import './index.css';
 import { CalculatorStoreProvider, useCalculatorStoreInternals } from './store/useCalculatorStore';
 import { runSimulation } from './lib/simulation';
-import { createReportAuditMeta, type ReportAuditMeta } from '@cb/shared/reportTraceability';
 import type { CurrencyCode } from './config/currency';
-import { ModelReportDownloadFooter, stampAllPdfPagesWithAudit, useModelMetricSpine } from '@cb/ui';
+import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
 import { ExpensesInput } from './components/ExpensesInput';
 import { IncomeInputs } from './components/IncomeInputs';
 import { AssetsUnlockPanel } from './components/AssetsUnlockPanel';
 import { assetUnlocksToLoans } from './lib/assetUnlockToLoans';
 import { InvestmentBucketsPanel } from './components/InvestmentBucketsPanel';
 import { WhatThisMeansBox } from './components/WhatThisMeansBox';
-import { PrintReportView } from './components/PrintReportView';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { serializeIncomePrintProps } from './incomePrintSnapshot';
 import {
   buildLionVerdictClientReportFromIncomeEngineering,
   incomeEngineeringCoverageToLion0to100,
@@ -247,165 +236,71 @@ const AppInner = forwardRef<
     spineStatusLabel,
   ]);
 
-  const reportRef = useRef<HTMLDivElement>(null);
-  const reportReadyTokenRef = useRef(0);
-  const [pdfAuditMeta, setPdfAuditMeta] = useState<ReportAuditMeta | null>(null);
+  const [pdfDownloadBusy, setPdfDownloadBusy] = useState(false);
 
-  const reportStableKey = useMemo(
-    () =>
-      [
-        lionAccessEnabled,
-        props.reportClientDisplayName,
-        currency,
-        monthlyExpenses,
-        JSON.stringify(incomeRows),
-        JSON.stringify(loansFromAssets),
-        JSON.stringify(investmentBuckets),
-        JSON.stringify(assetUnlocks),
-        result.medianCoverage,
-        result.worstMonthCoverage,
-        result.summary.sustainabilityStatus,
-      ].join('|'),
-    [
-      lionAccessEnabled,
-      props.reportClientDisplayName,
+  const handleDownloadPdf = async () => {
+    if (pdfDownloadBusy) return;
+    const snapshot = serializeIncomePrintProps({
+      summary: result.summary,
       currency,
+      totalCapital,
       monthlyExpenses,
       incomeRows,
-      loansFromAssets,
-      investmentBuckets,
+      loans: loansFromAssets,
       assetUnlocks,
-      result.medianCoverage,
-      result.worstMonthCoverage,
-      result.summary.sustainabilityStatus,
-    ]
-  );
-
-  useLayoutEffect(() => {
-    const token = beginReportReadyCycle();
-    reportReadyTokenRef.current = token;
-    // If print is already active (Playwright `emulateMedia` or Strict Mode remount), `matchMedia('change')`
-    // will not fire again — complete this cycle immediately so `__REPORT_READY__` is not stuck false.
-    if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
-      queueMicrotask(() => {
-        void completeReportReadyCycle(token);
-      });
-    }
-  }, [reportStableKey]);
-
-  const scheduleReportReady = useCallback(() => {
-    void completeReportReadyCycle(reportReadyTokenRef.current);
-  }, []);
-
-  /** Re-run when inputs change while already in print (browser print preview / Playwright). */
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia('(print)').matches) {
-      scheduleReportReady();
-    }
-  }, [reportStableKey, scheduleReportReady]);
-
-  useEffect(() => {
-    return subscribeReportReadyOnPrint(scheduleReportReady);
-  }, [scheduleReportReady]);
-
-  /** Playwright calls `emulateMedia({ print })` then `resize`; matchMedia may not emit `change` in all cases. */
-  useEffect(() => {
-    const onResize = () => {
-      if (typeof window !== 'undefined' && window.matchMedia('(print)').matches) {
-        scheduleReportReady();
-      }
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [scheduleReportReady]);
-
-  const handlePrintReport = async () => {
-    const el = reportRef.current;
-    if (!el) return;
-    let audit!: ReportAuditMeta;
-    flushSync(() => {
-      audit = createReportAuditMeta({
-        modelCode: "INCOME",
-        userDisplayName: props.reportClientDisplayName ?? "Client",
-      });
-      setPdfAuditMeta(audit);
+      investmentBuckets,
+      medianCoverage: result.medianCoverage,
+      worstMonthCoverage: result.worstMonthCoverage,
+      lionAccessEnabled,
+      reportClientDisplayName: props.reportClientDisplayName ?? 'Client',
+      hasStrategicInterest,
     });
-    try {
-      if (typeof document !== 'undefined' && document.fonts?.ready) {
-        await document.fonts.ready;
-      }
-    } catch {
-      /* ignore */
-    }
-    const margin = 12; // mm white space around content
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const contentWidth = pageWidth - 2 * margin;
-    const contentHeight = pageHeight - 2 * margin;
 
-    const addPartToPdf = async (
-      doc: jsPDF,
-      partEl: HTMLElement
-    ): Promise<void> => {
-      const canvas = await html2canvas(partEl, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: partEl.scrollWidth,
-        windowHeight: partEl.scrollHeight,
-        ignoreElements: (node) => {
-          if (!(node instanceof Element)) return false;
-          const cls = node.getAttribute('class') ?? '';
-          if (cls.includes('elfsight-app-') || cls.includes('eapps-')) return true;
-          if (node.tagName === 'IFRAME') {
-            const src = (node as HTMLIFrameElement).getAttribute('src') ?? '';
-            if (src.includes('elfsight') || src.includes('eapps-')) return true;
-          }
-          return false;
-        },
+    setPdfDownloadBusy(true);
+    try {
+      const startRes = await fetch('/api/income-engineering/report-export/start', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snapshot }),
       });
-      const imgWidthMm = contentWidth;
-      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
-      const sliceHeightPx = (contentHeight / imgHeightMm) * canvas.height;
-      const numPages = Math.ceil(imgHeightMm / contentHeight);
-      for (let pageIndex = 0; pageIndex < numPages; pageIndex++) {
-        const fromY = pageIndex * sliceHeightPx;
-        const sliceH = Math.min(sliceHeightPx, canvas.height - fromY);
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = sliceH;
-        const ctx = sliceCanvas.getContext('2d');
-        if (!ctx) {
-          throw new Error('Failed to get 2d context for PDF page slice');
-        }
-        if (pageIndex > 0) doc.addPage();
-        ctx.drawImage(canvas, 0, fromY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-        const sliceData = sliceCanvas.toDataURL('image/png');
-        const sliceHeightMm = (sliceH / canvas.height) * imgHeightMm;
-        doc.addImage(sliceData, 'PNG', margin, margin, imgWidthMm, sliceHeightMm);
+      if (!startRes.ok) {
+        const err = await startRes.json().catch(() => ({}));
+        console.error('[income-engineering] report-export/start failed', startRes.status, err);
+        return;
       }
-    };
-
-    try {
-      const part1 = el.querySelector<HTMLElement>('[data-pdf-part="1"]');
-      const part2 = el.querySelector<HTMLElement>('[data-pdf-part="2"]');
-      if (!part1) return;
-      const doc = new jsPDF('p', 'mm', 'a4');
-      await addPartToPdf(doc, part1);
-      if (part2) {
-        doc.addPage();
-        await addPartToPdf(doc, part2);
+      const { exportId } = (await startRes.json()) as { exportId?: string };
+      if (!exportId) return;
+      const pdfRes = await fetch(`/api/income-engineering/report-pdf/${exportId}`, {
+        credentials: 'same-origin',
+      });
+      if (!pdfRes.ok) {
+        console.error('[income-engineering] report-pdf failed', pdfRes.status);
+        return;
       }
-      stampAllPdfPagesWithAudit(doc, audit);
-      doc.save(audit.filename);
-    } catch (err) {
-      console.error('PDF generation failed:', err);
+      const blob = await pdfRes.blob();
+      const cd = pdfRes.headers.get('Content-Disposition');
+      let filename = 'IncomeEngineering-Report.pdf';
+      const m = cd?.match(/filename="([^"]+)"/);
+      if (m?.[1]) filename = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('[income-engineering] PDF download failed:', e);
+    } finally {
+      setPdfDownloadBusy(false);
     }
   };
 
   return (
-    <div className="cb-body min-h-screen min-w-0 overflow-x-hidden bg-transparent text-[#F6F5F1]">
+    <div className="cb-body min-w-0 overflow-x-hidden bg-transparent text-[#F6F5F1]">
       {/* On-screen app (hidden when printing) */}
       <div className="no-print">
         <div className="mx-auto w-full max-w-[100%] pt-8 pb-7 px-4 min-[641px]:max-w-[var(--container-tablet-max)] min-[641px]:px-6 min-[641px]:pt-10 min-[641px]:pb-9 min-[1025px]:max-w-[var(--container-desktop-max)] min-[1025px]:px-8 min-[1025px]:pt-12 min-[1025px]:pb-11 min-[1441px]:max-w-[var(--container-wide-max)] min-[1441px]:px-10 min-[1441px]:pt-14 min-[1441px]:pb-14">
@@ -470,32 +365,13 @@ const AppInner = forwardRef<
             </div>
           </section>
 
-          <ModelReportDownloadFooter onDownload={() => void handlePrintReport()} />
+          <ModelReportDownloadFooter
+            onDownload={() => void handleDownloadPdf()}
+            disabled={pdfDownloadBusy}
+            buttonLabel={pdfDownloadBusy ? 'GENERATING…' : undefined}
+            buttonLeading={pdfDownloadBusy ? <ChromeSpinnerGlyph sizePx={16} /> : undefined}
+          />
         </div>
-      </div>
-
-      {/* Report content (off-screen; captured for PDF download) */}
-      <div
-        ref={reportRef}
-        className="print-only"
-        style={{ position: 'absolute', left: '-9999px', top: 0, width: 800 }}
-      >
-        <PrintReportView
-          summary={result.summary}
-          currency={currency}
-          totalCapital={totalCapital}
-          monthlyExpenses={monthlyExpenses}
-          incomeRows={incomeRows}
-          loans={loansFromAssets}
-          assetUnlocks={assetUnlocks}
-          investmentBuckets={investmentBuckets}
-          medianCoverage={result.medianCoverage}
-          worstMonthCoverage={result.worstMonthCoverage}
-          lionAccessEnabled={lionAccessEnabled}
-          reportClientDisplayName={props.reportClientDisplayName}
-          auditMeta={pdfAuditMeta}
-          hasStrategicInterest={hasStrategicInterest}
-        />
       </div>
     </div>
   );

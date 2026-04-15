@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&display=swap");
+
 /**
  * Shared Playwright / print layout for model strategic reports (Forever, Income Engineering,
  * Capital Health, Capital Stress). Import after `reports/print.css` in each app’s globals.
@@ -28,10 +30,15 @@
   font-family: "Inter", Arial, Helvetica, sans-serif;
   --cb-print-header-gap: 0px;
   --cb-header-height: 18mm;
-  --cb-footer-height: 16mm;
+  --cb-footer-height: 18mm;
   --cb-advisory-print-header-height: var(--cb-header-height);
   /* Aligns with Playwright bottom margin when footer template is active */
-  --cb-advisory-print-footer-reserved: 20mm;
+  --cb-advisory-print-footer-reserved: 26mm;
+}
+
+/* Capital Stress: light green paper (must follow base `.cb-advisory-pdf-doc` background). */
+.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc.cb-report-root {
+  background: #f7faf7;
 }
 
 /* No gold/yellow on white — overrides shared print.css (#ffcc6a) and inline REPORT_ACCENT on headings/KV keys. */
@@ -67,6 +74,20 @@
   margin-left: auto;
   margin-right: auto;
   padding: 28px 0 84px 0;
+}
+
+/*
+ * Client-side html2canvas (Income Engineering, Capital Stress): fixed ReportPrintChrome would
+ * slice unpredictably across pages. Hide it during capture; stampAllPdfPagesWithAudit supplies audit.
+ */
+html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-report-print-header,
+html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-report-print-footer {
+  display: none !important;
+}
+
+html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
+  padding-top: 22px !important;
+  padding-bottom: 32px !important;
 }
 
 .cb-advisory-doc-cover-main {
@@ -268,7 +289,8 @@
     justify-content: center !important;
     overflow: hidden !important;
     background: #fff !important;
-    border-bottom: 0.35pt solid rgba(13, 58, 29, 0.1) !important;
+    /* No hairline under header — Chromium PDF shows it as a full-width grey rule above body content. */
+    border-bottom: none !important;
   }
 
   .cb-advisory-pdf-doc .cb-report-print-header-inner {
@@ -283,13 +305,14 @@
   }
 
   .cb-advisory-pdf-doc .cb-report-print-header-model {
-    font-size: 7.5pt !important;
-    line-height: 1.12 !important;
+    font-family: "Tinos", "Roboto Serif", Georgia, serif !important;
+    font-size: 9.5pt !important;
+    line-height: 1.15 !important;
   }
 
   .cb-advisory-pdf-doc .cb-report-print-header-meta {
-    font-size: 6pt !important;
-    line-height: 1.15 !important;
+    font-size: 7.5pt !important;
+    line-height: 1.25 !important;
   }
 
   .cb-advisory-pdf-doc.cb-report-root:has(> .cb-report-print-header),
@@ -351,6 +374,9 @@
   }
 
   .cb-advisory-pdf-doc .cb-advisory-doc-cover-logo {
+    height: 88px !important;
+    width: auto !important;
+    max-width: min(100%, 440px) !important;
     max-height: none !important;
     object-fit: contain;
   }

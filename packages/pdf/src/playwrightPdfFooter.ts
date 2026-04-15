@@ -16,7 +16,7 @@ export type PlaywrightPdfFooterContext = {
   reportId: string;
   /** e.g. v1.2 */
   versionLabel: string;
-  /** Legacy: wordmark was shown in older templates; current footer is text-only. */
+  /** Green wordmark (`CapitalBridgeLogo_Green.svg`) as data URI for the footer template `<img>`. */
   logoDataUri: string;
 };
 
@@ -36,21 +36,26 @@ export const PLAYWRIGHT_PDF_HEADER_RESERVED_MM = 20;
 /** Matches `--cb-header-height` / fixed `.cb-report-print-header` band inside the content viewport. */
 export const PLAYWRIGHT_PDF_FIXED_PRINT_HEADER_BAND_MM = 18;
 /** Chromium footer template min band; Playwright bottom margin should be ≥ this for readable text. */
-export const PLAYWRIGHT_PDF_FOOTER_TEMPLATE_MIN_MM = 22;
-/** Canonical copyright + pagination; keep page bottom margin ≥ this. */
-export const PLAYWRIGHT_PDF_FOOTER_RESERVED_MM = 24;
+export const PLAYWRIGHT_PDF_FOOTER_TEMPLATE_MIN_MM = 24;
+/** Canonical copyright + pagination; keep page bottom margin ≥ this (logo + 2-line legal). */
+export const PLAYWRIGHT_PDF_FOOTER_RESERVED_MM = 26;
 
 /**
- * Canonical legal (left, 8pt) · pagination only (right).
- * Never embed report id / version / logo here — traceability is PDF metadata + server logs.
+ * Green wordmark (left) · centred legal · pagination (right).
+ * Report id / version are PDF metadata only, not in this band.
  */
-export function buildPlaywrightPdfFooterTemplate(_ctx?: PlaywrightPdfFooterContext): string {
-  void _ctx;
+export function buildPlaywrightPdfFooterTemplate(ctx?: PlaywrightPdfFooterContext): string {
   const legal = escapeHtmlText(CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER);
+  const logo = ctx?.logoDataUri?.trim() ?? "";
+  const logoBlock =
+    logo.length > 0
+      ? `<img src="${escapeHtmlText(logo)}" alt="" style="display:block;height:6mm;width:auto;max-width:42mm;object-fit:contain;object-position:left bottom;" />`
+      : `<span style="display:inline-block;width:1px;height:6mm;"></span>`;
 
-  return `<div style="box-sizing:border-box;width:100%;min-height:${PLAYWRIGHT_PDF_FOOTER_TEMPLATE_MIN_MM}mm;padding:3px 13mm 2px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;font-size:8pt;line-height:1.35;color:#2B2B2B;font-family:Inter,Arial,Helvetica,sans-serif;">
-  <div style="flex:1;min-width:0;text-align:left;white-space:normal;">${legal}</div>
-  <div style="flex-shrink:0;text-align:right;white-space:nowrap;font-size:8pt;line-height:1.35;color:#374151;">Page <span class="pageNumber"></span> / <span class="totalPages"></span></div>
+  return `<div style="box-sizing:border-box;width:100%;min-height:${PLAYWRIGHT_PDF_FOOTER_TEMPLATE_MIN_MM}mm;padding:3px 13mm 2px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;font-size:7.5pt;line-height:1.35;color:#2B2B2B;font-family:Inter,Arial,Helvetica,sans-serif;">
+  <div style="flex:0 0 auto;min-width:0;max-width:32%;align-self:flex-end;">${logoBlock}</div>
+  <div style="flex:1;min-width:0;text-align:center;white-space:normal;padding:0 6px;">${legal}</div>
+  <div style="flex:0 0 auto;text-align:right;white-space:nowrap;font-size:8pt;line-height:1.35;color:#374151;align-self:flex-end;">Page <span class="pageNumber"></span> / <span class="totalPages"></span></div>
 </div>`;
 }
 

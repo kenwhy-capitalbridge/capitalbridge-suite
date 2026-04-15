@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER } from "@cb/shared/legalMonocopy";
+import { CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER } from "@cb/shared/legalMonocopy";
 
 import { ForeverReportDocumentClient } from "@/app/dashboard/report-document/[exportId]/ForeverReportDocumentClient";
 import { getForeverMockReportPdfProps } from "@/lib/foreverReportMockPdfData";
@@ -22,7 +22,7 @@ export default function ForeverReportMockPage() {
     <main className="min-h-0">
       <ForeverReportDocumentClient
         {...props}
-        shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER}
+        shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER}
       />
     </main>
   );

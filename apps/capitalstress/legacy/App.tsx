@@ -10,7 +10,6 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
-import { flushSync } from 'react-dom';
 import "./index.css";
 import { MonteCarloResult, StressSeverity, StressScenarioResult } from './types';
 import { runMonteCarlo, getSimulationCount, runStressScenarios, getDepletionBarOutput } from './services/mathUtils';
@@ -35,7 +34,9 @@ import {
   type CapitalTimelinePoint,
   type CapitalTimelinePrintPayload,
 } from '@cb/advisory-graph/reports';
-import { PrintReport } from './PrintReport';
+import { PrintReport, type PrintReportProps } from './PrintReport';
+import { buildStressPrintReportProps } from './buildStressPrintReportProps';
+import { serializeStressPrintProps } from './stressPrintSnapshot';
 import { loadCapitalStressTimelineSavedPointsForUser } from './loadCapitalStressTimeline';
 import { LionVerdictActive } from "../../../packages/lion-verdict/LionVerdictActive";
 import { SystemInsightLimited } from "../../../packages/lion-verdict/SystemInsightLimited";
@@ -43,13 +44,9 @@ import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdi
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
-import { createReportAuditMeta, type ReportAuditMeta } from "@cb/shared/reportTraceability";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import {
   ChromeSpinnerGlyph,
   ModelReportDownloadFooter,
-  stampAllPdfPagesWithAudit,
   useModelMetricSpine,
 } from "@cb/ui";
 import { createSupabaseBrowserClient } from "@cb/advisory-graph/supabaseClient";
@@ -286,9 +283,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const [distributionTooltip, setDistributionTooltip] = useState<{ low: number; high: number; count: number; pct: number; isMedian: boolean; x: number; y: number } | null>(null);
   const [radarLabelTooltip, setRadarLabelTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
-  const [printAuditMeta, setPrintAuditMeta] = useState<ReportAuditMeta | null>(null);
   const [pdfDownloadBusy, setPdfDownloadBusy] = useState(false);
-  const stressReportPdfRef = useRef<HTMLDivElement>(null);
+  const stressPrintPropsRef = useRef<PrintReportProps | null>(null);
   const [hasStrategicInterest, setHasStrategicInterest] = useState(false);
   const [stressTimelineSaved, setStressTimelineSaved] = useState<CapitalTimelinePoint[] | undefined>(
     undefined,
@@ -561,87 +557,55 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     else if (rawValue === '') setWithdrawal(0);
   };
 
-  const ignorePdfWidgetElements = useCallback((node: Element) => {
-    const cls = node.getAttribute("class") ?? "";
-    if (cls.includes("elfsight-app-") || cls.includes("eapps-")) return true;
-    if (node.tagName === "IFRAME") {
-      const src = (node as HTMLIFrameElement).getAttribute("src") ?? "";
-      if (src.includes("elfsight") || src.includes("eapps-")) return true;
-    }
-    return false;
-  }, []);
-
   const handleDownloadPdf = async () => {
     if (!mcResult || pdfDownloadBusy) return;
-    const wrap = stressReportPdfRef.current;
-    const partEl =
-      wrap?.querySelector<HTMLElement>('[data-pdf-part="1"]') ??
-      wrap?.querySelector<HTMLElement>("#print-report");
-    if (!partEl) return;
+    const props = stressPrintPropsRef.current;
+    if (!props) return;
 
-    setPdfDownloadBusy(true);
-    let audit!: ReportAuditMeta;
-    flushSync(() => {
-      audit = createReportAuditMeta({
-        modelCode: "STRESS",
-        userDisplayName: reportClientDisplayName,
-      });
-      setPrintAuditMeta(audit);
+    const snapshot = serializeStressPrintProps(props, {
+      code: selectedCurrency.code,
+      locale: selectedCurrency.locale,
+      label: selectedCurrency.label,
     });
 
+    setPdfDownloadBusy(true);
     try {
-      if (typeof document !== "undefined" && document.fonts?.ready) {
-        await document.fonts.ready;
-      }
-    } catch {
-      /* ignore */
-    }
-
-    const margin = 12;
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const contentWidth = pageWidth - 2 * margin;
-    const contentHeight = pageHeight - 2 * margin;
-
-    const addPartToPdf = async (doc: jsPDF, el: HTMLElement): Promise<void> => {
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-        ignoreElements: ignorePdfWidgetElements,
+      const startRes = await fetch("/api/capital-stress/report-export/start", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ snapshot }),
       });
-      const imgWidthMm = contentWidth;
-      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
-      const sliceHeightPx = (contentHeight / imgHeightMm) * canvas.height;
-      const numPages = Math.ceil(imgHeightMm / contentHeight);
-      for (let pageIndex = 0; pageIndex < numPages; pageIndex++) {
-        const fromY = pageIndex * sliceHeightPx;
-        const sliceH = Math.min(sliceHeightPx, canvas.height - fromY);
-        const sliceCanvas = document.createElement("canvas");
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = sliceH;
-        const ctx = sliceCanvas.getContext("2d");
-        if (!ctx) {
-          throw new Error("Failed to get 2d context for PDF page slice");
-        }
-        if (pageIndex > 0) doc.addPage();
-        ctx.drawImage(canvas, 0, fromY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-        const sliceData = sliceCanvas.toDataURL("image/png");
-        const sliceHeightMm = (sliceH / canvas.height) * imgHeightMm;
-        doc.addImage(sliceData, "PNG", margin, margin, imgWidthMm, sliceHeightMm);
+      if (!startRes.ok) {
+        const err = await startRes.json().catch(() => ({}));
+        console.error("[capital-stress] report-export/start failed", startRes.status, err);
+        return;
       }
-    };
-
-    try {
-      const doc = new jsPDF("p", "mm", "a4");
-      await addPartToPdf(doc, partEl);
-      stampAllPdfPagesWithAudit(doc, audit);
-      doc.save(audit.filename);
-    } catch (err) {
-      console.error("[capital-stress] PDF generation failed:", err);
+      const { exportId } = (await startRes.json()) as { exportId?: string };
+      if (!exportId) return;
+      const pdfRes = await fetch(`/api/capital-stress/report-pdf/${exportId}`, {
+        credentials: "same-origin",
+      });
+      if (!pdfRes.ok) {
+        console.error("[capital-stress] report-pdf failed", pdfRes.status);
+        return;
+      }
+      const blob = await pdfRes.blob();
+      const cd = pdfRes.headers.get("Content-Disposition");
+      let filename = "CapitalStress-Report.pdf";
+      const m = cd?.match(/filename="([^"]+)"/);
+      if (m?.[1]) filename = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("[capital-stress] PDF download failed:", e);
     } finally {
       setPdfDownloadBusy(false);
     }
@@ -2055,64 +2019,30 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       </div>
 
       {mcResult != null && (() => {
-        const returnRange = upperPct - lowerPct;
-        const returnSens = Math.min(100, Math.max(0, (returnRange - 5) * 10));
-        const withdrawalSens = investment > 0 ? Math.min(100, (withdrawal / investment) * 500) : 0;
-        const inflationSens = Math.min(100, effectiveInflation * 25);
-        const volSens = Math.min(100, mcResult.maxDrawdownPctAvg * 2);
-        const drawdownSens = Math.min(100, mcResult.maxDrawdownPctAvg * 2.5);
-        const fragilityIndex = Math.round((returnSens + withdrawalSens + inflationSens + volSens + drawdownSens) / 5);
-        const fiTier = getFragilityIndexTier(fragilityIndex);
-        const depletionPill = depletionBarOutput?.pillLabel ?? 'Stable';
-        const healthStatus = getCapitalHealthStatus(mcResult.tier, fiTier, depletionPill);
-        const advisoryInputs = {
-          capitalResilienceScore: mcResult.capitalResilienceScore,
-          tier: mcResult.tier,
-          fragilityIndicator: depletionPill,
-          initialCapital: investment,
-          withdrawalAmount: withdrawal,
-          timeHorizonYears: years,
-          simulatedAverageOutcome: mcResult.simulatedAverage,
-          maximumDrawdownPct: mcResult.maxDrawdownPctAvg,
-          worstCaseOutcome: mcResult.percentile5,
-        };
-        const lionEnginePrint =
-          canSeeVerdict && lionAccessEnabled ? runLionVerdictEngineStress(advisoryInputs, formatCurrency) : null;
-        const verdict = lionEnginePrint ? toVerdictNarrative(lionEnginePrint) : null;
+        const props = buildStressPrintReportProps({
+          mcResult,
+          depletionBarOutput,
+          investment,
+          withdrawal,
+          years,
+          confidence,
+          lowerPct,
+          upperPct,
+          effectiveInflation,
+          stressScenarioResults,
+          adjustmentResults,
+          selectedCurrency,
+          canSeeVerdict,
+          lionAccessEnabled,
+          reportClientDisplayName,
+          auditMeta: null,
+          capitalTimelinePrintPayload,
+          hasStrategicInterest,
+        });
+        stressPrintPropsRef.current = props;
         return (
-          <div ref={stressReportPdfRef} className="cb-stress-pdf-capture-wrap">
-          <PrintReport
-            mcResult={mcResult}
-            depletionBarOutput={depletionBarOutput}
-            investment={investment}
-            withdrawal={withdrawal}
-            years={years}
-            confidence={confidence}
-            lowerPct={lowerPct}
-            upperPct={upperPct}
-            effectiveInflation={effectiveInflation}
-            stressScenarioResults={stressScenarioResults}
-            adjustmentResults={adjustmentResults}
-            formatCurrency={formatCurrency}
-            formatPercent={formatPercent}
-            formatPercentSmall={formatPercentSmall}
-            formatSignedPct={formatSignedPct}
-            healthStatus={healthStatus}
-            fragilityIndex={fragilityIndex}
-            fiTier={fiTier}
-            verdict={verdict}
-            lionVerdictOutput={lionEnginePrint}
-            lionAccessEnabled={lionAccessEnabled}
-            stressAdvisoryInputs={canSeeVerdict && advisoryInputs ? advisoryInputs : null}
-            keyTakeaways={canSeeVerdict ? getKeyTakeaways(advisoryInputs) : []}
-            recommendedAdjustments={canSeeVerdict ? getRecommendedAdjustments(advisoryInputs) : []}
-            microSignals={canSeeVerdict ? getMicroDiagnosticSignals(advisoryInputs) : []}
-            medianPathYearly={mcResult.medianPathYearly}
-            reportClientDisplayName={reportClientDisplayName}
-            auditMeta={printAuditMeta}
-            capitalTimelinePrintPayload={capitalTimelinePrintPayload}
-            hasStrategicInterest={hasStrategicInterest}
-          />
+          <div className="cb-stress-pdf-capture-wrap">
+            <PrintReport {...props} />
           </div>
         );
       })()}

@@ -36,6 +36,8 @@ export type ReportAuditMeta = {
   generatedAt: Date;
   generatedAtLabel: string;
   modelDisplayName: string;
+  /** Recipient / viewer name for PDF header (typically profile first + last or display name). */
+  clientDisplayName: string;
   /** e.g. `SG · GMT+8` — advisory market + offset when Forever v6 export uses profile zone */
   reportExportZoneLabel?: string;
 };
@@ -291,6 +293,7 @@ export function createReportAuditMeta(args: {
     generatedAt: now,
     generatedAtLabel: tz ? formatReportGeneratedAtLabel(now, { timeZone: tz }) : formatReportGeneratedAtLabel(now),
     modelDisplayName: args.modelDisplayName ?? CB_REPORT_MODEL_DISPLAY_NAME[args.modelCode],
+    clientDisplayName: args.userDisplayName,
     reportExportZoneLabel: zoneLabel,
   };
 }

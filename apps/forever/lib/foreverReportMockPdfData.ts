@@ -65,6 +65,7 @@ export function getForeverMockReportPdfProps(): {
     generatedAt: createdAt,
     generatedAtLabel: formatForeverCoverGeneratedLabel(createdAt, tz),
     modelDisplayName: CB_REPORT_MODEL_DISPLAY_NAME.FOREVER,
+    clientDisplayName: "Mock Client",
   };
 
   const inputs: Record<string, unknown> = {

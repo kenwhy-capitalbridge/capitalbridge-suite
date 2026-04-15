@@ -15,8 +15,8 @@ export const REPORT_BG = '#ffffff';
 /** Brand tagline (use in alt text / accessibility; omit under logo if already in artwork). */
 export const REPORT_BRAND_TAGLINE = 'Strength Behind Every Structure';
 
-/** Primary headings (cover, major sections) — matches model apps + login (Roboto Serif) */
-export const REPORT_FONT_DISPLAY = '"Roboto Serif", Georgia, "Noto Serif", ui-serif, serif';
+/** Primary headings (cover, major sections) — Tinos for PDF/print alignment; serif fallback for web */
+export const REPORT_FONT_DISPLAY = '"Tinos", "Roboto Serif", Georgia, "Noto Serif", ui-serif, serif';
 /** Body — Inter stack aligned with Capital Bridge web apps */
 export const REPORT_FONT_BODY = '"Inter", system-ui, -apple-system, "Segoe UI", sans-serif';
 

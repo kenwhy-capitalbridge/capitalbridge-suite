@@ -75,7 +75,7 @@ button {
   display: none !important;
 }
 
-/* Client-side PDF capture: html2canvas needs the report DOM visible off-screen */
+/* Hidden off-screen print tree (browser print + snapshot ref for Playwright PDF export). */
 .cb-stress-pdf-capture-wrap {
   position: absolute;
   left: -9999px;

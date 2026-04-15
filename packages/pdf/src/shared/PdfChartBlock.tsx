@@ -1,7 +1,12 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { CB_REPORT_CHART_WRAP, ReportHeading, ReportProse } from "@cb/advisory-graph/reports";
+import {
+  CB_REPORT_CHART_WRAP,
+  REPORT_FONT_DISPLAY,
+  ReportHeading,
+  ReportProse,
+} from "@cb/advisory-graph/reports";
 
 export type PdfChartBlockProps = {
   /** Chart / figure title */
@@ -35,7 +40,7 @@ export function PdfChartBlock({
       {title ? (
         <div
           className="cb-pdf-chart-block-title m-0 mb-2 text-[11pt] font-bold leading-snug text-[#0d3a1d] print:mb-2"
-          style={titleStyle}
+          style={{ fontFamily: REPORT_FONT_DISPLAY, ...titleStyle }}
         >
           {title}
         </div>
