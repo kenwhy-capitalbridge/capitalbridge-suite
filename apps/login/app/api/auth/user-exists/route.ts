@@ -9,6 +9,32 @@ function normalizeEmail(s: string) {
   return s.trim().toLowerCase();
 }
 
+/**
+ * Primary: `public.profiles` is keyed by auth user id and stores the canonical login email.
+ * This is O(1) and avoids scanning thousands of Auth users via `listUsers` (which only pages
+ * the first N users and incorrectly reported `auth_user_exists: false` for many accounts).
+ */
+async function findProfileIdByEmail(
+  svc: ReturnType<typeof createServiceClient>,
+  email: string
+): Promise<string | null> {
+  const normalized = normalizeEmail(email);
+  const { data, error } = await svc
+    .schema("public")
+    .from("profiles")
+    .select("id")
+    .ilike("email", normalized)
+    .limit(1);
+
+  if (error) {
+    console.error("[user-exists] profiles lookup", error.message);
+    return null;
+  }
+  const row = data?.[0];
+  return typeof row?.id === "string" ? row.id : null;
+}
+
+/** Fallback when no profile row yet (rare): paginated Auth scan. */
 async function findAuthUserIdByEmail(
   svc: ReturnType<typeof createServiceClient>,
   email: string
@@ -26,8 +52,48 @@ async function findAuthUserIdByEmail(
   return null;
 }
 
+async function billingSessionRegistered(
+  svc: ReturnType<typeof createServiceClient>,
+  email: string,
+  profileId: string | null
+): Promise<boolean> {
+  const normalized = normalizeEmail(email);
+
+  const { data: billingByNorm } = await svc
+    .schema("public")
+    .from("billing_sessions")
+    .select("id")
+    .eq("email", normalized)
+    .limit(1)
+    .maybeSingle();
+  if (billingByNorm?.id) return true;
+
+  const { data: billingByRaw } = await svc
+    .schema("public")
+    .from("billing_sessions")
+    .select("id")
+    .eq("email", email.trim())
+    .limit(1)
+    .maybeSingle();
+  if (billingByRaw?.id) return true;
+
+  if (profileId) {
+    const { data: byUser } = await svc
+      .schema("public")
+      .from("billing_sessions")
+      .select("id")
+      .eq("user_id", profileId)
+      .limit(1)
+      .maybeSingle();
+    if (byUser?.id) return true;
+  }
+
+  return false;
+}
+
 /**
- * Pre-login: auth user exists + billing_sessions row with this email (normalized).
+ * Pre-login: whether a Capital Bridge account exists (profile / auth) and whether billing
+ * has been recorded for this email or for this profile id.
  */
 export async function POST(req: Request) {
   let body: { email?: string };
@@ -49,31 +115,15 @@ export async function POST(req: Request) {
 
   try {
     const svc = createServiceClient();
-    const normalized = normalizeEmail(email);
 
-    const authUserId = await findAuthUserIdByEmail(svc, email);
+    const profileId = await findProfileIdByEmail(svc, email);
+    let authUserId = profileId;
+    if (!authUserId) {
+      authUserId = await findAuthUserIdByEmail(svc, email);
+    }
     const auth_user_exists = !!authUserId;
 
-    let billing_email_registered = false;
-    const { data: billingByNorm } = await svc
-      .schema("public")
-      .from("billing_sessions")
-      .select("id")
-      .eq("email", normalized)
-      .limit(1)
-      .maybeSingle();
-    if (billingByNorm?.id) {
-      billing_email_registered = true;
-    } else {
-      const { data: billingByRaw } = await svc
-        .schema("public")
-        .from("billing_sessions")
-        .select("id")
-        .eq("email", email.trim())
-        .limit(1)
-        .maybeSingle();
-      billing_email_registered = !!billingByRaw?.id;
-    }
+    const billing_email_registered = await billingSessionRegistered(svc, email, authUserId);
 
     return NextResponse.json({
       auth_user_exists,
