@@ -373,10 +373,11 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
     overflow: visible;
   }
 
+  /* ~2× prior cover wordmark (Forever PDF): readable at A4 width without clipping */
   .cb-advisory-pdf-doc .cb-advisory-doc-cover-logo {
-    height: 88px !important;
+    height: 176px !important;
     width: auto !important;
-    max-width: min(100%, 440px) !important;
+    max-width: min(100%, 880px) !important;
     max-height: none !important;
     object-fit: contain;
   }

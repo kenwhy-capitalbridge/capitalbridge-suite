@@ -53,7 +53,7 @@ export function PdfAdvisoryCoverPage({
         <img
           src={logoSrc}
           alt={logoAlt}
-          className="cb-advisory-doc-cover-logo mx-auto block h-[88px] w-auto max-w-[min(100%,440px)] min-w-0 object-contain object-center"
+          className="cb-advisory-doc-cover-logo mx-auto block h-[176px] w-auto max-w-[min(100%,880px)] min-w-0 object-contain object-center"
         />
       </div>
       <h1
