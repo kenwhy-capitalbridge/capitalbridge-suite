@@ -2,7 +2,6 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import {
-  REPORT_ACCENT,
   REPORT_BRAND_GREEN,
   REPORT_FONT_BODY,
   REPORT_FONT_DISPLAY,
@@ -63,7 +62,8 @@ export function PdfLionsVerdictBlock({
   executionPathway,
   tierChip,
   microSignals,
-  accentColor = REPORT_ACCENT,
+  /** Default: brand body green (#0D3A1D), not gold accent — matches Forever PDF print spec. */
+  accentColor = REPORT_TEXT,
   labelColor,
   scoreLineColor,
   titleColor = REPORT_BRAND_GREEN,

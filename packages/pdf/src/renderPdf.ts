@@ -141,19 +141,37 @@ const evalAddHtmlClass = new Function(
   `document.documentElement.classList.add(cls);`,
 ) as (cls: string) => void;
 
-/** Remove Elfsight / vendor widgets from the live DOM — `@media print` CSS does not apply to Playwright `page.pdf()`. */
+/** Remove Elfsight / vendor widgets from the live DOM — `@media print` CSS alone is not enough for Playwright `page.pdf()`. */
 const evalStripThirdPartyWidgets = new Function(`
   (function() {
     try {
       document.querySelectorAll(
-        '[class*="elfsight-app-"], [class*="eapps-cdn"], [class*="eapps-widget"], [id^="eapps-"]'
+        '[class*="elfsight-app-"], [class*="elfsight"], [class*="eapps-cdn"], [class*="eapps-widget"], [class*="eapps-"], [id^="eapps-"], [data-elfsight-app-lazy], [data-widget-id], a[href*="elfsight"]'
       ).forEach(function (el) { el.remove(); });
-      document.querySelectorAll('iframe[src*="elfsight"], iframe[src*="eapps-"]').forEach(function (el) {
+      document.querySelectorAll('iframe[src*="elfsight"], iframe[src*="eapps-"], iframe[src*="elfsightcdn"]').forEach(function (el) {
+        el.remove();
+      });
+      document.querySelectorAll('script[src*="elfsightcdn"], script[src*="eapps-"]').forEach(function (el) {
         el.remove();
       });
     } catch (e) {}
   })();
 `) as () => void;
+
+/** After audit ids are copied for metadata, remove from DOM so nothing in the rasterized page can echo them. */
+const evalRemoveDomAuditTraceAttrs = new Function(
+  "tuple",
+  `
+  var idAttr = tuple[0];
+  var verAttr = tuple[1];
+  var root = document.querySelector(".cb-report-root") || document.querySelector("#print-report");
+  if (!root) return;
+  try {
+    root.removeAttribute(idAttr);
+    root.removeAttribute(verAttr);
+  } catch (e) {}
+`,
+) as (tuple: [string, string]) => void;
 
 async function waitForFonts(page: import("playwright").Page): Promise<void> {
   await page.evaluate(evalWaitFontsReady);
@@ -230,6 +248,14 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       await page.evaluate(evalAddHtmlClass, CB_REPORT_PDF_PLAYWRIGHT_FOOTER_HTML_CLASS);
     }
 
+    if (options.playwrightFooterFromDom && footerCtx) {
+      await page.evaluate(evalRemoveDomAuditTraceAttrs, [
+        CB_PDF_FOOTER_DOM_REPORT_ID_ATTR,
+        CB_PDF_FOOTER_DOM_VERSION_ATTR,
+      ] as [string, string]);
+    }
+
+    await page.evaluate(evalStripThirdPartyWidgets);
     await page.evaluate(evalStripThirdPartyWidgets);
 
     const pdf = await page.pdf({

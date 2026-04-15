@@ -73,7 +73,7 @@
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #ffcc6a;
+    color: #0d3a1d;
     margin: 0 0 0.85em;
     padding-bottom: 6px;
     border-bottom: 1px solid rgba(13, 58, 29, 0.2);
@@ -238,7 +238,27 @@
     page-break-after: avoid !important;
   }
 
+  html.cb-report-pdf-playwright-footer .cb-advisory-appendix-tail.cb-page {
+    min-height: 0 !important;
+    padding-bottom: 2mm !important;
+  }
+
   html.cb-report-pdf-playwright-footer body {
     min-height: 0 !important;
+  }
+
+  /* Playwright PDF: Elfsight is outside the report shell — hide even if script reinjects after first strip. */
+  html.cb-report-pdf-playwright-footer [class*="elfsight-app-"],
+  html.cb-report-pdf-playwright-footer [class*="elfsight"],
+  html.cb-report-pdf-playwright-footer [id^="eapps-"],
+  html.cb-report-pdf-playwright-footer iframe[src*="elfsight"],
+  html.cb-report-pdf-playwright-footer iframe[src*="eapps-"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
   }
 }
