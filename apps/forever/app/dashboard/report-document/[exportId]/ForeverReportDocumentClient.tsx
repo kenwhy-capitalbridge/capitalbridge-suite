@@ -252,7 +252,13 @@ export function ForeverReportDocumentClient({
     pricingReturnModelDashboardUrl("incomeengineering") ?? "https://incomeengineering.thecapitalbridge.com/dashboard";
 
   return (
-    <PdfLayout audit={audit} shortFooterLegal={shortFooterLegal} modelSurfaceClass="cb-forever-doc-report">
+    <PdfLayout
+      audit={audit}
+      shortFooterLegal={shortFooterLegal}
+      modelSurfaceClass="cb-forever-doc-report"
+      documentRootId="print-report"
+      printHeaderVisibility={{ showModelName: true, showReportId: false, showVersion: false }}
+    >
       <PdfSection className="cb-advisory-doc-cover cb-page-break-after">
         <PdfAdvisoryCoverPage
           title="FOREVER INCOME — STRATEGIC WEALTH REPORT"
@@ -354,7 +360,10 @@ export function ForeverReportDocumentClient({
 
       {derived ? <ForeverReportModuleSections derived={derived} formatMoney={formatMoneyBound} /> : null}
 
-      <PdfSection className="cb-appendix cb-page-break" aria-label="Appendix and closing">
+      <PdfSection
+        className="cb-appendix cb-page-break cb-advisory-appendix-tail"
+        aria-label="Appendix and closing"
+      >
         <PdfAdvisorySectionLead
           stageLabel="Appendix & closing"
           title="Disclosures and next steps"

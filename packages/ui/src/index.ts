@@ -36,6 +36,7 @@ export {
   type ReportPrintChromeProps,
   type ReportPrintFooterProps,
   type ReportPrintHeaderProps,
+  type ReportPrintHeaderVisibility,
 } from "./ReportPrintChrome";
 export { stampAllPdfPagesWithAudit } from "./stampPdfAuditMeta";
 export { CbLegalSiteFooter, type CbLegalSiteFooterProps } from "./CbLegalSiteFooter";

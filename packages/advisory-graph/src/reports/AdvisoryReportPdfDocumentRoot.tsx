@@ -6,6 +6,7 @@ import {
   CB_PDF_FOOTER_DOM_REPORT_ID_ATTR,
   CB_PDF_FOOTER_DOM_VERSION_ATTR,
 } from "@cb/shared/reportPdfPlaywright";
+import type { ReportPrintHeaderVisibility } from "@cb/ui";
 import { ReportPrintChrome } from "@cb/ui";
 
 export type AdvisoryReportPdfDocumentRootProps = {
@@ -17,6 +18,8 @@ export type AdvisoryReportPdfDocumentRootProps = {
   className?: string;
   /** e.g. `print-report` — legacy print CSS / Playwright resize targets `#print-report`. */
   documentRootId?: string;
+  /** Which header lines appear in the print DOM (report id still on data-* for PDF metadata). */
+  printHeaderVisibility?: ReportPrintHeaderVisibility;
 };
 
 /**
@@ -30,6 +33,7 @@ export function AdvisoryReportPdfDocumentRoot({
   modelSurfaceClass,
   className = "",
   documentRootId,
+  printHeaderVisibility,
 }: AdvisoryReportPdfDocumentRootProps) {
   return (
     <div
@@ -50,7 +54,11 @@ export function AdvisoryReportPdfDocumentRoot({
         [CB_PDF_FOOTER_DOM_VERSION_ATTR]: audit.versionLabel,
       }}
     >
-      <ReportPrintChrome audit={audit} printFooterText={shortFooterLegal} />
+      <ReportPrintChrome
+        audit={audit}
+        printFooterText={shortFooterLegal}
+        printHeaderVisibility={printHeaderVisibility}
+      />
       {children}
     </div>
   );

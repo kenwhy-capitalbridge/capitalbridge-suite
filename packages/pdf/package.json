@@ -23,6 +23,7 @@
     "@cb/shared": "*",
     "@cb/ui": "*",
     "@sparticuz/chromium": "^143.0.4",
+    "pdf-lib": "^1.17.1",
     "playwright": "^1.51.1"
   }
 }

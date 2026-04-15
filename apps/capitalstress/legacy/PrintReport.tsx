@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER } from '@cb/shared/legalMonocopy';
+import { CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER } from '@cb/shared/legalMonocopy';
 import {
   CB_REPORT_SOFT_PANEL_BG,
   CB_REPORT_SOFT_PANEL_BORDER,
@@ -376,9 +376,10 @@ export function PrintReport(props: PrintReportProps) {
     <div data-pdf-part="1">
     <PdfLayout
       audit={layoutAudit}
-      shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER}
+      shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER}
       documentRootId="print-report"
       className="cb-capital-stress-pdf-doc"
+      printHeaderVisibility={{ showModelName: true, showReportId: false, showVersion: false }}
     >
       <PdfSection className="cb-advisory-doc-cover cb-page-break-after print-section section cb-print-cover" aria-label="Cover">
         <PdfAdvisoryCoverPage

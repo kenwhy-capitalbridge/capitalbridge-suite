@@ -1,6 +1,14 @@
 /**
  * Suite standard for server-side / CI PDF capture: Playwright Chromium only (`@cb/pdf/render`).
- * One system with e2e — install once: `npx playwright install chromium`.
+ *
+ * **Local / self-hosted Node:** `npm run docs:playwright-browsers` or `npx playwright install chromium`
+ * (cache `~/.cache/ms-playwright`). **GitHub Actions:** `npx playwright install --with-deps chromium`
+ * (see `.github/workflows/e2e-model-platform.yml`, `.github/workflows/pdf-render-smoke.yml`).
+ * **Vercel / AWS Lambda:** uses `@sparticuz/chromium`
+ * when `VERCEL=1` or lambda env — no `playwright install` on the serverless image.
+ * **Next.js** apps that call `renderPdf` from API routes must set
+ * `serverExternalPackages: ["playwright", "@sparticuz/chromium"]` (Forever + Capital Stress `next.config.mjs`).
+ * Override: `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
  *
  * Always use `page.goto(realAppUrl)` — never `setContent` — so output matches hydration, fonts, and real app state.
  * For Node/CI scripts only — do not import from client bundles.
@@ -48,7 +56,7 @@ export type RenderPdfOptions = {
    */
   storageStatePath?: string;
   /**
-   * Forever v6 / Option B: Chromium footer with wordmark data URI, short legal only, report id + version + page numbers.
+   * Chromium footer: canonical copyright (left) + page numbers (right). Report id / version / client come from the DOM header.
    * When omitted, `displayHeaderFooter` is off (legacy sample PDFs unchanged).
    * Mutually exclusive with `playwrightFooterFromDom`.
    */
@@ -133,6 +141,20 @@ const evalAddHtmlClass = new Function(
   `document.documentElement.classList.add(cls);`,
 ) as (cls: string) => void;
 
+/** Remove Elfsight / vendor widgets from the live DOM — `@media print` CSS does not apply to Playwright `page.pdf()`. */
+const evalStripThirdPartyWidgets = new Function(`
+  (function() {
+    try {
+      document.querySelectorAll(
+        '[class*="elfsight-app-"], [class*="eapps-cdn"], [class*="eapps-widget"], [id^="eapps-"]'
+      ).forEach(function (el) { el.remove(); });
+      document.querySelectorAll('iframe[src*="elfsight"], iframe[src*="eapps-"]').forEach(function (el) {
+        el.remove();
+      });
+    } catch (e) {}
+  })();
+`) as () => void;
+
 async function waitForFonts(page: import("playwright").Page): Promise<void> {
   await page.evaluate(evalWaitFontsReady);
 }
@@ -208,6 +230,8 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       await page.evaluate(evalAddHtmlClass, CB_REPORT_PDF_PLAYWRIGHT_FOOTER_HTML_CLASS);
     }
 
+    await page.evaluate(evalStripThirdPartyWidgets);
+
     const pdf = await page.pdf({
       path: options.outputPath,
       format: options.format ?? "A4",
@@ -224,9 +248,35 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       },
     });
 
-    return Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf);
+    let out = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf);
+
+    if (useFooter && footerCtx) {
+      out = await embedTraceabilityPdfMetadata(out, {
+        reportId: footerCtx.reportId,
+        versionLabel: footerCtx.versionLabel,
+      });
+    }
+
+    return out;
   } finally {
     await browser.close();
+  }
+}
+
+/** Embeds Report ID / version into PDF document info (not visible layout). */
+async function embedTraceabilityPdfMetadata(
+  pdfBuffer: Buffer,
+  meta: { reportId: string; versionLabel: string },
+): Promise<Buffer> {
+  try {
+    const { PDFDocument } = await import("pdf-lib");
+    const doc = await PDFDocument.load(pdfBuffer);
+    doc.setTitle(`Capital Bridge report — ${meta.reportId}`);
+    doc.setSubject(`Report ID: ${meta.reportId}; Version: ${meta.versionLabel}`);
+    doc.setKeywords([meta.reportId, meta.versionLabel]);
+    return Buffer.from(await doc.save());
+  } catch {
+    return pdfBuffer;
   }
 }
 

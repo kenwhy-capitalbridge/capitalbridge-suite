@@ -3,7 +3,7 @@ import {
   buildLionVerdictClientReportFromIncomeEngineering,
   formatLionPublicStatusLabel,
 } from '@cb/advisory-graph/lionsVerdict';
-import { CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER } from '@cb/shared/legalMonocopy';
+import { CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER } from '@cb/shared/legalMonocopy';
 import { formatReportGeneratedAtLabel } from '@cb/shared/reportIdentity';
 import {
   CB_REPORT_SOFT_PANEL_BG,
@@ -183,7 +183,7 @@ function lionPublicStatusTierChipClass(status: string): string {
   return map[u] ?? 'cb-forever-tier-chip';
 }
 
-interface PrintReportViewProps {
+export interface PrintReportViewProps {
   summary: SummaryKPIs;
   currency: CurrencyCode;
   totalCapital: number;
@@ -356,8 +356,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   return (
     <PdfLayout
       audit={layoutAudit}
-      shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_SHORT_FOOTER}
+      shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER}
       documentRootId="print-report"
+      printHeaderVisibility={{ showModelName: false, showReportId: false, showVersion: false }}
     >
       <div data-pdf-part="1">
       <PdfSection className="cb-advisory-doc-cover cb-page-break-after" aria-label="Cover">
@@ -554,7 +555,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           </div>
         ) : null}
       </PdfSection>
+      </div>
 
+      <div data-pdf-part="2">
         <PdfSection className="cb-page-break" aria-label="Section B — Advisor Read">
         <PdfAdvisorySectionLead
           stageLabel="Section B — Advisor Read"
@@ -721,7 +724,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           </table>
         </section>
         </PdfSection>
+      </div>
 
+      <div data-pdf-part="3">
       <PdfSection className="cb-page-break" aria-label="Section C — Deeper analysis">
       <PdfAdvisorySectionLead
         stageLabel="Section C — Deeper analysis"
