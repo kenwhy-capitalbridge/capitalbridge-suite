@@ -19,23 +19,6 @@ function formatTimestamp(iso: string): string {
   }
 }
 
-function relativeTime(iso: string): string {
-  try {
-    const d = new Date(iso).getTime();
-    const diff = Date.now() - d;
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return formatTimestamp(iso);
-  } catch {
-    return iso;
-  }
-}
-
 export type ModelHeaderSaveRestoreProps = {
   userId: string;
   serverCanSave?: boolean;
@@ -295,7 +278,7 @@ export function ModelHeaderSaveRestore({
         <option value="">{loadingList ? "…" : items.length === 0 ? "No saves" : "Rolling Saves (20)"}</option>
         {items.map((item) => (
           <option key={item.id} value={item.id}>
-            {formatTimestamp(item.created_at)} · {relativeTime(item.created_at)}
+            {formatTimestamp(item.created_at)}
           </option>
         ))}
       </select>
