@@ -83,6 +83,20 @@ function pdfQualityHeading(q: OptimisationQuality): string {
   return 'BALANCED POSITION';
 }
 
+/** Pill colours aligned with report status semantics (amber ≈ plausible-style caution). */
+function pdfClassificationPillColors(q: OptimisationQuality): { bg: string; border: string } {
+  if (q.kind === 'deficit') {
+    if (q.label === 'GOOD_DEFICIT') return { bg: '#11B981', border: '#11B981' };
+    if (q.label === 'BAD_DEFICIT') return { bg: '#DD524C', border: '#DD524C' };
+    return { bg: '#F59E0B', border: '#F59E0B' };
+  }
+  if (q.kind === 'surplus') {
+    if (q.label === 'PRODUCTIVE_SURPLUS') return { bg: '#11B981', border: '#11B981' };
+    return { bg: '#64748B', border: '#64748B' };
+  }
+  return { bg: '#6B7280', border: '#6B7280' };
+}
+
 function pdfInterpretiveTracePair(q: OptimisationQuality): [string, string] {
   if (q.kind === 'deficit') {
     if (q.label === 'GOOD_DEFICIT') {
@@ -450,6 +464,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
       capitalOutcomeBody,
       incomeGrowthLine,
       tenureLine,
+      pillColors: pdfClassificationPillColors(decision.quality),
       formulaLineDisplay: `(${c(f.expenses)} + ${c(f.loanRepayments)}) − (${c(f.recurringIncome)} + ${c(f.investmentIncome)}) = ${c(magnitude)}${flowWord ? ` ${flowWord}` : ''}`,
       netHeadline: `Net monthly position: ${c(magnitude)}${flowWord ? ` ${flowWord}` : ''}`,
       interpretationParagraph: showClassification
@@ -976,50 +991,50 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
           {ieOptimisationPdf.formulaLineDisplay}
         </p>
-        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 1.35 }}>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 10px', lineHeight: 1.35 }}>
           Structure classification
         </h3>
         {ieOptimisationPdf.showClassification ? (
-          <div
-            style={{
-              margin: '14px 0 20px',
-              padding: '14px 18px',
-              background: CB_REPORT_SOFT_PANEL_BG,
-              border: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
-              borderRadius: '8px',
-              breakInside: 'avoid',
-              pageBreakInside: 'avoid',
-            }}
-          >
-            <p
+          <div style={{ margin: '14px 0 20px' }}>
+            <span
               style={{
-                margin: 0,
-                color: '#0D3A1D',
-                lineHeight: 1.45,
+                display: 'inline-block',
+                padding: '10px 22px',
+                borderRadius: '9999px',
+                fontSize: '11px',
                 fontWeight: 700,
                 letterSpacing: '0.08em',
-                fontSize: '12px',
-                textAlign: 'center',
                 textTransform: 'uppercase',
+                color: '#fff',
+                lineHeight: 1.35,
+                backgroundColor: ieOptimisationPdf.pillColors.bg,
+                border: `1px solid ${ieOptimisationPdf.pillColors.border}`,
               }}
             >
               {pdfQualityHeading(ieOptimisationPdf.decision.quality)}
-            </p>
+            </span>
           </div>
         ) : (
-          <div
-            style={{
-              margin: '14px 0 20px',
-              padding: '14px 18px',
-              background: CB_REPORT_SOFT_PANEL_BG,
-              border: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
-              borderRadius: '8px',
-              breakInside: 'avoid',
-              pageBreakInside: 'avoid',
-            }}
-          >
-            <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.58, fontSize: '11px', textAlign: 'center' }}>
-              Not available while inputs sit outside illustrated ranges.
+          <div style={{ margin: '14px 0 20px' }}>
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '10px 22px',
+                borderRadius: '9999px',
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#fff',
+                lineHeight: 1.35,
+                backgroundColor: '#6B7280',
+                border: '1px solid #6B7280',
+              }}
+            >
+              Not available
+            </span>
+            <p style={{ margin: '10px 0 0', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
+              Inputs sit outside illustrated ranges.
             </p>
           </div>
         )}
