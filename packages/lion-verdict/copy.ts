@@ -85,7 +85,7 @@ export const LION_COPY: Record<Tier, { headlines: Line[]; guidance: Line[] }> = 
       { text: "Income is supported by returns, but buffer is limited. Capital is intact. Surplus is not significant.", weight: 3 },
       { text: "The structure holds under expected conditions. Downside scenarios may create pressure. Monitoring is required.", weight: 3 },
       { text: "Returns broadly match withdrawals. Cushion is present but not deep. Stability depends on consistency.", weight: 3 },
-      { text: "Plan remains viable, but not overbuilt. Small changes can impact outcomes. Reinforcement is advisable.", weight: 3 },
+      { text: "The plan remains workable, but the margin is not wide. Small changes could affect the outcome, so strengthening the structure is advisable.", weight: 3 },
       { text: "Moderate buffer exists, but can compress under stress. Volatility may affect sustainability.", weight: 3 },
       { text: "Stability is present, but not excess. The system performs within limits. Improvement is recommended.", weight: 3 },
       { text: "Current trajectory holds, but relies on conditions remaining stable. Deviations may affect balance.", weight: 3 },

@@ -34,23 +34,23 @@ export const PDF_TOC_FOREVER_INCOME: readonly PdfTocBlock[] = [
 export const PDF_TOC_INCOME_ENGINEERING: readonly PdfTocBlock[] = [
   {
     title: "Section A — Opening",
-    items: ["Advisory framework context", "Trial or paid: The Lion’s Verdict"],
+    items: ["Where this report fits", "Lion’s Verdict"],
   },
   {
     title: "Section B — Advisor Read",
     items: [
-      "Model inputs and expectations",
-      "Income, expenses, and unlocking capital",
+      "Your inputs and assumptions",
+      "Income, expenses, and capital unlocking",
       "Investment allocation",
-      "Coverage and sustainability charts",
-      "Optimisation themes",
+      "Coverage and sustainability",
+      "Areas to improve",
     ],
   },
   {
     title: "Section C — Deeper analysis",
-    items: ["Assumption sensitivity", "Methodology notes"],
+    items: ["Sensitivity to assumptions", "How this model works"],
   },
-  { title: "Appendix & closing" },
+  { title: "Appendix and next steps" },
 ];
 
 export const PDF_TOC_CAPITAL_STRESS: readonly PdfTocBlock[] = [

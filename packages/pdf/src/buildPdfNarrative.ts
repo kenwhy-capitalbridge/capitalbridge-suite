@@ -344,7 +344,7 @@ export function buildPdfNarrative(
       ? {
           title: "Execution Pathway (Early Access)",
           body:
-            "You have requested priority access to structured execution.\n\nCapital Bridge™ will assess your structure and match suitable execution pathways when available.",
+            "You have requested priority access to structured execution.\n\nCapital Bridge™ will assess your structure and identify suitable execution pathways when available.",
         }
       : undefined,
     journey: {

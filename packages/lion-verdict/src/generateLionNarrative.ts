@@ -46,7 +46,7 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
   );
   const why =
     netMonthly < 0
-      ? `This deficit exists because expenses exceed income, requiring capital drawdown of ${formatAmount(Math.abs(netMonthly), ctx.currency)} per month.`
+      ? `This deficit exists because expenses are higher than income, so ${formatAmount(Math.abs(netMonthly), ctx.currency)} must be drawn from capital each month.`
       : `This surplus exists because income exceeds expenses, allowing capital to remain intact.`;
   const capital = `Total capital stands at ${formatAmount(ctx.totalCapital, ctx.currency)}${
     capitalGap > 0 ? `, with a gap of ${formatAmount(capitalGap, ctx.currency)} to target.` : `.`

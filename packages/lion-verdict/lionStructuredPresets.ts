@@ -11,7 +11,7 @@ export const LION_PRESET_STRATEGIC_OPTIONS: Record<Tier, readonly [string, strin
     "Focus can shift from protection to optimisation. The system is already secure.",
   ],
   STABLE: [
-    "Plan remains viable, but not overbuilt. Small changes can impact outcomes. Reinforcement is advisable.",
+    "The plan remains workable, but the margin is not wide. Small changes could affect the outcome, so strengthening the structure is advisable.",
     "Small optimisation in returns or contributions will improve resilience. This strengthens the system.",
     "Returns support income, but leave little excess. Building buffer is recommended.",
   ],

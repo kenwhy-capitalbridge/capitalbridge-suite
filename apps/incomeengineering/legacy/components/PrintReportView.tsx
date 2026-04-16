@@ -142,14 +142,14 @@ function getOptimisationContent(
     return {
       sectionTitle: 'What this means',
       summary:
-        'The plan is close: most months work, but the cushion is thin. A few adverse months or a small assumption miss could tilt the read from comfortable to pressured.',
-      subheading: 'Where to tighten the story',
+        'The plan is close to working, but the margin is thin. A few weaker months or a small miss in assumptions could quickly put the structure under pressure.',
+      subheading: 'Where to strengthen the plan',
       suggestions: [
         'Stress-test income and return assumptions with your adviser.',
-        'Identify expenses that could flex if conditions tighten.',
-        'Build or preserve a modest buffer before relying on this structure long term.',
+        'Identify expenses that can be reduced or made more flexible if conditions tighten.',
+        'Build or preserve a modest buffer before relying on this structure over the long term.',
       ],
-      tagline: 'Small adjustments now often prevent larger ones later.',
+      tagline: 'Small adjustments made early can reduce bigger problems later.',
     };
   }
   return {
@@ -358,13 +358,13 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
       audit={layoutAudit}
       shortFooterLegal={CB_REPORT_PLAYWRIGHT_PDF_CANONICAL_FOOTER}
       documentRootId="print-report"
-      printHeaderVisibility={{ showModelName: false, showReportId: false, showVersion: false }}
+      printHeaderVisibility={{ showModelName: true, showReportId: false, showVersion: false }}
     >
       <div data-pdf-part="1">
       <PdfSection className="cb-advisory-doc-cover cb-page-break-after" aria-label="Cover">
         <PdfAdvisoryCoverPage
           title="INCOME ENGINEERING — STRATEGIC WEALTH REPORT"
-          subtitle="Income sustainability: offsets, unlocking capital, and allocation under your stated assumptions."
+          subtitle="Income Engineering: shows where capital can be unlocked, allocated, or strengthened under your stated assumptions."
           preparedForName={reportClientDisplayName ?? 'Client'}
           generatedAtLabel={generatedLabel}
           toc={PDF_TOC_INCOME_ENGINEERING}
@@ -377,10 +377,10 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           title="Opening"
           whatThisShows={
             lionAccessEnabled
-              ? "Where Income Engineering sits in the Capital Bridge journey, then — when your plan includes it — the Lion’s Verdict on income structure, using the same numbers as Section B."
+              ? "Where this report fits in your Capital Bridge journey, and your Lion’s Verdict if it is included in your plan."
               : "Where Income Engineering sits in the Capital Bridge journey and how to read the evidence in Section B — full Lion’s Verdict narrative is available on paid plans."
           }
-          whyThisMatters="Orientation and judgement come first, then the fact base, so the read follows a natural advisory sequence."
+          whyThisMatters="This gives context first, then the supporting numbers, so the report is easier to follow."
         />
 
         {!lionAccessEnabled ? <ReportTrialSnapshotCaption isTrial /> : null}
@@ -396,7 +396,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             Step 1B — Engineer your income structure
           </p>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: '0 0 8px' }}>
-            This report follows your sustainability check (Forever Income).
+            This report follows your sustainability check in Forever Income.
           </p>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: '0 0 4px' }}>
             At this stage, the question shifts from:
@@ -414,9 +414,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               fontSize: '11px',
             }}
           >
-            <li style={{ marginBottom: '6px' }}>Where can income be strengthened within the current setup?</li>
-            <li style={{ marginBottom: '6px' }}>Which assets can be unlocked into usable capital?</li>
-            <li style={{ marginBottom: 0 }}>How can surplus be intentionally converted into long-term capital growth?</li>
+            <li style={{ marginBottom: '6px' }}>Where can income be improved within your current structure?</li>
+            <li style={{ marginBottom: '6px' }}>Which assets can be turned into usable capital?</li>
+            <li style={{ marginBottom: 0 }}>How can surplus be used to build long-term capital growth?</li>
           </ul>
 
           <p
@@ -432,7 +432,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             What this model does
           </p>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: '0 0 6px' }}>
-            The Income Engineering Model focuses on how capital moves, not just how it sits.
+            The Income Engineering Model looks at how your capital can be used, not just where it sits.
           </p>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: '0 0 6px' }}>It shows:</p>
           <ul
@@ -444,9 +444,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               fontSize: '11px',
             }}
           >
-            <li style={{ marginBottom: '6px' }}>Where income already exceeds requirements (surplus)</li>
+            <li style={{ marginBottom: '6px' }}>Where income already exceeds your needs (surplus)</li>
             <li style={{ marginBottom: '6px' }}>Where capital may be unlocked from existing assets</li>
-            <li style={{ marginBottom: 0 }}>How structured use of capital (including borrowing) affects long-term outcomes</li>
+            <li style={{ marginBottom: 0 }}>How using capital, including borrowing, may affect long-term outcomes</li>
           </ul>
 
           <p
@@ -462,10 +462,10 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             Why this matters
           </p>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: '0 0 8px' }}>
-            Different structures can produce very different outcomes over time.
+            Different capital structures can lead to very different outcomes over time.
           </p>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: '0 0 6px' }}>
-            Rather than assuming what should or should not be done, this model allows:
+            Instead of assuming the right answer, this model helps you compare options by showing:
           </p>
           <ul
             style={{
@@ -476,12 +476,12 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               fontSize: '11px',
             }}
           >
-            <li style={{ marginBottom: '6px' }}>the cost of capital to be compared against expected outcomes</li>
-            <li style={{ marginBottom: '6px' }}>the impact of each decision to be observed under consistent assumptions</li>
-            <li style={{ marginBottom: 0 }}>the structure to be evaluated as a system, not in isolation</li>
+            <li style={{ marginBottom: '6px' }}>how the cost of capital compares with expected outcomes</li>
+            <li style={{ marginBottom: '6px' }}>how each decision affects the overall picture under the same assumptions</li>
+            <li style={{ marginBottom: 0 }}>how the structure performs as a whole</li>
           </ul>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: 0 }}>
-            All results remain scenario-based and are not guaranteed.
+            All results are based on the assumptions in this report and are not guaranteed.
           </p>
 
           <p
@@ -497,7 +497,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             What happens next
           </p>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: '0 0 6px' }}>
-            From here, the advisory journey continues:
+            From here, the journey continues:
           </p>
           <ul
             style={{
@@ -509,10 +509,10 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             }}
           >
             <li style={{ marginBottom: '6px' }}>
-              Capital Health → assesses whether the structure remains sustainable over time
+              Capital Health → shows whether the structure remains sustainable over time
             </li>
             <li style={{ marginBottom: 0 }}>
-              Capital Stress → evaluates how the structure behaves under changing conditions
+              Capital Stress → shows how the structure may behave under changing conditions
             </li>
           </ul>
         </section>
@@ -562,22 +562,22 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <PdfAdvisorySectionLead
           stageLabel="Section B — Advisor Read"
           title="Advisor Read"
-          whatThisShows="Expectations, income, loans, unlocking capital lines, allocations, coverage, and headline status — the numbers you are reviewing together."
-          whyThisMatters="One agreed fact base before Section C, so you can separate what the model says from what you might change next."
+          whatThisShows="Your assumptions, income, loans, capital unlocking lines, allocations, coverage, and headline results — the key numbers being reviewed."
+          whyThisMatters="This gives you one clear set of numbers before moving into deeper analysis and next steps."
         />
 
         <section className="section" style={sectionBlock}>
           <PrintStageLabel>Input Summary</PrintStageLabel>
           <h2 style={sectionHeading}>Your model inputs</h2>
           <p style={{ margin: 0, fontSize: '12px', color: '#4b5563', lineHeight: 1.55 }}>
-            The tables below reflect the assumptions you agreed for this review: expectations, income, any loans from unlocking capital, each unlock line, and investment buckets.
+            The tables below show the assumptions used for this review, including your targets, income, any loans used to unlock capital, each capital unlocking line, and your investment buckets.
           </p>
         </section>
 
         <section className="section" style={sectionBlock}>
           <h2 style={sectionHeading}>Expectations</h2>
           <p style={{ margin: '0 0 4px', color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Currency:</strong> {currency}</p>
-          <p style={{ margin: 0, color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Desired monthly expenses:</strong> {formatCurrency(monthlyExpenses, currency)}</p>
+          <p style={{ margin: 0, color: '#2d3748' }}><strong style={{ color: '#0D3A1D' }}>Target monthly expenses:</strong> {formatCurrency(monthlyExpenses, currency)}</p>
         </section>
 
         <section className="section" style={sectionBlock}>
@@ -591,7 +591,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
                 </tr>
               ))}
               <tr style={{ borderTop: '1px solid rgba(255,204,106,0.5)' }}>
-                <td style={{ padding: '6px 0', fontWeight: 600, color: '#0D3A1D' }}>Total recurring income</td>
+                <td style={{ padding: '6px 0', fontWeight: 600, color: '#0D3A1D' }}>Total monthly recurring income</td>
                 <td style={{ textAlign: 'right', fontWeight: 600, color: '#0D3A1D' }}>{formatCurrency(summary.monthlyIncome, currency)}</td>
               </tr>
             </tbody>
@@ -599,7 +599,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         </section>
 
         <section className="section" style={sectionBlock}>
-          <h2 style={sectionHeading}>Loan repayments (from unlocking capital)</h2>
+          <h2 style={sectionHeading}>Loan repayments from capital unlocking</h2>
           {loans.length > 0 ? (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
@@ -626,7 +626,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         </section>
 
         <section className="section" style={sectionBlock}>
-          <h2 style={sectionHeading}>Unlocking capital</h2>
+          <h2 style={sectionHeading}>Capital unlocking options</h2>
           {assetUnlocks.length > 0 ? (
             <div>
               {assetUnlocks.map((asset) => {
@@ -650,8 +650,8 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
                     <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#2d3748', lineHeight: 1.5 }}>{summarizeUnlockParams(asset, currency)}</p>
                     {(asset.enabled && (liq > 0 || repayment > 0)) && (
                       <p style={{ margin: 0, fontSize: '12px', color: '#2d3748' }}>
-                        Modelled liquidity: {formatCurrency(liq, currency)}
-                        {repayment > 0 && <> · Repayment: {formatCurrency(repayment, currency)}/mo</>}
+                        Estimated capital unlocked: {formatCurrency(liq, currency)}
+                        {repayment > 0 && <> · Monthly repayment: {formatCurrency(repayment, currency)}/mo</>}
                       </p>
                     )}
                     {(invRet != null && invRet > 0) || (yieldM != null && yieldM > 0) ? (
@@ -693,13 +693,13 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <section className="section chart-block" style={sectionBlock}>
           <PrintStageLabel>Visual Analysis</PrintStageLabel>
           <PdfChartBlock
-            title="Coverage (from your inputs)"
+            title="Coverage based on your inputs"
             titleStyle={{ fontFamily: CB_FONT_SERIF, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '13px', color: '#0D3A1D', marginBottom: '10px', paddingBottom: '6px', borderBottom: '1px solid rgba(255, 204, 106, 0.55)' }}
-            whatThisShows="How far monthly inflows (including modelled investment income) cover total outflows in a typical month versus the weakest month you modelled."
-            whyThisMatters="Advisory conversations often anchor on an average that hides a thin month — pairing median and weakest-month coverage keeps both in view."
+            whatThisShows="How much of your total monthly outflows are covered by monthly inflows, including modelled investment income, in both a typical month and the weakest month modelled."
+            whyThisMatters="An average month can hide a weaker one. Looking at both the typical month and the weakest month gives a clearer picture."
             interpretation={
               <p style={{ margin: 0, fontSize: '12px', color: '#2d3748', lineHeight: 1.58 }}>
-                Together, these two reads show whether the income story is robust or merely &ldquo;usually fine&rdquo; on the assumptions captured in this report.
+                Together, these two views show whether the income structure is genuinely robust or only appears workable under normal conditions.
               </p>
             }
           >
@@ -731,8 +731,8 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
       <PdfAdvisorySectionLead
         stageLabel="Section C — Deeper analysis"
         title="Deeper analysis"
-        whatThisShows="Interpretation of sustainability, practical next steps, and the improvement story that fits the Section B picture."
-        whyThisMatters="Keeps judgement and options after the facts, so the conversation can move from alignment to action."
+        whatThisShows="What the results mean, what may need attention, and what to consider next."
+        whyThisMatters="This helps turn the numbers into practical next steps."
       />
       <section className="section" style={sectionBlock}>
         <PrintStageLabel>Strategic Interpretation</PrintStageLabel>
@@ -770,21 +770,21 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
 
       <PdfSection className="cb-appendix cb-page-break" aria-label="Appendix and closing">
         <PdfAdvisorySectionLead
-          stageLabel="Appendix & closing"
+          stageLabel="Appendix and next steps"
           title="Disclosures and next steps"
-          whatThisShows="How to use this report, regulatory context, and the next step in the Capital Bridge journey."
-          whyThisMatters="Closes with a clear handoff: what this document is for, and where to go next with your adviser."
+          whatThisShows="How to use this report, the regulatory context, and the next step in your Capital Bridge journey."
+          whyThisMatters="This closes the report clearly by explaining what it is for and what to review next with your adviser."
         />
         <section className="section" style={sectionBlock}>
-          <h2 style={sectionHeading}>Disclosures & how to use this report</h2>
+          <h2 style={sectionHeading}>Disclosures and how to use this report</h2>
           <p style={{ marginBottom: '12px', color: '#2d3748', lineHeight: 1.58 }}>
-            This document comes from the Capital Bridge Income Engineering model and is meant for discussion with your adviser. It is not personal advice. The footer on each page carries the full legal notice.
+            This document is generated from the Capital Bridge Income Engineering model and is intended for discussion with your adviser. It does not constitute personal advice. The footer on each page contains the legal notice.
           </p>
           <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px', lineHeight: 1.35 }}>How to use this report</h3>
           <ul style={{ margin: '0 0 16px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55 }}>
-            <li style={{ marginBottom: '6px' }}>Review it in a client meeting alongside your live model inputs.</li>
-            <li style={{ marginBottom: '6px' }}>Treat illustrations as scenario-based, not guaranteed outcomes.</li>
-            <li style={{ marginBottom: '6px' }}>When assumptions change materially, refresh the live model before the next review.</li>
+            <li style={{ marginBottom: '6px' }}>Review it alongside your live model inputs during an advisory discussion.</li>
+            <li style={{ marginBottom: '6px' }}>Treat all illustrations as scenario-based, not guaranteed outcomes.</li>
+            <li style={{ marginBottom: '6px' }}>If assumptions change materially, refresh the live model before the next review.</li>
           </ul>
           <div
             style={{
@@ -798,13 +798,13 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             }}
           >
             <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', fontFamily: CB_FONT_SERIF, margin: '0 0 10px', lineHeight: 1.35 }}>
-              Recommended next step — Capital Health
+              Recommended next step: Capital Health
             </h3>
             <p style={{ margin: '0 0 12px', color: '#2d3748', fontSize: '10pt', lineHeight: 1.55 }}>
-              Capital Health summarises withdrawal sustainability, structural confidence, and capital trajectory under your assumptions — a natural follow-on once income and allocation are aligned in this model.
+              Capital Health shows whether your capital structure can remain sustainable over time under your stated assumptions. It is the natural next step once income and allocation are aligned in this model.
             </p>
             <p style={{ margin: 0, fontSize: '10pt', fontWeight: 600, color: '#0D3A1D' }}>
-              Next:&nbsp;
+              Next step:&nbsp;
               <a href={capitalHealthDashboardUrl} style={{ color: '#0D3A1D', textDecoration: 'underline' }}>
                 Run Capital Health
               </a>
