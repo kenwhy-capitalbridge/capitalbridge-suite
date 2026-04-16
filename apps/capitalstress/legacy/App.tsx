@@ -820,7 +820,13 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           horizonDisplay={`${years} years`}
         />
       <div className="cb-body bg-transparent text-cb-cream font-sans selection:bg-[#FFCC6A] selection:text-black pt-0 pb-4 md:pb-8">
-        <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 lg:pt-14 space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
+        <main
+          className={`w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-4 sm:pt-8 md:pt-12 lg:pt-14 ${
+            allSectionsCollapsed
+              ? "space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-5 xl:space-y-6"
+              : "space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16"
+          }`}
+        >
         {/* Module 3 note — standalone mode */}
         <div className="pt-6 pb-2 sm:pt-2 no-print">
           <p className="text-sm text-[#FFCC6A]/90 leading-relaxed text-center">This model represents <strong className="text-[#FFCC6A]">Module 3 of the Capital Bridge Advisory Framework</strong>, focusing on capital resilience under market volatility and withdrawal pressure over the selected time horizon.</p>
@@ -1022,13 +1028,25 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         </section>
 
         {/* RESULTS — Single stacked analytical report */}
-        <section className="w-full max-w-5xl mx-auto space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
+        <section
+          className={`w-full max-w-5xl mx-auto ${
+            allSectionsCollapsed
+              ? "space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-5 xl:space-y-6"
+              : "space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16"
+          }`}
+        >
           {!mcResult && (
             <p className="text-[#FFCC6A]/60 text-center py-8 uppercase">Run Simulation to see results.</p>
           )}
 
           {mcResult && (
-            <div className="space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16">
+            <div
+              className={
+                allSectionsCollapsed
+                  ? "space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-5 xl:space-y-6"
+                  : "space-y-4 sm:space-y-6 md:space-y-10 lg:space-y-14 xl:space-y-16"
+              }
+            >
           {/* CAPITAL DIAGNOSIS — introduction (horizontal flow on desktop, stacked on mobile) */}
           <div>
             <h2 className="text-sm md:text-lg font-bold uppercase tracking-wide mb-2 md:mb-4 serif-font text-[#FFCC6A]">CAPITAL DIAGNOSIS</h2>
