@@ -976,17 +976,52 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
           {ieOptimisationPdf.formulaLineDisplay}
         </p>
-        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 1.35 }}>
           Structure classification
         </h3>
         {ieOptimisationPdf.showClassification ? (
-          <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58, fontWeight: 700, letterSpacing: '0.06em' }}>
-            {pdfQualityHeading(ieOptimisationPdf.decision.quality)}
-          </p>
+          <div
+            style={{
+              margin: '14px 0 20px',
+              padding: '14px 18px',
+              background: CB_REPORT_SOFT_PANEL_BG,
+              border: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
+              borderRadius: '8px',
+              breakInside: 'avoid',
+              pageBreakInside: 'avoid',
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                color: '#0D3A1D',
+                lineHeight: 1.45,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                fontSize: '12px',
+                textAlign: 'center',
+                textTransform: 'uppercase',
+              }}
+            >
+              {pdfQualityHeading(ieOptimisationPdf.decision.quality)}
+            </p>
+          </div>
         ) : (
-          <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58 }}>
-            Not available while inputs sit outside illustrated ranges.
-          </p>
+          <div
+            style={{
+              margin: '14px 0 20px',
+              padding: '14px 18px',
+              background: CB_REPORT_SOFT_PANEL_BG,
+              border: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
+              borderRadius: '8px',
+              breakInside: 'avoid',
+              pageBreakInside: 'avoid',
+            }}
+          >
+            <p style={{ margin: 0, color: '#2d3748', lineHeight: 1.58, fontSize: '11px', textAlign: 'center' }}>
+              Not available while inputs sit outside illustrated ranges.
+            </p>
+          </div>
         )}
         <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
           Why this classification
