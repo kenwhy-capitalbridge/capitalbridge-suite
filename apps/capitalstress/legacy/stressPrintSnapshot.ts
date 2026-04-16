@@ -49,15 +49,28 @@ export type StressPrintSnapshotV1 = {
   hasStrategicInterest: boolean;
 };
 
+/** Keep PDF payloads small and deterministic without changing visible report structure. */
+const MAX_EXPORT_PATHS = 1200;
+
+function compactPathsForExport(paths: MonteCarloResult["paths"]): MonteCarloResult["paths"] {
+  if (!Array.isArray(paths) || paths.length === 0) return [];
+  if (paths.length <= MAX_EXPORT_PATHS) {
+    return paths.map((p) => ({ finalCapital: p.finalCapital })) as MonteCarloResult["paths"];
+  }
+  const step = paths.length / MAX_EXPORT_PATHS;
+  const out: { finalCapital: number }[] = [];
+  for (let i = 0; i < MAX_EXPORT_PATHS; i++) {
+    const idx = Math.min(paths.length - 1, Math.floor(i * step));
+    out.push({ finalCapital: paths[idx]?.finalCapital ?? 0 });
+  }
+  return out as MonteCarloResult["paths"];
+}
+
 function stripMonteCarloResultForExport(mc: MonteCarloResult): MonteCarloResult {
   return {
     ...mc,
-    paths: mc.paths.map((p) => ({
-      finalCapital: p.finalCapital,
-      maxDrawdownPct: p.maxDrawdownPct,
-      survived: p.survived,
-      yearlyBalances: [],
-    })),
+    // PDF currently reads only `finalCapital` from `paths`; keep payload compact for report_exports insert.
+    paths: compactPathsForExport(mc.paths),
     worstPathYearly: [],
     bestPathYearly: [],
   };

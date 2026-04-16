@@ -579,8 +579,14 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       const startPayload = (await startRes.json().catch(() => ({}))) as { exportId?: string; error?: unknown };
       if (!startRes.ok) {
         console.error("[capital-stress] report-export/start failed", startRes.status, startPayload);
+        const detail =
+          typeof startPayload.error === "string" && startPayload.error.trim().length > 0
+            ? startPayload.error.trim().slice(0, 300)
+            : "";
         window.alert(
-          "Could not start PDF export. If this keeps happening, try again later or contact support.",
+          detail
+            ? `Could not start PDF export: ${detail}`
+            : "Could not start PDF export. If this keeps happening, try again later or contact support.",
         );
         return;
       }

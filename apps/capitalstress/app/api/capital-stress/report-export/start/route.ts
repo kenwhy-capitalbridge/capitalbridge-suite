@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
   if (error || !data?.id) {
     console.error("[capital-stress] report_exports insert failed:", error?.message);
-    return NextResponse.json({ error: "insert_failed" }, { status: 500 });
+    return NextResponse.json({ error: (error?.message ?? "insert_failed").slice(0, 200) }, { status: 500 });
   }
 
   return NextResponse.json({
