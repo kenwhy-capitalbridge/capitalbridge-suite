@@ -349,6 +349,10 @@ const AppInner = forwardRef<
               medianCoverage={result.medianCoverage}
               worstMonthCoverage={result.worstMonthCoverage}
               invalidReason={result.summary.invalidReason}
+              currency={currency}
+              summary={result.summary}
+              totalCapital={totalCapital}
+              loans={loansFromAssets}
             />
           </section>
 
