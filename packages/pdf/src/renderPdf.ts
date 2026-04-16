@@ -32,6 +32,40 @@ import {
   type PlaywrightPdfFooterContext,
 } from "./playwrightPdfFooter";
 
+/** Drop analytics / chat / tag-manager during PDF capture — same-origin app + static assets still load. */
+function shouldBlockPdfCaptureRequestUrl(url: string): boolean {
+  try {
+    const h = new URL(url).hostname;
+    return (
+      h.includes("googletagmanager") ||
+      h.includes("google-analytics") ||
+      h.includes("analytics.google") ||
+      h.includes("doubleclick") ||
+      h.includes("facebook.net") ||
+      h.includes("hotjar") ||
+      h.includes("segment.io") ||
+      h.includes("segment.com") ||
+      h.includes("intercom") ||
+      h.includes("intercomcdn") ||
+      h.includes("elfsight") ||
+      h.includes("eapps-") ||
+      h.includes("tiktok.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function installPdfCaptureRouteBlock(page: import("playwright").Page): Promise<void> {
+  await page.route("**/*", async (route) => {
+    if (shouldBlockPdfCaptureRequestUrl(route.request().url())) {
+      await route.abort("blockedbyclient").catch(() => {});
+      return;
+    }
+    await route.continue();
+  });
+}
+
 export type PdfPageFormat = "A4" | "Letter";
 
 export type PlaywrightCookieParam = { name: string; value: string; url: string };
@@ -131,7 +165,7 @@ const evalWaitFontsReady = new Function(`
     if (typeof document === "undefined" || !document.fonts) return;
     await Promise.race([
       document.fonts.ready,
-      new Promise(function (resolve) { setTimeout(resolve, 5000); }),
+      new Promise(function (resolve) { setTimeout(resolve, 2500); }),
     ]);
   })();
 `) as () => Promise<void>;
@@ -275,6 +309,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       options.storageStatePath ? { storageState: options.storageStatePath } : {},
     );
     const page = await context.newPage();
+    await installPdfCaptureRouteBlock(page);
     if (options.playwrightCookies?.length) {
       await context.addCookies(options.playwrightCookies);
     }
@@ -301,7 +336,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       // Playwright signature is (pageFunction, arg, options) — do not pass options as the second argument.
       try {
         // Cap separately from total `remaining()` so a hung client cannot burn the entire serverless budget.
-        const reportReadyWaitMs = Math.min(remaining(), 45_000);
+        const reportReadyWaitMs = Math.min(remaining(), 8_000);
         await page.waitForFunction(() => window.__REPORT_READY__ === true, undefined, {
           timeout: reportReadyWaitMs,
         });
@@ -318,11 +353,9 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
           throw readyErr;
         }
       }
-      await waitForFonts(page);
     } else if (settleMs > 0) {
       await page.waitForSelector("#print-report", { timeout: remaining() });
       await page.waitForTimeout(Math.min(settleMs, remaining()));
-      await waitForFonts(page);
     }
 
     await waitForFonts(page);
@@ -354,7 +387,6 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       ] as [string, string]);
     }
 
-    await page.evaluate(evalStripThirdPartyWidgets);
     await page.evaluate(evalStripThirdPartyWidgets);
 
     pdfRenderTimingEmit("before_page_pdf", t0);

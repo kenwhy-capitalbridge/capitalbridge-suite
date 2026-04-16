@@ -18,7 +18,7 @@ declare global {
 let reportReadyCycleToken = 0;
 
 /** `document.fonts.ready` can hang indefinitely if a @font-face never settles (bad URL / blocked). */
-const FONTS_READY_MAX_MS = 4000;
+const FONTS_READY_MAX_MS = 2500;
 
 async function awaitFontsReadyBounded(): Promise<void> {
   if (typeof document === "undefined" || !document.fonts?.ready) return;
@@ -76,7 +76,7 @@ export async function markReportReadyWhenStable(expectedToken?: number): Promise
   });
 
   if (window.matchMedia?.("(print)")?.matches) {
-    for (let f = 0; f < 32; f++) {
+    for (let f = 0; f < 12; f++) {
       if (getReportReadyCycleToken() !== tokenAtStart) return;
       const roots = document.querySelectorAll(".print-chart-wrap");
       if (roots.length === 0) break;

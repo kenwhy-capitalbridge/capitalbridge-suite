@@ -37,7 +37,7 @@ export function ModelHeaderSaveRestore({
   initialSessionId = null,
   logTag,
 }: ModelHeaderSaveRestoreProps) {
-  const { getHandlers, registered } = useModelSaveHandlers();
+  const { getHandlers } = useModelSaveHandlers();
   const [sessionId, setSessionId] = useState<string | null>(() => initialSessionId ?? null);
   const [canSave, setCanSave] = useState(serverCanSave);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "ok" | "error">("idle");
@@ -124,7 +124,14 @@ export function ModelHeaderSaveRestore({
   }, [sessionId]);
 
   const handleSave = useCallback(async () => {
-    if (!useV2 || !userId || !canSave || !registered) return;
+    if (!useV2 || !userId || !canSave) return;
+    const h = getHandlers();
+    if (!h?.getInputs) {
+      console.warn(`${logTag} save: dashboard handlers not registered yet — retry after the model loads`);
+      setSaveStatus("error");
+      window.setTimeout(() => setSaveStatus("idle"), 4000);
+      return;
+    }
     setSaveStatus("saving");
     const sid = await resolveSessionId();
     if (!sid) {
@@ -133,7 +140,6 @@ export function ModelHeaderSaveRestore({
       window.setTimeout(() => setSaveStatus("idle"), 5000);
       return;
     }
-    const h = getHandlers();
     const res = await fetch("/api/advisory-report", {
       method: "POST",
       credentials: "include",
@@ -154,7 +160,7 @@ export function ModelHeaderSaveRestore({
     setSaveStatus("ok");
     setRefreshToken((n) => n + 1);
     setTimeout(() => setSaveStatus("idle"), 2000);
-  }, [userId, canSave, registered, getHandlers, resolveSessionId, logTag]);
+  }, [userId, canSave, getHandlers, resolveSessionId, logTag]);
 
   const handleLoad = useCallback(
     async (id: string) => {
@@ -176,7 +182,7 @@ export function ModelHeaderSaveRestore({
   );
 
   const trialLocked = !canSave;
-  const saveBlocked = saveStatus === "saving" || trialLocked || (useV2 && !registered);
+  const saveBlocked = saveStatus === "saving" || trialLocked;
   const saveMutedStyle: CSSProperties = {
     background: "rgba(48, 56, 48, 0.98)",
     color: "rgba(170, 176, 170, 0.95)",
@@ -258,7 +264,7 @@ export function ModelHeaderSaveRestore({
       <select
         aria-label="Rolling saves (up to 20 newest)"
         value={selectValue}
-        disabled={loadingList || trialLocked || (useV2 && !registered)}
+        disabled={loadingList || trialLocked}
         onChange={async (e) => {
           if (trialLocked) return;
           const id = e.target.value;
