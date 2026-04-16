@@ -8,6 +8,7 @@
  * when `VERCEL=1` or lambda env — no `playwright install` on the serverless image.
  * **Next.js** apps that call `renderPdf` from API routes must set
  * `serverExternalPackages: ["playwright", "@sparticuz/chromium"]` (Forever + model apps `next.config.mjs`).
+ * **Prod diagnostics:** set `PDF_RENDER_TIMING_LOG=1` for JSON stage logs (`renderPdf` + `report-pdf-api` when wired in app routes).
  * Income / Capital Stress: pass `?pdfCapture=` (HMAC from `@cb/shared/pdfCaptureToken`) so headless Chromium
  * does not rely on replaying `Domain=.thecapitalbridge.com` session cookies.
  * Override: `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
@@ -41,8 +42,13 @@ export type RenderPdfOptions = {
   format?: PdfPageFormat;
   /** Forward session cookies for authenticated `page.goto` (same-origin PDF capture). */
   playwrightCookies?: PlaywrightCookieParam[];
-  /** Navigation + readiness wait (ms). Default 120_000. */
+  /** @deprecated Prefer `budgetMs`. If `budgetMs` is omitted, used as total wall-clock budget (not per step). */
   timeoutMs?: number;
+  /**
+   * Total wall-clock budget (ms) for launch + navigation + PDF. Default 120_000.
+   * Prevents stacking multiple 120s Playwright timeouts, which exceeds Vercel FUNCTION_INVOCATION_TIMEOUT.
+   */
+  budgetMs?: number;
   /**
    * Playwright `page.goto` waitUntil. Default `"load"`.
    * Avoid `"networkidle"` on production pages — analytics, chat widgets, and long-lived connections often prevent it from settling.
@@ -198,8 +204,51 @@ const evalForceReportReady = new Function(`
   window.__REPORT_READY__ = true;
 `) as () => void;
 
+function pdfRenderTimingEnabled(): boolean {
+  const v = process.env.PDF_RENDER_TIMING_LOG?.trim();
+  return v === "1" || v?.toLowerCase() === "true";
+}
+
+/** Log pathname only — `pdfCapture` tokens must not appear in production logs. */
+function pdfRenderUrlForLog(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return "(invalid-url)";
+  }
+}
+
+function pdfRenderTimingEmit(
+  stage: string,
+  t0: number,
+  extra?: Record<string, string | number | boolean | null | undefined>,
+): void {
+  if (!pdfRenderTimingEnabled()) return;
+  console.log(
+    JSON.stringify({
+      tag: "renderPdf",
+      stage,
+      elapsed_ms: Date.now() - t0,
+      ...extra,
+    }),
+  );
+}
+
 export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
-  const timeoutMs = options.timeoutMs ?? 120_000;
+  const t0 = Date.now();
+  const budgetMs = options.budgetMs ?? options.timeoutMs ?? 120_000;
+  const deadline = Date.now() + budgetMs;
+  const remaining = (): number => {
+    const ms = deadline - Date.now();
+    if (ms <= 0) {
+      throw new Error(
+        "renderPdf: time budget exceeded — increase budgetMs / PDF_RENDER_BUDGET_MS or Vercel maxDuration (Pro: up to 300s)",
+      );
+    }
+    return Math.max(500, ms);
+  };
+
   const waitReady = options.waitForReportReadySignal !== false;
   const settleMs = options.settleMsBeforePdf ?? 0;
   const navigateWaitUntil = options.navigateWaitUntil ?? "load";
@@ -208,7 +257,16 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     throw new Error("renderPdf: pass only one of playwrightFooter or playwrightFooterFromDom");
   }
 
+  pdfRenderTimingEmit("start", t0, {
+    budget_ms: budgetMs,
+    url: pdfRenderUrlForLog(options.url),
+    wait_ready: waitReady,
+    footer_from_dom: Boolean(options.playwrightFooterFromDom),
+    cookies: options.playwrightCookies?.length ?? 0,
+  });
+
   const browser = await chromium.launch(await chromiumLaunchOptions());
+  pdfRenderTimingEmit("chromium_launched", t0);
   try {
     const context = await browser.newContext(
       options.storageStatePath ? { storageState: options.storageStatePath } : {},
@@ -219,32 +277,37 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     }
     await page.goto(options.url, {
       waitUntil: navigateWaitUntil,
-      timeout: timeoutMs,
+      timeout: remaining(),
     });
+    pdfRenderTimingEmit("goto_done", t0);
 
     // Client report roots mount after hydration; do not rely on networkidle (often never settles in prod).
     await page.waitForSelector(".cb-report-root, #print-report", {
       state: "attached",
-      timeout: timeoutMs,
+      timeout: remaining(),
     });
+    pdfRenderTimingEmit("report_root_visible", t0);
 
     await page.emulateMedia({ media: "print" });
     await page.evaluate(evalResizeForPrint);
 
     await waitForFonts(page);
+    pdfRenderTimingEmit("fonts_after_print_emulate", t0);
 
     if (waitReady) {
       // Playwright signature is (pageFunction, arg, options) — do not pass options as the second argument.
       try {
         await page.waitForFunction(() => window.__REPORT_READY__ === true, undefined, {
-          timeout: timeoutMs,
+          timeout: remaining(),
         });
+        pdfRenderTimingEmit("report_ready_true", t0);
       } catch (readyErr) {
         const hasRoot = await page.$("#print-report, .cb-report-root");
         if (hasRoot) {
           console.warn(
             "[renderPdf] __REPORT_READY__ timed out; forcing ready after #print-report / .cb-report-root found",
           );
+          pdfRenderTimingEmit("report_ready_forced_after_timeout", t0);
           await page.evaluate(evalForceReportReady);
         } else {
           throw readyErr;
@@ -252,8 +315,8 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       }
       await waitForFonts(page);
     } else if (settleMs > 0) {
-      await page.waitForSelector("#print-report", { timeout: timeoutMs });
-      await page.waitForTimeout(settleMs);
+      await page.waitForSelector("#print-report", { timeout: remaining() });
+      await page.waitForTimeout(Math.min(settleMs, remaining()));
       await waitForFonts(page);
     }
 
@@ -270,6 +333,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
         versionLabel: dom.versionLabel.length > 0 ? dom.versionLabel : "v0.0",
         logoDataUri: loadForeverReportLogoFooterDataUri(),
       };
+      pdfRenderTimingEmit("footer_dom_read", t0);
     }
 
     const useFooter = Boolean(footerCtx);
@@ -288,6 +352,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     await page.evaluate(evalStripThirdPartyWidgets);
     await page.evaluate(evalStripThirdPartyWidgets);
 
+    pdfRenderTimingEmit("before_page_pdf", t0);
     const pdf = await page.pdf({
       path: options.outputPath,
       format: options.format ?? "A4",
@@ -305,14 +370,17 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     });
 
     let out = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf);
+    pdfRenderTimingEmit("page_pdf_done", t0, { pdf_bytes: out.length });
 
     if (useFooter && footerCtx) {
       out = await embedTraceabilityPdfMetadata(out, {
         reportId: footerCtx.reportId,
         versionLabel: footerCtx.versionLabel,
       });
+      pdfRenderTimingEmit("metadata_embedded", t0);
     }
 
+    pdfRenderTimingEmit("complete", t0, { out_bytes: out.length });
     return out;
   } finally {
     await browser.close();
