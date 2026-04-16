@@ -245,6 +245,11 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   const totalIncome = summary.monthlyIncome + summary.estimatedMonthlyInvestmentIncome;
   const totalExpenses = summary.monthlyExpenses + summary.monthlyLoanRepayments;
   const net = totalIncome - totalExpenses;
+  /** PDF convention: (expenses + loan repayments) − (income + investment income); positive = deficit, negative = surplus. */
+  const netMonthlyPositionRaw = totalExpenses - totalIncome;
+  const netMonthlyMagnitude = Math.abs(netMonthlyPositionRaw);
+  const netMonthlyLabel: 'deficit' | 'surplus' | null =
+    netMonthlyPositionRaw > 0 ? 'deficit' : netMonthlyPositionRaw < 0 ? 'surplus' : null;
   const pct = coveragePct(totalIncome, totalExpenses);
   const isSurplus = pct >= 100;
   const deficitSurplusLabel = isSurplus ? 'SURPLUS' : 'DEFICIT';
@@ -476,9 +481,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
               fontSize: '11px',
             }}
           >
-            <li style={{ marginBottom: '6px' }}>how the cost of capital compares with expected outcomes</li>
-            <li style={{ marginBottom: '6px' }}>how each decision affects the overall picture under the same assumptions</li>
-            <li style={{ marginBottom: 0 }}>how the structure performs as a whole</li>
+            <li style={{ marginBottom: '6px' }}>How the cost of capital compares with expected outcomes</li>
+            <li style={{ marginBottom: '6px' }}>How each decision affects the overall picture under the same assumptions</li>
+            <li style={{ marginBottom: 0 }}>How the structure performs as a whole</li>
           </ul>
           <p style={{ fontSize: '11px', color: '#374151', lineHeight: 1.55, margin: 0 }}>
             All results are based on the assumptions in this report and are not guaranteed.
@@ -758,60 +763,115 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
           Net monthly position
         </h3>
+        <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58, fontWeight: 600 }}>
+          Net monthly position: {formatCurrency(netMonthlyMagnitude, currency)}
+          {netMonthlyLabel ? ` ${netMonthlyLabel}` : ''}
+        </p>
         <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>What this shows:</strong> Your total monthly position after accounting for all inflows and outflows.
-        </p>
-        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>This is calculated as:</strong>
-        </p>
-        <p style={{ margin: '0 0 2px', color: '#2d3748', lineHeight: 1.58 }}>
-          (Total expenses + total loan repayments)
-        </p>
-        <p style={{ margin: '0 0 2px', color: '#2d3748', lineHeight: 1.58 }}>
-          minus
+          <strong style={{ color: '#0D3A1D' }}>What this shows</strong>
         </p>
         <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.58 }}>
-          (total income + total investment income)
+          Your total monthly position after accounting for all inflows and outflows.
         </p>
         <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>Interpretation:</strong>
+          <strong style={{ color: '#0D3A1D' }}>Calculation</strong>
         </p>
-        <ul style={{ margin: '0 0 8px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55 }}>
-          <li style={{ marginBottom: '4px' }}>If the result is positive (surplus): more income is coming in than going out</li>
-          <li style={{ marginBottom: 0 }}>If the result is negative (deficit): part of your spending depends on capital drawdown</li>
-        </ul>
-        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>Important:</strong>
+        <p style={{ margin: '0 0 2px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
+          (Total expenses + total loan repayments) − (total income + total investment income)
         </p>
-        <p style={{ margin: '0 0 2px', color: '#2d3748', lineHeight: 1.58 }}>
-          A surplus does not always mean the structure is strong.
-        </p>
-        <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.58 }}>
-          A deficit does not always mean the structure is weak.
+        <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
+          ({formatCurrency(summary.monthlyExpenses, currency)} + {formatCurrency(summary.monthlyLoanRepayments, currency)}) − (
+          {formatCurrency(summary.monthlyIncome, currency)} + {formatCurrency(summary.estimatedMonthlyInvestmentIncome, currency)}) ={' '}
+          {formatCurrency(netMonthlyMagnitude, currency)}
+          {netMonthlyLabel ? ` ${netMonthlyLabel}` : ''}
         </p>
         <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          What matters is how capital is being used:
+          <strong style={{ color: '#0D3A1D' }}>Interpretation</strong>
         </p>
-        <ul style={{ margin: '0 0 8px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55 }}>
-          <li style={{ marginBottom: '4px' }}>A surplus may be underutilised if it is not building future income</li>
-          <li style={{ marginBottom: 0 }}>A deficit may be acceptable if capital is being deployed to grow long-term income</li>
-        </ul>
-        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>What to do next:</strong>
-        </p>
-        <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55 }}>
-          <li style={{ marginBottom: '4px' }}>
-            If there is a deficit, review the Income Engineering Model to see where it can be reduced or made intentional
+        <ul
+          style={{
+            margin: '0 0 10px',
+            paddingLeft: '20px',
+            color: '#2d3748',
+            lineHeight: 1.55,
+            fontSize: '11px',
+            listStyleType: 'disc',
+            listStylePosition: 'outside',
+          }}
+        >
+          <li style={{ marginBottom: '6px' }}>
+            If the result is a deficit, part of your spending depends on capital drawdown.
           </li>
           <li style={{ marginBottom: 0 }}>
-            If there is a surplus, assess whether it can be redirected to strengthen long-term income and capital growth
+            If the result is a surplus, more income is coming in than going out.
+          </li>
+        </ul>
+        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
+          <strong style={{ color: '#0D3A1D' }}>Important</strong>
+        </p>
+        <ul
+          style={{
+            margin: '0 0 10px',
+            paddingLeft: '20px',
+            color: '#2d3748',
+            lineHeight: 1.55,
+            fontSize: '11px',
+            listStyleType: 'disc',
+            listStylePosition: 'outside',
+          }}
+        >
+          <li style={{ marginBottom: '6px' }}>A surplus does not always mean the structure is strong.</li>
+          <li style={{ marginBottom: 0 }}>A deficit does not always mean the structure is weak.</li>
+        </ul>
+        <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58, fontWeight: 600 }}>
+          What matters is how capital is being used
+        </p>
+        <ul
+          style={{
+            margin: '0 0 10px',
+            paddingLeft: '20px',
+            color: '#2d3748',
+            lineHeight: 1.55,
+            fontSize: '11px',
+            listStyleType: 'disc',
+            listStylePosition: 'outside',
+          }}
+        >
+          <li style={{ marginBottom: '6px' }}>
+            A surplus may be underutilised if it is not building future income.
+          </li>
+          <li style={{ marginBottom: 0 }}>
+            A deficit may be acceptable if capital is being deployed to grow long-term income.
+          </li>
+        </ul>
+        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
+          <strong style={{ color: '#0D3A1D' }}>What to do next</strong>
+        </p>
+        <ul
+          style={{
+            margin: '0 0 12px',
+            paddingLeft: '20px',
+            color: '#2d3748',
+            lineHeight: 1.55,
+            fontSize: '11px',
+            listStyleType: 'disc',
+            listStylePosition: 'outside',
+          }}
+        >
+          <li style={{ marginBottom: '6px' }}>
+            If there is a deficit, review the Income Engineering Model to see where it can be reduced or made intentional.
+          </li>
+          <li style={{ marginBottom: 0 }}>
+            If there is a surplus, assess whether it can be redirected to strengthen long-term income and capital growth.
           </li>
         </ul>
         <PrintStageLabel>Next Steps</PrintStageLabel>
         <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px', lineHeight: 1.35 }}>{optSubheading}</h3>
         <ol style={{ margin: 0, paddingLeft: '20px', color: '#2d3748' }}>
           {suggestions.map((s, i) => (
-            <li key={i} style={{ marginBottom: '4px' }}>{s}</li>
+            <li key={i} style={{ marginBottom: '4px' }}>
+              {s}
+            </li>
           ))}
         </ol>
         {optTagline ? (
@@ -882,8 +942,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             margin: '0 auto',
           }}
         >
-          This report is for advisory purposes only. Illustrations rest on your assumptions and are not a guarantee of future outcomes.
-          The footer on each page carries the full legal notice.
+          This report is for advisory purposes only. All illustrations are based on your assumptions and are not a guarantee of future outcomes. The footer on each page contains the legal notice.
         </p>
       </div>
       </div>
