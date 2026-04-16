@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import LegacyApp, { type CapitalStressAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
@@ -25,7 +25,7 @@ export function CapitalStressDashboardClient({
   const appRef = useRef<CapitalStressAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handlers = {
       getInputs: () => appRef.current?.getInputs() ?? {},
       getResults: () => appRef.current?.getResults() ?? {},

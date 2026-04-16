@@ -1,8 +1,4 @@
-import {
-  BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT,
-  BRAND_CAPITAL_BRIDGE_LOGO_GOLD,
-  BRAND_LIONHEAD_GOLD,
-} from "./brandPaths";
+import { BRAND_CAPITAL_BRIDGE_LOGO_GOLD, BRAND_LIONHEAD_GOLD } from "./brandPaths";
 
 export type HeaderBrandPictureProps = {
   pictureClassName?: string;
@@ -19,7 +15,8 @@ export function HeaderBrandPicture({
 }: HeaderBrandPictureProps) {
   return (
     <picture className={`cb-header-chrome-picture ${pictureClassName}`.trim()}>
-      <source media="(min-width: 1440px)" srcSet={BRAND_BIGGERFONT_CAPITAL_LOGO_VERTICAL_TRANSPARENT} />
+      {/* Wide desktop: same lockup as tablet — avoids 404 on optional BiggerFont asset missing from some app `public/brand/`. */}
+      <source media="(min-width: 1440px)" srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD} />
       <source media="(min-width: 1024px)" srcSet={BRAND_CAPITAL_BRIDGE_LOGO_GOLD} />
       <img
         src={BRAND_LIONHEAD_GOLD}

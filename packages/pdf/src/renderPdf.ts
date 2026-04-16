@@ -129,7 +129,10 @@ const evalResizeForPrint = new Function(`
 const evalWaitFontsReady = new Function(`
   return (async () => {
     if (typeof document === "undefined" || !document.fonts) return;
-    await document.fonts.ready;
+    await Promise.race([
+      document.fonts.ready,
+      new Promise(function (resolve) { setTimeout(resolve, 5000); }),
+    ]);
   })();
 `) as () => Promise<void>;
 
@@ -297,8 +300,10 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
     if (waitReady) {
       // Playwright signature is (pageFunction, arg, options) — do not pass options as the second argument.
       try {
+        // Cap separately from total `remaining()` so a hung client cannot burn the entire serverless budget.
+        const reportReadyWaitMs = Math.min(remaining(), 45_000);
         await page.waitForFunction(() => window.__REPORT_READY__ === true, undefined, {
-          timeout: remaining(),
+          timeout: reportReadyWaitMs,
         });
         pdfRenderTimingEmit("report_ready_true", t0);
       } catch (readyErr) {

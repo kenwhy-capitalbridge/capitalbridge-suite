@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import LegacyApp, { type IncomeEngineeringAppHandle } from "@/legacy/App";
 import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import type { CurrencyCode } from "@/legacy/config/currency";
@@ -20,7 +20,7 @@ export function IncomeEngineeringDashboardClient({
   const appRef = useRef<IncomeEngineeringAppHandle>(null);
   const { setHandlers } = useModelSaveHandlers();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handlers = {
       getInputs: () => appRef.current?.getInputs() ?? {},
       getResults: () => appRef.current?.getResults() ?? {},

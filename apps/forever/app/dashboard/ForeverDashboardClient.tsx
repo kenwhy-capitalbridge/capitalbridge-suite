@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import ForeverApp, { type ForeverAppHandle } from "@/legacy/App";
 import { AdvisoryShell } from "./AdvisoryShell";
 import { useForeverCalculatorContext } from "../ForeverCalculatorProvider";
@@ -20,7 +20,7 @@ export function ForeverDashboardClient({
   const appRef = useRef<ForeverAppHandle>(null);
   const { setHandlers } = useForeverCalculatorContext();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handlers = {
       getInputs: () => appRef.current?.getInputs() ?? {},
       getResults: () => appRef.current?.getResults() ?? {},

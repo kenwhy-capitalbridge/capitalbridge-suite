@@ -17,6 +17,19 @@ declare global {
 
 let reportReadyCycleToken = 0;
 
+/** `document.fonts.ready` can hang indefinitely if a @font-face never settles (bad URL / blocked). */
+const FONTS_READY_MAX_MS = 4000;
+
+async function awaitFontsReadyBounded(): Promise<void> {
+  if (typeof document === "undefined" || !document.fonts?.ready) return;
+  await Promise.race([
+    document.fonts.ready,
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, FONTS_READY_MAX_MS);
+    }),
+  ]);
+}
+
 export function resetReportReady(): void {
   if (typeof window === "undefined") return;
   window.__REPORT_READY__ = false;
@@ -47,7 +60,7 @@ export async function markReportReadyWhenStable(expectedToken?: number): Promise
   const tokenAtStart = expectedToken !== undefined ? expectedToken : getReportReadyCycleToken();
 
   try {
-    if (document.fonts?.ready) await document.fonts.ready;
+    await awaitFontsReadyBounded();
   } catch {
     /* ignore */
   }
@@ -112,7 +125,21 @@ export function subscribeReportReadyOnPrint(scheduleComplete: () => void): () =>
   const run = () => {
     if (mq.matches) scheduleComplete();
   };
-  mq.addEventListener("change", run);
+  const mqLegacy = mq as MediaQueryList & {
+    addListener?: (cb: (this: MediaQueryList, ev: MediaQueryListEvent) => void) => void;
+    removeListener?: (cb: (this: MediaQueryList, ev: MediaQueryListEvent) => void) => void;
+  };
+  if (typeof mq.addEventListener === "function") {
+    mq.addEventListener("change", run);
+  } else {
+    mqLegacy.addListener?.(run);
+  }
   if (mq.matches) queueMicrotask(run);
-  return () => mq.removeEventListener("change", run);
+  return () => {
+    if (typeof mq.removeEventListener === "function") {
+      mq.removeEventListener("change", run);
+    } else {
+      mqLegacy.removeListener?.(run);
+    }
+  };
 }
