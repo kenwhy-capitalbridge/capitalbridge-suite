@@ -5,7 +5,6 @@ import { PlatformLoginButton } from "./PlatformLoginButton";
 import { PlatformHeaderAuthCluster } from "./PlatformHeaderAuthCluster";
 import { PlatformMarketingHomeLink } from "./PlatformMarketingHomeLink";
 import { PlatformHeaderBackButton } from "./PlatformHeaderBackButton";
-import { initialsFromFirstLastOrFallback } from "../../lib/profileInitials";
 
 function marketingHomeUrl(): string {
   const base = MARKETING_SITE_URL.replace(/\/+$/, "");
@@ -104,35 +103,6 @@ export async function PlatformFrameworkHeader({
 
   if (!user && !verifiedUserEmail) return null;
 
-  const displayName = user
-    ? (
-        (user.user_metadata?.name as string | undefined)?.trim() ||
-        (user.user_metadata?.full_name as string | undefined)?.trim() ||
-        null
-      )
-    : null;
-  const emailForInitials = user?.email ?? verifiedUserEmail ?? null;
-
-  let profileFirst = profileNames?.firstName ?? null;
-  let profileLast = profileNames?.lastName ?? null;
-  if (user && !profileNames) {
-    const { data: prof } = await supabase
-      .schema("public")
-      .from("profiles")
-      .select("first_name, last_name")
-      .eq("id", user.id)
-      .maybeSingle();
-    profileFirst = prof?.first_name?.trim() ?? null;
-    profileLast = prof?.last_name?.trim() ?? null;
-  }
-
-  const initials = initialsFromFirstLastOrFallback(
-    profileFirst,
-    profileLast,
-    displayName,
-    emailForInitials
-  );
-
   const home = marketingHomeUrl();
   const showTrialPill = membershipPlanSlug === "trial";
 
@@ -177,7 +147,7 @@ export async function PlatformFrameworkHeader({
               TRIAL
             </span>
           ) : null}
-          <PlatformHeaderAuthCluster initials={initials} />
+          <PlatformHeaderAuthCluster />
         </div>
       </div>
     </header>

@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./cb-model-base.css": "./src/cb-model-base.css",
-    "./brandPaths": "./src/brandPaths.ts"
+    "./brandPaths": "./src/brandPaths.ts",
+    "./siteFaviconMetadata": "./src/siteFaviconMetadata.ts"
   },
   "dependencies": {
     "@cb/shared": "*",

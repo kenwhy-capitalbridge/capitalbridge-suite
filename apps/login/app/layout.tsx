@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ElfsightChatbot } from "@cb/ui";
+import { CB_SITE_FAVICON_ICONS } from "@cb/ui/siteFaviconMetadata";
 import Header from "@/components/Header";
 import { AuthHelpFooter } from "@/components/AuthHelpFooter";
 import { TabCloseSessionClear } from "@/components/TabCloseSessionClear";
@@ -8,6 +9,7 @@ import { TabCloseSessionClear } from "@/components/TabCloseSessionClear";
 export const metadata: Metadata = {
   title: "Capital Bridge — Login",
   description: "Capital Bridge login and onboarding.",
+  icons: CB_SITE_FAVICON_ICONS,
 };
 
 export default function RootLayout({

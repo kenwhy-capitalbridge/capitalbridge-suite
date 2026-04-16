@@ -13,6 +13,7 @@ import {
   ModelAppHeader,
   ModelMetricSpineProvider,
 } from "@cb/ui";
+import { CB_SITE_FAVICON_ICONS } from "@cb/ui/siteFaviconMetadata";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ForeverCalculatorProvider } from "./ForeverCalculatorProvider";
 import "./globals.css";
@@ -20,6 +21,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Forever | Capital Bridge",
   description: "Legacy planning tool — Capital Bridge.",
+  icons: CB_SITE_FAVICON_ICONS,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -6,10 +6,9 @@ import { useTransition } from "react";
 import { ChromeSpinnerGlyph } from "@cb/ui";
 import { PlatformLogoutToMarketing } from "./PlatformLogoutToMarketing";
 
-export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
+export function PlatformHeaderAuthCluster() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const label = `Account profile (${initials})`;
 
   return (
     <div
@@ -22,9 +21,9 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
     >
       <Link
         href="/profile"
-        className="pf-header-profile-avatar"
-        aria-label={label}
-        title="Profile"
+        className="pf-chrome-gold-btn pf-chrome-gold-btn--header-inline"
+        aria-label="Settings — account and profile"
+        title="Settings"
         aria-busy={isPending}
         aria-disabled={isPending}
         tabIndex={isPending ? -1 : undefined}
@@ -42,7 +41,14 @@ export function PlatformHeaderAuthCluster({ initials }: { initials: string }) {
           opacity: isPending ? 0.92 : 1,
         }}
       >
-        {isPending ? <ChromeSpinnerGlyph sizePx={12} /> : initials}
+        {isPending ? (
+          <span className="cb-pending-btn-inner">
+            <ChromeSpinnerGlyph sizePx={12} />
+            <span className="cb-visually-hidden">Loading</span>
+          </span>
+        ) : (
+          "SETTINGS"
+        )}
       </Link>
       <PlatformLogoutToMarketing inline />
     </div>

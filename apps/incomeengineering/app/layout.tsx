@@ -12,6 +12,7 @@ import {
   ModelAppHeader,
   ModelMetricSpineProvider,
 } from "@cb/ui";
+import { CB_SITE_FAVICON_ICONS } from "@cb/ui/siteFaviconMetadata";
 import { ModelHeaderSaveRestore } from "@cb/advisory-graph/ModelHeaderSaveRestore";
 import { ModelSaveHandlersProvider } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import "./globals.css";
@@ -19,6 +20,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Income Engineering | Capital Bridge",
   description: "Income Engineering planning tool — Capital Bridge.",
+  icons: CB_SITE_FAVICON_ICONS,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

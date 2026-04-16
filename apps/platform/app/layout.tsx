@@ -11,6 +11,7 @@ const cbFrameworkFont = Tinos({
   variable: "--font-cb-framework",
 });
 import { CbLegalSiteFooter, ElfsightChatbot } from "@cb/ui";
+import { CB_SITE_FAVICON_ICONS } from "@cb/ui/siteFaviconMetadata";
 import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
 
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
   title: "Capital Bridge Advisory Platform",
   description:
     "Capital Bridge Advisory Platform — institutional-grade capital modelling for income sustainability, risk resilience, and long-term financial structure.",
+  icons: CB_SITE_FAVICON_ICONS,
 };
 
 const CB_MBR_SAFE = "cb_mbr_safe";
