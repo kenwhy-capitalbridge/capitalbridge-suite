@@ -1,20 +1,47 @@
 /** Malaysia default IANA zone — same as `marketIdToReportExportTimeZone("MY")` in `@cb/shared/markets`. */
 export const CB_REPORT_EXPORT_TIMEZONE_KUALA_LUMPUR = "Asia/Kuala_Lumpur";
 
-/** Date and time for PDF / report covers (en-GB, 24h). Optional `timeZone` (e.g. STEP 10 Kuala Lumpur). */
+function withUppercaseMeridiem(label: string): string {
+  return label.replace(/\b(am|pm)\b/gi, (m) => m.toUpperCase());
+}
+
+/** Date and time for PDF / report covers (en-GB, 12h with AM/PM). Optional `timeZone` (e.g. STEP 10 Kuala Lumpur). */
 export function formatReportGeneratedAtLabel(
   d: Date = new Date(),
   options?: { timeZone?: string },
 ): string {
-  return d.toLocaleString("en-GB", {
+  const raw = d.toLocaleString("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
-    hour12: false,
+    hour12: true,
     ...(options?.timeZone ? { timeZone: options.timeZone } : {}),
   });
+  return withUppercaseMeridiem(raw);
+}
+
+/**
+ * Short date + time for rolling-save / snapshot lists (viewer locale, 12h with AM/PM).
+ * Accepts an ISO string or `Date`.
+ */
+export function formatRollingSaveTimestamp(isoOrDate: string | Date): string {
+  try {
+    const d = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;
+    if (Number.isNaN(d.getTime())) return typeof isoOrDate === "string" ? String(isoOrDate) : "";
+    const raw = d.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return withUppercaseMeridiem(raw);
+  } catch {
+    return typeof isoOrDate === "string" ? isoOrDate : "";
+  }
 }
 
 export function reportPreparedForLine(displayName: string): string {

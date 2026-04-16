@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { formatRollingSaveTimestamp } from "@cb/shared/reportIdentity";
 import {
   listReports,
   getReport,
@@ -11,15 +12,7 @@ import {
 const LIMIT = 20;
 
 function formatTimestamp(iso: string): string {
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString(undefined, {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  } catch {
-    return iso;
-  }
+  return formatRollingSaveTimestamp(iso);
 }
 
 function relativeTime(iso: string): string {

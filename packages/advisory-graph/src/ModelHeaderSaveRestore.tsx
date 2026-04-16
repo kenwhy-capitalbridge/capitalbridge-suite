@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { ChromeSpinnerGlyph } from "@cb/ui";
+import { formatRollingSaveTimestamp } from "@cb/shared/reportIdentity";
 import { deriveEntitlements, type Persona } from "./platformAccess";
 import { useModelSaveHandlers } from "./ModelSaveHandlersContext";
 
@@ -9,14 +10,7 @@ const LIMIT = 20;
 const useV2 = process.env.NEXT_PUBLIC_USE_V2 === "1";
 
 function formatTimestamp(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  } catch {
-    return iso;
-  }
+  return formatRollingSaveTimestamp(iso);
 }
 
 export type ModelHeaderSaveRestoreProps = {

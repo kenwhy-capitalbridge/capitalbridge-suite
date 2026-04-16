@@ -30,13 +30,15 @@ function formatCoverDate(value?: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
 
-  return parsed.toLocaleString("en-MY", {
+  const raw = parsed.toLocaleString("en-MY", {
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    hour12: true,
   });
+  return raw.replace(/\b(am|pm)\b/gi, (m) => m.toUpperCase());
 }
 
 function getReportTitle(rawTitle?: string): string {

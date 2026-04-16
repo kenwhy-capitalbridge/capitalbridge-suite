@@ -127,12 +127,13 @@ export function formatForeverCoverGeneratedLabel(d: Date, timeZone: string): str
       year: "numeric",
       timeZone: tz,
     });
-    const timePart = d.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
+    const timePartRaw = d.toLocaleTimeString("en-GB", {
+      hour: "numeric",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
       timeZone: tz,
     });
+    const timePart = timePartRaw.replace(/\b(am|pm)\b/gi, (m) => m.toUpperCase());
     return `${datePart} at ${timePart}`;
   } catch {
     const datePart = d.toLocaleDateString("en-GB", {
@@ -141,12 +142,13 @@ export function formatForeverCoverGeneratedLabel(d: Date, timeZone: string): str
       year: "numeric",
       timeZone: "UTC",
     });
-    const timePart = d.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
+    const timePartRaw = d.toLocaleTimeString("en-GB", {
+      hour: "numeric",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
       timeZone: "UTC",
     });
+    const timePart = timePartRaw.replace(/\b(am|pm)\b/gi, (m) => m.toUpperCase());
     return `${datePart} at ${timePart}`;
   }
 }
