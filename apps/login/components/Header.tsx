@@ -37,8 +37,8 @@ function HeaderChrome({
 
   /** Mobile: compact lion only (`/brand/lionhead_Gold.svg`); md+: full `HeaderBrandPicture`. */
   const logoClassName = pricingStyleGrid
-    ? "relative flex h-7 w-7 shrink-0 items-center justify-self-start md:h-auto md:w-auto md:max-w-[34%] min-[400px]:md:max-w-[40%] sm:max-w-none"
-    : "relative flex h-7 w-7 shrink-0 items-center md:h-auto md:w-auto md:max-w-[42%] sm:max-w-none";
+    ? "relative flex h-[21px] w-[21px] shrink-0 items-center justify-self-start md:h-auto md:w-auto md:max-w-[34%] min-[400px]:md:max-w-[40%] sm:max-w-none"
+    : "relative flex h-[21px] w-[21px] shrink-0 items-center md:h-auto md:w-auto md:max-w-[42%] sm:max-w-none";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#FFCC6A]/20 bg-[#0D3A1D] pt-[env(safe-area-inset-top)]">
@@ -57,9 +57,9 @@ function HeaderChrome({
           <img
             src={BRAND_LIONHEAD_GOLD}
             alt=""
-            width={28}
-            height={28}
-            className="h-7 w-7 shrink-0 object-contain md:hidden"
+            width={21}
+            height={21}
+            className="h-[21px] w-[21px] shrink-0 object-contain md:hidden"
             aria-hidden
           />
           <span className="hidden md:contents">

@@ -27,8 +27,9 @@
   --pf-chrome-pad-x-inline: 0.65rem;
   /**
    * Sticky header logos — scale up to nearly fill the bar (login sm:h-14 ≈ 56px; mobile min-h-11 ≈ 44px).
+   * ~25% smaller than original caps (user request ~20–30% reduction across apps).
    */
-  --cb-header-logo-h: clamp(28px, 4.2vh, 48px);
+  --cb-header-logo-h: clamp(21px, 3.15vh, 36px);
 }
 
 @media (max-width: 639px) {
@@ -127,7 +128,7 @@
 .cb-header-chrome-picture-img {
   height: 100%;
   width: auto;
-  max-width: 240px;
+  max-width: 180px;
   max-height: 100%;
   object-fit: contain;
   object-position: left center;
@@ -144,7 +145,7 @@
 
 @media (max-width: 768px) {
   .cb-header-chrome-picture-img {
-    height: 28px;
+    height: 21px;
     max-width: none;
   }
 }

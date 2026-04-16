@@ -21,8 +21,8 @@ export function HeaderBrandPicture({
       <img
         src={BRAND_LIONHEAD_GOLD}
         alt="Capital Bridge"
-        width={280}
-        height={48}
+        width={210}
+        height={36}
         decoding="async"
         fetchPriority="high"
         className={imgClassName}
