@@ -43,6 +43,11 @@ import type {
   TermLoanParams,
 } from '../types/calculator';
 import type { SustainabilityStatus } from '../types/calculator';
+import {
+  buildOptimisationDecisionView,
+  type OptimisationQuality,
+  type TriState,
+} from '../lib/optimisationDecisionEngine';
 import { MECHANISM_LABELS } from '../lib/assetUnlockDefaults';
 import { getUnlockedLiquidity, getLoanForAsset } from '../lib/assetUnlockToLoans';
 import { monthlyPayment } from '../lib/amortize';
@@ -58,6 +63,103 @@ function getStatusLabel(tier: SustainabilityStatus): string {
   if (tier === 'amber') return 'PLAUSIBLE';
   if (tier === 'red') return 'UNSUSTAINABLE';
   return 'INVALID';
+}
+
+function triLabelPdf(t: TriState): string {
+  if (t === 'yes') return 'Yes';
+  if (t === 'no') return 'No';
+  return 'Partially';
+}
+
+function pdfQualityHeading(q: OptimisationQuality): string {
+  if (q.kind === 'deficit') {
+    if (q.label === 'GOOD_DEFICIT') return 'GOOD DEFICIT';
+    if (q.label === 'BAD_DEFICIT') return 'BAD DEFICIT';
+    return 'WATCHLIST DEFICIT';
+  }
+  if (q.kind === 'surplus') {
+    return q.label === 'PRODUCTIVE_SURPLUS' ? 'PRODUCTIVE SURPLUS' : 'IDLE SURPLUS';
+  }
+  return 'BALANCED POSITION';
+}
+
+function pdfInterpretiveTracePair(q: OptimisationQuality): [string, string] {
+  if (q.kind === 'deficit') {
+    if (q.label === 'GOOD_DEFICIT') {
+      return [
+        'Deficit is driven by capital deployment, not pure shortfall.',
+        'Capital unlocked contributes to future income generation.',
+      ];
+    }
+    if (q.label === 'BAD_DEFICIT') {
+      return [
+        'Deficit is large relative to current income.',
+        'Capital outcome is weak, unclear, or not strong enough to justify the pressure.',
+      ];
+    }
+    return [
+      'Deficit may be manageable, but the margin is thin.',
+      'Outcome depends on assumptions holding.',
+    ];
+  }
+  if (q.kind === 'surplus') {
+    if (q.label === 'PRODUCTIVE_SURPLUS') {
+      return [
+        'Surplus exists alongside active capital deployment.',
+        'Structure appears to strengthen long-term income or capital.',
+      ];
+    }
+    return [
+      'Surplus exists, but capital deployment is limited.',
+      'Structure may be underutilising available capital.',
+    ];
+  }
+  return [
+    'Inflows and outflows are closely matched on these inputs.',
+    'Small assumption changes could tilt the picture either way.',
+  ];
+}
+
+function pdfClassificationInterpretationParagraph(q: OptimisationQuality): string {
+  if (q.kind === 'deficit') {
+    if (q.label === 'GOOD_DEFICIT') {
+      return 'This deficit appears to be strategic. It creates short-term pressure but may strengthen long-term capital and income.';
+    }
+    if (q.label === 'BAD_DEFICIT') {
+      return 'This deficit appears to weaken the structure. The pressure is not clearly justified by long-term benefit.';
+    }
+    return 'This deficit may be manageable, but the margin is thin and should be monitored carefully.';
+  }
+  if (q.kind === 'surplus') {
+    if (q.label === 'PRODUCTIVE_SURPLUS') {
+      return 'This surplus supports the structure and appears to strengthen long-term capital.';
+    }
+    return 'This surplus is stable, but may not be fully utilised to build future income.';
+  }
+  return 'Inflows and outflows are closely matched on these inputs. Small changes could tilt the picture either way.';
+}
+
+type PdfIeTraceMode = 'full' | 'compact' | 'minimal';
+
+function pdfIeTraceDensityScore(args: {
+  loanCount: number;
+  assetUnlockCount: number;
+  suggestionCount: number;
+  lionEnabled: boolean;
+}): number {
+  let s = 0;
+  s += Math.min(4, args.loanCount * 2);
+  s += Math.min(3, args.assetUnlockCount);
+  if (args.suggestionCount >= 4) s += 1;
+  if (args.lionEnabled) s += 1;
+  return s;
+}
+
+function pdfIeTraceModeFromScore(score: number, invalid: boolean): PdfIeTraceMode {
+  if (invalid) return 'minimal';
+  if (score >= 8) return 'minimal';
+  if (score >= 4) return 'compact';
+  return 'full';
 }
 
 function summarizeUnlockParams(asset: AssetUnlock, currency: CurrencyCode): string {
@@ -245,11 +347,6 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
   const totalIncome = summary.monthlyIncome + summary.estimatedMonthlyInvestmentIncome;
   const totalExpenses = summary.monthlyExpenses + summary.monthlyLoanRepayments;
   const net = totalIncome - totalExpenses;
-  /** PDF convention: (expenses + loan repayments) − (income + investment income); positive = deficit, negative = surplus. */
-  const netMonthlyPositionRaw = totalExpenses - totalIncome;
-  const netMonthlyMagnitude = Math.abs(netMonthlyPositionRaw);
-  const netMonthlyLabel: 'deficit' | 'surplus' | null =
-    netMonthlyPositionRaw > 0 ? 'deficit' : netMonthlyPositionRaw < 0 ? 'surplus' : null;
   const pct = coveragePct(totalIncome, totalExpenses);
   const isSurplus = pct >= 100;
   const deficitSurplusLabel = isSurplus ? 'SURPLUS' : 'DEFICIT';
@@ -268,6 +365,106 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     worstMonthCoverage,
     summary.invalidReason
   );
+
+  const ieOptimisationPdf = useMemo(() => {
+    const decision = buildOptimisationDecisionView({ summary, totalCapital, loans });
+    const invalid = summary.sustainabilityStatus === 'invalid';
+    const density = pdfIeTraceDensityScore({
+      loanCount: loans.length,
+      assetUnlockCount: assetUnlocks.length,
+      suggestionCount: suggestions.length,
+      lionEnabled: lionAccessEnabled,
+    });
+    const traceMode = pdfIeTraceModeFromScore(density, invalid);
+    const c = (n: number) => formatCurrency(n, currency);
+    const f = decision.formulaParts;
+    const positionRaw = decision.positionRaw;
+    const magnitude = decision.magnitude;
+    const flowWord: 'deficit' | 'surplus' | null =
+      positionRaw > 0 ? 'deficit' : positionRaw < 0 ? 'surplus' : null;
+
+    const statusLabelLocal = getStatusLabel(summary.sustainabilityStatus);
+
+    const maxLoanY = decision.funding.longestLoanYears;
+    const positiveTenures = loans.map((l) => l.tenureYears).filter((y) => Number.isFinite(y) && y > 0);
+    const loanYearsForPressure = maxLoanY ?? (positiveTenures.length ? Math.max(...positiveTenures) : null);
+    const loanPressureBullet =
+      loans.length === 0
+        ? `Loan pressure: ${c(0)} per month (no modelled loans).`
+        : `Loan pressure: ${c(summary.monthlyLoanRepayments)} per month over ${loanYearsForPressure ?? 'modelled'} years.`;
+
+    const netBullet = `Net monthly position: ${c(magnitude)}${flowWord ? ` ${flowWord}` : ''}.`;
+    const unlockedBullet = `Total capital unlocked: ${c(decision.funding.totalUnlocked)}.`;
+    const structureBullet = `Structure status: ${statusLabelLocal}.`;
+
+    const [interp1, interp2] = pdfInterpretiveTracePair(decision.quality);
+
+    const showClassification = !invalid;
+
+    let whyBullets: string[];
+    if (!showClassification) {
+      whyBullets = [
+        structureBullet,
+        'Review inputs with your adviser until the scenario falls within illustrated ranges.',
+      ];
+    } else if (traceMode === 'minimal') {
+      whyBullets = [structureBullet, interp1];
+    } else if (traceMode === 'compact') {
+      whyBullets =
+        loans.length >= 1
+          ? [netBullet, loanPressureBullet, interp1]
+          : [netBullet, structureBullet, interp1];
+    } else {
+      whyBullets =
+        loans.length >= 1
+          ? [netBullet, unlockedBullet, loanPressureBullet, interp1, interp2]
+          : [netBullet, unlockedBullet, structureBullet, interp1, interp2];
+    }
+
+    const capitalOutcomeBody =
+      decision.capitalOutcome.remainingAfterLoans != null
+        ? `After loan periods, the model still points to roughly ${c(decision.capitalOutcome.remainingAfterLoans)} in additional capital where that figure is available.`
+        : 'This model shows your portfolio and unlocked liquidity today. It does not project balances after every loan has fully repaid, so long-term capital persistence is described in cautious terms only.';
+
+    const incomeGrowthLine =
+      decision.capitalOutcome.incomeGrowthHint === 'likely_supportive'
+        ? 'On these inputs, unlocked capital and investment income appear to support stronger long-term, income-generating capital.'
+        : decision.capitalOutcome.incomeGrowthHint === 'uncertain'
+          ? 'Unlocked capital is present, but the long-term income effect depends on how it stays invested and how loans evolve.'
+          : 'With little or no unlocking capital on these inputs, the structure is less clearly adding long-term income-generating capital from that lever.';
+
+    const tenureLine =
+      decision.funding.shortestLoanYears != null && decision.funding.longestLoanYears != null
+        ? decision.funding.shortestLoanYears === decision.funding.longestLoanYears
+          ? `${decision.funding.shortestLoanYears} years`
+          : `${decision.funding.shortestLoanYears} to ${decision.funding.longestLoanYears} years`
+        : loans.length
+          ? 'See loan table above for tenures.'
+          : 'Not modelled (no loans from unlocking capital).';
+
+    return {
+      decision,
+      traceMode,
+      showClassification,
+      whyBullets,
+      capitalOutcomeBody,
+      incomeGrowthLine,
+      tenureLine,
+      formulaLineDisplay: `(${c(f.expenses)} + ${c(f.loanRepayments)}) − (${c(f.recurringIncome)} + ${c(f.investmentIncome)}) = ${c(magnitude)}${flowWord ? ` ${flowWord}` : ''}`,
+      netHeadline: `Net monthly position: ${c(magnitude)}${flowWord ? ` ${flowWord}` : ''}`,
+      interpretationParagraph: showClassification
+        ? pdfClassificationInterpretationParagraph(decision.quality)
+        : 'Critical inputs sit outside illustrated limits. Stabilise the scenario with your adviser before relying on this narrative.',
+    };
+  }, [
+    summary,
+    totalCapital,
+    loans,
+    assetUnlocks.length,
+    suggestions.length,
+    lionAccessEnabled,
+    currency,
+  ]);
 
   const lionReport = useMemo(() => {
     if (!lionAccessEnabled) return null;
@@ -763,10 +960,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
           Net monthly position
         </h3>
-        <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58, fontWeight: 600 }}>
-          Net monthly position: {formatCurrency(netMonthlyMagnitude, currency)}
-          {netMonthlyLabel ? ` ${netMonthlyLabel}` : ''}
-        </p>
+        <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58, fontWeight: 600 }}>{ieOptimisationPdf.netHeadline}</p>
         <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58 }}>
           <strong style={{ color: '#0D3A1D' }}>What this shows</strong>
         </p>
@@ -780,17 +974,26 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           (Total expenses + total loan repayments) − (total income + total investment income)
         </p>
         <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
-          ({formatCurrency(summary.monthlyExpenses, currency)} + {formatCurrency(summary.monthlyLoanRepayments, currency)}) − (
-          {formatCurrency(summary.monthlyIncome, currency)} + {formatCurrency(summary.estimatedMonthlyInvestmentIncome, currency)}) ={' '}
-          {formatCurrency(netMonthlyMagnitude, currency)}
-          {netMonthlyLabel ? ` ${netMonthlyLabel}` : ''}
+          {ieOptimisationPdf.formulaLineDisplay}
         </p>
-        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>Interpretation</strong>
-        </p>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          Structure classification
+        </h3>
+        {ieOptimisationPdf.showClassification ? (
+          <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58, fontWeight: 700, letterSpacing: '0.06em' }}>
+            {pdfQualityHeading(ieOptimisationPdf.decision.quality)}
+          </p>
+        ) : (
+          <p style={{ margin: '0 0 10px', color: '#2d3748', lineHeight: 1.58 }}>
+            Not available while inputs sit outside illustrated ranges.
+          </p>
+        )}
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          Why this classification
+        </h3>
         <ul
           style={{
-            margin: '0 0 10px',
+            margin: '0 0 12px',
             paddingLeft: '20px',
             color: '#2d3748',
             lineHeight: 1.55,
@@ -799,54 +1002,15 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             listStylePosition: 'outside',
           }}
         >
-          <li style={{ marginBottom: '6px' }}>
-            If the result is a deficit, part of your spending depends on capital drawdown.
-          </li>
-          <li style={{ marginBottom: 0 }}>
-            If the result is a surplus, more income is coming in than going out.
-          </li>
+          {ieOptimisationPdf.whyBullets.map((line, i) => (
+            <li key={i} style={{ marginBottom: i === ieOptimisationPdf.whyBullets.length - 1 ? 0 : '6px' }}>
+              {line}
+            </li>
+          ))}
         </ul>
-        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>Important</strong>
-        </p>
-        <ul
-          style={{
-            margin: '0 0 10px',
-            paddingLeft: '20px',
-            color: '#2d3748',
-            lineHeight: 1.55,
-            fontSize: '11px',
-            listStyleType: 'disc',
-            listStylePosition: 'outside',
-          }}
-        >
-          <li style={{ marginBottom: '6px' }}>A surplus does not always mean the structure is strong.</li>
-          <li style={{ marginBottom: 0 }}>A deficit does not always mean the structure is weak.</li>
-        </ul>
-        <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58, fontWeight: 600 }}>
-          What matters is how capital is being used
-        </p>
-        <ul
-          style={{
-            margin: '0 0 10px',
-            paddingLeft: '20px',
-            color: '#2d3748',
-            lineHeight: 1.55,
-            fontSize: '11px',
-            listStyleType: 'disc',
-            listStylePosition: 'outside',
-          }}
-        >
-          <li style={{ marginBottom: '6px' }}>
-            A surplus may be underutilised if it is not building future income.
-          </li>
-          <li style={{ marginBottom: 0 }}>
-            A deficit may be acceptable if capital is being deployed to grow long-term income.
-          </li>
-        </ul>
-        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
-          <strong style={{ color: '#0D3A1D' }}>What to do next</strong>
-        </p>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          What is driving this
+        </h3>
         <ul
           style={{
             margin: '0 0 12px',
@@ -859,17 +1023,71 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           }}
         >
           <li style={{ marginBottom: '6px' }}>
-            If there is a deficit, review the Income Engineering Model to see where it can be reduced or made intentional.
+            Covered by existing capital: {triLabelPdf(ieOptimisationPdf.decision.funding.capitalCover)}.
+          </li>
+          <li style={{ marginBottom: '6px' }}>
+            Covered by investment income: {triLabelPdf(ieOptimisationPdf.decision.funding.investmentIncomeCover)}.
+          </li>
+          <li style={{ marginBottom: '6px' }}>
+            Pressure period (loan tenure range): {ieOptimisationPdf.tenureLine}
           </li>
           <li style={{ marginBottom: 0 }}>
-            If there is a surplus, assess whether it can be redirected to strengthen long-term income and capital growth.
+            Total capital unlocked: {formatCurrency(ieOptimisationPdf.decision.funding.totalUnlocked, currency)}.
           </li>
         </ul>
-        <PrintStageLabel>Next Steps</PrintStageLabel>
-        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px', lineHeight: 1.35 }}>{optSubheading}</h3>
-        <ol style={{ margin: 0, paddingLeft: '20px', color: '#2d3748' }}>
-          {suggestions.map((s, i) => (
-            <li key={i} style={{ marginBottom: '4px' }}>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          Capital outcome if maintained
+        </h3>
+        <ul
+          style={{
+            margin: '0 0 12px',
+            paddingLeft: '20px',
+            color: '#2d3748',
+            lineHeight: 1.55,
+            fontSize: '11px',
+            listStyleType: 'disc',
+            listStylePosition: 'outside',
+          }}
+        >
+          <li style={{ marginBottom: '6px' }}>
+            Total capital unlocked: {formatCurrency(ieOptimisationPdf.decision.capitalOutcome.totalUnlocked, currency)}.
+          </li>
+          <li style={{ marginBottom: '6px' }}>{ieOptimisationPdf.capitalOutcomeBody}</li>
+          <li style={{ marginBottom: 0 }}>{ieOptimisationPdf.incomeGrowthLine}</li>
+        </ul>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          Interpretation
+        </h3>
+        <ul
+          style={{
+            margin: '0 0 8px',
+            paddingLeft: '20px',
+            color: '#2d3748',
+            lineHeight: 1.55,
+            fontSize: '11px',
+            listStyleType: 'disc',
+            listStylePosition: 'outside',
+          }}
+        >
+          <li style={{ marginBottom: '6px' }}>A surplus does not always mean the structure is strong.</li>
+          <li style={{ marginBottom: 0 }}>A deficit does not always mean the structure is weak.</li>
+        </ul>
+        <p style={{ margin: '0 0 12px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
+          {ieOptimisationPdf.interpretationParagraph}
+        </p>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          Short-term vs long-term
+        </h3>
+        <p style={{ margin: '0 0 12px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>
+          In the short term, modelled loan pressure is spread over about {ieOptimisationPdf.tenureLine}. {ieOptimisationPdf.incomeGrowthLine}
+        </p>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          What to do next
+        </h3>
+        <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.58, fontSize: '11px' }}>{optSubheading}</p>
+        <ol style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748' }}>
+          {(ieOptimisationPdf.showClassification ? ieOptimisationPdf.decision.nextSteps : suggestions).map((s, i) => (
+            <li key={i} style={{ marginBottom: '4px', fontSize: '11px', lineHeight: 1.55 }}>
               {s}
             </li>
           ))}
