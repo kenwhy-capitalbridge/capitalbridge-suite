@@ -817,12 +817,10 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <div
           style={{
             marginTop: '24px',
-            borderTop: `1px solid ${CB_REPORT_SOFT_PANEL_BORDER}`,
-            paddingTop: '22px',
+            paddingTop: '8px',
             textAlign: 'center',
           }}
         >
-        <PrintStageLabel>Closing</PrintStageLabel>
         <p
           style={{
             fontSize: '11px',
