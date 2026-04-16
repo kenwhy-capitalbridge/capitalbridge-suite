@@ -140,16 +140,29 @@ export function ModelHeaderSaveRestore({
       window.setTimeout(() => setSaveStatus("idle"), 5000);
       return;
     }
-    const res = await fetch("/api/advisory-report", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: sid,
-        inputs: h?.getInputs?.() ?? {},
-        results: h?.getResults?.() ?? {},
-      }),
-    });
+    const inputs = h?.getInputs?.() ?? {};
+    const results = h?.getResults?.() ?? {};
+    const postSave = async (resultsPayload: Record<string, unknown>, mode: "full" | "inputs_only") =>
+      fetch("/api/advisory-report", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "x-cb-save-mode": mode,
+        },
+        body: JSON.stringify({
+          sessionId: sid,
+          inputs,
+          results: resultsPayload,
+        }),
+      });
+
+    let res = await postSave(results, "full");
+    if (!res.ok && Object.keys(results).length > 0) {
+      // Stress payloads can be large due rich chart/result blobs; retry once with inputs-only.
+      console.warn(`${logTag} advisory-report POST full failed; retrying inputs-only`, res.status);
+      res = await postSave({}, "inputs_only");
+    }
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
       console.warn(`${logTag} advisory-report POST`, res.status, errBody);
