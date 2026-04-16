@@ -755,6 +755,58 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
           {statusLabel}
         </span>
         <p style={{ marginBottom: '12px', color: '#2d3748', lineHeight: 1.58 }}>{optSummary}</p>
+        <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1.35 }}>
+          Net monthly position
+        </h3>
+        <p style={{ margin: '0 0 6px', color: '#2d3748', lineHeight: 1.58 }}>
+          <strong style={{ color: '#0D3A1D' }}>What this shows:</strong> Your total monthly position after accounting for all inflows and outflows.
+        </p>
+        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
+          <strong style={{ color: '#0D3A1D' }}>This is calculated as:</strong>
+        </p>
+        <p style={{ margin: '0 0 2px', color: '#2d3748', lineHeight: 1.58 }}>
+          (Total expenses + total loan repayments)
+        </p>
+        <p style={{ margin: '0 0 2px', color: '#2d3748', lineHeight: 1.58 }}>
+          minus
+        </p>
+        <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.58 }}>
+          (total income + total investment income)
+        </p>
+        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
+          <strong style={{ color: '#0D3A1D' }}>Interpretation:</strong>
+        </p>
+        <ul style={{ margin: '0 0 8px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55 }}>
+          <li style={{ marginBottom: '4px' }}>If the result is positive (surplus): more income is coming in than going out</li>
+          <li style={{ marginBottom: 0 }}>If the result is negative (deficit): part of your spending depends on capital drawdown</li>
+        </ul>
+        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
+          <strong style={{ color: '#0D3A1D' }}>Important:</strong>
+        </p>
+        <p style={{ margin: '0 0 2px', color: '#2d3748', lineHeight: 1.58 }}>
+          A surplus does not always mean the structure is strong.
+        </p>
+        <p style={{ margin: '0 0 8px', color: '#2d3748', lineHeight: 1.58 }}>
+          A deficit does not always mean the structure is weak.
+        </p>
+        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
+          What matters is how capital is being used:
+        </p>
+        <ul style={{ margin: '0 0 8px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55 }}>
+          <li style={{ marginBottom: '4px' }}>A surplus may be underutilised if it is not building future income</li>
+          <li style={{ marginBottom: 0 }}>A deficit may be acceptable if capital is being deployed to grow long-term income</li>
+        </ul>
+        <p style={{ margin: '0 0 4px', color: '#2d3748', lineHeight: 1.58 }}>
+          <strong style={{ color: '#0D3A1D' }}>What to do next:</strong>
+        </p>
+        <ul style={{ margin: '0 0 12px', paddingLeft: '20px', color: '#2d3748', lineHeight: 1.55 }}>
+          <li style={{ marginBottom: '4px' }}>
+            If there is a deficit, review the Income Engineering Model to see where it can be reduced or made intentional
+          </li>
+          <li style={{ marginBottom: 0 }}>
+            If there is a surplus, assess whether it can be redirected to strengthen long-term income and capital growth
+          </li>
+        </ul>
         <PrintStageLabel>Next Steps</PrintStageLabel>
         <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#0D3A1D', textTransform: 'uppercase', marginBottom: '8px', lineHeight: 1.35 }}>{optSubheading}</h3>
         <ol style={{ margin: 0, paddingLeft: '20px', color: '#2d3748' }}>
