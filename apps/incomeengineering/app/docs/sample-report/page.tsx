@@ -8,7 +8,7 @@ const lionAccessUser: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: fa
 
 /**
  * Public (no /dashboard auth) fixture URL for sample PDFs — real App + store hydration, not static HTML.
- * Playwright: `page.goto(origin + '/docs/sample-report')` while `next dev` is running.
+ * Playwright PDF: use `/docs/ie-sample-print` (see `apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts`).
  */
 export default function IncomeEngineeringSampleReportPage() {
   return (

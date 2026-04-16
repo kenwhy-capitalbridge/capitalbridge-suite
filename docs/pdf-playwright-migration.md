@@ -12,7 +12,7 @@ Legacy programmatic PDFs (e.g. some sample scripts) are exceptions until migrate
 |------|--------|
 | Shared module `@cb/pdf` | `renderPdf` in `@cb/pdf/render`: `page.goto` (`networkidle`), print media, `document.fonts.ready`, `__REPORT_READY__`, `page.pdf` with `printBackground: true`, **`preferCSSPageSize: true`** (honours `@page` in CSS), URL-only (no `setContent`) |
 | Client signal | `@cb/pdf` → `beginReportReadyCycle` / `completeReportReadyCycle` / print `resize` hooks |
-| **Pilot: Income Engineering** | `/docs/sample-report` + `apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts` → `renderPdf({ url })` |
+| **Pilot: Income Engineering** | `/docs/ie-sample-print` + `apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts` → `renderPdf({ url })` |
 | Capital Stress | Same pattern: `/docs/sample-report` + URL script |
 
 **No** `page.setContent` / HTML injection for IE or Stress samples.
@@ -25,7 +25,7 @@ Run with dev servers up (`npm run dev -w @cb/incomeengineering`, `npm run dev -w
 2. **Lion Verdict** — full block (incl. “If you do nothing”), no half-rendered copy; compare to browser print preview at same URL.
 3. **Fonts + spacing** — `waitForFonts` runs before `page.pdf`; spot-check vs UI (webfont metrics).
 
-Smoke: `npm run generate:pdf -- http://127.0.0.1:3005/docs/sample-report ./tmp-ie.pdf` (ports: IE **3005**, Stress **3003**).
+Smoke: `npm run generate:pdf -- http://127.0.0.1:3005/docs/ie-sample-print ./tmp-ie.pdf` (ports: IE **3005**, Stress **3003**).
 
 ## STEP C — Remaining + Puppeteer
 

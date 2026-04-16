@@ -5,6 +5,7 @@
  * From repo root: npx tsx apps/incomeengineering/scripts/render-sample-pdf-for-docs.ts
  *
  * Override origin: SAMPLE_PDF_BASE_URL=http://127.0.0.1:3005
+ * Override path: SAMPLE_IE_PDF_PATH=/docs/ie-sample-print
  */
 
 import { mkdirSync } from "node:fs";
@@ -15,7 +16,9 @@ import { waitForHttpOk } from "../../../scripts/wait-for-http-get";
 
 const DEFAULT_PORT = 3005;
 const baseUrl = (process.env.SAMPLE_PDF_BASE_URL ?? `http://127.0.0.1:${DEFAULT_PORT}`).replace(/\/$/, "");
-const reportUrl = `${baseUrl}/docs/sample-report`;
+const reportPathRaw = (process.env.SAMPLE_IE_PDF_PATH ?? "/docs/ie-sample-print").trim() || "/docs/ie-sample-print";
+const reportPath = reportPathRaw.startsWith("/") ? reportPathRaw : `/${reportPathRaw}`;
+const reportUrl = `${baseUrl}${reportPath}`;
 
 async function main() {
   const scriptDir = fileURLToPath(new URL(".", import.meta.url));
@@ -27,9 +30,8 @@ async function main() {
   await renderPdf({
     url: reportUrl,
     outputPath: outPath,
-    /** Sample app: report-ready can race hydration; settle after `#print-report` is attached. */
-    waitForReportReadySignal: false,
-    settleMsBeforePdf: 6000,
+    /** Cold `next dev` compiles can exceed the default 8s client stabilisation window. */
+    reportReadyTimeoutMs: 25_000,
   });
 
   console.log(`Wrote ${outPath}`);

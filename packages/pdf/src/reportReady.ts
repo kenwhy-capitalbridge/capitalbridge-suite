@@ -123,7 +123,13 @@ export function subscribeReportReadyOnPrint(scheduleComplete: () => void): () =>
   if (typeof window === "undefined") return () => {};
   const mq = window.matchMedia("(print)");
   const run = () => {
-    if (mq.matches) scheduleComplete();
+    // Re-read each time: programmatic print emulation updates the same MQL object, but some
+    // environments skip `change` delivery until the next frame.
+    try {
+      if (window.matchMedia?.("(print)")?.matches) scheduleComplete();
+    } catch {
+      /* ignore */
+    }
   };
   const mqLegacy = mq as MediaQueryList & {
     addListener?: (cb: (this: MediaQueryList, ev: MediaQueryListEvent) => void) => void;

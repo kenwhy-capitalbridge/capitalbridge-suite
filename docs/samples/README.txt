@@ -16,6 +16,6 @@ Files:
   capital-health-report.pdf — Capital Health (react-pdf + buildCalculatorResults)
   forever-income-report.pdf — Forever Income (jsPDF, legacy/foreverPdfBuild)
   capital-stress-report.pdf — Capital Stress print layout (PrintReport + Playwright)
-  income-engineering-report.pdf — Income Engineering print layout (PrintReportView + Playwright)
+  income-engineering-report.pdf — Income Engineering print layout (`/docs/ie-sample-print`, PrintReportView + Playwright)
 
 Default scenarios are documented in each script (representative inputs for review).

@@ -1,7 +1,7 @@
 /**
  * Regenerates design-review PDFs under docs/samples/ via real app URLs + Playwright `page.goto`.
  *
- * Income Engineering + Capital Stress require dev servers (sample routes `/docs/sample-report`):
+ * Income Engineering + Capital Stress require dev servers (IE: `/docs/ie-sample-print`, Stress: `/docs/sample-report`):
  *   npm run dev -w @cb/incomeengineering
  *   npm run dev -w @cb/capitalstress
  *

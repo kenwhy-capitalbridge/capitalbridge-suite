@@ -94,6 +94,11 @@ export type RenderPdfOptions = {
    */
   waitForReportReadySignal?: boolean;
   /**
+   * Max time to wait for `__REPORT_READY__` after print emulation (capped by remaining `budgetMs`).
+   * Default 8_000. Increase for cold `next dev` compiles on sample routes.
+   */
+  reportReadyTimeoutMs?: number;
+  /**
    * After print emulation + fonts, wait this many ms before `page.pdf` (e.g. sample routes when
    * `__REPORT_READY__` is flaky). Only applied when `waitForReportReadySignal` is false.
    */
@@ -336,7 +341,7 @@ export async function renderPdf(options: RenderPdfOptions): Promise<Buffer> {
       // Playwright signature is (pageFunction, arg, options) — do not pass options as the second argument.
       try {
         // Cap separately from total `remaining()` so a hung client cannot burn the entire serverless budget.
-        const reportReadyWaitMs = Math.min(remaining(), 8_000);
+        const reportReadyWaitMs = Math.min(remaining(), options.reportReadyTimeoutMs ?? 8_000);
         await page.waitForFunction(() => window.__REPORT_READY__ === true, undefined, {
           timeout: reportReadyWaitMs,
         });

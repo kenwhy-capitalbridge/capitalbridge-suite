@@ -31,10 +31,14 @@ export function IncomeReportDocumentClient({
   useLayoutEffect(() => {
     const token = beginReportReadyCycle();
     printReadyTokenRef.current = token;
-    if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
-      queueMicrotask(() => {
-        void completeReportReadyCycle(token);
-      });
+    try {
+      if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
+        queueMicrotask(() => {
+          void completeReportReadyCycle(token);
+        });
+      }
+    } catch {
+      /* ignore */
     }
   }, [printStableKey]);
 
@@ -43,8 +47,12 @@ export function IncomeReportDocumentClient({
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
-      scheduleReportReady();
+    try {
+      if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
+        scheduleReportReady();
+      }
+    } catch {
+      /* ignore */
     }
   }, [printStableKey, scheduleReportReady]);
 
@@ -54,13 +62,31 @@ export function IncomeReportDocumentClient({
 
   useEffect(() => {
     const onResize = () => {
-      if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
-        scheduleReportReady();
+      try {
+        if (typeof window !== "undefined" && window.matchMedia("(print)").matches) {
+          scheduleReportReady();
+        }
+      } catch {
+        /* ignore */
       }
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [scheduleReportReady]);
+
+  /**
+   * Playwright `emulateMedia({ media: 'print' })` does not reliably flip `matchMedia('(print)')` in headless
+   * Chromium, so print listeners may never run. Always schedule one stabilisation pass after mount so
+   * `__REPORT_READY__` is set for `renderPdf` (real browser print preview still benefits from resize/MQL hooks).
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const token = printReadyTokenRef.current;
+    const id = window.setTimeout(() => {
+      void completeReportReadyCycle(token);
+    }, 2_000);
+    return () => window.clearTimeout(id);
+  }, [printStableKey]);
 
   return (
     <div className="cb-body min-h-screen bg-[#f6f5f1] text-[#0D3A1D]">
