@@ -309,6 +309,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       };
     });
   }, []);
+  const allSectionsCollapsed = Object.values(collapsedSections).every(Boolean);
   useEffect(() => {
     const check = () => setIsMobileView(typeof window !== 'undefined' && window.innerWidth < 768);
     check();
@@ -1070,7 +1071,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           </div>
 
           {/* CAPITAL STRUCTURE HEALTH: Resilience Score + Fragility Index + Health Status pill */}
-          <div className="space-y-6 md:space-y-9 lg:space-y-12">
+          <div className={allSectionsCollapsed ? "space-y-3 md:space-y-4 lg:space-y-5" : "space-y-6 md:space-y-9 lg:space-y-12"}>
             <div className="pb-2 flex flex-row flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="text-sm md:text-lg font-bold text-[#FFCC6A] uppercase tracking-wide serif-font leading-tight mt-0">CAPITAL STRUCTURE HEALTH</h2>
@@ -1259,7 +1260,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             const currentZone = zone(xNorm, yNorm);
             const expanded = !collapsedSections.structuralStabilityMap;
             return (
-              <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
+              <div
+                className={`bg-[#0D3A1D] rounded-sm border border-[#FFCC6A]/20 shadow-2xl ${expanded ? "p-6 md:p-8" : "px-4 py-3 md:px-6 md:py-4"}`}
+              >
                 <button type="button" onClick={() => toggleSection('structuralStabilityMap')} className="w-full text-left flex items-center justify-between gap-2 group">
                   <h2 className="text-sm md:text-lg font-bold text-[#FFCC6A] uppercase tracking-wide serif-font">Structural Stability Map</h2>
                   <span className="inline-flex items-center rounded border border-[#FFCC6A]/60 text-[#FFCC6A]/90 py-0.5 px-1.5 sm:px-2 text-[9px] sm:text-xs font-medium shrink-0">{expanded ? 'Collapse' : 'Expand'}</span>
@@ -1321,7 +1324,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           })()}
 
           {/* 2. Simulated Average Outcome */}
-          <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
+          <div
+            className={`bg-[#0D3A1D] rounded-sm border border-[#FFCC6A]/20 shadow-2xl ${collapsedSections.capitalOutcomeDist ? "px-4 py-3 md:px-6 md:py-4" : "p-6 md:p-8"}`}
+          >
             <h2 className="text-sm md:text-lg font-bold mb-1 text-[#FFCC6A] uppercase tracking-wide serif-font">Simulated Average Outcome</h2>
             <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-4 -mt-0.5">Using the simulated average reduces market noise to show a more stable and representative outcome over {mcResult.simulationCount.toLocaleString()} scenarios.</p>
             <p className="text-lg md:text-2xl font-bold tracking-tighter break-words" style={{ color: '#F6F5F1' }}>{formatCurrency(mcResult.simulatedAverage)}</p>
@@ -1722,7 +1727,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             };
             return (
               <>
-                <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
+                <div
+                  className={`bg-[#0D3A1D] rounded-sm border border-[#FFCC6A]/20 shadow-2xl ${collapsedSections.capitalAdjustmentSimulator ? "px-4 py-3 md:px-6 md:py-4" : "p-6 md:p-8"}`}
+                >
                   <h2 className="text-sm md:text-lg font-bold mb-2 text-[#FFCC6A] uppercase tracking-wide serif-font">BIGGEST IMPACT IMPROVEMENTS</h2>
                   <p className="text-[9px] text-[#FFCC6A]/60 mb-4">Ranked by impact on Lion score (0–100).</p>
                   <ol className="list-decimal list-inside space-y-1 text-sm md:text-xs text-[#F6F5F1] font-medium">
@@ -1761,7 +1768,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           })()}
 
           {/* 10. Capital Stress Radar */}
-          <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
+          <div
+            className={`bg-[#0D3A1D] rounded-sm border border-[#FFCC6A]/20 shadow-2xl ${collapsedSections.capitalStressRadar ? "px-4 py-3 md:px-6 md:py-4" : "p-6 md:p-8"}`}
+          >
             <button type="button" onClick={() => toggleSection('capitalStressRadar')} className="w-full text-left flex items-center justify-between gap-2 min-h-[2.5rem]">
               <h2 className="text-sm md:text-lg font-bold text-[#FFCC6A] uppercase tracking-wide serif-font">Capital Stress Radar</h2>
               <span className="inline-flex items-center rounded border border-[#FFCC6A]/60 text-[#FFCC6A]/90 py-0.5 px-1.5 sm:px-2 text-[9px] sm:text-xs font-medium shrink-0">{!collapsedSections.capitalStressRadar ? 'Collapse' : 'Expand'}</span>
@@ -1871,7 +1880,9 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           </div>
 
           {/* 11. Structural Stress Sensitivity Panel */}
-          <div className="bg-[#0D3A1D] p-6 md:p-8 rounded-sm border border-[#FFCC6A]/20 shadow-2xl">
+          <div
+            className={`bg-[#0D3A1D] rounded-sm border border-[#FFCC6A]/20 shadow-2xl ${collapsedSections.furtherStressTest ? "px-4 py-3 md:px-6 md:py-4" : "p-6 md:p-8"}`}
+          >
             <button type="button" onClick={() => toggleSection('furtherStressTest')} className="w-full text-left flex items-center justify-between gap-2">
               <h2 className="text-sm md:text-lg font-bold text-[#FFCC6A] uppercase tracking-wide serif-font">FURTHER STRUCTURAL STRESS TEST</h2>
               <span className="inline-flex items-center rounded border border-[#FFCC6A]/60 text-[#FFCC6A]/90 py-0.5 px-1.5 sm:px-2 text-[9px] sm:text-xs font-medium shrink-0">{!collapsedSections.furtherStressTest ? 'Collapse' : 'Expand'}</span>
