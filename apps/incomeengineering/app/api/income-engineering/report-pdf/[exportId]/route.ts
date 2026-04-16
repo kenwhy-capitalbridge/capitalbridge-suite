@@ -119,6 +119,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ exportI
       url: docUrl,
       playwrightFooterFromDom: true,
       playwrightCookies: playwrightCookies.length > 0 ? playwrightCookies : undefined,
+      navigateWaitUntil: "domcontentloaded",
       budgetMs,
       timeoutMs: budgetMs,
     });

@@ -5,10 +5,23 @@ import { getAdvisoryRequestContext } from "./requestContext";
 
 export type AdvisoryJsonResult = { status: number; body: unknown };
 
+const VALID_MODEL_TYPES = new Set<ModelType>([
+  "forever-income",
+  "income-engineering",
+  "capital-health",
+  "capital-stress",
+]);
+
 function resolveModelType(base: ModelType, envKey?: string): ModelType {
   if (!envKey) return base;
   const v = process.env[envKey];
-  if (typeof v === "string" && v.trim().length > 0) return v.trim() as ModelType;
+  if (typeof v === "string" && v.trim().length > 0) {
+    const candidate = v.trim() as ModelType;
+    if (VALID_MODEL_TYPES.has(candidate)) return candidate;
+    console.warn(
+      `[advisoryRoutes] ignoring invalid ${envKey}="${v}" (expected one of ${Array.from(VALID_MODEL_TYPES).join(", ")}), using ${base}`,
+    );
+  }
   return base;
 }
 
