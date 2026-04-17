@@ -63,7 +63,6 @@ import { CB_REPORT_TRIAL_SNAPSHOT_CAPTION } from '@cb/shared/reportTrialCopy';
 import { PDF_TOC_CAPITAL_HEALTH } from '@cb/pdf/shared/pdf-advisory-cover-presets';
 import {
   CB_REPORT_BODY_MUTED,
-  CB_REPORT_BRAND_FULL_GREEN_PATH,
   CB_REPORT_BRAND_WORDMARK_GREEN_PATH,
   CB_REPORT_FOOTER_RESERVE_PT,
   CB_REPORT_FRAME_PADDING_PT,
@@ -133,7 +132,7 @@ function formatRunwayYearsMonths(depletionMonths: number | null): string {
   return `${years} years ${months} months`;
 }
 
-const CHART_HEIGHT = 170;
+const CHART_HEIGHT = 146;
 /** Tick column width; Y-axis title sits in a separate left gutter so it cannot paint under bars. */
 const CHART_Y_AXIS_W = 40;
 const CHART_Y_LABEL_GUTTER = 68;
@@ -142,14 +141,15 @@ const PAGE_W_PT = 595.28;
 const PAGE_H_PT = 841.89;
 const BAR_COUNT = 48;
 
-const REPORT_PAGE_OUTER = Math.max(16, cbReportMmToPt(CB_REPORT_PAGE_MARGIN_MM) - 8);
-const CONTENT_PADDING = 8;
-const SECTION_SPACING = 40;
-const SUBSECTION_SPACING = 22;
+const REPORT_PAGE_OUTER = Math.max(10, cbReportMmToPt(CB_REPORT_PAGE_MARGIN_MM) - 14);
+const CONTENT_PADDING = 6;
+const SECTION_SPACING = 24;
+const SUBSECTION_SPACING = 14;
 const CHART_SPACING = 28;
 const CARD_SPACING = 20;
 const LOGO_TITLE_GAP = 12;
 const CAPITAL_HEALTH_COVER_LOGO_PNG_PATH = '/brand/Full_CapitalBridge_Green.png';
+const FRAME_INNER_X = Math.max(10, CB_REPORT_FRAME_PADDING_PT - 6);
 
 const styles = StyleSheet.create({
   warningPanel: {
@@ -500,8 +500,8 @@ function ReportPage({
           width: frameW,
           minHeight: frameH,
           paddingTop: 26,
-          paddingLeft: CB_REPORT_FRAME_PADDING_PT,
-          paddingRight: CB_REPORT_FRAME_PADDING_PT,
+          paddingLeft: FRAME_INNER_X,
+          paddingRight: FRAME_INNER_X,
           paddingBottom: CB_REPORT_FOOTER_RESERVE_PT + 42,
           position: 'relative',
           flexDirection: 'column',
@@ -511,8 +511,8 @@ function ReportPage({
           style={{
             position: 'absolute',
             top: 8,
-            left: CB_REPORT_FRAME_PADDING_PT,
-            right: CB_REPORT_FRAME_PADDING_PT,
+            left: FRAME_INNER_X,
+            right: FRAME_INNER_X,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
@@ -541,8 +541,8 @@ function ReportPage({
           style={{
             position: 'absolute',
             bottom: 8,
-            left: CB_REPORT_FRAME_PADDING_PT,
-            right: CB_REPORT_FRAME_PADDING_PT,
+            left: FRAME_INNER_X,
+            right: FRAME_INNER_X,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -584,8 +584,12 @@ interface ReportProps {
   baseUrl?: string;
   /** Raster brand marks (e.g. PNG data URLs) when `baseUrl` is unavailable (Node sample PDF). */
   brandFullLockupPngDataUrl?: string | null;
+  /** Same-origin absolute URL for cover lockup when data URL embedding is unavailable. */
+  brandFullLockupSrc?: string | null;
   brandLionPngDataUrl?: string | null;
   brandWordmarkPngDataUrl?: string | null;
+  /** Same-origin absolute URL for footer wordmark when data URL embedding is unavailable. */
+  brandWordmarkSrc?: string | null;
   chartData?: ChartPoint[];
   /** Client age for Capital Survival Age (optional). */
   currentAge?: number;
@@ -645,7 +649,6 @@ function CapitalProjectionChart({
   lastPointCaption,
   insightLabel,
   insight,
-  depletionLabel,
 }: {
   chartData: ChartPoint[];
   formatY: (n: number) => string;
@@ -654,16 +657,15 @@ function CapitalProjectionChart({
   lastPointCaption: string;
   insightLabel?: string;
   insight: string;
-  depletionLabel?: string;
 }) {
   if (!chartData.length) return null;
 
-  const W = 520;
+  const W = 440;
   const H = CHART_HEIGHT;
-  const left = 62;
-  const right = 18;
-  const top = 14;
-  const bottom = 34;
+  const left = 12;
+  const right = 12;
+  const top = 10;
+  const bottom = 24;
   const plotW = W - left - right;
   const plotH = H - top - bottom;
 
@@ -674,72 +676,62 @@ function CapitalProjectionChart({
   const yLo = minVal;
   const yMid = minVal + range / 2;
 
-  const pts = chartData.map((d, i) => {
+  const points = chartData.map((d, i) => {
     const x = left + (chartData.length === 1 ? 0 : (i / (chartData.length - 1)) * plotW);
     const y = top + ((maxVal - d.nominal) / range) * plotH;
     return { ...d, x, y };
   });
-  const polyPoints = pts.map((p) => `${p.x},${p.y}`).join(' ');
-  const finalX = pts[pts.length - 1]?.x ?? left + plotW;
+
+  const linePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
+  const lastPoint = points[points.length - 1];
+  const yAxisStackedLabel = yAxisLabel.split(' ').join('\n');
 
   return (
     <View>
-      <Svg width="100%" viewBox={`0 0 ${W} ${H}`}>
-        <Line x1={left} y1={top} x2={left} y2={top + plotH} stroke="#6b7280" strokeWidth={0.8} />
-        <Line x1={left} y1={top + plotH} x2={left + plotW} y2={top + plotH} stroke="#6b7280" strokeWidth={0.8} />
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+        <View style={{ width: 58, marginTop: 10 }}>
+          <Text style={{ fontSize: 8, color: DARK, marginBottom: 30, fontFamily: 'Inter' }}>{formatY(yHi)}</Text>
+          <Text style={{ fontSize: 8, color: DARK, marginBottom: 30, fontFamily: 'Inter' }}>{formatY(yMid)}</Text>
+          <Text style={{ fontSize: 8, color: DARK, fontFamily: 'Inter' }}>{formatY(yLo)}</Text>
+          <Text style={{ fontSize: 8, color: DARK, marginTop: 10, fontFamily: 'Inter', lineHeight: 1.1 }}>{yAxisStackedLabel}</Text>
+        </View>
 
-        <Line x1={left} y1={top} x2={left + plotW} y2={top} stroke="#d8ddd9" strokeWidth={0.6} />
-        <Line x1={left} y1={top + plotH / 2} x2={left + plotW} y2={top + plotH / 2} stroke="#d8ddd9" strokeWidth={0.6} />
+        <View style={{ flex: 1 }}>
+          <Svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+            <Line x1={left} y1={top} x2={left} y2={top + plotH} stroke="#74807a" strokeWidth={0.8} />
+            <Line x1={left} y1={top + plotH} x2={left + plotW} y2={top + plotH} stroke="#74807a" strokeWidth={0.8} />
+            <Line x1={left} y1={top} x2={left + plotW} y2={top} stroke="#d6dcd8" strokeWidth={0.6} />
+            <Line x1={left} y1={top + plotH / 2} x2={left + plotW} y2={top + plotH / 2} stroke="#d6dcd8" strokeWidth={0.6} />
 
-        <Polyline points={polyPoints} stroke="#215c4a" strokeWidth={2.2} fill="none" />
+            <Polyline points={linePoints} stroke="#1f5f4b" strokeWidth={2.2} fill="none" />
 
-        {pts.map((p, i) => (
-          <Circle
-            key={`${p.month}-${i}`}
-            cx={p.x}
-            cy={p.y}
-            r={i === pts.length - 1 ? 3.4 : 2.8}
-            fill={i >= Math.floor(pts.length * 0.78) ? '#b55a52' : '#215c4a'}
-          />
-        ))}
+            {points.map((pt, i) => (
+              <Circle
+                key={`${pt.month}-${i}`}
+                cx={pt.x}
+                cy={pt.y}
+                r={i === points.length - 1 ? 3.8 : 2.7}
+                fill="#1f5f4b"
+              />
+            ))}
+          </Svg>
 
-        {depletionLabel ? (
-          <>
-            <Line
-              x1={finalX}
-              y1={top}
-              x2={finalX}
-              y2={top + plotH}
-              stroke="#b55a52"
-              strokeWidth={1.2}
-              strokeDasharray="4,3"
-            />
-          </>
-        ) : null}
-      </Svg>
-
-      <View style={{ marginTop: -H + top - 2, marginBottom: H - top - 14 }}>
-        <Text style={{ fontSize: 8, color: DARK, marginLeft: 4, marginBottom: plotH / 2 - 10, fontFamily: 'Inter' }}>{formatY(yHi)}</Text>
-        <Text style={{ fontSize: 8, color: DARK, marginLeft: 4, marginBottom: plotH / 2 - 10, fontFamily: 'Inter' }}>{formatY(yMid)}</Text>
-        <Text style={{ fontSize: 8, color: DARK, marginLeft: 4, fontFamily: 'Inter' }}>{formatY(yLo)}</Text>
+          <Text style={{ fontSize: 8, color: DARK, marginTop: 3, textAlign: 'center', fontFamily: 'Inter' }}>{xAxisLabel}</Text>
+          <Text style={{ fontSize: 8, color: MUTED, marginTop: 2, textAlign: 'right', fontFamily: 'Inter' }}>
+            End at year {Math.max(1, Math.round(lastPoint.month / 12))}
+          </Text>
+        </View>
       </View>
 
-      <Text style={{ fontSize: 8, color: DARK, marginTop: 2, textAlign: 'center', fontFamily: 'Inter' }}>{xAxisLabel}</Text>
-      <Text style={{ fontSize: 8, color: DARK, marginTop: 4, fontFamily: 'Inter' }}>{yAxisLabel}</Text>
-      {depletionLabel ? (
-        <Text style={{ fontSize: 8, color: '#b55a52', marginTop: 2, textAlign: 'right', fontFamily: 'Inter', fontWeight: 'bold' }}>
-          {depletionLabel}
-        </Text>
-      ) : null}
-
-      <View style={{ marginTop: 10, paddingVertical: 6 }}>
-        <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, fontFamily: 'Roboto Serif' }}>Latest value (end of series)</Text>
+      <View style={{ marginTop: 8, paddingVertical: 6 }}>
+        <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, fontFamily: 'Roboto Serif' }}>End-point snapshot</Text>
         <Text style={{ fontSize: PDF_BODY_PT, color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH }}>{lastPointCaption}</Text>
       </View>
+
       {insightLabel ? (
-        <Text style={{ fontSize: PDF_BODY_PT, fontWeight: 'bold', color: DARK, marginTop: 10, marginBottom: 4, fontFamily: 'Inter' }}>{insightLabel}</Text>
+        <Text style={{ fontSize: PDF_BODY_PT, fontWeight: 'bold', color: DARK, marginTop: 8, marginBottom: 4, fontFamily: 'Inter' }}>{insightLabel}</Text>
       ) : null}
-      <Text style={{ fontSize: PDF_BODY_PT, color: DARK, marginTop: insightLabel ? 0 : 10, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' }}>{insight}</Text>
+      <Text style={{ fontSize: PDF_BODY_PT, color: DARK, marginTop: insightLabel ? 0 : 8, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' }}>{insight}</Text>
     </View>
   );
 }
@@ -773,8 +765,10 @@ export function CapitalGrowthReport({
   result,
   baseUrl,
   brandFullLockupPngDataUrl,
+  brandFullLockupSrc,
   brandLionPngDataUrl,
   brandWordmarkPngDataUrl,
+  brandWordmarkSrc,
   chartData = [],
   currentAge,
   includeLionsVerdict = true,
@@ -829,7 +823,7 @@ export function CapitalGrowthReport({
       ? `Based on the assumptions provided, the current withdrawal structure ${incomeGap > 0 ? 'places meaningful pressure on the portfolio.' : 'is within sustainable limits.'} A withdrawal of ${formatCurrency(inputs.targetMonthlyIncome)} per month with expected returns of ${formatNum(inputs.expectedAnnualReturnPct, 1)}% produces a projected capital runway of ${depletionMo == null ? 'perpetual income' : runwayYearsText}. ${incomeGap > 0 ? 'The model identifies a structural income gap where withdrawals exceed sustainable portfolio returns, resulting in progressive capital depletion. Adjustments to income, capital base, or portfolio returns would materially improve the resilience of the structure.' : 'The structure is supported by sustainable returns under current assumptions.'}`
       : `Based on the assumptions provided, a target of ${formatCurrency(inputs.targetFutureCapital)} at ${formatNum(inputs.expectedAnnualReturnPct, 1)}% over ${horizonYearsFormatted} years projects to ${formatCurrency(result.nominalCapitalAtHorizon)}.`;
 
-  const verdictNarrative = result.statusCopy?.long ?? ADVISORY_LONG[result.status];
+  const verdictNarrative = result.statusCopy?.long ?? USER_GUIDANCE_LONG[result.status];
   const verdictHeadline = result.statusCopy?.headline;
   const riskTierLabel = result.riskMetrics?.riskTierLabel ?? (result.statusCopy?.short ?? '');
   const structuralDiagnosis = inputs.mode === 'withdrawal'
@@ -870,13 +864,17 @@ export function CapitalGrowthReport({
   const footerLogoSrc =
     brandWordmarkPngDataUrl
       ? brandWordmarkPngDataUrl
-      : baseUrl
-        ? `${baseUrl}/brand/CapitalBridgeLogo_Green.png`
-        : null;
+      : brandWordmarkSrc
+        ? brandWordmarkSrc
+        : baseUrl
+          ? `${baseUrl}/brand/CapitalBridgeLogo_Green.png`
+          : brandFullLockupPngDataUrl ?? null;
 
   const coverLogo =
     brandFullLockupPngDataUrl ? (
       <Image src={brandFullLockupPngDataUrl} style={styles.pdfCoverLogo} />
+    ) : brandFullLockupSrc ? (
+      <Image src={brandFullLockupSrc} style={styles.pdfCoverLogo} />
     ) : brandLionPngDataUrl && brandWordmarkPngDataUrl ? (
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
         <Image src={brandLionPngDataUrl} style={{ height: 44, width: 44, marginRight: 6, objectFit: 'contain' }} />
@@ -1014,7 +1012,7 @@ export function CapitalGrowthReport({
             whatThisShows="Diagnosis, confidence strip, and summary cards built from the same withdrawal and return assumptions you entered."
             whyThisMatters="This is the shared fact base for the meeting — clear numbers before optional Lion narrative and scenario pages."
           />
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
             <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
               <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Structure Status</Text><Text style={[styles.assumptionValue, { fontWeight: 'bold' }]}>{riskTierLabel}</Text></View>
@@ -1025,7 +1023,7 @@ export function CapitalGrowthReport({
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>This diagnostic assessment evaluates whether the withdrawal structure is sustainable under the portfolio's expected return assumptions.</Text>
           </View>
 
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURAL CONFIDENCE</Text>
             <Text style={[styles.bodyText, { marginBottom: 6 }]}>{structuralScoreLabel}: {lionScorePdf} / 100 · {lionStatusPdf}</Text>
             <View style={styles.confidenceBarWrap}>
@@ -1041,9 +1039,9 @@ export function CapitalGrowthReport({
             </Text>
           </View>
 
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL HEALTH SUMMARY</Text>
-            <View style={[styles.summaryRow, PDF_BREAK_INSIDE_AVOID]}>
+            <View style={[styles.summaryRow]}>
               <View style={[styles.summaryCard]}>
                 <Text style={styles.summaryCardLabel}>Capital Runway</Text>
                 <Text style={styles.summaryCardValue}>{runwayYearsText}</Text>
@@ -1063,7 +1061,7 @@ export function CapitalGrowthReport({
 
       {/* Page 5: Structure Overview, Capital Projection Chart */}
       <ReportPage pageNumber={5} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap]}>
             <Text style={styles.sectionTitleLarge}>STRUCTURE OVERVIEW</Text>
             <Text style={styles.bodyText}>Desired Monthly Income {formatCurrency(inputs.targetMonthlyIncome)}</Text>
             <Text style={styles.bodyText}>Sustainable Monthly Return {formatCurrency(sustainableMonthly)}</Text>
@@ -1086,14 +1084,14 @@ export function CapitalGrowthReport({
               <CapitalProjectionChart
                 chartData={chartPoints}
                 formatY={(n) => formatCurrencyDisplayNoDecimals(Math.round(n), symbol)}
-                yAxisLabel={`Portfolio capital (${inputs.currency.code})`}
+                yAxisLabel="Capital balance"
                 xAxisLabel="Time along the projection (sampled months)"
                 lastPointCaption={(() => {
                   const last = chartPoints[chartPoints.length - 1];
                   return `Month ${last.month}: ${formatCurrency(last.nominal)} — compare to starting capital and sustainable return assumptions.`;
                 })()}
                 insightLabel="Interpretation"
-                insight="Each bar is modelled portfolio capital at that month. Read left to right for the trend: flat or rising suggests more room; a steady decline signals depletion pressure to discuss in your plan. The right-hand side reflects the late horizon under your withdrawal and return settings."
+                insight="Each point shows projected capital at that month. A flatter path signals stronger resilience. A steeper decline signals faster depletion pressure. The end-point year and amount show where this trajectory lands under your current assumptions."
               />
             </View>
           ) : null}
@@ -1107,7 +1105,7 @@ export function CapitalGrowthReport({
             whatThisShows="Explicit assumptions, structure detail, optimiser logic, and stress context behind the Section B headline."
             whyThisMatters="Lets you stress-test the story: which inputs would change the conclusion, and what the model did with your settings."
           />
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap]}>
             <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTIONS</Text>
             <View style={styles.row}>
               <View style={styles.col}>
@@ -1128,7 +1126,7 @@ export function CapitalGrowthReport({
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 8 }]}>Portfolio Structure: {100 - inputs.cashBufferPct}% invested at {formatNum(inputs.expectedAnnualReturnPct, 1)}% · {inputs.cashBufferPct}% liquidity buffer earning {formatNum(inputs.cashAPY, 1)}%</Text>
           </View>
 
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap]}>
             <Text style={styles.sectionTitleLarge}>RUNWAY SENSITIVITY</Text>
             <Text style={[styles.bodyText, { marginBottom: 4 }]}>Inflation adjustment: {inputs.inflationEnabled ? 'ON' : 'OFF'}.</Text>
             <Text style={[styles.bodyText, { marginBottom: 4 }]}>Runway without inflation: {formatRunwayYearsMonths(runwayWithoutInflationMonths)}.</Text>
@@ -1146,7 +1144,7 @@ export function CapitalGrowthReport({
 
       {/* Page 7: Key Outcomes, Outcome Optimiser */}
       <ReportPage pageNumber={7} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <View style={[styles.sectionWrap, PDF_BREAK_INSIDE_AVOID]}>
+          <View style={[styles.sectionWrap]}>
             <Text style={styles.sectionTitleLarge}>KEY OUTCOMES</Text>
             <View style={[styles.row, { marginBottom: 4 }]}>
               <View style={[styles.card, styles.col]}>
@@ -1363,8 +1361,10 @@ export async function generateReportBlob(
   options?: {
     baseUrl?: string;
     brandFullLockupPngDataUrl?: string | null;
+    brandFullLockupSrc?: string | null;
     brandLionPngDataUrl?: string | null;
     brandWordmarkPngDataUrl?: string | null;
+    brandWordmarkSrc?: string | null;
     chartData?: ChartPoint[];
     currentAge?: number;
     includeLionsVerdict?: boolean;
@@ -1375,8 +1375,10 @@ export async function generateReportBlob(
 ): Promise<Blob> {
   const baseUrl = options?.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined);
   const brandFullLockupPngDataUrl = options?.brandFullLockupPngDataUrl;
+  const brandFullLockupSrc = options?.brandFullLockupSrc;
   const brandLionPngDataUrl = options?.brandLionPngDataUrl;
   const brandWordmarkPngDataUrl = options?.brandWordmarkPngDataUrl;
+  const brandWordmarkSrc = options?.brandWordmarkSrc;
   const chartData = options?.chartData ?? [];
   const currentAge = options?.currentAge;
   const includeLionsVerdict = options?.includeLionsVerdict ?? true;
@@ -1393,8 +1395,10 @@ export async function generateReportBlob(
       result={result}
       baseUrl={baseUrl}
       brandFullLockupPngDataUrl={brandFullLockupPngDataUrl}
+      brandFullLockupSrc={brandFullLockupSrc}
       brandLionPngDataUrl={brandLionPngDataUrl}
       brandWordmarkPngDataUrl={brandWordmarkPngDataUrl}
+      brandWordmarkSrc={brandWordmarkSrc}
       chartData={chartData}
       currentAge={currentAge}
       includeLionsVerdict={includeLionsVerdict}

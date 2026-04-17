@@ -1,16 +1,25 @@
 import type { CalculatorInputs } from '../../calculator-types';
 import type { CalculatorResults } from '../hooks/useCalculatorResults';
 import { generateReportBlob } from '../../CapitalGrowthReport';
+import { CAPITAL_HEALTH_PDF_BRAND } from '../../pdfBrandAssets';
 import type { ReportChartPoint } from '../../ReportPrint';
 import { createReportAuditMeta } from '@cb/shared/reportTraceability';
 
 const CAPITAL_HEALTH_COVER_LOGO_PNG_PATH = '/brand/Full_CapitalBridge_Green.png';
+const CAPITAL_HEALTH_FOOTER_LOGO_PNG_PATH = '/brand/CapitalBridgeLogo_Green.png';
 
-/** Read the cover PNG and return data URL for react-pdf reliability. */
-async function loadCoverLogoPngForPdf(pageOrigin: string): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
+function absoluteUrlForNextAsset(assetPath: string): string {
+  if (typeof window === 'undefined') return '';
+  if (assetPath.startsWith('http')) return assetPath;
+  const path = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
+  return `${window.location.origin}${path}`;
+}
+
+/** Fetch any same-origin URL and return a data URL for @react-pdf/renderer Image. */
+async function fetchUrlAsDataUrl(url: string): Promise<string | null> {
+  if (!url) return null;
   try {
-    const res = await fetch(`${pageOrigin}${CAPITAL_HEALTH_COVER_LOGO_PNG_PATH}`);
+    const res = await fetch(url);
     if (!res.ok) return null;
     const blob = await res.blob();
     return await new Promise<string | null>((resolve) => {
@@ -22,6 +31,16 @@ async function loadCoverLogoPngForPdf(pageOrigin: string): Promise<string | null
   } catch {
     return null;
   }
+}
+
+/** Fallback: read PNG from `/public/brand/` when bundled-asset fetch fails. */
+async function loadCoverLogoPngForPdf(pageOrigin: string): Promise<string | null> {
+  return fetchUrlAsDataUrl(`${pageOrigin}${CAPITAL_HEALTH_COVER_LOGO_PNG_PATH}`);
+}
+
+/** Fallback: footer PNG from `/public/brand/`. */
+async function loadFooterLogoPngForPdf(pageOrigin: string): Promise<string | null> {
+  return fetchUrlAsDataUrl(`${pageOrigin}${CAPITAL_HEALTH_FOOTER_LOGO_PNG_PATH}`);
 }
 
 export async function exportCapitalHealthReport(args: {
@@ -37,8 +56,19 @@ export async function exportCapitalHealthReport(args: {
     modelCode: 'HEALTH',
     userDisplayName: args.reportClientDisplayName ?? 'Client',
   });
+
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const bundledCoverAbs = origin ? absoluteUrlForNextAsset(CAPITAL_HEALTH_PDF_BRAND.fullLockupSrc) : '';
+  const bundledFooterAbs = origin ? absoluteUrlForNextAsset(CAPITAL_HEALTH_PDF_BRAND.footerLogoSrc) : '';
+
+  const coverFromBundle = bundledCoverAbs ? await fetchUrlAsDataUrl(bundledCoverAbs) : null;
+  const footerFromBundle = bundledFooterAbs ? await fetchUrlAsDataUrl(bundledFooterAbs) : null;
+
   const brandFullLockupPngDataUrl =
-    typeof window !== 'undefined' ? await loadCoverLogoPngForPdf(window.location.origin) : null;
+    coverFromBundle ?? (origin ? await loadCoverLogoPngForPdf(origin) : null);
+  const brandWordmarkPngDataUrl =
+    footerFromBundle ?? (origin ? await loadFooterLogoPngForPdf(origin) : null);
+
   const blob = await generateReportBlob(args.inputs, args.result, {
     chartData: args.chartPoints,
     currentAge: args.currentAge ?? undefined,
@@ -46,6 +76,9 @@ export async function exportCapitalHealthReport(args: {
     reportClientDisplayName: args.reportClientDisplayName,
     reportAudit: audit,
     brandFullLockupPngDataUrl: brandFullLockupPngDataUrl ?? undefined,
+    brandWordmarkPngDataUrl: brandWordmarkPngDataUrl ?? undefined,
+    brandFullLockupSrc: brandFullLockupPngDataUrl ? undefined : bundledCoverAbs || undefined,
+    brandWordmarkSrc: brandWordmarkPngDataUrl ? undefined : bundledFooterAbs || undefined,
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

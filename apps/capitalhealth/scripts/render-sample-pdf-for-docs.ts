@@ -2,23 +2,19 @@
  * Writes docs/samples/capital-health-report.pdf at repo root (design review).
  * Run from repo root: npx tsx apps/capitalhealth/scripts/render-sample-pdf-for-docs.ts
  *
- * Embeds green full lockup as PNG data URL (rasterised from SVG; no dev server) so the cover matches production brand.
+ * Embeds the same bundled PNGs as production (`packages/ui` assets) so the sample PDF matches live exports.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import sharp from "sharp";
 import { CURRENCIES, PRESETS, type CalculatorInputs } from "../legacy/calculator-types";
 import { buildCalculatorResults } from "../legacy/src/hooks/buildCalculatorResults";
 import { generateReportBlob } from "../legacy/CapitalGrowthReport";
 
-async function svgFileToPngDataUrl(absPath: string, width: number, height: number): Promise<string | null> {
+function pngFileToDataUrl(absPath: string): string | null {
   try {
-    const buf = await sharp(readFileSync(absPath))
-      .resize(width, height, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
-      .png()
-      .toBuffer();
+    const buf = readFileSync(absPath);
     return `data:image/png;base64,${buf.toString("base64")}`;
   } catch {
     return null;
@@ -48,10 +44,11 @@ const sampleInputs: CalculatorInputs = {
 async function main() {
   const scriptDir = fileURLToPath(new URL(".", import.meta.url));
   const repoRoot = join(scriptDir, "..", "..", "..");
-  /** Synced brand asset (see `npm run brand:sync`); matches `/brand/Full_CapitalBridge_Green.svg` in apps. */
-  const brandSvg = join(repoRoot, "apps", "platform", "public", "brand", "Full_CapitalBridge_Green.svg");
+  const fullLockupPng = join(repoRoot, "packages", "ui", "src", "assets", "Full_CapitalBridge_Green.png");
+  const footerLogoPng = join(repoRoot, "packages", "ui", "src", "assets", "CapitalBridgeLogo_Green.png");
 
-  const brandFullLockupPngDataUrl = await svgFileToPngDataUrl(brandSvg, 540, 108);
+  const brandFullLockupPngDataUrl = pngFileToDataUrl(fullLockupPng);
+  const brandWordmarkPngDataUrl = pngFileToDataUrl(footerLogoPng);
 
   const result = buildCalculatorResults(sampleInputs);
   const snaps = result.monthlySnapshots;
@@ -63,7 +60,8 @@ async function main() {
   const blob = await generateReportBlob(sampleInputs, result, {
     chartData,
     currentAge: 55,
-    brandFullLockupPngDataUrl,
+    brandFullLockupPngDataUrl: brandFullLockupPngDataUrl ?? undefined,
+    brandWordmarkPngDataUrl: brandWordmarkPngDataUrl ?? undefined,
   });
   const buf = Buffer.from(await blob.arrayBuffer());
 
