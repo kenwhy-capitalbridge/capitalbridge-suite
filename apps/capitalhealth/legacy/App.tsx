@@ -315,18 +315,6 @@ const CalculatorScreen = forwardRef<
   const [toast, setToast] = useState<string | null>(null);
   const [reportGenerating, setReportGenerating] = useState(false);
   const [currentAge, setCurrentAge] = useState<number | null>(35);
-  const [stressTestExpanded, setStressTestExpanded] = useState(false);
-  const [stressPulseOn, setStressPulseOn] = useState(true);
-  const handleToggleStressTest = () => {
-    const willExpand = !stressTestExpanded;
-    setStressTestExpanded(willExpand);
-    if (willExpand) {
-      setStressPulseOn(false);
-      setTimeout(() => {
-        document.querySelector('[data-capital-health-stress-grid]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 120);
-    }
-  };
   /** When switching to growth we overwrite horizon with 10; restore this when switching back to withdrawal. */
   const lastWithdrawalHorizonYearsRef = useRef<number | null>(null);
 
@@ -623,6 +611,47 @@ const CalculatorScreen = forwardRef<
         ? formatRunwayFromDecimalYears(depletionYears)
         : 'Perpetual'
       : `${Number(inputs.timeHorizonYears).toFixed(1)} years`;
+
+  const runwaySensitivity = useMemo(() => {
+    if (inputs.mode !== 'withdrawal') return null;
+
+    const withoutInflation = runSimulation({ ...inputs, inflationEnabled: false });
+    const withInflation = runSimulation({ ...inputs, inflationEnabled: true });
+    const withoutMonths = withoutInflation.depletionMonth ?? null;
+    const withMonths = withInflation.depletionMonth ?? null;
+
+    let impactLabel = 'No material change in projected runway under current assumptions.';
+    if (withoutMonths != null && withMonths != null) {
+      const diff = withoutMonths - withMonths;
+      if (diff > 0) {
+        impactLabel = `Impact of inflation on runway: shorter by ${formatRunwayYearsMonths(diff)}.`;
+      } else if (diff < 0) {
+        impactLabel = `Impact of inflation on runway: longer by ${formatRunwayYearsMonths(Math.abs(diff))}.`;
+      }
+    }
+
+    return {
+      inflationAdjustment: inputs.inflationEnabled ? 'ON' : 'OFF',
+      withoutMonths,
+      withMonths,
+      impactLabel,
+    };
+  }, [
+    inputs.mode,
+    inputs.expectedAnnualReturnPct,
+    inputs.timeHorizonYears,
+    inputs.targetFutureCapital,
+    inputs.startingCapital,
+    inputs.targetMonthlyIncome,
+    inputs.monthlyTopUp,
+    inputs.inflationEnabled,
+    inputs.inflationPct,
+    inputs.cashBufferPct,
+    inputs.cashAPY,
+    inputs.withdrawalRule,
+    inputs.withdrawalPctOfCapital,
+  ]);
+
   const stressTestScenarios = useMemo(() => {
     const baseReturn = inputs.expectedAnnualReturnPct;
     const bearReturn = Math.max(baseReturn - 4, 0);
@@ -1243,6 +1272,19 @@ const CalculatorScreen = forwardRef<
           </div>
                 </>
               )}
+              {runwaySensitivity ? (
+                <div className="mb-4 rounded-lg border border-[#FFCC6A]/45 bg-white/5 p-3 sm:p-4">
+                  <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFCC6A] mb-2">Runway Sensitivity</h3>
+                  <ul className="space-y-1.5 text-[10px] sm:text-xs text-[#F6F5F1]/90 leading-snug">
+                    <li>Inflation adjustment: <strong>{runwaySensitivity.inflationAdjustment}</strong>.</li>
+                    <li>Runway without inflation: <strong>{formatRunwayYearsMonths(runwaySensitivity.withoutMonths)}</strong>.</li>
+                    <li>Runway with inflation: <strong>{formatRunwayYearsMonths(runwaySensitivity.withMonths)}</strong>.</li>
+                    <li>{runwaySensitivity.impactLabel}</li>
+                    <li>Inflation increases the pressure on withdrawals over time, which can shorten how long your capital lasts.</li>
+                  </ul>
+                </div>
+              ) : null}
+
               {result.scenarioAdjustments != null && (() => {
                 const s = result.scenarioAdjustments;
                 const addCapNoOp = !s.addCapital.feasible || Math.abs(inputs.startingCapital - s.addCapital.requiredStart) <= EPS_MONEY;
@@ -1507,65 +1549,46 @@ const CalculatorScreen = forwardRef<
               <p className="max-w-md text-[9px] sm:text-xs text-[#F6F5F1]/80">
                 Evaluate your structure across different market return scenarios.
               </p>
-              <button
-                type="button"
-                onClick={handleToggleStressTest}
-                className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border-2 border-[#FFCC6A] bg-black/15 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-[#FFCC6A] shadow-[0_0_12px_rgba(255,204,106,0.12)] transition-colors duration-150 hover:border-[#FFCC6A] hover:bg-[#1a4d32] hover:text-[#FFCC6A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC6A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D3A1D] sm:px-5 sm:text-sm ${stressPulseOn ? 'motion-safe:animate-pulse' : ''}`}
-                aria-expanded={stressTestExpanded}
-                aria-label={stressTestExpanded ? 'Hide Stress Test' : 'Show Stress Test'}
-              >
-                <span>{stressTestExpanded ? 'Hide Stress Test' : 'Show Stress Test'}</span>
-                <span className="tabular-nums" aria-hidden>
-                  {stressTestExpanded ? '–' : '+'}
-                </span>
-              </button>
-            </div>
-            {stressTestExpanded ? (
-              <>
-                <div className="mx-auto mt-4 w-full max-w-full border-t border-[#FFCC6A]/25" aria-hidden />
-                <div
-                  data-capital-health-stress-grid
-                  className="mx-auto mt-4 grid w-full max-w-full grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3 md:items-stretch"
-                >
-                  {stressTestScenarios.map((s) => (
-                    <div
-                      key={s.label}
-                      className="flex min-h-0 flex-1 flex-col rounded-lg border border-[#0D3A1D] bg-[#F0F7F0] p-3 text-left text-[#0D3A1D] shadow-sm sm:p-4"
-                    >
-                      <div className="mb-3 min-h-0 flex-1 space-y-1.5">
-                        <div className="text-sm font-bold leading-tight text-[#0D3A1D]">{s.label}</div>
-                        <div className="text-xs font-semibold text-[#0D3A1D]/90">{s.relationshipLabel}</div>
-                        <div className="text-xs text-[#0D3A1D]/95">
-                          Return: {formatNum(s.returnPct, 1)}%
+              <div className="mx-auto mt-4 w-full max-w-full border-t border-[#FFCC6A]/25" aria-hidden />
+              <div className="mx-auto mt-4 grid w-full max-w-full grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3 md:items-stretch" data-capital-health-stress-grid>
+                {stressTestScenarios.map((s) => (
+                  <div
+                    key={s.label}
+                    className="flex min-h-0 flex-1 flex-col rounded-lg border border-[#0D3A1D] bg-[#F0F7F0] p-3 text-left text-[#0D3A1D] shadow-sm sm:p-4"
+                  >
+                    <div className="mb-3 min-h-0 flex-1 space-y-1.5">
+                      <div className="text-sm font-bold leading-tight text-[#0D3A1D]">{s.label}</div>
+                      <div className="text-xs font-semibold text-[#0D3A1D]/90">{s.relationshipLabel}</div>
+                      <div className="text-xs text-[#0D3A1D]/95">
+                        Return: {formatNum(s.returnPct, 1)}%
+                      </div>
+                      {inputs.mode === 'withdrawal' ? (
+                        <div className="pt-2">
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-[#0D3A1D]/75">
+                            Capital Survival Time
+                          </div>
+                          <div className="text-base font-bold text-[#0D3A1D]">
+                            {s.runwayYears != null ? formatRunwayFromDecimalYears(s.runwayYears) : 'Forever'}
+                          </div>
                         </div>
-                        {inputs.mode === 'withdrawal' ? (
-                          <div className="pt-2">
-                            <div className="text-[10px] font-bold uppercase tracking-wide text-[#0D3A1D]/75">
-                              Capital survival age
-                            </div>
-                            <div className="text-base font-bold text-[#0D3A1D]">
-                              {s.runwayYears != null ? formatRunwayFromDecimalYears(s.runwayYears) : 'Forever'}
-                            </div>
+                      ) : (
+                        <div className="pt-2">
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-[#0D3A1D]/75">
+                            Ending Capital
                           </div>
-                        ) : (
-                          <div className="pt-2">
-                            <div className="text-[10px] font-bold uppercase tracking-wide text-[#0D3A1D]/75">
-                              Ending capital
-                            </div>
-                            <div className="text-base font-bold text-[#0D3A1D]">
-                              {formatCurrencyCompactDisplay(s.endingCapital)}
-                            </div>
+                          <div className="text-base font-bold text-[#0D3A1D]">
+                            {formatCurrencyCompactDisplay(s.endingCapital)}
                           </div>
-                        )}
-                      </div>
-                      <div className="mt-auto border-t border-[#0D3A1D]/15 pt-2">
-                        <RiskTierBadge tier={s.tier} label={s.tierLabel} />
-                      </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </>
-            ) : null}
+                    <div className="mt-auto border-t border-[#0D3A1D]/15 pt-2">
+                      <RiskTierBadge tier={s.tier} label={s.tierLabel} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {result.bufferBreachMonths > 0 && (
