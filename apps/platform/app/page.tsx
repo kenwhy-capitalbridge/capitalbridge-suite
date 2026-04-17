@@ -5,7 +5,7 @@ import { PersonaHeader } from "./dashboard/components/PersonaHeader";
 import { DashboardTiles } from "./dashboard/components/DashboardTiles";
 import { FrameworkStaticLanding } from "./components/FrameworkStaticLanding";
 import { PlatformFrameworkHeader } from "./components/PlatformFrameworkHeader";
-import { ElfsightChatbot } from "./components/ElfsightChatbot";
+import { ElfsightChatbot } from "@cb/ui";
 
 export const dynamic = "force-dynamic";
 
