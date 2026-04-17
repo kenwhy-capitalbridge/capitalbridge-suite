@@ -20,6 +20,7 @@ import {
 import { applyPreset } from './calculator-engine';
 import { useCalculatorResults } from './src/hooks/useCalculatorResults';
 import { TapToReveal, TapToRevealProvider } from './src/components/TapToReveal';
+import { downsampleSnapshotIndices } from './src/lib/chartSnapshotsSeries';
 import { ADVISORY_REQUIRED_RETURN_DISPLAY_CAP_PCT, MID_RETURN_WARN_PCT, EPS_MONEY, EPS_RETURN } from './src/lib/constants';
 import { exportCapitalHealthReport } from './src/lib/exportCapitalHealthReport';
 import { SECTIONS, getHealthScoreCopy } from './src/lib/capitalHealthCopy';
@@ -544,17 +545,20 @@ const CalculatorScreen = forwardRef<
   }, [inputs.timeHorizonYears]);
 
   const chartData = useMemo(() => {
-    const step = Math.max(1, Math.floor(result.monthlySnapshots.length / 60)) || 1;
-    return result.monthlySnapshots
-      .filter((_, i) => i % step === 0)
-      .map((s) => ({
+    const snaps = result.monthlySnapshots;
+    const indices = downsampleSnapshotIndices(snaps.length, 96);
+    return indices.map((i) => {
+      const s = snaps[i]!;
+      return {
         month: s.monthIndex,
         year: chartYearFromMonth(s.monthIndex),
+        /** End-of-month book capital from the simulation only (not solver/sustainable series). */
         nominal: s.totalCapital,
         real: s.totalCapital,
         withdrawal: s.withdrawalPaid,
         target: inputs.mode === 'withdrawal' ? inputs.targetMonthlyIncome : null,
-      }));
+      };
+    });
   }, [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome, chartYearFromMonth]);
 
   /** Full monthly series for PDF (first + last month preserved in PDF sampler). */
@@ -1252,12 +1256,13 @@ const CalculatorScreen = forwardRef<
                         />
                         <Tooltip content={resultsChartTooltip} cursor={{ stroke: 'rgba(246,245,241,0.55)' }} />
                         <Area
-                          type="monotone"
+                          type="linear"
                           dataKey="nominal"
                           stroke="#FFCC6A"
                           fill="#FFCC6A"
                           fillOpacity={0.3}
                           strokeWidth={2}
+                          isAnimationActive={false}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -1481,12 +1486,13 @@ const CalculatorScreen = forwardRef<
                     />
                     <Tooltip content={resultsChartTooltip} cursor={{ stroke: 'rgba(246,245,241,0.55)' }} />
                     <Area
-                      type="monotone"
+                      type="linear"
                       dataKey="nominal"
                       stroke="#FFCC6A"
                       fill="#FFCC6A"
                       fillOpacity={0.3}
                       strokeWidth={2}
+                      isAnimationActive={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
