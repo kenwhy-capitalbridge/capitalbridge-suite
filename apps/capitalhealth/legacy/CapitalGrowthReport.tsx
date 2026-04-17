@@ -53,6 +53,26 @@ Font.register({
 });
 import type { CalculatorInputs, SimulationResult, StatusKind } from './calculator-types';
 import { runSimulation } from './calculator-engine';
+import {
+  sampleCapitalHealthChartPoints,
+  computeCapitalHealthVerdict,
+  verdictColor,
+  structuralToneFromVerdict,
+  confidenceFromVerdict,
+  confidenceBarColor,
+  modeHeaderSuffix,
+  modeCoverLabel,
+  coverSubtitleForMode,
+  buildExecutiveSummaryBlocks,
+  buildChartCaption,
+  buildChartAnnotationLines,
+  buildVerdictSupportLine,
+  lionAlignmentPreamble,
+  sanitizePlanCopy,
+  type ChartPoint,
+} from './capitalHealthPdfAlignment';
+
+export type { ChartPoint } from './capitalHealthPdfAlignment';
 import { getRiskTier } from './src/lib/riskTier';
 import type { ScenarioAdjustments } from './src/lib/capitalHealthTypes';
 import type { LionHealthVariables } from '@cb/advisory-graph/lionsVerdict';
@@ -117,6 +137,9 @@ const USER_GUIDANCE_LONG: Record<StatusKind, string> = {
 const GREEN = CB_REPORT_INK_GREEN;
 const DARK = CB_REPORT_INK_GREEN;
 const MUTED = CB_REPORT_BODY_MUTED;
+/** Chart overlays (not verdict line colour). */
+const CHART_TARGET_GUIDE = '#b45309';
+const CHART_DEPLETION_LINE = '#b91c1c';
 function formatNum(n: number, decimals = 0): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
@@ -465,21 +488,19 @@ const styles = StyleSheet.create({
   pdfCoverTocItem: { fontSize: 8, color: DARK, marginLeft: 10, marginBottom: 3, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' },
 });
 
-export interface ChartPoint {
-  month: number;
-  nominal: number;
-}
-
 function ReportPage({
   pageNumber,
   totalPages,
   audit,
+  modeHeaderLine,
   children,
   footerLogoSrc,
 }: {
   pageNumber: number;
   totalPages: number;
   audit: ReportAuditMeta;
+  /** Left header: e.g. CAPITAL HEALTH — COMPOUNDING GROWTH */
+  modeHeaderLine: string;
   children: React.ReactNode;
   footerLogoSrc?: string | null;
 }) {
@@ -529,7 +550,7 @@ function ReportPage({
               lineHeight: 1.25,
             }}
           >
-            {audit.modelDisplayName}
+            {modeHeaderLine}
           </Text>
           <View style={{ alignItems: 'flex-end', maxWidth: '48%' }}>
             <Text style={{ fontSize: 8, color: '#4b5563', textAlign: 'right', lineHeight: 1.35, fontFamily: 'Inter' }}>{audit.clientDisplayName}</Text>
@@ -600,27 +621,11 @@ interface ReportProps {
   reportAudit: ReportAuditMeta;
 }
 
-function durationPhrase(result: SimulationResult): string {
-  if (result.formulaSustainable === true) return 'Forever Income Achieved';
-  if (result.formulaDepletionMonthsWhole != null) {
-    const mo = result.formulaDepletionMonthsWhole;
-    const yr = Math.floor(mo / 12);
-    const rem = mo % 12;
-    return rem > 0 ? `${yr} yr / ${rem} mo` : `${yr} yr`;
-  }
-  return 'Forever Income Achieved';
-}
-
 function coveragePct(inputs: CalculatorInputs, result: SimulationResult): number {
   if (inputs.mode === 'withdrawal' && inputs.targetMonthlyIncome > 0 && result.monthlyReturnOnCapital != null) {
     return (result.monthlyReturnOnCapital / inputs.targetMonthlyIncome) * 100;
   }
   return result.coveragePct;
-}
-
-function netValue(inputs: CalculatorInputs, result: SimulationResult): number {
-  if (inputs.mode === 'withdrawal') return result.passiveIncomeMonthly - inputs.targetMonthlyIncome;
-  return result.nominalCapitalAtHorizon - inputs.targetFutureCapital;
 }
 
 type StressRow = { scenario: string; returnPct: number; runwayText: string };
@@ -643,122 +648,204 @@ function computeStressScenarios(inputs: CalculatorInputs): StressRow[] {
 
 function CapitalProjectionChart({
   chartData,
+  horizonYears,
   formatY,
   yAxisLabel,
-  xAxisLabel,
-  lastPointCaption,
-  insightLabel,
-  insight,
+  verdictLabel,
+  verdictColorHex,
+  annotationLines,
+  caption,
+  confidenceLevel,
+  confidenceTint,
+  optionalSupportLine,
+  mode,
+  targetFutureCapital,
+  depletionMonth,
+  formatCurrency,
 }: {
   chartData: ChartPoint[];
+  horizonYears: number;
   formatY: (n: number) => string;
   yAxisLabel: string;
-  xAxisLabel: string;
-  lastPointCaption: string;
-  insightLabel?: string;
-  insight: string;
+  verdictLabel: string;
+  verdictColorHex: string;
+  annotationLines: string[];
+  caption: string;
+  confidenceLevel: string;
+  confidenceTint: string;
+  optionalSupportLine: string | null;
+  mode: 'growth' | 'withdrawal';
+  targetFutureCapital: number;
+  depletionMonth: number | null;
+  formatCurrency: (n: number) => string;
 }) {
   if (!chartData.length) return null;
 
   const W = 440;
-  const H = CHART_HEIGHT;
+  const H = 152;
   const left = 12;
   const right = 12;
-  const top = 10;
-  const bottom = 24;
+  const top = 14;
+  const bottom = 28;
   const plotW = W - left - right;
   const plotH = H - top - bottom;
+  const hm = Math.max(1, Math.round(horizonYears * 12));
 
-  const maxVal = Math.max(...chartData.map((d) => d.nominal), 1);
-  const minVal = Math.min(...chartData.map((d) => d.nominal), 0);
+  const maxVal = Math.max(
+    ...chartData.map((d) => d.nominal),
+    mode === 'growth' ? targetFutureCapital : 0,
+    1,
+  );
+  const minVal = Math.min(...chartData.map((d) => d.nominal), 0, mode === 'growth' ? targetFutureCapital : 0);
   const range = maxVal - minVal || 1;
   const yHi = maxVal;
   const yLo = minVal;
   const yMid = minVal + range / 2;
 
+  const xForMonth = (m: number) =>
+    left + (hm <= 1 ? 0 : (m / (hm - 1)) * plotW);
+  const yForVal = (v: number) => top + ((maxVal - v) / range) * plotH;
+
   const points = chartData.map((d, i) => {
-    const x = left + (chartData.length === 1 ? 0 : (i / (chartData.length - 1)) * plotW);
-    const y = top + ((maxVal - d.nominal) / range) * plotH;
-    return { ...d, x, y };
+    const x = xForMonth(d.month);
+    const y = yForVal(d.nominal);
+    return { ...d, x, y, i };
   });
 
   const linePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
-  const lastPoint = points[points.length - 1];
+  const areaPoints = `${linePoints} ${points[points.length - 1]!.x},${top + plotH} ${points[0]!.x},${top + plotH}`;
   const yAxisStackedLabel = yAxisLabel.split(' ').join('\n');
+  const hyLabel = horizonYears % 1 === 0 ? String(Math.round(horizonYears)) : horizonYears.toFixed(1);
+  const first = chartData[0]!;
+  const last = chartData[chartData.length - 1]!;
+  const targetY = mode === 'growth' ? yForVal(targetFutureCapital) : null;
+  const showTargetLine =
+    mode === 'growth' && targetY != null && targetY >= top - 2 && targetY <= top + plotH + 2;
+  const depletionInHorizon =
+    mode === 'withdrawal' && depletionMonth != null && depletionMonth <= hm;
+  const depletionX = depletionInHorizon ? xForMonth(Math.max(0, depletionMonth - 1)) : null;
 
   return (
     <View>
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: 'bold',
+          color: GREEN,
+          marginBottom: 8,
+          textTransform: 'none',
+          fontFamily: 'Roboto Serif',
+        }}
+      >
+        Capital projection over selected horizon ({hyLabel} years)
+      </Text>
+
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
         <View style={{ width: 58, marginTop: 10 }}>
-          <Text style={{ fontSize: 8, color: DARK, marginBottom: 30, fontFamily: 'Inter' }}>{formatY(yHi)}</Text>
-          <Text style={{ fontSize: 8, color: DARK, marginBottom: 30, fontFamily: 'Inter' }}>{formatY(yMid)}</Text>
-          <Text style={{ fontSize: 8, color: DARK, fontFamily: 'Inter' }}>{formatY(yLo)}</Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', color: DARK, marginBottom: 28, fontFamily: 'Inter' }}>{formatY(yHi)}</Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', color: DARK, marginBottom: 28, fontFamily: 'Inter' }}>{formatY(yMid)}</Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', color: DARK, fontFamily: 'Inter' }}>{formatY(yLo)}</Text>
           <Text style={{ fontSize: 8, color: DARK, marginTop: 10, fontFamily: 'Inter', lineHeight: 1.1 }}>{yAxisStackedLabel}</Text>
         </View>
 
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, position: 'relative' }}>
           <Svg width="100%" viewBox={`0 0 ${W} ${H}`}>
             <Line x1={left} y1={top} x2={left} y2={top + plotH} stroke="#74807a" strokeWidth={0.8} />
             <Line x1={left} y1={top + plotH} x2={left + plotW} y2={top + plotH} stroke="#74807a" strokeWidth={0.8} />
             <Line x1={left} y1={top} x2={left + plotW} y2={top} stroke="#d6dcd8" strokeWidth={0.6} />
             <Line x1={left} y1={top + plotH / 2} x2={left + plotW} y2={top + plotH / 2} stroke="#d6dcd8" strokeWidth={0.6} />
 
-            <Polyline points={linePoints} stroke="#1f5f4b" strokeWidth={2.2} fill="none" />
+            <Polyline points={areaPoints} fill={verdictColorHex} fillOpacity={0.12} stroke="none" strokeWidth={0} />
+            <Polyline points={linePoints} stroke={verdictColorHex} strokeWidth={2.2} fill="none" />
 
-            {points.map((pt, i) => (
-              <Circle
-                key={`${pt.month}-${i}`}
-                cx={pt.x}
-                cy={pt.y}
-                r={i === points.length - 1 ? 3.8 : 2.7}
-                fill="#1f5f4b"
+            {showTargetLine ? (
+              <Line
+                x1={left}
+                y1={targetY!}
+                x2={left + plotW}
+                y2={targetY!}
+                stroke={CHART_TARGET_GUIDE}
+                strokeDasharray="4 3"
+                strokeWidth={0.9}
               />
-            ))}
+            ) : null}
+            {depletionX != null ? (
+              <Line x1={depletionX} y1={top} x2={depletionX} y2={top + plotH} stroke={CHART_DEPLETION_LINE} strokeWidth={1} />
+            ) : null}
+
+            <Circle cx={points[0]!.x} cy={points[0]!.y} r={3} fill={verdictColorHex} />
+            <Circle cx={points[points.length - 1]!.x} cy={points[points.length - 1]!.y} r={3.6} fill={verdictColorHex} />
           </Svg>
 
-          <Text style={{ fontSize: 8, color: DARK, marginTop: 3, textAlign: 'center', fontFamily: 'Inter' }}>{xAxisLabel}</Text>
-          <Text style={{ fontSize: 8, color: MUTED, marginTop: 2, textAlign: 'right', fontFamily: 'Inter' }}>
-            End at year {Math.max(1, Math.round(lastPoint.month / 12))}
+          <View
+            style={{
+              position: 'absolute',
+              top: 6,
+              right: 6,
+              backgroundColor: verdictColorHex,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 20,
+            }}
+          >
+            <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#ffffff', fontFamily: 'Inter' }}>{verdictLabel}</Text>
+            {optionalSupportLine ? (
+              <Text style={{ fontSize: 6.5, color: '#ffffff', fontFamily: 'Inter', marginTop: 2, maxWidth: 120 }}>
+                {optionalSupportLine}
+              </Text>
+            ) : null}
+          </View>
+
+          <View
+            style={{
+              position: 'absolute',
+              left: left + 4,
+              bottom: 10,
+              maxWidth: 200,
+              backgroundColor: 'rgba(255,255,255,0.92)',
+              padding: 5,
+              borderWidth: 0.5,
+              borderColor: '#e5e7eb',
+            }}
+          >
+            {annotationLines.map((ln, idx) => (
+              <Text key={idx} style={{ fontSize: 7, color: DARK, fontFamily: 'Inter', lineHeight: 1.35, marginBottom: idx === annotationLines.length - 1 ? 0 : 2 }}>
+                {ln}
+              </Text>
+            ))}
+          </View>
+
+          <Text style={{ fontSize: 8, fontWeight: 'bold', color: DARK, marginTop: 4, textAlign: 'center', fontFamily: 'Inter' }}>
+            Years (0 — {hyLabel})
           </Text>
         </View>
       </View>
 
-      <View style={{ marginTop: 8, paddingVertical: 6 }}>
-        <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, fontFamily: 'Roboto Serif' }}>End-point snapshot</Text>
-        <Text style={{ fontSize: PDF_BODY_PT, color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH }}>{lastPointCaption}</Text>
+      <View style={{ marginTop: 6, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Text style={{ fontSize: 7.5, color: MUTED, fontFamily: 'Inter' }}>Start: {formatCurrency(first.nominal)}</Text>
+        <Text style={{ fontSize: 7.5, color: MUTED, fontFamily: 'Inter' }}>
+          End (year {hyLabel}): {formatCurrency(last.nominal)}
+        </Text>
+        {mode === 'growth' ? (
+          <Text style={{ fontSize: 7.5, color: MUTED, fontFamily: 'Inter' }}>Target: {formatCurrency(targetFutureCapital)}</Text>
+        ) : null}
+        {depletionInHorizon ? (
+          <Text style={{ fontSize: 7.5, color: CHART_DEPLETION_LINE, fontFamily: 'Inter' }}>Capital depleted within horizon</Text>
+        ) : null}
       </View>
 
-      {insightLabel ? (
-        <Text style={{ fontSize: PDF_BODY_PT, fontWeight: 'bold', color: DARK, marginTop: 8, marginBottom: 4, fontFamily: 'Inter' }}>{insightLabel}</Text>
-      ) : null}
-      <Text style={{ fontSize: PDF_BODY_PT, color: DARK, marginTop: insightLabel ? 0 : 8, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' }}>{insight}</Text>
+      <View style={{ marginTop: 8 }}>
+        <View style={{ height: 3, backgroundColor: '#e8ebe9', marginBottom: 4 }}>
+          <View style={{ height: '100%', width: '100%', backgroundColor: confidenceTint, opacity: 0.85 }} />
+        </View>
+        <Text style={{ fontSize: 8, color: MUTED, fontFamily: 'Inter' }}>Confidence: {confidenceLevel}</Text>
+      </View>
+
+      <Text style={{ fontSize: PDF_BODY_PT, color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH, marginTop: 8 }}>{caption}</Text>
     </View>
   );
 }
 
-/** Section A/B/C opener — matches Html PDF `PdfAdvisorySectionLead` rhythm. */
-function CapitalHealthAdvisorySectionLead({
-  stage,
-  title,
-  whatThisShows,
-  whyThisMatters,
-}: {
-  stage: string;
-  title: string;
-  whatThisShows: string;
-  whyThisMatters: string;
-}) {
-  return (
-    <View style={[{ marginBottom: 14, width: '100%' }, PDF_CB_BLOCK]}>
-      <Text style={{ fontSize: 8, letterSpacing: 1, textTransform: 'uppercase', color: MUTED, marginBottom: 6, fontFamily: 'Inter' }}>{stage}</Text>
-      <Text style={{ fontSize: 16, fontWeight: 'bold', color: GREEN, fontFamily: 'Roboto Serif', marginBottom: 10, lineHeight: PDF_TITLE_SERIF_LH }}>{title}</Text>
-      <Text style={{ fontSize: 9, fontWeight: 'bold', color: DARK, marginBottom: 4, fontFamily: 'Inter' }}>What this shows</Text>
-      <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 8, fontFamily: 'Inter' }}>{whatThisShows}</Text>
-      <Text style={{ fontSize: 9, fontWeight: 'bold', color: DARK, marginBottom: 4, fontFamily: 'Inter' }}>Why this matters</Text>
-      <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>{whyThisMatters}</Text>
-    </View>
-  );
-}
 
 export function CapitalGrowthReport({
   inputs,
@@ -785,8 +872,6 @@ export function CapitalGrowthReport({
   const incomeGap = inputs.mode === 'withdrawal' ? Math.max(0, inputs.targetMonthlyIncome - sustainableMonthly) : 0;
   const depletionMo = result.depletionMonth ?? null;
   const runwayYearsText = formatRunwayYearsMonths(depletionMo);
-  const survivalAge = currentAge != null && depletionMo != null && depletionMo < 1200
-    ? Math.floor(currentAge + depletionMo / 12) : null;
   const healthScore = result.riskMetrics?.healthScore ?? coveragePct(inputs, result);
   const tier = result.riskMetrics?.riskTier ?? getRiskTier(healthScore).tier;
   const riskTierClamped = Math.min(5, Math.max(1, tier)) as 1 | 2 | 3 | 4 | 5;
@@ -802,7 +887,6 @@ export function CapitalGrowthReport({
       lionStrongEligibilityFromHealthTier(riskTierClamped, inputs.mode, healthVarsForStrong),
     ),
   );
-  const confidenceColor = tier >= 4 ? '#B45309' : tier === 3 ? '#D97706' : '#55B685';
   const stressRows = computeStressScenarios(inputs);
   const runwayWithoutInflationMonths = runSimulation({ ...inputs, inflationEnabled: false }).depletionMonth ?? null;
   const runwayWithInflationMonths = runSimulation({ ...inputs, inflationEnabled: true }).depletionMonth ?? null;
@@ -815,13 +899,23 @@ export function CapitalGrowthReport({
   const requiredCapital = adj?.addCapital?.requiredStart ?? 0;
   const requiredReturn = adj?.increaseReturn?.requiredAnnualPct ?? 0;
   const increaseReturnFeasible = adj?.increaseReturn?.feasible ?? false;
-  const step = chartData.length <= BAR_COUNT ? 1 : Math.max(1, Math.floor(chartData.length / BAR_COUNT));
-  const chartPoints = chartData.filter((_, i) => i % step === 0).slice(0, BAR_COUNT);
 
-  const executiveSummary =
-    inputs.mode === 'withdrawal'
-      ? `Based on the assumptions provided, the current withdrawal structure ${incomeGap > 0 ? 'places meaningful pressure on the portfolio.' : 'is within sustainable limits.'} A withdrawal of ${formatCurrency(inputs.targetMonthlyIncome)} per month with expected returns of ${formatNum(inputs.expectedAnnualReturnPct, 1)}% produces a projected capital runway of ${depletionMo == null ? 'perpetual income' : runwayYearsText}. ${incomeGap > 0 ? 'The model identifies a structural income gap where withdrawals exceed sustainable portfolio returns, resulting in progressive capital depletion. Adjustments to income, capital base, or portfolio returns would materially improve the resilience of the structure.' : 'The structure is supported by sustainable returns under current assumptions.'}`
-      : `Based on the assumptions provided, a target of ${formatCurrency(inputs.targetFutureCapital)} at ${formatNum(inputs.expectedAnnualReturnPct, 1)}% over ${horizonYearsFormatted} years projects to ${formatCurrency(result.nominalCapitalAtHorizon)}.`;
+  const chartFull: ChartPoint[] =
+    chartData.length > 0
+      ? chartData.map((d) => ({ month: d.month, nominal: d.nominal }))
+      : result.monthlySnapshots.map((s) => ({ month: s.monthIndex, nominal: s.totalCapital }));
+  const verdict = computeCapitalHealthVerdict(inputs, result, chartFull);
+  const verdictHue = verdictColor(verdict);
+  const structuralTone = structuralToneFromVerdict(verdict);
+  const confidenceLevel = confidenceFromVerdict(verdict);
+  const confidenceTint = confidenceBarColor(confidenceLevel);
+  const chartPoints = sampleCapitalHealthChartPoints(chartFull);
+  const headerModeLine = `CAPITAL HEALTH — ${modeHeaderSuffix(inputs)}`;
+  const execBlocks = buildExecutiveSummaryBlocks(inputs, result, verdict, formatCurrency, formatNum);
+  const chartCaption = buildChartCaption(inputs, result, verdict, formatCurrency, formatNum);
+  const chartAnnotationLines = buildChartAnnotationLines(inputs, result, verdict, formatCurrency, formatNum);
+  const verdictSupportLine = buildVerdictSupportLine(inputs, result, verdict, formatCurrency);
+  const lionPreamble = lionAlignmentPreamble(verdict, structuralTone);
 
   const verdictNarrative = result.statusCopy?.long ?? USER_GUIDANCE_LONG[result.status];
   const verdictHeadline = result.statusCopy?.headline;
@@ -829,15 +923,32 @@ export function CapitalGrowthReport({
   const structuralDiagnosis = inputs.mode === 'withdrawal'
     ? (incomeGap > 0 ? `Withdrawals of ${formatCurrency(inputs.targetMonthlyIncome)}/month exceed sustainable portfolio returns of ${formatCurrency(sustainableMonthly)}/month, creating a structural income gap of ${formatCurrency(incomeGap)}.` : `The withdrawal structure is supported by sustainable returns under current assumptions.`)
     : `Progress to target capital: ${formatNum(healthScore, 1)}% of goal.`;
-  const primaryRiskDriver = tier >= 4 ? 'Withdrawals exceed sustainable portfolio returns; capital depletion is projected.' : tier === 3 ? 'Moderate pressure on capital; adjustments recommended to improve resilience.' : 'Structure is within sustainable limits under current assumptions.';
+  const primaryRiskDriver =
+    inputs.mode === 'withdrawal'
+      ? verdict === 'AT RISK'
+        ? 'Capital depletion is projected within the selected horizon under these withdrawals and return assumptions.'
+        : verdict === 'UNDER PRESSURE'
+          ? 'A persistent income gap is applying pressure to capital over the horizon.'
+          : verdict === 'STABLE'
+            ? 'Withdrawals exceed sustainable returns only slightly; margins are thin but runway remains within horizon assumptions.'
+            : 'Withdrawals are within sustainable portfolio returns on these assumptions.'
+      : verdict === 'AT RISK'
+        ? 'Capital trajectory is declining or far from target on these growth assumptions.'
+        : verdict === 'BELOW TARGET'
+          ? 'Projected capital remains below your target at the selected horizon.'
+          : verdict === 'ON TRACK'
+            ? 'Projected capital is near your target at the horizon.'
+            : 'Projected capital is above your target at the horizon.';
   const lionsVerdictNarrativeQuote = verdictHeadline ?? verdictNarrative;
-  const lionsVerdictSummary = structuralDiagnosis;
+  const lionsVerdictSummary = `${structuralDiagnosis} (Classification: ${verdict}.)`;
   const lionsVerdictWhy = primaryRiskDriver;
   const depletionSystemLine =
-    depletionMo != null && depletionMo < 1200
-      ? `Income structure projected to deplete capital in ${runwayYearsText}.`
-      : "Income structure is sustainable under current assumptions.";
-  const lionsVerdictSystemState = `Structural band: ${riskTierLabel}. ${depletionSystemLine}`;
+    inputs.mode === 'withdrawal'
+      ? depletionMo != null && depletionMo < 1200
+        ? `Income path projected to deplete capital in ${runwayYearsText}.`
+        : 'Income path is sustainable under current assumptions within the model window.'
+      : `Projected capital at horizon: ${formatCurrency(result.nominalCapitalAtHorizon)} vs target ${formatCurrency(inputs.targetFutureCapital)}.`;
+  const lionsVerdictSystemState = `${lionPreamble} Structural band: ${riskTierLabel}. ${depletionSystemLine}`;
   const lionsVerdictNextActions = [
     inputs.mode === 'withdrawal' && incomeGap > 0 && adj?.reduceIncome?.feasible && recommendedIncome > 0
       ? `Review withdrawal levels in your plan — the model highlights approximately ${formatCurrency(recommendedIncome)}/month as one path toward sustainability under current assumptions.`
@@ -850,14 +961,14 @@ export function CapitalGrowthReport({
     increaseReturnFeasible && requiredReturn > 0
       ? `Review return assumptions — while higher returns improve outcomes, the diagnostic implied rate to close the gap purely via return is approximately ${formatNum(requiredReturn, 1)}%; focus on realistic ranges (e.g. 6–10%) and combine with structural adjustments rather than relying on return alone.`
       : 'Review return assumptions — while higher returns improve outcomes, focus on realistic ranges and combine with structural adjustments rather than relying on return alone.',
-  ];
+  ].map(sanitizePlanCopy);
 
   const balancedIncomePct = adj?.balancedAdjustment?.incomeReductionPct ?? 0;
   const balancedCapPct = adj?.balancedAdjustment?.capitalIncreasePct ?? 0;
   const balancedFeasible = adj?.balancedAdjustment?.feasible ?? false;
 
   /** Must equal the number of <ReportPage> components. */
-  const TOTAL_PAGES = includeLionsVerdict ? 12 : 11;
+  const TOTAL_PAGES = includeLionsVerdict ? 12 : 11; /* cover, summary, inputs, results, chart, meaning, sensitivity, optimiser, stress, [lion], next, disclosure */
   /** Trial PDFs: avoid “Lion” framing where the full Verdict section is omitted. */
   const structuralScoreLabel = includeLionsVerdict ? 'Lion score' : 'Structural score';
 
@@ -892,13 +1003,23 @@ export function CapitalGrowthReport({
       subject={`Report ID: ${reportAudit.reportId}; Version: ${reportAudit.versionLabel}`}
     >
       {/* Page 1: Standard advisory cover + contents (Forever-aligned) */}
-      <ReportPage pageNumber={1} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
+      <ReportPage pageNumber={1} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
         <View style={[styles.pdfCoverRoot, PDF_BREAK_INSIDE_AVOID]}>
           {coverLogo}
           <Text style={styles.pdfCoverH1}>CAPITAL HEALTH — STRATEGIC WEALTH REPORT</Text>
-          <Text style={styles.pdfCoverSubtitle}>
-            Withdrawal sustainability and capital trajectory under your stated assumptions.
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: 'bold',
+              color: DARK,
+              textAlign: 'center',
+              marginBottom: 6,
+              fontFamily: 'Inter',
+            }}
+          >
+            {modeCoverLabel(inputs)}
           </Text>
+          <Text style={styles.pdfCoverSubtitle}>{coverSubtitleForMode(inputs)}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 4 }}>
             <Text style={styles.pdfCoverMeta}>Prepared for: </Text>
             <Text style={[styles.pdfCoverMeta, { fontWeight: 'bold' }]}>{reportClientDisplayName}</Text>
@@ -922,14 +1043,8 @@ export function CapitalGrowthReport({
         </View>
       </ReportPage>
 
-      {/* Page 2: Section A — journey only (executive summary starts on next page) */}
-      <ReportPage pageNumber={2} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-        <CapitalHealthAdvisorySectionLead
-          stage="Section A — Opening"
-          title="Opening"
-          whatThisShows="Step 2 in the Capital Bridge journey — structural durability after Income Engineering — then your executive summary on the following page."
-          whyThisMatters="Sets context before diagnosis and charts so the report reads as one clear story, consistent with Forever, Income Engineering, and Capital Stress."
-        />
+      {/* Page 2: Executive summary */}
+      <ReportPage pageNumber={2} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
         {!includeLionsVerdict ? (
           <View style={{ marginBottom: 10, paddingHorizontal: 2 }}>
             <Text
@@ -944,272 +1059,215 @@ export function CapitalGrowthReport({
             </Text>
           </View>
         ) : null}
-        <View style={[styles.sectionWrap, PDF_CB_BLOCK, { marginBottom: 12, paddingVertical: 4 }]}>
-          <Text style={{ fontSize: 11, fontWeight: 'bold', color: DARK, marginBottom: 6, letterSpacing: 0.4, fontFamily: 'Roboto Serif' }}>
-            CAPITAL BRIDGE PLANNING JOURNEY
-          </Text>
-          <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 8, fontFamily: 'Inter' }}>How to read this report</Text>
-          <Text style={{ fontSize: 10, fontWeight: 'bold', color: DARK, marginBottom: 6, fontFamily: 'Inter' }}>
-            Step 2 — Is your structure strong enough?
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 6, fontFamily: 'Inter' }}>
-            This report follows Income Engineering (Step 1B), where income and capital flow are structured.
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>At this stage, the question becomes:</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>• Is the structure sustainable over time?</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>• Do withdrawals exceed what the portfolio can support?</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 10, fontFamily: 'Inter' }}>• How long can capital last under current assumptions?</Text>
-          <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: 'Roboto Serif' }}>
-            What this model does
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>
-            The Capital Health Model shows how these parts interact:
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 2, fontFamily: 'Inter' }}>• withdrawals</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 2, fontFamily: 'Inter' }}>• capital base</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 6, fontFamily: 'Inter' }}>• expected returns</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 10, fontFamily: 'Inter' }}>over time. It focuses on how long your capital can last, not short-term noise.</Text>
-          <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: 'Roboto Serif' }}>
-            Why this matters
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 6, fontFamily: 'Inter' }}>
-            Even strong income structures can fail if withdrawals exceed sustainable returns.
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>This model allows:</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>
-            • Whether withdrawals are sustainable
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 3, fontFamily: 'Inter' }}>
-            • Where capital depletion risk appears early
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 10, fontFamily: 'Inter' }}>
-            • Which gaps to fix before they compound
-          </Text>
-          <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: 'Roboto Serif' }}>
-            What happens next
-          </Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, marginBottom: 4, fontFamily: 'Inter' }}>From here:</Text>
-          <Text style={{ fontSize: 9, color: MUTED, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' }}>
-            • Capital Stress → tests how this structure behaves under changing market conditions
-          </Text>
-        </View>
-      </ReportPage>
-
-      {/* Page 3: Executive summary (own page) */}
-      <ReportPage pageNumber={3} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
         <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
           <Text style={styles.sectionTitleLarge}>EXECUTIVE SUMMARY</Text>
-          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 8 }]}>Overall Structural Status: {riskTierLabel}</Text>
-          <Text style={styles.bodyText}>{executiveSummary}</Text>
+          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6 }]}>
+            Classification: {verdict} · {structuralScoreLabel}: {riskTierLabel}
+          </Text>
+          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Outcome</Text>
+          <Text style={[styles.bodyText, { marginBottom: 10 }]}>{execBlocks.outcome}</Text>
+          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Why</Text>
+          <Text style={[styles.bodyText, { marginBottom: 10 }]}>{execBlocks.why}</Text>
+          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Meaning</Text>
+          <Text style={styles.bodyText}>{execBlocks.meaning}</Text>
         </View>
       </ReportPage>
 
-      {/* Page 4: Capital Structure Diagnosis, Structural Confidence, Capital Health Summary */}
-      <ReportPage pageNumber={4} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <CapitalHealthAdvisorySectionLead
-            stage="Section B — Core Read"
-            title="Core Read"
-            whatThisShows="Diagnosis, confidence strip, and summary cards built from the same withdrawal and return assumptions you entered."
-            whyThisMatters="This is the shared fact base for the meeting — clear numbers before optional Lion narrative and scenario pages."
-          />
-          <View style={[styles.sectionWrap]}>
-            <Text style={styles.sectionTitleLarge}>CAPITAL STRUCTURE DIAGNOSIS</Text>
-            <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Structure Status</Text><Text style={[styles.assumptionValue, { fontWeight: 'bold' }]}>{riskTierLabel}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>{structuralScoreLabel} (0–100)</Text><Text style={styles.assumptionValue}>{lionScorePdf} · {lionStatusPdf}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Income Gap</Text><Text style={styles.assumptionValue}>{formatCurrency(incomeGap)}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Capital Runway</Text><Text style={styles.assumptionValue}>{runwayYearsText}</Text></View>
-            </View>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>This diagnostic assessment evaluates whether the withdrawal structure is sustainable under the portfolio's expected return assumptions.</Text>
-          </View>
-
-          <View style={[styles.sectionWrap]}>
-            <Text style={styles.sectionTitleLarge}>STRUCTURAL CONFIDENCE</Text>
-            <Text style={[styles.bodyText, { marginBottom: 6 }]}>{structuralScoreLabel}: {lionScorePdf} / 100 · {lionStatusPdf}</Text>
-            <View style={styles.confidenceBarWrap}>
-              <View style={styles.confidenceBar}>
-                <View style={[styles.confidenceFill, { width: `${Math.min(100, Math.max(0, lionScorePdf))}%`, backgroundColor: confidenceColor }]} />
-              </View>
-              <Text style={styles.confidenceLabel}>STRONG · STABLE · FRAGILE · AT RISK · NOT SUSTAINABLE</Text>
-            </View>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>
-              {includeLionsVerdict
-                ? "Lion score is mapped from the model risk tier; same scale as Lion's Verdict in the app."
-                : 'Structural score is mapped from the model risk tier (same 0–100 scale as paid members; full Lion’s Verdict narrative is not included in this trial export).'}
+      {/* Page 3: Your selected inputs */}
+      <ReportPage pageNumber={3} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>YOUR SELECTED INPUTS</Text>
+          <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Mode</Text><Text style={styles.assumptionValue}>{inputs.mode === 'withdrawal' ? 'Monthly Withdrawal' : 'Compounding Growth'}</Text></View>
+          <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Horizon</Text><Text style={styles.assumptionValue}>{horizonYearsFormatted} years</Text></View>
+          <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Starting capital</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.startingCapital)}</Text></View>
+          <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Monthly top-up</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.monthlyTopUp)}</Text></View>
+          <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Expected annual return</Text><Text style={styles.assumptionValue}>{formatNum(inputs.expectedAnnualReturnPct, 1)}%</Text></View>
+          <View style={styles.assumptionRow}>
+            <Text style={styles.assumptionLabel}>Inflation</Text>
+            <Text style={styles.assumptionValue}>
+              {inputs.inflationEnabled ? `ON · ${formatNum(inputs.inflationPct, 1)}%` : 'OFF'}
             </Text>
           </View>
-
-          <View style={[styles.sectionWrap]}>
-            <Text style={styles.sectionTitleLarge}>CAPITAL HEALTH SUMMARY</Text>
-            <View style={[styles.summaryRow]}>
-              <View style={[styles.summaryCard]}>
-                <Text style={styles.summaryCardLabel}>Capital Runway</Text>
-                <Text style={styles.summaryCardValue}>{runwayYearsText}</Text>
-              </View>
-              <View style={[styles.summaryCard]}>
-                <Text style={styles.summaryCardLabel}>Capital Survival Age</Text>
-                <Text style={styles.summaryCardValue} wrap={false}>{survivalAge != null ? `Capital Survival Age ${survivalAge}` : depletionMo == null || depletionMo / 12 >= 100 ? 'Beyond Lifetime Horizon' : '\u2014'}</Text>
-              </View>
-              <View style={[styles.summaryCard]}>
-                <Text style={styles.summaryCardLabel}>Income Sustainability</Text>
-                <Text style={[styles.summaryCardValue, { fontSize: 10 }]}>Sustainable Monthly Return {formatCurrency(sustainableMonthly)}</Text>
-                <Text style={[styles.bodyText, { fontSize: 9, marginTop: 2 }]}>Income Gap {formatCurrency(incomeGap)}</Text>
-              </View>
-            </View>
+          <View style={styles.assumptionRow}>
+            <Text style={styles.assumptionLabel}>Age</Text>
+            <Text style={styles.assumptionValue}>{currentAge != null ? String(currentAge) : '—'}</Text>
           </View>
+          <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Cash buffer</Text><Text style={styles.assumptionValue}>{formatNum(inputs.cashBufferPct, 0)}%</Text></View>
+          <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Cash return</Text><Text style={styles.assumptionValue}>{formatNum(inputs.cashAPY, 1)}%</Text></View>
+          {inputs.mode === 'growth' ? (
+            <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Target future capital</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.targetFutureCapital)}</Text></View>
+          ) : (
+            <>
+              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Desired monthly income</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.targetMonthlyIncome)}</Text></View>
+              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Withdrawal rule</Text><Text style={styles.assumptionValue}>{inputs.withdrawalRule === 'fixed' ? 'Fixed amount' : `${formatNum(inputs.withdrawalPctOfCapital, 1)}% of capital`}</Text></View>
+            </>
+          )}
+        </View>
       </ReportPage>
 
-      {/* Page 5: Structure Overview, Capital Projection Chart */}
-      <ReportPage pageNumber={5} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <View style={[styles.sectionWrap]}>
-            <Text style={styles.sectionTitleLarge}>STRUCTURE OVERVIEW</Text>
-            <Text style={styles.bodyText}>Desired Monthly Income {formatCurrency(inputs.targetMonthlyIncome)}</Text>
-            <Text style={styles.bodyText}>Sustainable Monthly Return {formatCurrency(sustainableMonthly)}</Text>
-            <Text style={styles.bodyText}>Income Gap {formatCurrency(incomeGap)}</Text>
-            <Text style={styles.bodyText}>Projected Capital Depletion {runwayYearsText}</Text>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 6 }]}>Income Gap represents withdrawals exceeding sustainable portfolio returns. Persistent gaps accelerate capital depletion and weaken long-term capital resilience.</Text>
+      {/* Page 4: Results */}
+      <ReportPage pageNumber={4} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>RESULTS</Text>
+          <View style={[styles.section, { marginBottom: SUBSECTION_SPACING }]}>
+            <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Classification</Text><Text style={[styles.assumptionValue, { fontWeight: 'bold' }]}>{verdict}</Text></View>
+            <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Structural band</Text><Text style={styles.assumptionValue}>{riskTierLabel}</Text></View>
+            <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>{structuralScoreLabel} (0–100)</Text><Text style={styles.assumptionValue}>{lionScorePdf} · {lionStatusPdf}</Text></View>
+            {inputs.mode === 'growth' ? (
+              <>
+                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Projected capital at horizon</Text><Text style={styles.assumptionValue}>{formatCurrency(result.nominalCapitalAtHorizon)}</Text></View>
+                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Target future capital</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.targetFutureCapital)}</Text></View>
+                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Total contributions (model)</Text><Text style={styles.assumptionValue}>{formatCurrency(result.totalContributions)}</Text></View>
+              </>
+            ) : (
+              <>
+                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Desired monthly income</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.targetMonthlyIncome)}</Text></View>
+                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Sustainable monthly return</Text><Text style={styles.assumptionValue}>{formatCurrency(sustainableMonthly)}</Text></View>
+                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Income gap</Text><Text style={styles.assumptionValue}>{formatCurrency(incomeGap)}</Text></View>
+                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Runway / depletion</Text><Text style={styles.assumptionValue}>{runwayYearsText}</Text></View>
+              </>
+            )}
           </View>
-
-          {chartPoints.length > 0 ? (
-            <View style={[styles.chartSection, { marginBottom: CHART_SPACING }, PDF_CB_BLOCK]}>
-              <Text style={styles.chartTitle}>CAPITAL PROJECTION OVER TIME</Text>
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>What this shows</Text>
-              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginBottom: 6, lineHeight: 1.45 }]}>
-                Modelled portfolio capital through time under your withdrawal and return assumptions — the same story as Section B, in one strip.
-              </Text>
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Why this matters</Text>
-              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginBottom: 8, lineHeight: 1.45 }]}>
-                A flat or rising strip supports the sustainability narrative; a clear downward trend signals depletion pressure worth discussing in your plan.
-              </Text>
-              <CapitalProjectionChart
-                chartData={chartPoints}
-                formatY={(n) => formatCurrencyDisplayNoDecimals(Math.round(n), symbol)}
-                yAxisLabel="Capital balance"
-                xAxisLabel="Time along the projection (sampled months)"
-                lastPointCaption={(() => {
-                  const last = chartPoints[chartPoints.length - 1];
-                  return `Month ${last.month}: ${formatCurrency(last.nominal)} — compare to starting capital and sustainable return assumptions.`;
-                })()}
-                insightLabel="Interpretation"
-                insight="Each point shows projected capital at that month. A flatter path signals stronger resilience. A steeper decline signals faster depletion pressure. The end-point year and amount show where this trajectory lands under your current assumptions."
-              />
+          <Text style={[styles.bodyText, { marginBottom: 8 }]}>Confidence (aligned to classification): {confidenceLevel}</Text>
+          <View style={styles.confidenceBarWrap}>
+            <View style={styles.confidenceBar}>
+              <View style={[styles.confidenceFill, { width: `${Math.min(100, Math.max(0, lionScorePdf))}%`, backgroundColor: verdictHue }]} />
             </View>
-          ) : null}
+            <Text style={styles.confidenceLabel}>Scale: {structuralScoreLabel} 0–100 (same engine as the headline narrative)</Text>
+          </View>
+        </View>
       </ReportPage>
 
-      {/* Page 6: Model Assumptions */}
-      <ReportPage pageNumber={6} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <CapitalHealthAdvisorySectionLead
-            stage="Section C — Deeper analysis"
-            title="Deeper analysis"
-            whatThisShows="Explicit assumptions, structure detail, optimiser logic, and stress context behind the Section B headline."
-            whyThisMatters="Lets you stress-test the story: which inputs would change the conclusion, and what the model did with your settings."
-          />
-          <View style={[styles.sectionWrap]}>
-            <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTIONS</Text>
-            <View style={styles.row}>
-              <View style={styles.col}>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Model Mode</Text><Text style={styles.assumptionValue}>{inputs.mode === 'withdrawal' ? 'Monthly Withdrawal' : 'Compounding Growth'}</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Currency</Text><Text style={styles.assumptionValue}>{inputs.currency.code} ({symbol})</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Desired Monthly Income</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.targetMonthlyIncome)}</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Starting Capital</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.startingCapital)}</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Monthly Top-Up</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.monthlyTopUp)}</Text></View>
-              </View>
-              <View style={styles.col}>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Expected Annual Return</Text><Text style={styles.assumptionValue}>{formatNum(inputs.expectedAnnualReturnPct, 1)}%</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Inflation Adjustment</Text><Text style={styles.assumptionValue}>{inputs.inflationEnabled ? `${formatNum(inputs.inflationPct, 1)}%` : 'Off'}</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Cash Buffer</Text><Text style={styles.assumptionValue}>{formatNum(inputs.cashBufferPct, 0)}%</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Cash Return</Text><Text style={styles.assumptionValue}>{formatNum(inputs.cashAPY, 1)}%</Text></View>
-                <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Withdrawal Rule</Text><Text style={styles.assumptionValue}>{inputs.withdrawalRule === 'fixed' ? 'Fixed amount' : `${formatNum(inputs.withdrawalPctOfCapital, 1)}% of capital`}</Text></View>
-              </View>
-            </View>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 8 }]}>Portfolio Structure: {100 - inputs.cashBufferPct}% invested at {formatNum(inputs.expectedAnnualReturnPct, 1)}% · {inputs.cashBufferPct}% liquidity buffer earning {formatNum(inputs.cashAPY, 1)}%</Text>
+      {/* Page 5: Chart */}
+      <ReportPage pageNumber={5} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        {chartPoints.length > 0 ? (
+          <View style={[styles.chartSection, { marginBottom: CHART_SPACING }, PDF_CB_BLOCK]}>
+            <CapitalProjectionChart
+              chartData={chartPoints}
+              horizonYears={inputs.timeHorizonYears}
+              formatY={(n) => formatCurrencyDisplayNoDecimals(Math.round(n), symbol)}
+              yAxisLabel="Capital balance"
+              verdictLabel={verdict}
+              verdictColorHex={verdictHue}
+              annotationLines={chartAnnotationLines}
+              caption={chartCaption}
+              confidenceLevel={confidenceLevel}
+              confidenceTint={confidenceTint}
+              optionalSupportLine={verdictSupportLine}
+              mode={inputs.mode}
+              targetFutureCapital={inputs.targetFutureCapital}
+              depletionMonth={depletionMo}
+              formatCurrency={formatCurrency}
+            />
           </View>
+        ) : (
+          <Text style={styles.bodyText}>No chart series available for this export.</Text>
+        )}
+      </ReportPage>
 
-          <View style={[styles.sectionWrap]}>
-            <Text style={styles.sectionTitleLarge}>RUNWAY SENSITIVITY</Text>
-            <Text style={[styles.bodyText, { marginBottom: 4 }]}>Inflation adjustment: {inputs.inflationEnabled ? 'ON' : 'OFF'}.</Text>
-            <Text style={[styles.bodyText, { marginBottom: 4 }]}>Runway without inflation: {formatRunwayYearsMonths(runwayWithoutInflationMonths)}.</Text>
-            <Text style={[styles.bodyText, { marginBottom: 4 }]}>Runway with inflation: {formatRunwayYearsMonths(runwayWithInflationMonths)}.</Text>
+      {/* Page 6: What this means */}
+      <ReportPage pageNumber={6} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>WHAT THIS MEANS</Text>
+          <Text style={[styles.bodyText, { marginBottom: 10 }]}>{chartCaption}</Text>
+          <Text style={[styles.bodyText, { marginBottom: 8 }]}>{execBlocks.meaning}</Text>
+          <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>
+            Classification {verdict}, confidence {confidenceLevel}, and the chart use the same assumptions as the executive summary.
+          </Text>
+        </View>
+      </ReportPage>
+
+      {/* Page 7: Sensitivity */}
+      <ReportPage pageNumber={7} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>SENSITIVITY</Text>
+          {inputs.mode === 'withdrawal' ? (
+            <>
+              <Text style={[styles.bodyText, { marginBottom: 4 }]}>Inflation adjustment: {inputs.inflationEnabled ? 'ON' : 'OFF'}.</Text>
+              <Text style={[styles.bodyText, { marginBottom: 4 }]}>Runway without inflation: {formatRunwayYearsMonths(runwayWithoutInflationMonths)}.</Text>
+              <Text style={[styles.bodyText, { marginBottom: 4 }]}>Runway with inflation: {formatRunwayYearsMonths(runwayWithInflationMonths)}.</Text>
+              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+                {runwayInflationImpactMonths != null && runwayInflationImpactMonths > 0
+                  ? `Impact of inflation on runway: shorter by ${formatRunwayYearsMonths(runwayInflationImpactMonths)}.`
+                  : 'Impact of inflation on runway: no material change in this scenario.'}
+              </Text>
+              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>
+                Inflation increases pressure on withdrawals over time, which can shorten how long capital lasts.
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+                With inflation adjustment ON, the model uses expected annual return minus inflation as the real return path over your horizon.
+              </Text>
+              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+                Inflation OFF applies your stated return without that reduction — compare both states in the live model when stress-testing compounding outcomes.
+              </Text>
+              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>
+                Small changes to return or horizon move projected capital meaningfully; treat {formatNum(inputs.expectedAnnualReturnPct, 1)}% as an assumption to revisit, not a promise.
+              </Text>
+            </>
+          )}
+        </View>
+      </ReportPage>
+
+      {/* Page 8: Ways to improve / optimiser */}
+      <ReportPage pageNumber={8} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>WAYS TO IMPROVE YOUR OUTCOME</Text>
+          {inputs.mode === 'growth' ? (
+            <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+              Add capital over time or extend the horizon to raise projected capital toward your target. Returns above ~10% are usually unrealistic to rely on — prefer structural moves first.
+            </Text>
+          ) : (
+            <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+              Reduce withdrawals or add capital to extend runway. Returns above ~10% are usually unrealistic to rely on — prefer structural moves first.
+            </Text>
+          )}
+          <View style={styles.section}>
+            {inputs.mode === 'withdrawal' ? (
+              <>
+                <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Withdrawal adjustment</Text>
+                <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+                  {adj?.reduceIncome?.feasible && recommendedIncome > 0
+                    ? `Aligning draw with sustainable portfolio income may extend runway. The model illustrates approximately ${formatCurrency(recommendedIncome)} per month — confirm in your plan; it is not a fixed instruction.`
+                    : 'No single illustrative withdrawal level was isolated under this solve — review the structure holistically in your plan.'}
+                </Text>
+              </>
+            ) : null}
+            <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Capital adjustment</Text>
             <Text style={[styles.bodyText, { marginBottom: 6 }]}>
-              {runwayInflationImpactMonths != null && runwayInflationImpactMonths > 0
-                ? `Impact of inflation on runway: shorter by ${formatRunwayYearsMonths(runwayInflationImpactMonths)}.`
-                : 'Impact of inflation on runway: no material change in this scenario.'}
+              {adj?.addCapital?.feasible && requiredCapital > 0
+                ? `Additional capital of approximately ${formatCurrency(requiredCapital)} may improve outcomes under current assumptions.`
+                : 'Additional capital may improve outcomes where there is a structural gap under these assumptions.'}
             </Text>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>
-              Inflation increases the pressure on withdrawals over time, which can shorten how long your capital lasts.
+            <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+              This is typically built progressively through income surplus, asset optimisation, or structured capital deployment. Income Engineering can help structure pathways to build capital over time.
+            </Text>
+            <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Return adjustment</Text>
+            <Text style={[styles.bodyText, { marginBottom: 6 }]}>
+              {increaseReturnFeasible && requiredReturn > 0
+                ? `The model indicates that significantly higher returns (e.g. ~${formatNum(requiredReturn, 1)}%) would be required to fully close the gap.`
+                : 'The model did not isolate a single implied return adjustment under this solve — review assumptions holistically in your plan.'}
+            </Text>
+            <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+              In practice, implied returns far above ~10% are unlikely to be sustainable. Review portfolio strategy within realistic ranges (e.g. 6–10%) while combining capital and income adjustments.
+            </Text>
+            <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Balanced pathway</Text>
+            <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+              {balancedFeasible && (balancedIncomePct > 0 || balancedCapPct > 0)
+                ? `One illustrative combined adjustment is income −${formatNum(balancedIncomePct, 0)}% and capital +${formatNum(balancedCapPct, 0)}% (from the live model) — use for discussion, not as a mandate.`
+                : 'Combined income and capital adjustments can be explored in the live model; avoid treating any single pathway as a standalone mandate.'}
+            </Text>
+            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>
+              Illustrations show structural trade-offs for discussion — not prescriptive instructions.
             </Text>
           </View>
+        </View>
       </ReportPage>
 
-      {/* Page 7: Key Outcomes, Outcome Optimiser */}
-      <ReportPage pageNumber={7} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <View style={[styles.sectionWrap]}>
-            <Text style={styles.sectionTitleLarge}>KEY OUTCOMES</Text>
-            <View style={[styles.row, { marginBottom: 4 }]}>
-              <View style={[styles.card, styles.col]}>
-                <Text style={styles.cardLabel}>How Long Money Lasts</Text>
-                <Text style={styles.cardValue}>{inputs.mode === 'withdrawal' ? (result.runwayPhrase ?? runwayYearsText) : formatCurrency(result.nominalCapitalAtHorizon)}</Text>
-              </View>
-              <View style={[styles.card, styles.col]}>
-                <Text style={styles.cardLabel}>Total Withdrawals</Text>
-                <Text style={styles.cardValue}>{formatCurrency(result.totalWithdrawalsPaid)}</Text>
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={[styles.card, styles.col]}>
-                <Text style={styles.cardLabel}>Total Contributions</Text>
-                <Text style={styles.cardValue}>{formatCurrency(result.totalContributions)}</Text>
-              </View>
-              <View style={[styles.card, styles.col]}>
-                <Text style={styles.cardLabel}>Capital At Horizon</Text>
-                <Text style={styles.cardValue}>{formatCurrency(result.nominalCapitalAtHorizon)}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
-            <Text style={styles.sectionTitleLarge}>OUTCOME OPTIMISER</Text>
-            <View style={styles.section}>
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Withdrawal adjustment</Text>
-              <Text style={[styles.bodyText, { marginBottom: 10 }]}>
-                {adj?.reduceIncome?.feasible && recommendedIncome > 0
-                  ? `Aligning draw with sustainable portfolio income may extend runway. For context, the model illustrates approximately ${formatCurrency(recommendedIncome)} per month — confirm in your plan; it is not a fixed instruction.`
-                  : 'No single illustrative withdrawal level was isolated under this solve — review the structure holistically in your plan.'}
-              </Text>
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Capital adjustment</Text>
-              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
-                {adj?.addCapital?.feasible && requiredCapital > 0
-                  ? `Additional capital of approximately ${formatCurrency(requiredCapital)} may improve sustainability under current assumptions.`
-                  : 'Additional capital may improve sustainability where there is a structural gap under these assumptions.'}
-              </Text>
-              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
-                This is typically built progressively through income surplus, asset optimisation, or structured capital deployment. Refer to Income Engineering for pathways to unlock or build capital over time.
-              </Text>
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Return adjustment</Text>
-              <Text style={[styles.bodyText, { marginBottom: 6 }]}>
-                {increaseReturnFeasible && requiredReturn > 0
-                  ? `The model indicates that significantly higher returns (e.g. ~${formatNum(requiredReturn, 1)}%) would be required to fully close the gap.`
-                  : 'The model did not isolate a single implied return adjustment under this solve — review assumptions holistically in your plan.'}
-              </Text>
-              <Text style={[styles.bodyText, { marginBottom: 10 }]}>
-                In practice, very high implied returns are unlikely to be sustainable. Portfolio strategy may be reviewed to optimise within realistic ranges (e.g. 6–10%), while combining capital and income adjustments.
-              </Text>
-              <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Balanced pathway</Text>
-              <Text style={[styles.bodyText, { marginBottom: 10 }]}>
-                {balancedFeasible && (balancedIncomePct > 0 || balancedCapPct > 0)
-                  ? `One illustrative combined adjustment is income −${formatNum(balancedIncomePct, 0)}% and capital +${formatNum(balancedCapPct, 0)}% (from the live model) — use for discussion, not as a mandate.`
-                  : 'Combined income and capital adjustments can be explored in the live model in your plan; avoid treating any single pathway as a standalone mandate.'}
-              </Text>
-              <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 4 }]}>
-                These rows illustrate structural trade-offs for discussion — not prescriptive advice.
-              </Text>
-            </View>
-          </View>
-      </ReportPage>
-
-      {/* Page 8: Stress test + warning only */}
-      <ReportPage pageNumber={8} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
+      {/* Page 9: Stress test */}
+      <ReportPage pageNumber={9} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
           <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLarge}>CAPITAL STRESS TEST</Text>
             <View style={[styles.stressTable, PDF_CB_BLOCK]}>
@@ -1229,21 +1287,24 @@ export function CapitalGrowthReport({
             <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginTop: 8 }]}>Stress test framing: Bear, Base, and Bull are scenario lenses, not promises. They show how survival time can change under different return environments and are quick structure tests, not forecasts.</Text>
           </View>
 
-          {incomeGap > 0 && depletionMo != null ? (
+          {inputs.mode === 'withdrawal' && incomeGap > 0 && depletionMo != null ? (
             <View style={[styles.warningPanel, PDF_CB_BLOCK]}>
               <Text style={[styles.sectionTitleLarge, { marginBottom: 10 }]}>CAPITAL PROTECTION WARNING</Text>
-              <Text style={styles.bodyText}>Current withdrawal levels exceed sustainable portfolio returns.</Text>
+              <Text style={styles.bodyText}>Withdrawal levels exceed sustainable portfolio returns on these assumptions.</Text>
               <Text style={styles.bodyText}>Without structural adjustments, capital depletion is projected within {runwayYearsText}.</Text>
-              <Text style={styles.bodyText}>Investors should review withdrawal levels, capital base, or portfolio return assumptions to prevent long-term erosion of capital.</Text>
+              <Text style={styles.bodyText}>
+                Review withdrawal levels, capital base, or return assumptions to reduce long-term erosion risk.
+              </Text>
             </View>
           ) : null}
       </ReportPage>
 
       {includeLionsVerdict ? (
-        <ReportPage pageNumber={9} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
+        <ReportPage pageNumber={10} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
           <View style={[styles.verdictSectionWrap, PDF_CB_BLOCK]}>
             <Text style={styles.sectionTitleLionVerdict}>THE LION&apos;S VERDICT</Text>
             <View style={styles.verdictSpacer} />
+            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginBottom: 6 }]}>{lionPreamble}</Text>
             <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 6, fontSize: PDF_BODY_PT }]}>
               Lion score: {lionScorePdf} / 100 · {lionStatusPdf}
             </Text>
@@ -1264,92 +1325,66 @@ export function CapitalGrowthReport({
         </ReportPage>
       ) : null}
 
-      {/* Advisory action plan + notes (own page) */}
-      <ReportPage pageNumber={includeLionsVerdict ? 10 : 9} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
-            <Text style={styles.sectionTitleLarge}>WHAT YOU CAN DO NEXT</Text>
-            <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Recommended Next Steps</Text>
-            <Text style={styles.actionItem}>
-              1. Review withdrawal strategy — Aligning draw with sustainable portfolio income can extend runway on these assumptions
-              {adj?.reduceIncome?.feasible && recommendedIncome > 0
-                ? ` (one illustrative level the model highlights is around ${formatCurrency(recommendedIncome)} per month).`
-                : '.'}
-            </Text>
-            <Text style={styles.actionItem}>
-              2. Strengthen capital base over time —{' '}
-              {adj?.addCapital?.feasible && requiredCapital > 0
-                ? `An estimated ${formatCurrency(requiredCapital)} would materially extend runway under these assumptions; typically built progressively (see Income Engineering for pathways).`
-                : 'Additional capital may improve sustainability when built progressively or through income and asset optimisation (see Income Engineering for pathways).'}
-            </Text>
-            <Text style={styles.actionItem}>
-              3. Review return assumptions —{' '}
-              {increaseReturnFeasible && requiredReturn > 0
-                ? `The diagnostic implied rate to close the gap purely via return is approximately ${formatNum(requiredReturn, 1)}%; treat cautiously, stay within realistic ranges (e.g. 6–10%), and combine with structural adjustments.`
-                : 'Ensure expected returns remain realistic and aligned with portfolio strategy; avoid relying on outsized return assumptions to close structural gaps.'}
-            </Text>
-            <Text style={styles.actionItem}>4. Conduct periodic review — Reassess assumptions annually or when circumstances change.</Text>
+      {/* What you can do next */}
+      <ReportPage pageNumber={includeLionsVerdict ? 11 : 10} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>WHAT YOU CAN DO NEXT</Text>
+          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Recommended next steps</Text>
+          <Text style={styles.actionItem}>
+            {inputs.mode === 'withdrawal'
+              ? `1. Review withdrawals — aligning draw with sustainable portfolio income can extend runway on these assumptions${
+                  adj?.reduceIncome?.feasible && recommendedIncome > 0
+                    ? ` (one illustrative level is around ${formatCurrency(recommendedIncome)} per month).`
+                    : '.'
+                }`
+              : '1. Review contributions and horizon — extending time or adding capital moves you toward target capital without leaning on unrealistic returns.'}
+          </Text>
+          <Text style={styles.actionItem}>
+            2. Strengthen capital over time —{' '}
+            {adj?.addCapital?.feasible && requiredCapital > 0
+              ? `An estimated ${formatCurrency(requiredCapital)} would materially extend runway under these assumptions; typically built progressively (Income Engineering pathways).`
+              : 'Additional capital may improve outcomes when built progressively or through income and asset optimisation (Income Engineering pathways).'}
+          </Text>
+          <Text style={styles.actionItem}>
+            3. Review return assumptions —{' '}
+            {increaseReturnFeasible && requiredReturn > 0
+              ? `The diagnostic implied rate to close the gap purely via return is approximately ${formatNum(requiredReturn, 1)}%; treat cautiously, stay within realistic ranges (e.g. 6–10%), and combine with structural adjustments.`
+              : 'Keep expected returns realistic; avoid relying on outsized return assumptions to close structural gaps.'}
+          </Text>
+          <Text style={styles.actionItem}>4. Periodic review — Reassess assumptions annually or when circumstances change.</Text>
 
-            {inputs.mode === 'withdrawal' && recommendedIncome > 0 ? (
-              <View style={[styles.highlightBox, PDF_CB_BLOCK]}>
-                <Text style={styles.highlightTitle}>PRIMARY DISCUSSION POINT</Text>
-                <Text style={[styles.subsectionTitle, { marginBottom: 2 }]}>Withdrawal alignment (illustrative)</Text>
-                <Text style={styles.bodyText}>
-                  The model highlights approximately {formatCurrency(recommendedIncome)} per month as one path toward sustainability — confirm suitability in your plan and your broader plan.
-                </Text>
-                <Text style={[styles.subsectionTitle, { marginTop: 8, marginBottom: 2 }]}>Why it matters</Text>
-                <Text style={styles.bodyText}>Lower draw reduces depletion pressure and can materially extend runway under the same return assumptions.</Text>
-              </View>
-            ) : null}
-          </View>
-
-          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
-            <Text style={styles.sectionTitleLarge}>HOW TO INTERPRET THESE RESULTS</Text>
-            <Text style={styles.bodyText}>Recommendations should be evaluated within the client&apos;s broader financial plan:</Text>
-            <Text style={styles.actionItem}>• Exploring withdrawal alignment with sustainable portfolio returns</Text>
-            <Text style={styles.actionItem}>• Building or redeploying capital over time to extend runway (Income Engineering)</Text>
-            <Text style={styles.actionItem}>• Reviewing portfolio strategy and return assumptions within realistic ranges</Text>
-            <Text style={styles.actionItem}>• Extending the investment horizon where appropriate</Text>
-          </View>
-      </ReportPage>
-
-      {/* Model assumption transparency — own page */}
-      <ReportPage pageNumber={includeLionsVerdict ? 11 : 10} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
-            <Text style={styles.sectionTitleLarge}>MODEL ASSUMPTION TRANSPARENCY</Text>
-            <View style={[styles.section, { marginBottom: 8 }]}>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Expected Portfolio Return</Text><Text style={styles.assumptionValue}>{formatNum(inputs.expectedAnnualReturnPct, 1)}%</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Monthly Withdrawal</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.targetMonthlyIncome)}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Starting Capital</Text><Text style={styles.assumptionValue}>{formatCurrency(inputs.startingCapital)}</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Cash Buffer Allocation</Text><Text style={styles.assumptionValue}>{formatNum(inputs.cashBufferPct, 0)}%</Text></View>
-              <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Investment Horizon</Text><Text style={styles.assumptionValue}>{horizonYearsFormatted} years</Text></View>
+          {inputs.mode === 'withdrawal' && recommendedIncome > 0 ? (
+            <View style={[styles.highlightBox, PDF_CB_BLOCK]}>
+              <Text style={styles.highlightTitle}>FOCUS AREA</Text>
+              <Text style={[styles.subsectionTitle, { marginBottom: 2 }]}>Withdrawal alignment (illustrative)</Text>
+              <Text style={styles.bodyText}>
+                The model highlights approximately {formatCurrency(recommendedIncome)} per month as one path toward sustainability — confirm suitability in your broader plan.
+              </Text>
+              <Text style={[styles.subsectionTitle, { marginTop: 8, marginBottom: 2 }]}>Why it matters</Text>
+              <Text style={styles.bodyText}>Lower draw reduces depletion pressure and can materially extend runway under the same return assumptions.</Text>
             </View>
-            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>Model outputs depend heavily on the assumptions provided.</Text>
-          </View>
+          ) : null}
+        </View>
       </ReportPage>
 
-      {/* System overview, client summary, disclosures */}
-      <ReportPage pageNumber={includeLionsVerdict ? 12 : 11} totalPages={TOTAL_PAGES} audit={reportAudit} footerLogoSrc={footerLogoSrc}>
-          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
-            <Text style={styles.sectionTitleLarge}>CAPITAL BRIDGE SYSTEM OVERVIEW</Text>
-            <Text style={styles.bodyText}>Capital Bridge functions as a financial modelling and diagnostic platform designed to evaluate capital sustainability and income resilience.</Text>
-            <Text style={[styles.bodyText, { marginTop: 4 }]}>The system integrates capital projections, withdrawal modelling, and structural diagnostics to support decision-making.</Text>
-          </View>
+      {/* Disclosure */}
+      <ReportPage pageNumber={includeLionsVerdict ? 12 : 11} totalPages={TOTAL_PAGES} audit={reportAudit} modeHeaderLine={headerModeLine} footerLogoSrc={footerLogoSrc}>
+        <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
+          <Text style={styles.sectionTitleLarge}>DISCLOSURE</Text>
+          <Text style={[styles.bodyText, { marginBottom: 8 }]}>
+            Capital Bridge is a modelling and diagnostic tool. Outputs depend on the inputs on page 3 and are not forecasts of future markets or personal outcomes.
+          </Text>
+          <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>How to use this export</Text>
+          <Text style={styles.actionItem}>• Use the classification, chart, and Lion narrative as one aligned story under your stated assumptions.</Text>
+          <Text style={styles.actionItem}>• Refresh the live model when withdrawals, returns, or horizon change materially.</Text>
+          <Text style={styles.actionItem}>• Evaluate any next steps alongside your broader plan and professional guidance where applicable.</Text>
+        </View>
 
-          <View style={[styles.sectionWrap, PDF_CB_BLOCK]}>
-            <Text style={styles.sectionTitleLarge}>DISCLOSURES AND HOW TO USE THIS REPORT</Text>
-            <Text style={styles.bodyText}>
-              This section explains how to read the report and which assumptions to review first.
-            </Text>
-            <Text style={[styles.bodyText, { marginTop: 6, fontWeight: 'bold' }]}>How to use this report</Text>
-            <Text style={styles.actionItem}>• Review structural diagnostics and charts in your plan.</Text>
-            <Text style={styles.actionItem}>• Refresh the live model when withdrawals, returns, or horizon change materially.</Text>
-          </View>
-
-          <View style={[styles.disclaimer, { marginTop: SECTION_SPACING }]}>
-            <Text style={{ textAlign: 'left', fontSize: 9, color: MUTED, fontFamily: 'Inter', lineHeight: PDF_BODY_LH }}>
-              This report is for advisory purposes only. All illustrations are based on your assumptions and are not a guarantee of future outcomes. The footer on each page contains the legal notice.
-            </Text>
-          </View>
+        <View style={[styles.disclaimer, { marginTop: SECTION_SPACING }]}>
+          <Text style={{ textAlign: 'left', fontSize: 9, color: MUTED, fontFamily: 'Inter', lineHeight: PDF_BODY_LH }}>
+            This report is for information purposes only. All illustrations are based on your assumptions and are not a guarantee of future outcomes. The footer on each page contains the legal notice.
+          </Text>
+        </View>
       </ReportPage>
     </Document>
   );

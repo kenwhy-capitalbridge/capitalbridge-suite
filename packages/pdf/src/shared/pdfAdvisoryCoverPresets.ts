@@ -76,22 +76,16 @@ export const PDF_TOC_CAPITAL_STRESS: readonly PdfTocBlock[] = [
 
 /** Same hierarchy for react-pdf (Capital Health) — render as Text blocks in app. */
 export const PDF_TOC_CAPITAL_HEALTH: readonly PdfTocBlock[] = [
-  {
-    title: "Section A — Opening",
-    items: ["Advisory framework context", "Executive summary"],
-  },
-  {
-    title: "Section B — Advisor Read",
-    items: [
-      "Capital structure diagnosis",
-      "Structural confidence",
-      "Capital health summary",
-      "Charts and drivers",
-    ],
-  },
-  {
-    title: "Section C — Deeper analysis",
-    items: ["Assumptions", "Scenario context"],
-  },
-  { title: "Appendix & closing" },
+  { title: "Cover", items: ["Title, mode, contents"] },
+  { title: "Summary", items: ["Outcome, why, meaning"] },
+  { title: "Your selected inputs", items: ["Mode, horizon, capital, returns, inflation, age, buffer"] },
+  { title: "Results", items: ["Structural headline aligned to mode"] },
+  { title: "Chart", items: ["Projection, verdict badge, confidence"] },
+  { title: "What this means", items: ["Plain-language interpretation"] },
+  { title: "Sensitivity", items: ["Inflation and runway comparison"] },
+  { title: "Optimisation", items: ["Ways to improve your outcome"] },
+  { title: "Stress test", items: ["Scenario lenses"] },
+  { title: "Lion's Verdict", items: ["Narrative aligned to classification"] },
+  { title: "What you can do next", items: ["Practical next steps"] },
+  { title: "Disclosure", items: ["How to use this report"] },
 ];

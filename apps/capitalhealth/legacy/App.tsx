@@ -546,6 +546,19 @@ const CalculatorScreen = forwardRef<
       }));
   }, [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome]);
 
+  /** Full monthly series for PDF (first + last month preserved in PDF sampler). */
+  const chartDataPdfSeries = useMemo(
+    () =>
+      result.monthlySnapshots.map((s) => ({
+        month: s.monthIndex,
+        nominal: s.totalCapital,
+        real: s.totalCapital,
+        withdrawal: s.withdrawalPaid,
+        target: inputs.mode === 'withdrawal' ? inputs.targetMonthlyIncome : null,
+      })),
+    [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome],
+  );
+
   const lionVerdictBundle = useMemo(() => {
     if (!lionAccessEnabled) return null;
     const mode = inputs.mode;
@@ -718,7 +731,7 @@ const CalculatorScreen = forwardRef<
   const handlePrintOrSaveReport = useCallback(async () => {
     setReportGenerating(true);
     try {
-      const chartPoints = chartData.map(({ month, nominal }) => ({ month, nominal }));
+      const chartPoints = chartDataPdfSeries.map(({ month, nominal }) => ({ month, nominal }));
       await exportCapitalHealthReport({
         inputs,
         result,
@@ -730,7 +743,7 @@ const CalculatorScreen = forwardRef<
     } finally {
       setReportGenerating(false);
     }
-  }, [inputs, result, chartData, lionAccessEnabled, currentAge, reportClientDisplayName]);
+  }, [inputs, result, chartDataPdfSeries, lionAccessEnabled, currentAge, reportClientDisplayName]);
 
   const capitalHealthSlot3RunwayValue = useMemo(() => {
     if (inputs.mode === 'growth') return `${horizonYearsFormatted} years`;

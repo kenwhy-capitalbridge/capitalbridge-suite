@@ -51,11 +51,10 @@ async function main() {
   const brandWordmarkPngDataUrl = pngFileToDataUrl(footerLogoPng);
 
   const result = buildCalculatorResults(sampleInputs);
-  const snaps = result.monthlySnapshots;
-  const step = Math.max(1, Math.floor(snaps.length / 60)) || 1;
-  const chartData = snaps
-    .filter((_, i) => i % step === 0)
-    .map((s) => ({ month: s.monthIndex, nominal: s.totalCapital }));
+  const chartData = result.monthlySnapshots.map((s) => ({
+    month: s.monthIndex,
+    nominal: s.totalCapital,
+  }));
 
   const blob = await generateReportBlob(sampleInputs, result, {
     chartData,
