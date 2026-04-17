@@ -3,7 +3,31 @@ import type { CalculatorResults } from '../hooks/useCalculatorResults';
 import { generateReportBlob } from '../../CapitalGrowthReport';
 import { CAPITAL_HEALTH_PDF_BRAND } from '../../pdfBrandAssets';
 import type { ReportChartPoint } from '../../ReportPrint';
-import { createReportAuditMeta } from '@cb/shared/reportTraceability';
+import {
+  createReportAuditMeta,
+  formatPdfTimestampParts,
+  sanitizePdfFilenameSegment,
+} from '@cb/shared/reportTraceability';
+
+/**
+ * Mode-specific download filename for Capital Health PDFs.
+ *   Compound (growth):    `Compound_CapitalHealth_{user}_{YYYYMMDD}_{HHmm}_v{ver}.pdf`
+ *   Monthly Withdrawal:   `Withdrawal_CapitalBridge_CapitalHealth_{user}_{YYYYMMDD}_{HHmm}_v{ver}.pdf`
+ */
+function buildCapitalHealthPdfFilename(args: {
+  mode: CalculatorInputs['mode'];
+  userDisplayName: string;
+  versionLabel: string;
+  generatedAt: Date;
+}): string {
+  const { datePart, timePart } = formatPdfTimestampParts(args.generatedAt);
+  const user = sanitizePdfFilenameSegment(args.userDisplayName);
+  const ver = args.versionLabel.startsWith('v') ? args.versionLabel : `v${args.versionLabel}`;
+  const tail = `${user}_${datePart}_${timePart}_${ver}.pdf`;
+  return args.mode === 'growth'
+    ? `Compound_CapitalHealth_${tail}`
+    : `Withdrawal_CapitalBridge_CapitalHealth_${tail}`;
+}
 
 const CAPITAL_HEALTH_COVER_LOGO_PNG_PATH = '/brand/Full_CapitalBridge_Green.png';
 const CAPITAL_HEALTH_FOOTER_LOGO_PNG_PATH = '/brand/CapitalBridgeLogo_Green.png';
@@ -56,6 +80,12 @@ export async function exportCapitalHealthReport(args: {
     modelCode: 'HEALTH',
     userDisplayName: args.reportClientDisplayName ?? 'Client',
   });
+  const downloadFilename = buildCapitalHealthPdfFilename({
+    mode: args.inputs.mode,
+    userDisplayName: args.reportClientDisplayName ?? 'Client',
+    versionLabel: audit.versionLabel,
+    generatedAt: audit.generatedAt,
+  });
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const bundledCoverAbs = origin ? absoluteUrlForNextAsset(CAPITAL_HEALTH_PDF_BRAND.fullLockupSrc) : '';
@@ -83,7 +113,7 @@ export async function exportCapitalHealthReport(args: {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = audit.filename;
+  a.download = downloadFilename;
   a.rel = 'noopener';
   document.body.appendChild(a);
   a.click();
