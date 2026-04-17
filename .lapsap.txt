@@ -4,7 +4,8 @@ Be concise. No explanation.
 
 
 
-
+Logo height: 88px → 176px
+Max width cap: 440px → 880px (same 2× scaling so wide wordmarks stay proportional)
 
 Green=#0D3A1D
 White=#F6F5F1
@@ -17,6 +18,12 @@ STABLE=#8FCF7A, FONT COLOR=#0D3A1D
 FRAGILE=#F3AF56, FONT COLOR=#0D3A1D
 AT RISK=#CFCBBF, FONT COLOR=#0D3A1D
 NOT SUSTAINABLE=#CD5B52, FONT COLOR=#FFFFFF
+
+
+
+
+
+
 
 
 
