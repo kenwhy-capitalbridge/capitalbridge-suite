@@ -1395,7 +1395,7 @@ const CalculatorScreen = forwardRef<
                         </tbody>
                       </table>
               </div>
-                    <p className="text-[8px] sm:text-[9px] text-white/55 mt-2 max-w-xl leading-snug">
+                    <p className="mt-3 w-full max-w-none text-center text-[10px] sm:text-xs md:text-sm text-white/70 leading-relaxed break-words">
                       Figures are illustrative diagnostics, not targets. Implied returns above ~{ADVISORY_REQUIRED_RETURN_DISPLAY_CAP_PCT}% are shown for transparency but Apply is disabled — combine realistic return assumptions (e.g. 6–10%) with withdrawal and capital pathways. Additional capital is usually built over time; see{' '}
                       <a
                         href={pricingReturnModelDashboardUrl('incomeengineering') ?? '#'}
