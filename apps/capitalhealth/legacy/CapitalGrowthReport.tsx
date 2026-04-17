@@ -9,6 +9,10 @@ import {
   StyleSheet,
   pdf,
   Font,
+  Svg,
+  Line,
+  Polyline,
+  Circle,
 } from '@react-pdf/renderer';
 import type { Style } from '@react-pdf/types';
 
@@ -129,7 +133,7 @@ function formatRunwayYearsMonths(depletionMonths: number | null): string {
   return `${years} years ${months} months`;
 }
 
-const CHART_HEIGHT = 72;
+const CHART_HEIGHT = 170;
 /** Tick column width; Y-axis title sits in a separate left gutter so it cannot paint under bars. */
 const CHART_Y_AXIS_W = 40;
 const CHART_Y_LABEL_GUTTER = 68;
@@ -138,13 +142,14 @@ const PAGE_W_PT = 595.28;
 const PAGE_H_PT = 841.89;
 const BAR_COUNT = 48;
 
-const REPORT_PAGE_OUTER = cbReportMmToPt(CB_REPORT_PAGE_MARGIN_MM);
-const CONTENT_PADDING = 12;
+const REPORT_PAGE_OUTER = Math.max(16, cbReportMmToPt(CB_REPORT_PAGE_MARGIN_MM) - 8);
+const CONTENT_PADDING = 8;
 const SECTION_SPACING = 40;
 const SUBSECTION_SPACING = 22;
 const CHART_SPACING = 28;
 const CARD_SPACING = 20;
 const LOGO_TITLE_GAP = 12;
+const CAPITAL_HEALTH_COVER_LOGO_PNG_PATH = '/brand/Full_CapitalBridge_Green.png';
 
 const styles = StyleSheet.create({
   warningPanel: {
@@ -640,6 +645,7 @@ function CapitalProjectionChart({
   lastPointCaption,
   insightLabel,
   insight,
+  depletionLabel,
 }: {
   chartData: ChartPoint[];
   formatY: (n: number) => string;
@@ -648,8 +654,19 @@ function CapitalProjectionChart({
   lastPointCaption: string;
   insightLabel?: string;
   insight: string;
+  depletionLabel?: string;
 }) {
   if (!chartData.length) return null;
+
+  const W = 520;
+  const H = CHART_HEIGHT;
+  const left = 62;
+  const right = 18;
+  const top = 14;
+  const bottom = 34;
+  const plotW = W - left - right;
+  const plotH = H - top - bottom;
+
   const maxVal = Math.max(...chartData.map((d) => d.nominal), 1);
   const minVal = Math.min(...chartData.map((d) => d.nominal), 0);
   const range = maxVal - minVal || 1;
@@ -657,60 +674,65 @@ function CapitalProjectionChart({
   const yLo = minVal;
   const yMid = minVal + range / 2;
 
-  const labelColW = CHART_Y_LABEL_GUTTER + CHART_Y_AXIS_W;
+  const pts = chartData.map((d, i) => {
+    const x = left + (chartData.length === 1 ? 0 : (i / (chartData.length - 1)) * plotW);
+    const y = top + ((maxVal - d.nominal) / range) * plotH;
+    return { ...d, x, y };
+  });
+  const polyPoints = pts.map((p) => `${p.x},${p.y}`).join(' ');
+  const finalX = pts[pts.length - 1]?.x ?? left + plotW;
+
   return (
     <View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-        <View style={{ width: labelColW, marginRight: 2 }}>
-          <Text
-            style={{
-              fontSize: 8,
-              color: DARK,
-              marginBottom: 4,
-              width: labelColW - 2,
-              textAlign: 'left',
-              fontFamily: 'Inter',
-              lineHeight: PDF_BODY_LH,
-            }}
-          >
-            {yAxisLabel}
-          </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <View style={{ width: CHART_Y_AXIS_W, height: CHART_HEIGHT, justifyContent: 'space-between', paddingRight: 4 }}>
-              <Text style={{ fontSize: 8, color: DARK, textAlign: 'right', fontFamily: 'Inter' }} wrap={false}>
-                {formatY(yHi)}
-              </Text>
-              <Text style={{ fontSize: 8, color: DARK, textAlign: 'right', fontFamily: 'Inter' }} wrap={false}>
-                {formatY(yMid)}
-              </Text>
-              <Text style={{ fontSize: 8, color: DARK, textAlign: 'right', fontFamily: 'Inter' }} wrap={false}>
-                {formatY(yLo)}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <View style={{ flex: 1, flexDirection: 'column', minWidth: 0 }}>
-          <View style={[styles.chartContainer, { height: CHART_HEIGHT, flex: 0 }]}>
-            {chartData.map((d, i) => {
-              const heightPct = (d.nominal - minVal) / range;
-              const height = Math.max(2, Math.round(CHART_HEIGHT * heightPct));
-              return (
-                <View
-                  key={i}
-                  style={[
-                    styles.chartBar,
-                    {
-                      height,
-                    },
-                  ]}
-                />
-              );
-            })}
-          </View>
-          <Text style={{ fontSize: 8, color: DARK, textAlign: 'center', marginTop: 6, fontFamily: 'Inter' }}>{xAxisLabel}</Text>
-        </View>
+      <Svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+        <Line x1={left} y1={top} x2={left} y2={top + plotH} stroke="#6b7280" strokeWidth={0.8} />
+        <Line x1={left} y1={top + plotH} x2={left + plotW} y2={top + plotH} stroke="#6b7280" strokeWidth={0.8} />
+
+        <Line x1={left} y1={top} x2={left + plotW} y2={top} stroke="#d8ddd9" strokeWidth={0.6} />
+        <Line x1={left} y1={top + plotH / 2} x2={left + plotW} y2={top + plotH / 2} stroke="#d8ddd9" strokeWidth={0.6} />
+
+        <Polyline points={polyPoints} stroke="#215c4a" strokeWidth={2.2} fill="none" />
+
+        {pts.map((p, i) => (
+          <Circle
+            key={`${p.month}-${i}`}
+            cx={p.x}
+            cy={p.y}
+            r={i === pts.length - 1 ? 3.4 : 2.8}
+            fill={i >= Math.floor(pts.length * 0.78) ? '#b55a52' : '#215c4a'}
+          />
+        ))}
+
+        {depletionLabel ? (
+          <>
+            <Line
+              x1={finalX}
+              y1={top}
+              x2={finalX}
+              y2={top + plotH}
+              stroke="#b55a52"
+              strokeWidth={1.2}
+              strokeDasharray="4,3"
+            />
+          </>
+        ) : null}
+      </Svg>
+
+      <View style={{ marginTop: -H + top - 2, marginBottom: H - top - 14 }}>
+        <Text style={{ fontSize: 8, color: DARK, marginLeft: 4, marginBottom: plotH / 2 - 10, fontFamily: 'Inter' }}>{formatY(yHi)}</Text>
+        <Text style={{ fontSize: 8, color: DARK, marginLeft: 4, marginBottom: plotH / 2 - 10, fontFamily: 'Inter' }}>{formatY(yMid)}</Text>
+        <Text style={{ fontSize: 8, color: DARK, marginLeft: 4, fontFamily: 'Inter' }}>{formatY(yLo)}</Text>
       </View>
-      <View style={{ marginTop: 12, paddingVertical: 6 }}>
+
+      <Text style={{ fontSize: 8, color: DARK, marginTop: 2, textAlign: 'center', fontFamily: 'Inter' }}>{xAxisLabel}</Text>
+      <Text style={{ fontSize: 8, color: DARK, marginTop: 4, fontFamily: 'Inter' }}>{yAxisLabel}</Text>
+      {depletionLabel ? (
+        <Text style={{ fontSize: 8, color: '#b55a52', marginTop: 2, textAlign: 'right', fontFamily: 'Inter', fontWeight: 'bold' }}>
+          {depletionLabel}
+        </Text>
+      ) : null}
+
+      <View style={{ marginTop: 10, paddingVertical: 6 }}>
         <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 4, fontFamily: 'Roboto Serif' }}>Latest value (end of series)</Text>
         <Text style={{ fontSize: PDF_BODY_PT, color: DARK, fontFamily: 'Inter', lineHeight: PDF_BODY_LH }}>{lastPointCaption}</Text>
       </View>
@@ -861,7 +883,7 @@ export function CapitalGrowthReport({
         <Image src={brandWordmarkPngDataUrl} style={{ width: 148, height: 40, objectFit: 'contain' }} />
       </View>
     ) : baseUrl ? (
-      <Image src={`${baseUrl}${CB_REPORT_BRAND_FULL_GREEN_PATH}`} style={styles.pdfCoverLogo} />
+      <Image src={`${baseUrl}${CAPITAL_HEALTH_COVER_LOGO_PNG_PATH}`} style={styles.pdfCoverLogo} />
     ) : (
       <Text style={{ fontSize: 11, fontWeight: 'bold', color: GREEN, marginBottom: 16 }}>Capital Bridge</Text>
     );

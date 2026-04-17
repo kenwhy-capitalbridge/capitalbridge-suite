@@ -3,39 +3,22 @@ import type { CalculatorResults } from '../hooks/useCalculatorResults';
 import { generateReportBlob } from '../../CapitalGrowthReport';
 import type { ReportChartPoint } from '../../ReportPrint';
 import { createReportAuditMeta } from '@cb/shared/reportTraceability';
-import { CB_REPORT_BRAND_FULL_GREEN_PATH } from '@cb/shared/cbReportTemplate';
 
-/** Rasterize the green full lockup SVG for react-pdf (reliable vs raw SVG); matches docs sample script. */
-async function rasterizeGreenLockupForPdf(pageOrigin: string): Promise<string | null> {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return null;
-  const svgUrl = `${pageOrigin}${CB_REPORT_BRAND_FULL_GREEN_PATH}`;
+const CAPITAL_HEALTH_COVER_LOGO_PNG_PATH = '/brand/Full_CapitalBridge_Green.png';
+
+/** Read the cover PNG and return data URL for react-pdf reliability. */
+async function loadCoverLogoPngForPdf(pageOrigin: string): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
   try {
-    const res = await fetch(svgUrl);
+    const res = await fetch(`${pageOrigin}${CAPITAL_HEALTH_COVER_LOGO_PNG_PATH}`);
     if (!res.ok) return null;
-    const svgText = await res.text();
-    const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-    const objUrl = URL.createObjectURL(blob);
-    const img = new window.Image();
-    img.crossOrigin = 'anonymous';
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error('lockup load'));
-      img.src = objUrl;
+    const blob = await res.blob();
+    return await new Promise<string | null>((resolve) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(typeof fr.result === 'string' ? fr.result : null);
+      fr.onerror = () => resolve(null);
+      fr.readAsDataURL(blob);
     });
-    const w = 720;
-    const h = 160;
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      URL.revokeObjectURL(objUrl);
-      return null;
-    }
-    ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(img, 0, 0, w, h);
-    URL.revokeObjectURL(objUrl);
-    return canvas.toDataURL('image/png');
   } catch {
     return null;
   }
@@ -55,7 +38,7 @@ export async function exportCapitalHealthReport(args: {
     userDisplayName: args.reportClientDisplayName ?? 'Client',
   });
   const brandFullLockupPngDataUrl =
-    typeof window !== 'undefined' ? await rasterizeGreenLockupForPdf(window.location.origin) : null;
+    typeof window !== 'undefined' ? await loadCoverLogoPngForPdf(window.location.origin) : null;
   const blob = await generateReportBlob(args.inputs, args.result, {
     chartData: args.chartPoints,
     currentAge: args.currentAge ?? undefined,
