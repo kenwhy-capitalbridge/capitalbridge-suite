@@ -56,6 +56,8 @@ import { runSimulation } from './calculator-engine';
 import {
   sampleCapitalHealthChartPoints,
   computeCapitalHealthVerdict,
+  computeChartFaceVerdict,
+  chartStructuralDivergenceLine,
   verdictColor,
   structuralToneFromVerdict,
   confidenceFromVerdict,
@@ -439,14 +441,14 @@ const styles = StyleSheet.create({
   highlightTitle: { fontSize: 9, fontWeight: 'bold', color: GREEN, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Roboto Serif' },
   actionList: { marginLeft: 8, marginBottom: 6 },
   actionItem: { fontSize: 9, color: DARK, marginBottom: 6, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' },
-  pdfCoverRoot: { width: '100%', alignItems: 'center', paddingTop: 4, paddingBottom: 12 },
+  pdfCoverRoot: { width: '100%', alignItems: 'center', paddingTop: 2, paddingBottom: 6 },
   /** Single dimension + objectFit — fixed width+height squashed wide SVG/PNG lockups. */
   pdfCoverLogo: {
     width: '100%',
     maxWidth: 880,
-    height: 176,
+    height: 148,
     objectFit: 'contain' as const,
-    marginBottom: 20,
+    marginBottom: 10,
     alignSelf: 'center' as const,
   },
   pdfCoverH1: {
@@ -457,35 +459,35 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
     fontFamily: 'Roboto Serif',
-    marginBottom: 8,
+    marginBottom: 4,
     maxWidth: 440,
     lineHeight: PDF_TITLE_SERIF_LH,
   },
   pdfCoverSubtitle: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: DARK,
     textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: PDF_BODY_LH,
+    marginBottom: 6,
+    lineHeight: 1.35,
     maxWidth: 380,
     paddingHorizontal: 12,
     fontFamily: 'Inter',
   },
-  pdfCoverMeta: { fontSize: 10, color: DARK, textAlign: 'center', marginBottom: 4, fontFamily: 'Inter' },
-  pdfCoverSpacer: { marginTop: 14, marginBottom: 14 },
+  pdfCoverMeta: { fontSize: 9, color: DARK, textAlign: 'center', marginBottom: 2, fontFamily: 'Inter' },
+  pdfCoverSpacer: { marginTop: 6, marginBottom: 6 },
   pdfCoverContents: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontWeight: 'bold',
     color: GREEN,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 10,
+    marginBottom: 4,
     textAlign: 'center',
     fontFamily: 'Roboto Serif',
   },
-  pdfCoverTocBlock: { width: '100%', maxWidth: 400, marginBottom: 10, alignSelf: 'center' },
-  pdfCoverTocTitle: { fontSize: 9, fontWeight: 'bold', color: DARK, marginBottom: 4, fontFamily: 'Inter' },
-  pdfCoverTocItem: { fontSize: 8, color: DARK, marginLeft: 10, marginBottom: 3, lineHeight: PDF_BODY_LH, fontFamily: 'Inter' },
+  pdfCoverTocBlock: { width: '100%', maxWidth: 400, marginBottom: 4, alignSelf: 'center' },
+  pdfCoverTocTitle: { fontSize: 8, fontWeight: 'bold', color: DARK, marginBottom: 1, fontFamily: 'Inter' },
+  pdfCoverTocItem: { fontSize: 7.5, color: DARK, marginLeft: 6, marginBottom: 1, lineHeight: 1.3, fontFamily: 'Inter' },
 });
 
 function ReportPage({
@@ -905,16 +907,19 @@ export function CapitalGrowthReport({
       ? chartData.map((d) => ({ month: d.month, nominal: d.nominal }))
       : result.monthlySnapshots.map((s) => ({ month: s.monthIndex, nominal: s.totalCapital }));
   const verdict = computeCapitalHealthVerdict(inputs, result, chartFull);
+  const chartFaceVerdict = computeChartFaceVerdict(verdict, inputs, result, chartFull);
   const verdictHue = verdictColor(verdict);
+  const chartFaceHue = verdictColor(chartFaceVerdict);
   const structuralTone = structuralToneFromVerdict(verdict);
   const confidenceLevel = confidenceFromVerdict(verdict);
   const confidenceTint = confidenceBarColor(confidenceLevel);
   const chartPoints = sampleCapitalHealthChartPoints(chartFull);
   const headerModeLine = `CAPITAL HEALTH — ${modeHeaderSuffix(inputs)}`;
   const execBlocks = buildExecutiveSummaryBlocks(inputs, result, verdict, formatCurrency, formatNum);
-  const chartCaption = buildChartCaption(inputs, result, verdict, formatCurrency, formatNum);
-  const chartAnnotationLines = buildChartAnnotationLines(inputs, result, verdict, formatCurrency, formatNum);
-  const verdictSupportLine = buildVerdictSupportLine(inputs, result, verdict, formatCurrency);
+  const chartCaption = buildChartCaption(inputs, result, chartFaceVerdict, formatCurrency, formatNum);
+  const chartAnnotationLines = buildChartAnnotationLines(inputs, result, chartFaceVerdict, formatCurrency, formatNum);
+  const verdictSupportLine = buildVerdictSupportLine(inputs, result, chartFaceVerdict, formatCurrency);
+  const chartDivergenceLine = chartStructuralDivergenceLine(verdict, chartFaceVerdict, inputs);
   const lionPreamble = lionAlignmentPreamble(verdict, structuralTone);
 
   const verdictNarrative = result.statusCopy?.long ?? USER_GUIDANCE_LONG[result.status];
@@ -1069,7 +1074,10 @@ export function CapitalGrowthReport({
           <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Why</Text>
           <Text style={[styles.bodyText, { marginBottom: 10 }]}>{execBlocks.why}</Text>
           <Text style={[styles.bodyText, { fontWeight: 'bold', marginBottom: 4 }]}>Meaning</Text>
-          <Text style={styles.bodyText}>{execBlocks.meaning}</Text>
+          <Text style={styles.bodyText}>
+            {execBlocks.meaning}
+            {chartDivergenceLine ? ` ${chartDivergenceLine}` : ''}
+          </Text>
         </View>
       </ReportPage>
 
@@ -1125,6 +1133,13 @@ export function CapitalGrowthReport({
                 <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Sustainable monthly return</Text><Text style={styles.assumptionValue}>{formatCurrency(sustainableMonthly)}</Text></View>
                 <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Income gap</Text><Text style={styles.assumptionValue}>{formatCurrency(incomeGap)}</Text></View>
                 <View style={styles.assumptionRow}><Text style={styles.assumptionLabel}>Runway / depletion</Text><Text style={styles.assumptionValue}>{runwayYearsText}</Text></View>
+                <View style={styles.assumptionRow}>
+                  <Text style={styles.assumptionLabel}>Chart read</Text>
+                  <Text style={[styles.assumptionValue, { fontWeight: 'bold' }]}>{chartFaceVerdict}</Text>
+                </View>
+                {chartDivergenceLine ? (
+                  <Text style={[styles.bodyText, { fontSize: 8, color: MUTED, marginTop: 2 }]}>{chartDivergenceLine}</Text>
+                ) : null}
               </>
             )}
           </View>
@@ -1147,8 +1162,8 @@ export function CapitalGrowthReport({
               horizonYears={inputs.timeHorizonYears}
               formatY={(n) => formatCurrencyDisplayNoDecimals(Math.round(n), symbol)}
               yAxisLabel="Capital balance"
-              verdictLabel={verdict}
-              verdictColorHex={verdictHue}
+              verdictLabel={chartFaceVerdict}
+              verdictColorHex={chartFaceHue}
               annotationLines={chartAnnotationLines}
               caption={chartCaption}
               confidenceLevel={confidenceLevel}
@@ -1171,8 +1186,13 @@ export function CapitalGrowthReport({
           <Text style={styles.sectionTitleLarge}>WHAT THIS MEANS</Text>
           <Text style={[styles.bodyText, { marginBottom: 10 }]}>{chartCaption}</Text>
           <Text style={[styles.bodyText, { marginBottom: 8 }]}>{execBlocks.meaning}</Text>
+          {chartDivergenceLine ? (
+            <Text style={[styles.bodyText, { fontSize: 9, color: MUTED, marginBottom: 6 }]}>{chartDivergenceLine}</Text>
+          ) : null}
           <Text style={[styles.bodyText, { fontSize: 9, color: MUTED }]}>
-            Classification {verdict}, confidence {confidenceLevel}, and the chart use the same assumptions as the executive summary.
+            {verdict === chartFaceVerdict
+              ? `Classification and chart read both ${verdict}; confidence ${confidenceLevel} — same inputs as the executive summary.`
+              : `Structural classification ${verdict}; chart read ${chartFaceVerdict}; confidence ${confidenceLevel} — same inputs as the executive summary.`}
           </Text>
         </View>
       </ReportPage>
@@ -1352,6 +1372,9 @@ export function CapitalGrowthReport({
               : 'Keep expected returns realistic; avoid relying on outsized return assumptions to close structural gaps.'}
           </Text>
           <Text style={styles.actionItem}>4. Periodic review — Reassess assumptions annually or when circumstances change.</Text>
+          <Text style={styles.actionItem}>
+            5. Next step: run Capital Stress to test this structure under different situational assumptions, multiple future paths, and probability-based confidence ranges (volatility and dispersion).
+          </Text>
 
           {inputs.mode === 'withdrawal' && recommendedIncome > 0 ? (
             <View style={[styles.highlightBox, PDF_CB_BLOCK]}>

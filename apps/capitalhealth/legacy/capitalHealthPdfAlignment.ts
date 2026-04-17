@@ -57,6 +57,42 @@ function trajectoryDeclines(chart: ChartPoint[]): boolean {
   return last < first * 0.999;
 }
 
+/** Fractional decline start→end; withdrawal chart-read only (not model formulas). */
+function withdrawalCapitalDeclineFraction(chart: ChartPoint[]): number {
+  if (chart.length < 2) return 0;
+  const first = chart[0]!.nominal;
+  const last = chart[chart.length - 1]!.nominal;
+  if (first <= 0) return 0;
+  return Math.max(0, (first - last) / first);
+}
+
+/** Structural STABLE + decline beyond this → chart reads UNDER PRESSURE (user-facing). */
+const WITHDRAWAL_MATERIAL_DECLINE_FOR_CHART = 0.05;
+
+/**
+ * Chart-facing verdict for badge / caption / annotations.
+ * Withdrawal: may upgrade STABLE → UNDER PRESSURE when capital falls materially through the horizon
+ * while still surviving the horizon (structural gap rules unchanged).
+ */
+export function computeChartFaceVerdict(
+  structural: CapitalHealthVerdict,
+  inputs: CalculatorInputs,
+  result: SimulationResult,
+  chartFull: ChartPoint[],
+): CapitalHealthVerdict {
+  if (inputs.mode === 'growth') return structural;
+  if (depletedBeforeHorizon(inputs, result) || structural === 'AT RISK') return 'AT RISK';
+  if (structural === 'UNDER PRESSURE') return 'UNDER PRESSURE';
+  if (structural === 'SUSTAINABLE') return 'SUSTAINABLE';
+  if (structural === 'STABLE') {
+    if (withdrawalCapitalDeclineFraction(chartFull) > WITHDRAWAL_MATERIAL_DECLINE_FOR_CHART) {
+      return 'UNDER PRESSURE';
+    }
+    return 'STABLE';
+  }
+  return structural;
+}
+
 function coverageGrowth(inputs: CalculatorInputs, result: SimulationResult): number {
   const t = inputs.targetFutureCapital || 1;
   return (result.nominalCapitalAtHorizon / t) * 100;
@@ -221,7 +257,7 @@ export function buildExecutiveSummaryBlocks(
 export function buildChartCaption(
   inputs: CalculatorInputs,
   result: SimulationResult,
-  verdict: CapitalHealthVerdict,
+  chartRead: CapitalHealthVerdict,
   formatCurrency: (n: number) => string,
   formatNum: (n: number, d?: number) => string,
 ): string {
@@ -230,25 +266,31 @@ export function buildChartCaption(
     const start = formatCurrency(inputs.startingCapital);
     const end = formatCurrency(result.nominalCapitalAtHorizon);
     const tgt = formatCurrency(inputs.targetFutureCapital);
-    if (verdict === 'AT RISK' || verdict === 'BELOW TARGET') {
-      return `Over ${hy} years capital moves from ${start} to ${end} versus target ${tgt} (${verdict}).`;
+    if (chartRead === 'AT RISK' || chartRead === 'BELOW TARGET') {
+      return `Over ${hy} years capital moves from ${start} to ${end} versus target ${tgt} (${chartRead}).`;
     }
-    return `Capital grows from ${start} to ${end} over ${hy} years relative to target ${tgt} (${verdict}).`;
+    return `Capital grows from ${start} to ${end} over ${hy} years relative to target ${tgt} (${chartRead}).`;
   }
   const gap = incomeGapMonthly(inputs, result);
-  if (verdict === 'AT RISK') {
+  if (chartRead === 'AT RISK') {
     return `Capital declines with a ${formatCurrency(gap)} monthly gap and is projected to be depleted before the ${hy}-year horizon.`;
   }
-  if (verdict === 'SUSTAINABLE' || verdict === 'STABLE') {
-    return `Capital trajectory over ${hy} years is consistent with ${verdict} under current withdrawals and return assumptions.`;
+  if (chartRead === 'SUSTAINABLE') {
+    return `Capital trajectory over ${hy} years reads as sustainable on the path shown under current withdrawals and return assumptions.`;
   }
-  return `Capital declines under a ${formatCurrency(gap)} monthly gap through the ${hy}-year horizon (${verdict}).`;
+  if (chartRead === 'STABLE') {
+    return `Capital stays relatively steady through the ${hy}-year horizon with a small income gap (${formatCurrency(gap)}/month); chart read: stable.`;
+  }
+  if (chartRead === 'UNDER PRESSURE') {
+    return `Capital declines over the ${hy}-year horizon with a ${formatCurrency(gap)} monthly gap; chart read: under pressure.`;
+  }
+  return `Capital path through the ${hy}-year horizon (${chartRead}).`;
 }
 
 export function buildChartAnnotationLines(
   inputs: CalculatorInputs,
   result: SimulationResult,
-  verdict: CapitalHealthVerdict,
+  chartRead: CapitalHealthVerdict,
   formatCurrency: (n: number) => string,
   formatNum: (n: number, d?: number) => string,
 ): string[] {
@@ -257,18 +299,27 @@ export function buildChartAnnotationLines(
     const lines = [
       `Capital grows to ${formatCurrency(result.nominalCapitalAtHorizon)} vs target ${formatCurrency(inputs.targetFutureCapital)}.`,
       `Horizon: ${hy} years · Return ${formatNum(inputs.expectedAnnualReturnPct, 1)}%`,
-      `Verdict: ${verdict}`,
+      `Verdict: ${chartRead}`,
     ];
     return lines.slice(0, 4);
   }
   const gap = incomeGapMonthly(inputs, result);
+  const depleted = depletedBeforeHorizon(inputs, result);
+  const pathLine =
+    depleted
+      ? 'Capital depletes before the selected horizon.'
+      : chartRead === 'UNDER PRESSURE'
+        ? 'Capital declines over time on the path shown (still within horizon).'
+        : chartRead === 'STABLE'
+          ? 'Capital is flat or only gently sloping through the horizon.'
+          : chartRead === 'SUSTAINABLE'
+            ? 'Capital path is supportive through the horizon on the line shown.'
+            : 'Review the slope against your runway expectations.';
   const lines = [
-    `Capital path reflects a ${formatCurrency(gap)} monthly income gap.`,
+    `Income gap about ${formatCurrency(gap)}/month.`,
     `Horizon: ${hy} years.`,
-    depletedBeforeHorizon(inputs, result)
-      ? 'Capital is depleted before the selected horizon.'
-      : 'Capital remains through the selected horizon on these assumptions.',
-    `Verdict: ${verdict}`,
+    pathLine,
+    `Chart read: ${chartRead}.`,
   ];
   return lines.slice(0, 4);
 }
@@ -276,18 +327,31 @@ export function buildChartAnnotationLines(
 export function buildVerdictSupportLine(
   inputs: CalculatorInputs,
   result: SimulationResult,
-  verdict: CapitalHealthVerdict,
+  chartRead: CapitalHealthVerdict,
   formatCurrency: (n: number) => string,
 ): string | null {
   if (inputs.mode === 'growth') {
     return `Target ${formatCurrency(inputs.targetFutureCapital)} → Projected ${formatCurrency(result.nominalCapitalAtHorizon)}`;
   }
   const gap = incomeGapMonthly(inputs, result);
-  if (verdict === 'AT RISK') {
+  if (chartRead === 'AT RISK') {
     return `Gap ${formatCurrency(gap)}/mo → Depletion before horizon`;
+  }
+  if (chartRead === 'UNDER PRESSURE') {
+    return gap > 0 ? `Declining path · gap ${formatCurrency(gap)}/mo` : 'Declining path through horizon';
   }
   if (gap > 0) return `Gap ${formatCurrency(gap)}/mo`;
   return null;
+}
+
+/** One line when structural label and chart read differ (withdrawal only). */
+export function chartStructuralDivergenceLine(
+  structural: CapitalHealthVerdict,
+  chartRead: CapitalHealthVerdict,
+  inputs: CalculatorInputs,
+): string | null {
+  if (inputs.mode !== 'withdrawal' || structural === chartRead) return null;
+  return `Structural label ${structural} reflects gap/runway rules; chart read ${chartRead} reflects how capital moves on the line.`;
 }
 
 export function lionAlignmentPreamble(verdict: CapitalHealthVerdict, tone: StructuralTone): string {
