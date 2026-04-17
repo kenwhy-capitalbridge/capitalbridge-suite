@@ -15,7 +15,7 @@ function absoluteUrlForNextAsset(assetPath: string): string {
   return `${window.location.origin}${path}`;
 }
 
-/** Fetch any same-origin URL and return a data URL for @react-pdf/renderer Image. */
+/** Fetch any same-origin URL and return a data URL for react-pdf Image src. */
 async function fetchUrlAsDataUrl(url: string): Promise<string | null> {
   if (!url) return null;
   try {
