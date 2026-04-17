@@ -441,20 +441,22 @@ const CalculatorScreen = forwardRef<
     (tp: TooltipContentProps) => {
       const { active, payload } = tp;
       if (!active || !payload?.length) return null;
-      const row = payload[0]?.payload as { month?: number; nominal?: number } | undefined;
+      const row = payload[0]?.payload as { month?: number; year?: number; nominal?: number } | undefined;
       if (row == null || typeof row.month !== 'number' || typeof row.nominal !== 'number') return null;
       const mo = row.month;
-      const years = (mo / 12).toFixed(1);
+      const horizonYr = inputs.timeHorizonYears;
+      const yearAlong =
+        typeof row.year === 'number' ? row.year.toFixed(horizonYr % 1 === 0 ? 0 : 1) : (mo / 12).toFixed(1);
       return (
         <div className="rounded border border-[#FFCC6A] bg-[#0D3A1D] px-2.5 py-2 text-[10px] sm:text-xs text-[#FFCC6A] shadow-lg">
           <div className="text-[#F6F5F1]">
-            Time: {years} yr ({mo} mo)
+            Year on horizon: {yearAlong} (month {mo})
           </div>
           <div className="mt-0.5">Capital : {formatCurrency(row.nominal)}</div>
         </div>
       );
     },
-    [formatCurrency]
+    [formatCurrency, inputs.timeHorizonYears]
   );
 
   const update = useCallback((patch: Partial<CalculatorInputs>) => {
@@ -534,17 +536,26 @@ const CalculatorScreen = forwardRef<
 
   const horizonYearsFormatted = Number(inputs.timeHorizonYears).toFixed(1);
 
+  /** Along-horizon year (0 → timeHorizonYears), same mapping as PDF chart x-scale. */
+  const chartYearFromMonth = useCallback((monthIndex: number) => {
+    const hy = inputs.timeHorizonYears;
+    const hm = Math.max(1, Math.round(hy * 12));
+    return hm <= 1 ? 0 : (monthIndex / (hm - 1)) * hy;
+  }, [inputs.timeHorizonYears]);
+
   const chartData = useMemo(() => {
+    const step = Math.max(1, Math.floor(result.monthlySnapshots.length / 60)) || 1;
     return result.monthlySnapshots
-      .filter((_, i) => i % (Math.max(1, Math.floor(result.monthlySnapshots.length / 60)) || 1) === 0)
-      .map((s, i) => ({
+      .filter((_, i) => i % step === 0)
+      .map((s) => ({
         month: s.monthIndex,
+        year: chartYearFromMonth(s.monthIndex),
         nominal: s.totalCapital,
         real: s.totalCapital,
         withdrawal: s.withdrawalPaid,
         target: inputs.mode === 'withdrawal' ? inputs.targetMonthlyIncome : null,
       }));
-  }, [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome]);
+  }, [result.monthlySnapshots, inputs.mode, inputs.targetMonthlyIncome, chartYearFromMonth]);
 
   /** Full monthly series for PDF (first + last month preserved in PDF sampler). */
   const chartDataPdfSeries = useMemo(
@@ -1222,9 +1233,17 @@ const CalculatorScreen = forwardRef<
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 24 }}>
                         <XAxis
-                          dataKey="month"
+                          dataKey="year"
+                          type="number"
+                          domain={[0, inputs.timeHorizonYears]}
                           tick={{ fontSize: 10 }}
-                          label={{ value: 'Time (months)', position: 'insideBottom', offset: -4, style: { fill: 'rgba(246,245,241,0.85)', fontSize: 9 } }}
+                          tickFormatter={(v) => (inputs.timeHorizonYears % 1 === 0 ? String(Math.round(Number(v))) : Number(v).toFixed(1))}
+                          label={{
+                            value: `Years (0 — ${horizonYearsFormatted})`,
+                            position: 'insideBottom',
+                            offset: -4,
+                            style: { fill: 'rgba(246,245,241,0.85)', fontSize: 9 },
+                          }}
                         />
                         <YAxis
                           tick={{ fontSize: 10 }}
@@ -1443,10 +1462,18 @@ const CalculatorScreen = forwardRef<
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 24 }}>
                     <XAxis
-                          dataKey="month"
-                          tick={{ fontSize: 10 }}
-                          label={{ value: 'Time (months)', position: 'insideBottom', offset: -4, style: { fill: 'rgba(246,245,241,0.85)', fontSize: 9 } }}
-                        />
+                      dataKey="year"
+                      type="number"
+                      domain={[0, inputs.timeHorizonYears]}
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(v) => (inputs.timeHorizonYears % 1 === 0 ? String(Math.round(Number(v))) : Number(v).toFixed(1))}
+                      label={{
+                        value: `Years (0 — ${horizonYearsFormatted})`,
+                        position: 'insideBottom',
+                        offset: -4,
+                        style: { fill: 'rgba(246,245,241,0.85)', fontSize: 9 },
+                      }}
+                    />
                     <YAxis
                       tick={{ fontSize: 10 }}
                       tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
