@@ -69,12 +69,9 @@ export const PDF_TOC_CAPITAL_STRESS: readonly PdfTocBlock[] = [
   },
   {
     title: "Section C — Deeper analysis",
-    items: [
-      "Regime-Based Monte Carlo context",
-      "Scenario methodology",
-      "Disclosures and Next Steps",
-    ],
+    items: ["Regime-Based Monte Carlo context", "Scenario methodology"],
   },
+  { title: "Disclosures and Next Steps" },
 ];
 
 /** Same hierarchy for react-pdf (Capital Health) — render as Text blocks in app. */
