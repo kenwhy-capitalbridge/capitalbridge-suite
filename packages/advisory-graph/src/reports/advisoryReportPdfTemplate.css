@@ -173,9 +173,15 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
     page-break-inside: auto !important;
   }
 
-  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc figure.cb-stress-timeline-standalone {
+  /* Timeline block: plain div + CSS bar (no figure/SVG) — keep fragmentation predictable. */
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-timeline-pdf-root {
     break-inside: auto !important;
     page-break-inside: auto !important;
+  }
+
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-timeline-pdf-heading {
+    break-after: auto !important;
+    page-break-after: auto !important;
   }
 
   /* Section C is long; must not use global `.section` avoid — see PrintReport PdfSection className. */
@@ -199,7 +205,6 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
 
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-chart-container svg,
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-report-chart-wrap svg,
-.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-timeline-standalone svg,
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .print-chart-wrap svg {
   overflow: visible !important;
 }

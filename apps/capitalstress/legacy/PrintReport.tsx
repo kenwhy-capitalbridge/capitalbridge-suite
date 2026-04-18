@@ -129,6 +129,18 @@ function pillTextColorForDepletionPill(label: string): string {
   return label === 'Watchful' || label === 'Vulnerable' ? '#0D3A1D' : '#FFFFFF';
 }
 
+/** CSS-only gradient bar for PDF (Policy B stops) — avoids Chromium print gaps before inline SVG. */
+function depletionGaugeGradientCss(segmentStops: number[]): string {
+  const chunks: string[] = [];
+  for (let i = 0; i < DEPLETION_GAUGE_COLORS.length; i++) {
+    const c = DEPLETION_GAUGE_COLORS[i];
+    const start = segmentStops[i] ?? 0;
+    const end = segmentStops[i + 1] ?? 100;
+    chunks.push(`${c} ${start}%`, `${c} ${end}%`);
+  }
+  return `linear-gradient(90deg, ${chunks.join(', ')})`;
+}
+
 const STRESS_CHART_TITLE_STYLE: React.CSSProperties = {
   fontFamily: CB_FONT_SERIF,
   fontSize: '13pt',
@@ -1380,8 +1392,8 @@ export function PrintReport(props: PrintReportProps) {
         </PdfChartBlock>
       </div>
 
-      {/* Outcome Probability Distribution */}
-      <div className="print-section section print-page-break-before">
+      {/* Outcome Probability Distribution — avoid global `.section` break-inside:avoid on this tall block. */}
+      <div className="print-section cb-print-section print-page-break-before">
         <PdfChartBlock
           title="Capital Outcome Probability Distribution"
           titleStyle={STRESS_CHART_TITLE_STYLE}
@@ -1534,15 +1546,15 @@ export function PrintReport(props: PrintReportProps) {
         </PdfChartBlock>
       </div>
 
-      {/* Capital Stress Timeline: depletion gauge only (line chart removed for print). Always opens a new page.
-          Do not use `section` / full-figure `cb-report-chart-wrap` break-inside:avoid here — nested huge avoid
-          blocks caused Chromium to leave a blank page between intro copy and the gauge. */}
+      {/* Capital Stress Timeline — PDF-only CSS bar (no SVG/figure): Chromium was inserting a full-page gap before the SVG gauge. */}
       <div
-        className="print-section print-page-break-before cb-capital-stress-timeline-section"
+        className="print-page-break-before cb-capital-stress-timeline-section"
         style={{ pageBreakBefore: 'always', breakBefore: 'page' }}
       >
-        <figure className="cb-stress-timeline-standalone" style={{ margin: '0.35em 0 0' }}>
-          <h2 style={{ ...STRESS_CHART_TITLE_STYLE, marginTop: 0 }}>Capital Stress Timeline</h2>
+        <div className="cb-stress-timeline-pdf-root" style={{ margin: '0.25em 0 0', display: 'block' }}>
+          <h2 className="cb-stress-timeline-pdf-heading" style={{ ...STRESS_CHART_TITLE_STYLE, marginTop: 0 }}>
+            Capital Stress Timeline
+          </h2>
           <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, lineHeight: 1.45, margin: '0 0 0.45em' }}>
             Same headline gauge as the live model. Path dispersion over time is shown in the Capital Durability Curve and outcome distribution earlier in this
             report.
@@ -1550,12 +1562,7 @@ export function PrintReport(props: PrintReportProps) {
           {(() => {
             const dep = depletionBarOutput ?? getDepletionBarOutput(mcResult.depletionPressurePct);
             const s = dep.segmentStops;
-            const barX = 72;
-            const barW = 336;
-            const barY = 22;
-            const barH = 14;
-            const markerX = barX + (dep.pos / 100) * barW;
-            const gradId = 'pdf-depletion-grad-stress';
+            const barBackground = depletionGaugeGradientCss(s);
             return (
               <div
                 className="cb-stress-timeline-gauge-panel"
@@ -1578,43 +1585,50 @@ export function PrintReport(props: PrintReportProps) {
                 >
                   Depletion pressure
                 </p>
-                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0 0 0.15em', lineHeight: 1.4 }}>
+                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0 0 0.5em', lineHeight: 1.4 }}>
                   Step 3: are withdrawals creating pressure? Further toward <strong>Stable</strong> on the right is better — left is heavier pressure.
                 </p>
-                <svg
-                  viewBox="0 0 480 58"
-                  preserveAspectRatio="xMidYMid meet"
-                  style={{ width: '100%', height: 'auto', maxHeight: 72, display: 'block', marginTop: 2 }}
-                  aria-label="Depletion pressure gauge"
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '8pt',
+                    fontWeight: 700,
+                    color: PRINT_TEXT,
+                    opacity: 0.75,
+                    marginBottom: 4,
+                  }}
                 >
-                  <defs>
-                    <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
-                      {s.map((pct, i) => (
-                        <stop key={`gs-${i}`} offset={`${pct}%`} stopColor={DEPLETION_GAUGE_COLORS[Math.min(i, 4)]} />
-                      ))}
-                    </linearGradient>
-                  </defs>
-                  <text x={barX} y={10} fontSize="9" fill={PRINT_TEXT} fontWeight="700" opacity={0.75}>
-                    Critical
-                  </text>
-                  <text x={barX + barW} y={10} fontSize="9" fill={PRINT_TEXT} fontWeight="700" textAnchor="end" opacity={0.75}>
-                    Stable
-                  </text>
-                  <rect x={barX} y={barY} width={barW} height={barH} rx={barH / 2} fill={`url(#${gradId})`} stroke={PRINT_BORDER} strokeWidth="0.6" />
-                  <line
-                    x1={markerX}
-                    y1={barY - 8}
-                    x2={markerX}
-                    y2={barY + barH + 8}
-                    stroke="#D9A441"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
+                  <span>Critical</span>
+                  <span>Stable</span>
+                </div>
+                <div
+                  style={{
+                    position: 'relative',
+                    height: 14,
+                    borderRadius: 7,
+                    border: `0.6px solid ${PRINT_BORDER}`,
+                    background: barBackground,
+                  }}
+                >
+                  <div
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      left: `${dep.pos}%`,
+                      top: -7,
+                      bottom: -7,
+                      width: 3,
+                      marginLeft: -1.5,
+                      background: '#D9A441',
+                      borderRadius: 2,
+                    }}
                   />
-                  <text x={barX + barW / 2} y={52} fontSize="11" fill={PRINT_TEXT} textAnchor="middle" fontWeight="800">
-                    {formatSignedPct(dep.displayValue)}
-                  </text>
-                </svg>
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
+                </div>
+                <p style={{ fontSize: '11pt', fontWeight: 800, color: PRINT_TEXT, textAlign: 'center', margin: '8px 0 6px', lineHeight: 1.2 }}>
+                  {formatSignedPct(dep.displayValue)}
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
                   <span
                     style={{
                       display: 'inline-block',
@@ -1631,7 +1645,7 @@ export function PrintReport(props: PrintReportProps) {
                     {dep.pillLabel}
                   </span>
                 </div>
-                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0.65em 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>
+                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0.35em 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>
                   {depletionPressureInterpretationForPdf(dep.pillLabel)}
                 </p>
               </div>
@@ -1658,7 +1672,7 @@ export function PrintReport(props: PrintReportProps) {
             Use the <strong>Capital Durability Curve</strong> and <strong>Capital Outcome Probability Distribution</strong> in this report for how capital may
             evolve year by year and how ending outcomes spread across simulated paths.
           </p>
-        </figure>
+        </div>
 
         <div style={{ border: `1px solid ${PRINT_BORDER}`, borderRadius: 4, padding: '0.75em 1em', marginTop: '0.75em' }}>
           <h3 style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.25em' }}>Capital Breakpoint Indicator</h3>
