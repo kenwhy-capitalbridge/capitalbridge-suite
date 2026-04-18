@@ -329,10 +329,21 @@ export function PrintReport(props: PrintReportProps) {
 
   const lionPdfDataPrint = useMemo(() => {
     if (!lionAccessEnabled) return null;
+    /**
+     * The app captures a YEARLY withdrawal (see "YEARLY WITHDRAWAL" input). The Lion
+     * engine fields are named `monthlyIncome` / `monthlyExpense` and its narrative
+     * hard-codes "each month" phrasing, so we normalise yearly inputs → monthly here
+     * to keep the engine's generated prose internally consistent. The PDF's own
+     * top-summary panel reads these same underlying inputs in yearly form (see the
+     * "Annual gap" block) — both representations are derived from the same source.
+     */
+    const assumedAnnualReturnForLion = ((lowerPct + upperPct) / 2) / 100;
+    const monthlyIncomeForLion = (investment * assumedAnnualReturnForLion) / 12;
+    const monthlyExpenseForLion = withdrawal / 12;
     const ctx = buildLionContext({
       currency: currencyLabel,
-      monthlyIncome: years > 0 ? mcResult.simulatedAverage / (years * 12) : mcResult.simulatedAverage,
-      monthlyExpense: withdrawal,
+      monthlyIncome: monthlyIncomeForLion,
+      monthlyExpense: monthlyExpenseForLion,
       totalCapital: mcResult.simulatedAverage,
       targetCapital: investment,
       coverageRatio: lionScorePrint / 100,
@@ -361,6 +372,8 @@ export function PrintReport(props: PrintReportProps) {
     currencyLabel,
     years,
     withdrawal,
+    lowerPct,
+    upperPct,
     lionPublicLabelPrint,
     hasStrategicInterest,
   ]);
@@ -758,12 +771,17 @@ export function PrintReport(props: PrintReportProps) {
             mcResult.depletionRateByYear,
             years,
           );
+          /**
+           * Cashflow framing — yearly. The app input `withdrawal` is a *yearly* figure
+           * (see "YEARLY WITHDRAWAL" field in Scenario Builder), so everything here
+           * stays on a yearly basis to avoid the mixed-unit "monthly vs yearly" trap.
+           */
           const assumedAnnualReturn = ((lowerPct + upperPct) / 2) / 100;
-          const monthlyIncomeFromCapital = (investment * assumedAnnualReturn) / 12;
-          const monthlyWithdrawal = withdrawal / 12;
-          const monthlyGap = monthlyIncomeFromCapital - monthlyWithdrawal;
-          const monthlyGapLabel = `${monthlyGap >= 0 ? '+' : '−'}${formatCurrency(Math.abs(monthlyGap))}`;
-          const monthlyGapTone: 'surplus' | 'deficit' = monthlyGap >= 0 ? 'surplus' : 'deficit';
+          const yearlyIncomeFromCapital = investment * assumedAnnualReturn;
+          const yearlyWithdrawalFigure = withdrawal;
+          const annualGap = yearlyIncomeFromCapital - yearlyWithdrawalFigure;
+          const annualGapLabel = `${annualGap >= 0 ? '+' : '−'}${formatCurrency(Math.abs(annualGap))}`;
+          const annualGapTone: 'surplus' | 'deficit' = annualGap >= 0 ? 'surplus' : 'deficit';
           return (
             <section style={STRESS_SECTION_BLOCK}>
               <h2 style={STRESS_SECTION_H2}>Top summary</h2>
@@ -824,13 +842,13 @@ export function PrintReport(props: PrintReportProps) {
               >
                 <div>
                   <div style={{ fontSize: '9pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
-                    Monthly gap
+                    Annual gap
                   </div>
                   <div style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT }}>
-                    {monthlyGapLabel}
+                    {annualGapLabel}
                   </div>
                   <div style={{ fontSize: '8.5pt', color: PRINT_TEXT, marginTop: 4 }}>
-                    Expected monthly return on capital {monthlyGapTone === 'surplus' ? 'exceeds' : 'falls short of'} monthly withdrawal ({formatCurrency(monthlyWithdrawal)}).
+                    Expected yearly return on capital {annualGapTone === 'surplus' ? 'exceeds' : 'falls short of'} yearly withdrawal ({formatCurrency(yearlyWithdrawalFigure)}).
                   </div>
                 </div>
                 <div>

@@ -2014,8 +2014,12 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 gap={gapAmount}
                 progress={progressPercent}
                 currency={selectedCurrency.label}
-                monthlyIncome={years > 0 ? projectedCapital / (years * 12) : projectedCapital}
-                monthlyExpense={withdrawal}
+                /* App input is a YEARLY withdrawal; the Lion engine narrative is phrased in
+                 * "each month" terms, so we normalise to monthly here to keep the engine's
+                 * prose internally consistent. Previously these read as raw yearly / weird
+                 * fractions of capital, which produced mis-scaled narrative numbers. */
+                monthlyIncome={(investment * ((lowerPct + upperPct) / 2 / 100)) / 12}
+                monthlyExpense={withdrawal / 12}
                 totalCapital={projectedCapital}
                 targetCapital={targetCapital}
                 coverageRatio={lionConfidenceScore}
