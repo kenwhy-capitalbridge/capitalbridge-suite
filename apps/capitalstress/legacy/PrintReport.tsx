@@ -1527,8 +1527,11 @@ export function PrintReport(props: PrintReportProps) {
         </PdfChartBlock>
       </div>
 
-      {/* Capital Stress Timeline: depletion gauge only (keeps gauge on same page as title; line chart removed for print). */}
-      <div className="print-section section print-page-break-before">
+      {/* Capital Stress Timeline: depletion gauge only (line chart removed for print). Always opens a new page. */}
+      <div
+        className="print-section section print-page-break-before cb-capital-stress-timeline-section"
+        style={{ pageBreakBefore: 'always', breakBefore: 'page' }}
+      >
         <figure
           className="cb-report-chart-wrap cb-stress-timeline-standalone"
           style={{

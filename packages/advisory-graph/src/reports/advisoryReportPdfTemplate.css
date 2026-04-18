@@ -164,6 +164,13 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
   page-break-before: always;
 }
 
+@media print {
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-capital-stress-timeline-section {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+}
+
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-chart-container,
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-report-chart-wrap .cb-pdf-chart-block-figure,
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .print-chart-wrap.chart-block {
