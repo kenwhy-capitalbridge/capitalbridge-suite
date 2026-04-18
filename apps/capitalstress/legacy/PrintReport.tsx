@@ -16,7 +16,6 @@ import {
   subscribeReportReadyOnPrint,
 } from '@cb/pdf';
 import {
-  mergeLionVerdictSummaryBody,
   PdfAdvisoryCoverPage,
   PdfAdvisorySectionLead,
   PdfChartBlock,
@@ -204,6 +203,23 @@ const CONFIDENCE_EXPLAINER: Record<'High' | 'Medium' | 'Low', string> = {
   Medium: 'Outcomes may vary depending on market conditions.',
   Low: 'Results are highly sensitive and may change significantly.',
 };
+
+/**
+ * Compact Ringgit formatter for chart tick labels — `RM0`, `RM900k`, `RM1.5M`, `RM3M`.
+ * Keeps axes scannable without long zero strings.
+ */
+function formatRmCompact(n: number): string {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1_000_000) {
+    const m = abs / 1_000_000;
+    const precision = m >= 10 || Math.abs(m - Math.round(m)) < 0.05 ? 0 : 1;
+    return `${sign}RM${m.toFixed(precision)}M`;
+  }
+  if (abs >= 1_000) return `${sign}RM${Math.round(abs / 1_000)}k`;
+  if (abs === 0) return 'RM0';
+  return `${sign}RM${Math.round(abs)}`;
+}
 
 /** Plain-English runway read from engine outputs. */
 function capitalRunwayLabel(
@@ -473,48 +489,134 @@ export function PrintReport(props: PrintReportProps) {
       </PdfSection>
 
       <PdfSection className="cb-advisory-doc-opening print-section section" aria-label="Section A — Opening">
-        <PdfAdvisorySectionLead
-          stageLabel="Section A — Opening"
-          title="Opening"
-          whatThisShows="Step 3 in the Capital Bridge journey — how your structure behaves under many simulated paths — then headline metrics and charts on the same assumptions."
-          whyThisMatters="Sets the thread before Section B numbers and Section C visuals, consistent with Forever, Income Engineering, and Capital Health."
-        />
+        {/* Inline opener (rich body with bullets) — visually matches PdfAdvisorySectionLead but allows block-level children. */}
+        <header className="cb-advisory-doc-section-divider">
+          <div className="cb-print-stage-label cb-advisory-doc-stage-label">Section A — Opening</div>
+          <h2
+            className="cb-advisory-doc-section-divider-title"
+            style={{
+              fontFamily: CB_FONT_SERIF,
+              fontSize: '16pt',
+              fontWeight: 700,
+              color: PRINT_TEXT,
+              margin: '0 0 0.85em',
+              letterSpacing: '0.01em',
+            }}
+          >
+            Opening
+          </h2>
+          <h3
+            className="cb-avoid-orphan-heading"
+            style={{
+              fontSize: '10pt',
+              fontWeight: 700,
+              color: PRINT_TEXT,
+              margin: '0 0 0.45em',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}
+          >
+            What this shows
+          </h3>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.55em' }}>
+            Step 3 — Stress Testing your capital structure.
+          </p>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.55em' }}>
+            This report shows how your capital behaves under different market conditions — not just one outcome, but many possible paths.
+          </p>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>You’ll see:</p>
+          <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em', paddingLeft: '1.3em' }}>
+            <li>What typically happens</li>
+            <li>What happens in weaker scenarios</li>
+            <li>Where pressure may start to appear</li>
+          </ul>
+          <h3
+            className="cb-avoid-orphan-heading"
+            style={{
+              fontSize: '10pt',
+              fontWeight: 700,
+              color: PRINT_TEXT,
+              margin: '0 0 0.45em',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}
+          >
+            Why this matters
+          </h3>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.55em' }}>
+            A structure that looks fine in one scenario may fail in others.
+          </p>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>This helps you understand:</p>
+          <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.25em', paddingLeft: '1.3em' }}>
+            <li>how stable your structure really is</li>
+            <li>where risks begin to build</li>
+            <li>whether your plan can hold over time</li>
+          </ul>
+        </header>
         <section style={STRESS_SECTION_BLOCK}>
           <p style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.35em', letterSpacing: '0.04em' }}>
             CAPITAL BRIDGE JOURNEY
           </p>
-          <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.75em' }}>How to read this report</p>
-          <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.5em' }}>
-            Step 3 — How does your structure behave under stress?
+          <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.85em' }}>How to read this report</p>
+          <p style={{ fontSize: '10.5pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.35em' }}>
+            Step 3 — Capital Stress-Test
           </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.35em' }}>This report follows:</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• Step 1 — Forever Income (Can your structure last?)</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• Step 1B — Income Engineering (How can capital be structured?)</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.65em' }}>• Step 2 — Capital Health (Is the structure sustainable?)</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.35em' }}>At this stage, the question becomes:</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• What happens if markets move against you?</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• How stable is your structure across different scenarios?</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.85em' }}>• Where does pressure begin to emerge over time?</p>
-          <p style={{ fontSize: '8.5pt', fontWeight: 700, color: PRINT_TEXT, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.35em' }}>
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.85em' }}>
+            How does your structure behave under stress?
+          </p>
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.45em' }}>This report follows:</p>
+          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.9em', paddingLeft: '1.3em' }}>
+            <li style={{ marginBottom: '0.45em' }}>
+              <span style={{ fontWeight: 700 }}>Step 1 — Forever Income</span>
+              <br />
+              <span>Can your structure last?</span>
+            </li>
+            <li style={{ marginBottom: '0.45em' }}>
+              <span style={{ fontWeight: 700 }}>Step 1B — Income Engineering</span>
+              <br />
+              <span>How is your capital structured?</span>
+            </li>
+            <li style={{ marginBottom: '0.45em' }}>
+              <span style={{ fontWeight: 700 }}>Step 2 — Capital Health</span>
+              <br />
+              <span>Is the structure sustainable?</span>
+            </li>
+            <li style={{ marginBottom: 0 }}>
+              <span style={{ fontWeight: 700 }}>Step 3 — Capital Stress-Test</span>
+              <br />
+              <span>What happens when conditions change?</span>
+            </li>
+          </ul>
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.45em' }}>At this stage:</p>
+          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em', paddingLeft: '1.3em' }}>
+            <li>Does your structure hold under pressure?</li>
+            <li>Where do risks begin to appear?</li>
+            <li>How stable is it over time?</li>
+          </ul>
+          <p style={{ fontSize: '8.5pt', fontWeight: 700, color: PRINT_TEXT, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.4em' }}>
             What this model does
           </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.35em' }}>
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.4em' }}>
             The Capital Stress Model simulates many possible market paths using your current assumptions.
           </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.25em' }}>It shows:</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• how capital may evolve under uncertainty</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• how often outcomes fall within expected ranges</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.65em' }}>• where downside risk becomes meaningful</p>
-          <p style={{ fontSize: '8.5pt', fontWeight: 700, color: PRINT_TEXT, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.35em' }}>
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>It shows:</p>
+          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.9em', paddingLeft: '1.3em' }}>
+            <li>How capital may evolve under uncertainty</li>
+            <li>How often outcomes fall within expected ranges</li>
+            <li>Where downside risk becomes meaningful</li>
+          </ul>
+          <p style={{ fontSize: '8.5pt', fontWeight: 700, color: PRINT_TEXT, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.4em' }}>
             Why this matters
           </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.5em' }}>
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.55em' }}>
             A structure that works in one scenario may not hold across many.
           </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.25em' }}>This model allows:</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• resilience to be tested beyond a single projection</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.2em' }}>• downside risk to be understood clearly</p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: 0 }}>• confidence to be built before execution</p>
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>This model allows:</p>
+          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: 0, paddingLeft: '1.3em' }}>
+            <li>Resilience to be tested beyond a single projection</li>
+            <li>Downside risk to be understood clearly</li>
+            <li>Confidence to be built before execution</li>
+          </ul>
         </section>
       </PdfSection>
 
@@ -529,22 +631,59 @@ export function PrintReport(props: PrintReportProps) {
         >
           <div className="lion-verdict lion-verdict-one-page">
             {lionAccessEnabled && lionPdfDataPrint ? (
-              <PdfLionsVerdictBlock
-                scoreAndStatusLine={`Lion score: ${lionScorePrint} / 100 · ${lionPublicLabelPrint}`}
-                narrativeQuote={lionPdfDataPrint.lion.headline}
-                summary={mergeLionVerdictSummaryBody(lionPdfDataPrint.summary.keyPoint, lionPdfDataPrint.lion.guidance)}
-                whyThisIsHappening={lionPdfDataPrint.diagnosis.why}
-                systemState={lionPdfDataPrint.diagnosis.state}
-                nextActions={lionPdfDataPrint.actions}
-                executionPathway={lionPdfDataPrint.executionPathway ?? undefined}
-                microSignals={microSignals}
-                titleColor={PRINT_TEXT}
-                labelColor={PRINT_TEXT}
-                scoreLineColor={PRINT_TEXT}
-                textColor={PRINT_TEXT}
-                accentColor={PRINT_TEXT}
-                fontSerif={CB_FONT_SERIF}
-              />
+              (() => {
+                /**
+                 * Input-driven Lion's Verdict summary: replaces the engine's merged
+                 * keyPoint+guidance with a short, consistent 3-line narrative that
+                 * uses the same monthly income / withdrawal / gap numbers shown in
+                 * the Top Summary panel. The other Lion fields (quote, why, system
+                 * state, actions) still come from the engine.
+                 */
+                const midReturnRate = ((lowerPct + upperPct) / 2) / 100;
+                const monthlyIncome = (investment * midReturnRate) / 12;
+                const monthlyWithdrawalLocal = withdrawal / 12;
+                const monthlyGapLocal = monthlyIncome - monthlyWithdrawalLocal;
+                const incomeCovers = monthlyGapLocal >= 0;
+                const verdictNow = computeStressVerdict({
+                  fiTier,
+                  survivalProbability: mcResult.survivalProbability,
+                  initialCapital: investment,
+                  typicalEndingCapital: mcResult.percentile50,
+                });
+                const bucket = verdictNow.chip.bucket;
+                const stabilityClause =
+                  bucket === 'Safe'
+                    ? 'Your capital structure remains stable over time'
+                    : bucket === 'Fragile'
+                      ? 'Your capital structure is holding, but under pressure'
+                      : 'Your capital structure is under meaningful stress';
+                const incomeClause = incomeCovers
+                  ? 'and your income currently covers your withdrawals.'
+                  : 'but your income does not cover your withdrawals.';
+                const amountsLine = `You are generating ${formatCurrency(monthlyIncome)} against ${formatCurrency(monthlyWithdrawalLocal)} monthly, resulting in a monthly gap of ${monthlyGapLocal >= 0 ? '+' : '−'}${formatCurrency(Math.abs(monthlyGapLocal))}.`;
+                const bulletsBlock = incomeCovers
+                  ? `This means:\n• ongoing withdrawals are supported by current income\n• the structure ${bucket === 'Safe' ? 'supports itself without drawing down capital' : 'is holding, but sensitive to change'}`
+                  : `This means:\n• capital is being drawn down to support your lifestyle\n• ${bucket === 'Dangerous' ? 'the structure is on course to deplete under current conditions' : 'the structure survives, but depends on depletion'}`;
+                const inputDrivenSummary = `${stabilityClause}, ${incomeClause}\n\n${amountsLine}\n\n${bulletsBlock}`;
+                return (
+                  <PdfLionsVerdictBlock
+                    scoreAndStatusLine={`Lion score: ${lionScorePrint} / 100 · ${lionPublicLabelPrint}`}
+                    narrativeQuote={lionPdfDataPrint.lion.headline}
+                    summary={inputDrivenSummary}
+                    whyThisIsHappening={lionPdfDataPrint.diagnosis.why}
+                    systemState={lionPdfDataPrint.diagnosis.state}
+                    nextActions={lionPdfDataPrint.actions}
+                    executionPathway={lionPdfDataPrint.executionPathway ?? undefined}
+                    microSignals={microSignals}
+                    titleColor={PRINT_TEXT}
+                    labelColor={PRINT_TEXT}
+                    scoreLineColor={PRINT_TEXT}
+                    textColor={PRINT_TEXT}
+                    accentColor={PRINT_TEXT}
+                    fontSerif={CB_FONT_SERIF}
+                  />
+                );
+              })()
             ) : !lionAccessEnabled ? (
               <>
                 <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
@@ -574,12 +713,12 @@ export function PrintReport(props: PrintReportProps) {
         </section>
       </PdfSection>
 
-      <PdfSection className="print-section section print-page-break-before key-outcomes" aria-label="Section B — Plain Read">
+      <PdfSection className="print-section section print-page-break-before key-outcomes" aria-label="Section B — Key Insights">
         <PdfAdvisorySectionLead
-          stageLabel="Section B — Plain Read"
-          title="Plain Read"
+          stageLabel="Section B — Key Insights"
+          title="Key Insights"
           whatThisShows="Headline resilience metrics, a plain-language read of what they mean, and the scenario assumptions this report used."
-          whyThisMatters="A simple read comes first, then the evidence charts in Section C."
+          whyThisMatters="The key read comes first, then the evidence charts in Section C."
         />
         <PrintStageLabel>Top summary</PrintStageLabel>
         {(() => {
@@ -626,12 +765,23 @@ export function PrintReport(props: PrintReportProps) {
                 <div style={{ fontSize: '22pt', fontWeight: 800, color: verdictChip.text, lineHeight: 1.1, letterSpacing: '0.02em' }}>
                   {verdictChip.bucket}
                 </div>
-                <div style={{ fontSize: '9pt', color: verdictChip.text }}>
-                  Detail tier: {fiTier}
-                  {verdict.overrideApplied
-                    ? ` · Downgraded from Safe — capital erodes by ~${Math.round(verdict.erosionPct * 100)}% even though paths don't deplete`
-                    : ''}
-                </div>
+                {(() => {
+                  const erosionPctDisplay = Math.round(verdict.erosionPct * 100);
+                  const bucket = verdictChip.bucket;
+                  const detailLine =
+                    bucket === 'Safe'
+                      ? `Your structure is stable across the ${years}-year horizon, with capital largely preserved.`
+                      : bucket === 'Fragile'
+                        ? erosionPctDisplay >= 5
+                          ? `Your structure remains stable, but capital gradually declines (~${erosionPctDisplay}%) over time. It does not run out, but it weakens under long-term pressure.`
+                          : `Your structure is holding, but sensitive to market or withdrawal pressure over the ${years}-year horizon.`
+                        : `Your structure is under meaningful pressure and depletes under current conditions.`;
+                  return (
+                    <div style={{ fontSize: '9.5pt', color: verdictChip.text, lineHeight: 1.5 }}>
+                      <span style={{ fontWeight: 700 }}>Detail:</span> {detailLine}
+                    </div>
+                  );
+                })()}
               </div>
               <div
                 style={{
@@ -824,25 +974,21 @@ export function PrintReport(props: PrintReportProps) {
         })()}
         <section style={STRESS_SECTION_BLOCK}>
           <h2 style={STRESS_SECTION_H2}>Assumptions captured here</h2>
-          <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.65em', lineHeight: 1.55 }}>
-            The model explores many possible paths — not one forecast — given your capital, withdrawals, horizon, return range, and inflation.
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.85em', lineHeight: 1.6 }}>
+            This model uses Regime-Based Monte Carlo modelling to simulate{' '}
+            <strong style={{ fontWeight: 700 }}>{mcResult.simulationCount.toLocaleString()} possible paths</strong> — not a single forecast.
           </p>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10pt', color: PRINT_TEXT }}>
             <tbody>
-              <tr>
-                <td colSpan={2} style={{ padding: '4px 0', fontWeight: 700 }}>
-                  Monte Carlo simulation: {mcResult.simulationCount.toLocaleString()} possible paths tested
-                </td>
-              </tr>
-              <tr><td style={{ padding: '4px 0' }}>Starting capital</td><td style={{ padding: '4px 0', textAlign: 'right' }}>{formatCurrency(investment)}</td></tr>
-              <tr><td style={{ padding: '4px 0' }}>Yearly withdrawal</td><td style={{ padding: '4px 0', textAlign: 'right' }}>{formatCurrency(withdrawal)}</td></tr>
-              <tr><td style={{ padding: '4px 0' }}>Time horizon</td><td style={{ padding: '4px 0', textAlign: 'right' }}>{years} years</td></tr>
-              <tr><td style={{ padding: '4px 0' }}>Return range (assumed)</td><td style={{ padding: '4px 0', textAlign: 'right' }}>{formatPercent(lowerPct)} to {formatPercent(upperPct)}</td></tr>
-              <tr><td style={{ padding: '4px 0' }}>Inflation (assumed)</td><td style={{ padding: '4px 0', textAlign: 'right' }}>{effectiveInflation}% p.a.</td></tr>
+              <tr><td style={{ padding: '5px 0' }}>Starting capital</td><td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(investment)}</td></tr>
+              <tr><td style={{ padding: '5px 0' }}>Yearly withdrawal</td><td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(withdrawal)}</td></tr>
+              <tr><td style={{ padding: '5px 0' }}>Time horizon</td><td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600 }}>{years} years</td></tr>
+              <tr><td style={{ padding: '5px 0' }}>Return range</td><td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600 }}>{formatPercent(lowerPct)} to {formatPercent(upperPct)}</td></tr>
+              <tr><td style={{ padding: '5px 0' }}>Inflation</td><td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600 }}>{effectiveInflation}% per year</td></tr>
             </tbody>
           </table>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0.75em 0 0' }}>
-            This model evaluates a wide range of potential market conditions based on your assumptions — not a single forecast.
+          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0.85em 0 0' }}>
+            This shows how your structure behaves across a wide range of conditions, not just one expected outcome.
           </p>
         </section>
       </PdfSection>
@@ -868,7 +1014,6 @@ export function PrintReport(props: PrintReportProps) {
         </div>
 
         <PrintStageLabel>Charts and visuals</PrintStageLabel>
-        <div className="print-page-break-before" />
 
         <PdfChartBlock
           title="Structural Stability Map"
@@ -981,7 +1126,7 @@ export function PrintReport(props: PrintReportProps) {
             </>
           }
         >
-        <div className="print-chart-wrap chart-block" style={{ minHeight: 200 }}>
+        <div className="print-chart-wrap chart-block" style={{ minHeight: 260 }}>
           {mcResult.yearlyPercentileBands.length > 0 && (() => {
             const bands = mcResult.yearlyPercentileBands;
             const maxVal = Math.max(...bands.map(b => b.p95), investment * 1.2, 1);
@@ -989,26 +1134,58 @@ export function PrintReport(props: PrintReportProps) {
             const w = 100 / (bands.length - 1 || 1);
             const xScale = 4;
             const plotWidth = 100 * xScale;
-            const viewWidth = 14 + plotWidth + 8;
+            const marginLeft = 32;
+            const marginRight = 6;
+            const marginBottom = 22;
+            const viewWidth = marginLeft + plotWidth + marginRight;
+            const viewHeight = 100 + marginBottom;
             const yTickCount = 5;
             const yTicks = Array.from({ length: yTickCount }, (_, i) => (i / (yTickCount - 1)) * maxVal);
+            const xTickYears = (() => {
+              const step = years <= 10 ? 2 : years <= 20 ? 5 : Math.max(5, Math.ceil(years / 6));
+              const ticks = [0];
+              for (let y = step; y < years; y += step) ticks.push(y);
+              if (ticks[ticks.length - 1] !== years) ticks.push(years);
+              return ticks;
+            })();
+            const xForYear = (y: number) => (y / Math.max(years, 1)) * plotWidth;
             return (
-              <svg viewBox={`-14 -6 ${viewWidth} 118`} preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 200 }} aria-label="Capital durability curve">
+              <svg
+                viewBox={`-${marginLeft} -6 ${viewWidth} ${viewHeight + 6}`}
+                preserveAspectRatio="xMidYMid meet"
+                style={{ width: '100%', height: 260 }}
+                aria-label="Capital durability curve"
+                shapeRendering="geometricPrecision"
+              >
                 <defs>
-                  <linearGradient id="printBandGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1b4d3e" stopOpacity="0.28" /><stop offset="100%" stopColor="#1b4d3e" stopOpacity="0.06" /></linearGradient>
-                  <linearGradient id="printBandOuter" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1b4d3e" stopOpacity="0.12" /><stop offset="100%" stopColor="#1b4d3e" stopOpacity="0.02" /></linearGradient>
+                  {/* Inner band: middle 50% of outcomes — light green with higher opacity for clear legibility. */}
+                  <linearGradient id="printBandInner" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#55B685" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#55B685" stopOpacity="0.18" />
+                  </linearGradient>
+                  {/* Outer band: 5th-95th percentile — deep Capital Bridge green, still visible in print. */}
+                  <linearGradient id="printBandOuter" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0D3A1D" stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="#0D3A1D" stopOpacity="0.08" />
+                  </linearGradient>
                 </defs>
-                <line x1={0} y1={0} x2={0} y2={100} stroke={CHART_AXIS} strokeOpacity="0.55" strokeWidth="0.3" />
-                <line x1={0} y1={100} x2={plotWidth} y2={100} stroke={CHART_AXIS} strokeOpacity="0.55" strokeWidth="0.3" />
+                {/* axes */}
+                <line x1={0} y1={0} x2={0} y2={100} stroke={PRINT_TEXT} strokeOpacity="0.85" strokeWidth="0.45" />
+                <line x1={0} y1={100} x2={plotWidth} y2={100} stroke={PRINT_TEXT} strokeOpacity="0.85" strokeWidth="0.45" />
+                {/* gridlines + Y ticks */}
                 {yTicks.map((val, i) => {
                   const y = 100 - scale(val);
                   return (
                     <g key={`y-${i}`}>
-                      <line x1={0} y1={y} x2={-0.8} y2={y} stroke={CHART_AXIS} strokeOpacity="0.5" strokeWidth="0.25" />
-                      <text x={-2.2} y={y} fontSize="2.8" fill={PRINT_TEXT} textAnchor="end" dominantBaseline="middle">{formatCurrency(Math.round(val))}</text>
+                      <line x1={0} y1={y} x2={plotWidth} y2={y} stroke={PRINT_BORDER} strokeWidth="0.3" strokeDasharray="1.2 1.8" />
+                      <line x1={0} y1={y} x2={-1.4} y2={y} stroke={PRINT_TEXT} strokeOpacity="0.8" strokeWidth="0.45" />
+                      <text x={-2.8} y={y} fontSize="4.2" fill={PRINT_TEXT} textAnchor="end" dominantBaseline="middle" fontWeight="500">
+                        {formatRmCompact(Math.round(val))}
+                      </text>
                     </g>
                   );
                 })}
+                {/* outer band (5-95) */}
                 {bands.slice(0, -1).map((b, i) => {
                   const x = i * w * xScale;
                   const next = bands[i + 1];
@@ -1018,17 +1195,73 @@ export function PrintReport(props: PrintReportProps) {
                   return (
                     <g key={i}>
                       <polygon points={outerPts} fill="url(#printBandOuter)" />
-                      <polygon points={innerPts} fill="url(#printBandGrad)" />
+                      <polygon points={innerPts} fill="url(#printBandInner)" />
                     </g>
                   );
                 })}
-                <polyline fill="none" stroke={CHART_MEDIAN_BAR} strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" points={bands.map((b, i) => `${i * w * xScale},${100 - scale(b.p50)}`).join(' ')} />
+                {/* median line */}
+                <polyline
+                  fill="none"
+                  stroke={CHART_MEDIAN_BAR}
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  points={bands.map((b, i) => `${i * w * xScale},${100 - scale(b.p50)}`).join(' ')}
+                />
                 {bands.map((b, i) => (
-                  <circle key={i} cx={i * w * xScale} cy={100 - scale(b.p50)} r="0.8" fill={CHART_MEDIAN_BAR} />
+                  <circle key={i} cx={i * w * xScale} cy={100 - scale(b.p50)} r="1.2" fill={CHART_MEDIAN_BAR} />
                 ))}
+                {/* X ticks + year labels */}
+                {xTickYears.map((yt) => {
+                  const x = xForYear(yt);
+                  return (
+                    <g key={`xt-${yt}`}>
+                      <line x1={x} y1={100} x2={x} y2={102.2} stroke={PRINT_TEXT} strokeOpacity="0.85" strokeWidth="0.45" />
+                      <text x={x} y={108} fontSize="4" fill={PRINT_TEXT} textAnchor="middle" fontWeight="500">{yt}</text>
+                    </g>
+                  );
+                })}
+                {/* X-axis title */}
+                <text x={plotWidth / 2} y={118} fontSize="4.4" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
+                  Years (0–{years})
+                </text>
+                {/* Y-axis title (vertical) */}
+                <text
+                  x={-22}
+                  y={50}
+                  fontSize="4.4"
+                  fill={PRINT_TEXT}
+                  textAnchor="middle"
+                  fontWeight="700"
+                  transform={`rotate(-90 ${-22} 50)`}
+                >
+                  Capital (RM)
+                </text>
               </svg>
             );
           })()}
+          {/* Legend */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 16,
+              fontSize: '9pt',
+              color: PRINT_TEXT,
+              marginTop: 8,
+              paddingLeft: 4,
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ display: 'inline-block', width: 18, height: 2, background: CHART_MEDIAN_BAR }} aria-hidden /> Typical path (median)
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ display: 'inline-block', width: 18, height: 10, background: 'rgba(85,182,133,0.45)', border: '1px solid rgba(85,182,133,0.7)' }} aria-hidden /> Middle 50% of outcomes
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ display: 'inline-block', width: 18, height: 10, background: 'rgba(13,58,29,0.18)', border: '1px solid rgba(13,58,29,0.35)' }} aria-hidden /> Full range (Downside → Favourable)
+            </span>
+          </div>
         </div>
         </PdfChartBlock>
       </div>
@@ -1065,90 +1298,103 @@ export function PrintReport(props: PrintReportProps) {
             hist[idx]++;
           });
           const maxCount = Math.max(...hist, 1);
-          const midCount = Math.round(maxCount / 2);
-          const barW = 100 / bins;
           const medianVal = mcResult.percentile50;
           const medianBin = Math.min(bins - 1, Math.max(0, Math.floor((medianVal - minV) / step)));
-          const plotTop = 8;
-          const plotBase = 70;
+          const marginLeft = 34;
+          const marginRight = 6;
+          const marginBottom = 24;
+          const plotTop = 6;
+          const plotBase = 78;
+          const plotWidth = 240;
           const plotH = plotBase - plotTop;
-          const xMid = minV + range / 2;
+          const viewWidth = marginLeft + plotWidth + marginRight;
+          const viewHeight = plotBase + marginBottom;
+          const barW = plotWidth / bins;
+          const yTickCount = 5;
+          const yTicks = Array.from({ length: yTickCount }, (_, i) => Math.round((i / (yTickCount - 1)) * maxCount));
+          const xLabelVals = [minV, minV + range / 4, minV + range / 2, minV + (3 * range) / 4, maxV];
           return (
             <>
-              <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.25em' }}>Vertical scale: how many paths ended in each band</p>
-              <p style={{ fontSize: '8pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.45 }}>
-                Taller bars mean more paths finished near that level of capital; short bars mean that ending was uncommon.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+              <div className="print-chart-wrap chart-block" style={{ width: '100%', minHeight: 260 }}>
+                <svg
+                  viewBox={`-${marginLeft} -${plotTop} ${viewWidth} ${viewHeight}`}
+                  preserveAspectRatio="xMidYMid meet"
+                  style={{ width: '100%', height: 260, display: 'block' }}
+                  aria-label="Capital outcome distribution"
+                  shapeRendering="geometricPrecision"
+                >
+                  {/* axes */}
+                  <line x1={0} y1={plotTop} x2={0} y2={plotBase} stroke={PRINT_TEXT} strokeOpacity="0.85" strokeWidth="0.5" />
+                  <line x1={0} y1={plotBase} x2={plotWidth} y2={plotBase} stroke={PRINT_TEXT} strokeOpacity="0.85" strokeWidth="0.5" />
+                  {/* Y gridlines + ticks */}
+                  {yTicks.map((val, i) => {
+                    const y = plotBase - (val / maxCount) * plotH;
+                    return (
+                      <g key={`hist-y-${i}`}>
+                        <line x1={0} y1={y} x2={plotWidth} y2={y} stroke={PRINT_BORDER} strokeWidth="0.35" strokeDasharray="1.5 2" />
+                        <line x1={-1.6} y1={y} x2={0} y2={y} stroke={PRINT_TEXT} strokeOpacity="0.85" strokeWidth="0.5" />
+                        <text x={-3} y={y} fontSize="4.2" fill={PRINT_TEXT} textAnchor="end" dominantBaseline="middle" fontWeight="500">{val}</text>
+                      </g>
+                    );
+                  })}
+                  {/* Bars — non-median = deep green, median band = gold (highlighted). */}
+                  {hist.map((count, i) => {
+                    const h = (count / maxCount) * (plotH - 1);
+                    const isMedian = i === medianBin;
+                    return (
+                      <rect
+                        key={i}
+                        x={i * barW + 0.6}
+                        y={plotBase - h}
+                        width={Math.max(0, barW - 1.2)}
+                        height={Math.max(h, count > 0 ? 0.8 : 0)}
+                        fill={isMedian ? CHART_MEDIAN_BAR : '#0D3A1D'}
+                        fillOpacity={isMedian ? 1 : 0.55}
+                        stroke={isMedian ? CHART_MEDIAN_BAR : '#0D3A1D'}
+                        strokeOpacity={isMedian ? 1 : 0.75}
+                        strokeWidth="0.25"
+                      />
+                    );
+                  })}
+                  {/* X-axis ticks + labels */}
+                  {xLabelVals.map((xv, i) => {
+                    const x = ((xv - minV) / (range || 1)) * plotWidth;
+                    return (
+                      <g key={`hist-xt-${i}`}>
+                        <line x1={x} y1={plotBase} x2={x} y2={plotBase + 1.8} stroke={PRINT_TEXT} strokeOpacity="0.85" strokeWidth="0.5" />
+                        <text x={x} y={plotBase + 7} fontSize="4" fill={PRINT_TEXT} textAnchor="middle" fontWeight="500">
+                          {formatRmCompact(Math.round(xv))}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  {/* X-axis title */}
+                  <text x={plotWidth / 2} y={plotBase + 16} fontSize="4.4" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
+                    Ending capital after {years} year{years !== 1 ? 's' : ''}
+                  </text>
+                  {/* Y-axis title — stacked (Number / of / Paths) */}
+                  <text x={-24} y={plotTop + plotH / 2 - 6} fontSize="4.6" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">Number</text>
+                  <text x={-24} y={plotTop + plotH / 2} fontSize="4.6" fill={PRINT_TEXT} textAnchor="middle" fontWeight="500">of</text>
+                  <text x={-24} y={plotTop + plotH / 2 + 6} fontSize="4.6" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">Paths</text>
+                </svg>
+                {/* Legend */}
                 <div
                   style={{
-                    width: 36,
-                    height: 168,
                     display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    fontSize: '8pt',
+                    flexWrap: 'wrap',
+                    gap: 16,
+                    fontSize: '9pt',
                     color: PRINT_TEXT,
-                    textAlign: 'right',
-                    paddingBottom: 26,
-                    flexShrink: 0,
+                    marginTop: 8,
+                    paddingLeft: 4,
                   }}
                 >
-                  <span>{maxCount}</span>
-                  <span>{midCount}</span>
-                  <span>0</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="print-chart-wrap chart-block" style={{ height: 168 }}>
-                    <svg viewBox="0 0 100 78" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', display: 'block' }} aria-label="Capital outcome distribution">
-                      <line x1="0" y1={plotBase} x2="100" y2={plotBase} stroke={CHART_AXIS} strokeWidth="0.45" strokeOpacity={0.9} />
-                      <line x1="0" y1={plotTop} x2="0" y2={plotBase} stroke={CHART_AXIS} strokeWidth="0.45" strokeOpacity={0.9} />
-                      {[0.5, 1].map((t) => (
-                        <line
-                          key={t}
-                          x1="0"
-                          y1={plotBase - t * plotH}
-                          x2="100"
-                          y2={plotBase - t * plotH}
-                          stroke={PRINT_BORDER}
-                          strokeWidth="0.2"
-                          strokeDasharray="1 1"
-                        />
-                      ))}
-                      {hist.map((count, i) => {
-                        const h = (count / maxCount) * (plotH - 2);
-                        return (
-                          <rect
-                            key={i}
-                            x={i * barW + 0.12}
-                            y={plotBase - h}
-                            width={barW - 0.28}
-                            height={Math.max(h, count > 0 ? 0.8 : 0)}
-                            fill={i === medianBin ? CHART_MEDIAN_BAR : 'rgba(13, 58, 29, 0.22)'}
-                            stroke={i === medianBin ? CHART_MEDIAN_BAR : 'rgba(13, 58, 29, 0.15)'}
-                            strokeWidth="0.15"
-                          />
-                        );
-                      })}
-                    </svg>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '8pt',
-                      color: PRINT_TEXT,
-                      marginTop: 4,
-                      gap: 4,
-                    }}
-                  >
-                    <span style={{ flex: 1, textAlign: 'left' }}>{formatCurrency(Math.round(minV))}</span>
-                    <span style={{ flex: 1, textAlign: 'center' }}>{formatCurrency(Math.round(xMid))}</span>
-                    <span style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(Math.round(maxV))}</span>
-                  </div>
-                  <p style={{ fontSize: '8pt', color: PRINT_TEXT, marginTop: 8, lineHeight: 1.45, textAlign: 'center' }}>
-                    <strong>Horizontal axis: ending capital</strong> ({bins} steps from lowest to highest ending balance in the test).
-                  </p>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ display: 'inline-block', width: 14, height: 10, background: CHART_MEDIAN_BAR }} aria-hidden /> Typical (median) band
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ display: 'inline-block', width: 14, height: 10, background: 'rgba(13,58,29,0.55)' }} aria-hidden /> Other outcomes
+                  </span>
                 </div>
               </div>
               <div
@@ -1160,12 +1406,12 @@ export function PrintReport(props: PrintReportProps) {
                   backgroundColor: 'rgba(255, 252, 245, 0.95)',
                 }}
               >
-                <p style={{ fontSize: '9pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.25em' }}>Typical outcome (median)</p>
-                <p style={{ fontSize: '9pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.45 }}>
+                <p style={{ fontSize: '9.5pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.25em' }}>Typical outcome (median)</p>
+                <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, margin: 0, lineHeight: 1.5 }}>
                   {formatCurrency(medianVal)} — the highlighted bar marks the band that holds this typical ending. If the tallest bars sit left of it, more paths end below typical; if weight sits to the right, more paths end above typical.
                 </p>
               </div>
-              <p style={{ fontSize: '9pt', color: PRINT_TEXT, marginTop: '0.75em', lineHeight: 1.5, marginBottom: 0 }}>
+              <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, marginTop: '0.85em', lineHeight: 1.55, marginBottom: 0 }}>
                 <strong>How to read this:</strong> One tall peak means most paths end near the same place; a wide spread means endings vary a lot. Heavy weight near the left means many paths finish with little capital — weigh that against how much downside you can live with. Use this together with the Downside / Typical / Favourable summary above.
               </p>
             </>
@@ -1204,10 +1450,22 @@ export function PrintReport(props: PrintReportProps) {
             const depletionData = mcResult.depletionRateByYear;
             const stressData = mcResult.structuralStressRateByYear ?? depletionData.map(() => 0);
             const allPcts = [...depletionData.map(d => d * 100), ...stressData.map(s => s * 100)];
-            const maxPct = Math.max(...allPcts, 5);
-            const yMax = Math.max(10, Math.ceil(maxPct / 5) * 5);
-            const plotLeft = 36;
-            const plotRight = 380;
+            const maxPct = Math.max(...allPcts, 0);
+            /**
+             * Dynamic Y-scale:
+             * — If all values < 1%, scale from 0 → 1% so lines don't look glued to the baseline.
+             * — Otherwise round up to a sensible step (5 / 10 / 25).
+             */
+            const yMax =
+              maxPct < 1
+                ? 1
+                : maxPct < 5
+                  ? Math.max(1, Math.ceil(maxPct * 2) / 2)
+                  : maxPct < 25
+                    ? Math.ceil(maxPct / 5) * 5
+                    : Math.ceil(maxPct / 10) * 10;
+            const plotLeft = 48;
+            const plotRight = 390;
             const plotTop = 20;
             const plotBottom = 180;
             const plotWidth = plotRight - plotLeft;
@@ -1218,48 +1476,87 @@ export function PrintReport(props: PrintReportProps) {
             const xFor = (i: number) => plotLeft + i * step;
             const depletionPts = depletionData.map((d, i) => `${xFor(i)},${scaleY(d * 100)}`).join(' ');
             const stressPts = stressData.length >= n ? stressData.slice(0, n).map((s, i) => `${xFor(i)},${scaleY(s * 100)}`).join(' ') : depletionPts;
-            const xStep = years <= 10 ? 2 : years <= 20 ? 5 : Math.ceil(years / 5);
+            const xStep = years <= 10 ? 2 : years <= 20 ? 5 : Math.ceil(years / 6);
             const xTickYears = Array.from({ length: Math.floor(years / xStep) + 1 }, (_, i) => i * xStep).filter(y => y <= years);
-            const yTicks = [0, Math.round(yMax * 0.25), Math.round(yMax * 0.5), Math.round(yMax * 0.75), yMax];
+            if (!xTickYears.includes(years)) xTickYears.push(years);
+            const yTickCount = 5;
+            const yTicks = Array.from({ length: yTickCount }, (_, i) => (i / (yTickCount - 1)) * yMax);
+            const yTickLabel = (v: number) => (yMax <= 1 ? `${v.toFixed(2)}%` : yMax <= 5 ? `${v.toFixed(1)}%` : `${Math.round(v)}%`);
+            const depletionColor = '#0D3A1D';
+            const stressColor = '#D9A441';
             return (
-              <svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 240 }} aria-label="Capital Stress Timeline" shapeRendering="geometricPrecision">
-                <defs>
-                  <linearGradient id="printStressZone" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#E3A539" stopOpacity="0.08" />
-                    <stop offset="100%" stopColor="#E3A539" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <line x1={plotLeft} y1={plotTop} x2={plotLeft} y2={plotBottom} stroke={CHART_AXIS} strokeWidth="1.2" strokeOpacity="0.75" />
-                <line x1={plotLeft} y1={plotBottom} x2={plotRight} y2={plotBottom} stroke={CHART_AXIS} strokeWidth="1.2" strokeOpacity="0.75" />
-                <text x={plotLeft - 4} y={plotTop - 6} fontSize="9" fill={PRINT_TEXT} fontWeight="bold">% of paths</text>
+              <svg
+                viewBox="0 0 400 215"
+                preserveAspectRatio="xMidYMid meet"
+                style={{ width: '100%', height: 260 }}
+                aria-label="Capital Stress Timeline"
+                shapeRendering="geometricPrecision"
+              >
+                {/* plot border axes */}
+                <line x1={plotLeft} y1={plotTop} x2={plotLeft} y2={plotBottom} stroke={PRINT_TEXT} strokeWidth="1" strokeOpacity="0.9" />
+                <line x1={plotLeft} y1={plotBottom} x2={plotRight} y2={plotBottom} stroke={PRINT_TEXT} strokeWidth="1" strokeOpacity="0.9" />
+                {/* Y gridlines + ticks */}
                 {yTicks.map((pct, i) => {
                   const y = scaleY(pct);
                   return (
-                    <g key={i}>
-                      <line x1={plotLeft} y1={y} x2={plotLeft - 4} y2={y} stroke={CHART_AXIS} strokeWidth="0.8" strokeOpacity="0.65" />
-                      <text x={plotLeft - 8} y={y} fontSize="8" fill={PRINT_TEXT} textAnchor="end" dominantBaseline="middle">{pct}%</text>
+                    <g key={`sy-${i}`}>
+                      <line x1={plotLeft} y1={y} x2={plotRight} y2={y} stroke={PRINT_BORDER} strokeWidth="0.5" strokeDasharray="2 3" />
+                      <line x1={plotLeft - 4} y1={y} x2={plotLeft} y2={y} stroke={PRINT_TEXT} strokeWidth="1" strokeOpacity="0.9" />
+                      <text x={plotLeft - 7} y={y} fontSize="9" fill={PRINT_TEXT} textAnchor="end" dominantBaseline="middle" fontWeight="500">
+                        {yTickLabel(pct)}
+                      </text>
                     </g>
                   );
                 })}
-                {xTickYears.map(y => {
-                  const x = n > 1 ? plotLeft + (y / (n - 1)) * plotWidth : plotLeft;
+                {/* X ticks */}
+                {xTickYears.map(yt => {
+                  const x = n > 1 ? plotLeft + (yt / (n - 1)) * plotWidth : plotLeft;
                   return (
-                    <g key={y}>
-                      <line x1={x} y1={plotBottom} x2={x} y2={plotBottom + 4} stroke={CHART_AXIS} strokeWidth="0.8" strokeOpacity="0.65" />
-                      <text x={x} y={plotBottom + 14} fontSize="8" fill={PRINT_TEXT} textAnchor="middle">Year {y}</text>
+                    <g key={`sxt-${yt}`}>
+                      <line x1={x} y1={plotBottom} x2={x} y2={plotBottom + 4} stroke={PRINT_TEXT} strokeWidth="1" strokeOpacity="0.9" />
+                      <text x={x} y={plotBottom + 14} fontSize="9" fill={PRINT_TEXT} textAnchor="middle" fontWeight="500">{yt}</text>
                     </g>
                   );
                 })}
-                <polyline fill="none" stroke={CHART_MEDIAN_BAR} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" points={depletionPts} />
-                {depletionData.map((d, i) => (
-                  <circle key={`d-${i}`} cx={xFor(i)} cy={scaleY(d * 100)} r="2.5" fill={CHART_MEDIAN_BAR} stroke={PRINT_TEXT} strokeWidth="0.8" />
-                ))}
-                <polyline fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4,3" points={stressPts} />
+                {/* X-axis title */}
+                <text x={(plotLeft + plotRight) / 2} y={plotBottom + 28} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">Years</text>
+                {/* Y-axis stacked title — % / of / Paths */}
+                <text x={16} y={plotTop + plotHeight / 2 - 12} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">%</text>
+                <text x={16} y={plotTop + plotHeight / 2} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="500">of</text>
+                <text x={16} y={plotTop + plotHeight / 2 + 12} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">Paths</text>
+                {/* Structural stress (gold, dashed) */}
+                <polyline
+                  fill="none"
+                  stroke={stressColor}
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeDasharray="6,4"
+                  points={stressPts}
+                />
                 {stressData.slice(0, n).map((s, i) => (
-                  <circle key={`s-${i}`} cx={xFor(i)} cy={scaleY(s * 100)} r="2" fill="#D97706" stroke={PRINT_TEXT} strokeWidth="0.6" />
+                  <circle key={`s-${i}`} cx={xFor(i)} cy={scaleY(s * 100)} r="2.4" fill={stressColor} stroke="#ffffff" strokeWidth="0.6" />
                 ))}
-                <text x={plotRight - 80} y={plotTop - 2} fontSize="8" fill={CHART_MEDIAN_BAR} fontWeight="600">— Depletion</text>
-                <text x={plotRight - 80} y={plotTop + 10} fontSize="8" fill="#D97706" fontWeight="600">— Structural stress</text>
+                {/* Depletion (deep green, solid) */}
+                <polyline
+                  fill="none"
+                  stroke={depletionColor}
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  points={depletionPts}
+                />
+                {depletionData.map((d, i) => (
+                  <circle key={`d-${i}`} cx={xFor(i)} cy={scaleY(d * 100)} r="2.6" fill={depletionColor} stroke="#ffffff" strokeWidth="0.6" />
+                ))}
+                {/* Legend (in-chart, top-right) */}
+                <g>
+                  <rect x={plotRight - 128} y={plotTop - 6} width="128" height="26" fill="#ffffff" fillOpacity="0.85" stroke={PRINT_BORDER} strokeWidth="0.5" rx="3" />
+                  <line x1={plotRight - 122} y1={plotTop + 3} x2={plotRight - 108} y2={plotTop + 3} stroke={depletionColor} strokeWidth="2.8" />
+                  <text x={plotRight - 104} y={plotTop + 6} fontSize="8" fill={PRINT_TEXT} fontWeight="600">Depletion</text>
+                  <line x1={plotRight - 122} y1={plotTop + 14} x2={plotRight - 108} y2={plotTop + 14} stroke={stressColor} strokeWidth="2.6" strokeDasharray="4,3" />
+                  <text x={plotRight - 104} y={plotTop + 17} fontSize="8" fill={PRINT_TEXT} fontWeight="600">Structural stress</text>
+                </g>
               </svg>
             );
           })()}
@@ -1384,6 +1681,8 @@ export function PrintReport(props: PrintReportProps) {
               ))}
             </ol>
 
+            {/* Force the simulator onto its own page so the grid of scenarios doesn't orphan-split. */}
+            <div className="print-page-break-before" />
             <h2 style={{ fontFamily: CB_FONT_SERIF, fontSize: '14pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.5em', textTransform: 'uppercase' }}>
               Capital Adjustment Simulator
             </h2>
@@ -1569,135 +1868,134 @@ export function PrintReport(props: PrintReportProps) {
       ) : null}
 
       <PdfSection className="cb-appendix cb-page-break print-disclosure-page print-section section" aria-label="Appendix and closing">
+        {/*
+          Left-aligned closing block. Removed the separate "Closing" stage label
+          and the decorative border-top per the premium-advisory spec — keeps
+          everything anchored to the left margin for scannability.
+        */}
         <PdfAdvisorySectionLead
           stageLabel="Appendix & closing"
           title="Disclosures and next step"
           whatThisShows="How to use this report, the disclaimer that applies, and the next step in the Capital Bridge journey."
           whyThisMatters="Closes with a clear handoff: what this document is for, and how to move into execution."
         />
-        <PrintStageLabel>Closing</PrintStageLabel>
-        <div
-          style={{
-            borderTop: '1px solid rgba(13, 58, 29, 0.14)',
-            marginTop: '2em',
-            paddingTop: '1.35em',
-            textAlign: 'center',
-          }}
-        >
+        <div style={{ marginTop: '1.5em', textAlign: 'left' }}>
           <h2
             style={{
               fontFamily: CB_FONT_SERIF,
-              fontSize: '13pt',
+              fontSize: '14pt',
               fontWeight: 700,
               color: PRINT_TEXT,
-              margin: '0 auto 0.65em',
-              maxWidth: '36em',
-              lineHeight: 1.35,
+              margin: '0 0 0.65em',
+              lineHeight: 1.3,
+              textTransform: 'uppercase',
+              letterSpacing: '0.03em',
             }}
           >
-            Disclosures & how to use this report
+            Disclosures &amp; how to use this report
           </h2>
-          <p style={{ fontSize: '10pt', fontWeight: 300, color: PRINT_TEXT, lineHeight: 1.5, margin: '0 auto', maxWidth: '36em' }}>
-            This document comes from the Capital Bridge Capital Stress model and is meant to help you understand your own structure. It is not personal advice. The footer carries the full legal notice.
+          <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em' }}>
+            This report helps you understand how your capital structure behaves. It is not personal advice.
           </p>
-          <p
+
+          <h3
             style={{
-              fontSize: '10pt',
+              fontSize: '10.5pt',
               fontWeight: 700,
               color: PRINT_TEXT,
-              marginTop: '0.85em',
-              marginBottom: '0.35em',
-              maxWidth: '36em',
-              marginLeft: 'auto',
-              marginRight: 'auto',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              margin: '0 0 0.4em',
             }}
           >
             How to use this report
-          </p>
+          </h3>
+          <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.35em' }}>Use it to:</p>
           <ul
             style={{
-              fontSize: '10pt',
+              fontSize: '10.5pt',
               color: PRINT_TEXT,
-              textAlign: 'left',
-              margin: '0 auto 1em',
-              maxWidth: '32em',
-              lineHeight: 1.5,
-              paddingLeft: '1.25em',
+              lineHeight: 1.65,
+              margin: '0 0 0.85em',
+              paddingLeft: '1.3em',
             }}
           >
-            <li style={{ marginBottom: '0.35em' }}>Use it to stress-test withdrawals, horizon, and return assumptions.</li>
-            <li style={{ marginBottom: '0.35em' }}>Treat paths as illustrative; update the live model when inputs change materially.</li>
+            <li>test withdrawals</li>
+            <li>test time horizon</li>
+            <li>test return assumptions</li>
           </ul>
+          <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1.75em' }}>
+            Treat scenarios as guidance, not prediction.
+          </p>
+
           <div
             style={{
-              maxWidth: '34em',
-              margin: '0 auto 1.15em',
-              padding: '1em 1.1em',
+              padding: '1.25em 1.35em',
               border: `1px solid ${PRINT_BORDER}`,
               borderRadius: 8,
               background: 'rgba(255, 252, 245, 0.95)',
-              textAlign: 'left',
+              marginBottom: '1.25em',
             }}
           >
-            <p
+            <h2
               style={{
                 fontFamily: CB_FONT_SERIF,
-                fontSize: '13pt',
+                fontSize: '14pt',
                 fontWeight: 700,
                 color: PRINT_TEXT,
-                margin: '0 0 0.5em',
+                margin: '0 0 0.55em',
                 lineHeight: 1.3,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
-                textAlign: 'center',
               }}
             >
               Request Execution Plan
-            </p>
-            <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.85em', textAlign: 'center' }}>
+            </h2>
+            <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em' }}>
               We help implement this structure through aligned partners.
             </p>
-            <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.5, margin: '0 0 0.5em' }}>
+            <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.4em' }}>
               At this stage, your structure has been:
             </p>
             <ul
               style={{
-                fontSize: '10pt',
+                fontSize: '10.5pt',
                 color: PRINT_TEXT,
-                lineHeight: 1.5,
-                margin: '0 0 0.75em',
-                paddingLeft: '1.25em',
-                textAlign: 'left',
+                lineHeight: 1.65,
+                margin: '0 0 0.9em',
+                paddingLeft: '1.3em',
               }}
             >
-              <li style={{ marginBottom: '0.25em' }}>evaluated for sustainability</li>
-              <li style={{ marginBottom: '0.25em' }}>engineered for capital flow</li>
-              <li style={{ marginBottom: '0.25em' }}>tested under stress</li>
+              <li>evaluated for sustainability</li>
+              <li>structured for income</li>
+              <li>tested under stress</li>
             </ul>
-            <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.85em' }}>
-              When the structure remains coherent across these stages, the next step is execution — putting the plan into practice with disciplined follow-through.
+            <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em' }}>
+              When these align, the next step is execution.
             </p>
             <p
               style={{
-                fontSize: '11pt',
+                fontSize: '11.5pt',
                 fontWeight: 700,
                 color: PRINT_TEXT,
-                margin: 0,
-                textAlign: 'center',
+                margin: '0 0 0.35em',
+                lineHeight: 1.45,
               }}
             >
+              <span aria-hidden style={{ marginRight: 6 }}>👉</span>
               <a href={strategicExecutionUrl} style={{ color: PRINT_TEXT, textDecoration: 'underline' }}>
-                Request Execution Plan →
+                Click here to Request Execution Plan
               </a>
             </p>
-            <p style={{ fontSize: '9pt', color: PRINT_TEXT, lineHeight: 1.45, margin: '0.5em 0 0', textAlign: 'center' }}>
+            <p style={{ fontSize: '9pt', color: PRINT_TEXT, lineHeight: 1.5, margin: 0 }}>
               Or visit {strategicExecutionUrl}
             </p>
           </div>
-          <p style={{ fontSize: '10pt', fontWeight: 300, color: PRINT_TEXT, lineHeight: 1.5, margin: '0 auto', maxWidth: '36em' }}>
+
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.45em' }}>
             This report is for educational purposes only. Illustrations rest on your assumptions and are not a guarantee of future performance.
           </p>
-          <p style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, marginTop: '0.55em', lineHeight: 1.45 }}>
+          <p style={{ fontSize: '10.5pt', fontWeight: 700, color: PRINT_TEXT, lineHeight: 1.5, margin: 0 }}>
             Please save or print a copy for your records.
           </p>
         </div>
