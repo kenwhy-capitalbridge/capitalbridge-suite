@@ -108,6 +108,12 @@ const BODY_PT_SMALL = '8.5pt';
 /** Policy B gradient (matches live Depletion Pressure gauge). */
 const DEPLETION_GAUGE_COLORS = ['#CA3A2E', '#D27A1F', '#E3A539', '#9BAA23', '#1F8A4D'] as const;
 
+/**
+ * PDF-only bar: muted gold (neutral read — avoids red “alert” on the printed strip).
+ * Uses only dark / base / light across the five Policy B segments (left → right).
+ */
+const DEPLETION_GAUGE_PDF_BAR_COLORS = ['#A8843B', '#A8843B', '#C9A86A', '#E8D3A3', '#E8D3A3'] as const;
+
 function depletionPressureInterpretationForPdf(pillLabel: string): string {
   switch (pillLabel) {
     case 'Stable':
@@ -129,11 +135,14 @@ function pillTextColorForDepletionPill(label: string): string {
   return label === 'Watchful' || label === 'Vulnerable' ? '#0D3A1D' : '#FFFFFF';
 }
 
-/** CSS-only gradient bar for PDF (Policy B stops) — avoids Chromium print gaps before inline SVG. */
-function depletionGaugeGradientCss(segmentStops: number[]): string {
+/** CSS-only gradient bar for PDF (Policy B stops). */
+function depletionGaugeGradientCss(
+  segmentStops: number[],
+  colors: readonly string[] = DEPLETION_GAUGE_COLORS,
+): string {
   const chunks: string[] = [];
-  for (let i = 0; i < DEPLETION_GAUGE_COLORS.length; i++) {
-    const c = DEPLETION_GAUGE_COLORS[i];
+  for (let i = 0; i < colors.length; i++) {
+    const c = colors[i];
     const start = segmentStops[i] ?? 0;
     const end = segmentStops[i + 1] ?? 100;
     chunks.push(`${c} ${start}%`, `${c} ${end}%`);
@@ -1562,7 +1571,7 @@ export function PrintReport(props: PrintReportProps) {
           {(() => {
             const dep = depletionBarOutput ?? getDepletionBarOutput(mcResult.depletionPressurePct);
             const s = dep.segmentStops;
-            const barBackground = depletionGaugeGradientCss(s);
+            const barBackground = depletionGaugeGradientCss(s, DEPLETION_GAUGE_PDF_BAR_COLORS);
             return (
               <div
                 className="cb-stress-timeline-gauge-panel"
