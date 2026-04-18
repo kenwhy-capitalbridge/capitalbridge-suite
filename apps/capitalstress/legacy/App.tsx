@@ -840,8 +840,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             
             <div className="max-w-2xl mx-auto space-y-10 sm:space-y-12 md:space-y-16 lg:space-y-20">
               
-              <p className="text-center text-[10px] sm:text-xs text-[#FFCC6A]/85 pb-2 no-print">
-                Currency: <span className="font-bold text-[#FFCC6A]">{selectedCurrency.label}</span>
+              <p className="text-center text-sm sm:text-lg md:text-xl font-semibold uppercase tracking-wider text-[#FFCC6A]/85 pb-2 no-print">
+                Currency Selected: <span className="font-bold text-[#FFCC6A]">{selectedCurrency.label}</span>
               </p>
 
               {/* INITIAL CAPITAL */}

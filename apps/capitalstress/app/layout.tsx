@@ -19,7 +19,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Capital Stress | Capital Bridge",
-  description: "Capital Stress model — Capital Bridge Advisory.",
+  description: "Capital Stress model — test how your capital holds up under many simulated paths.",
   icons: CB_SITE_FAVICON_ICONS,
 };
 
