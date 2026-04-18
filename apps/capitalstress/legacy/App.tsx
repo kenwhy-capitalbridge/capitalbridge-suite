@@ -2043,6 +2043,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             disabled={!mcResult || pdfDownloadBusy}
             buttonLabel={pdfDownloadBusy ? "GENERATING…" : undefined}
             buttonLeading={pdfDownloadBusy ? <ChromeSpinnerGlyph sizePx={16} /> : undefined}
+            postCtaHint="Run simulation before downloading the report."
           />
 
         </section>

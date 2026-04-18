@@ -34,6 +34,8 @@ export type ModelReportDownloadFooterProps = {
   buttonClassName?: string;
   /** Optional lines between the records prompt and the button (e.g. Capital Health status). */
   statusSlot?: ReactNode;
+  /** Centered line under the download button (e.g. remind users to run the simulation first). */
+  postCtaHint?: string;
   className?: string;
 };
 
@@ -47,6 +49,7 @@ export function ModelReportDownloadFooter({
   buttonLeading,
   buttonClassName,
   statusSlot,
+  postCtaHint,
   className = "",
 }: ModelReportDownloadFooterProps) {
   const btnClass =
@@ -95,6 +98,11 @@ export function ModelReportDownloadFooter({
           )}
         </button>
         </div>
+        {postCtaHint?.trim() ? (
+          <p className="mx-auto mt-2 max-w-xl px-2 text-center text-xs font-normal leading-snug text-white/95 sm:text-sm">
+            {postCtaHint.trim()}
+          </p>
+        ) : null}
       </div>
     </footer>
   );

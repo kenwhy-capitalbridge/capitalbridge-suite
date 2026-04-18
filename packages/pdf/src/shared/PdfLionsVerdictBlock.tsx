@@ -161,19 +161,26 @@ export function PdfLionsVerdictBlock({
           <p style={bodyStyle}>{executionPathway.body}</p>
         </div>
       ) : null}
-      <p style={{ ...labelStyle, marginBottom: "0.25em", marginTop: "0.15em" }}>What you should do next</p>
+      <p style={{ ...labelStyle, marginBottom: "0.35em", marginTop: "0.15em" }}>WHAT YOU SHOULD DO NEXT</p>
       <ul
+        className="cb-lion-verdict-next-actions"
         style={{
           fontSize: REPORT_TYPE.body.fontSize,
           color: textColor,
-          marginLeft: "1.25em",
+          marginTop: 0,
           marginBottom: "0.55em",
+          marginLeft: 0,
+          paddingLeft: "1.15em",
           lineHeight: 1.45,
           fontFamily: fontBody,
+          listStyleType: "disc",
+          listStylePosition: "outside",
         }}
       >
         {nextActions.map((line) => (
-          <li key={line}>{line}</li>
+          <li key={line} style={{ display: "list-item" }}>
+            {line}
+          </li>
         ))}
       </ul>
       {microSignals && microSignals.length > 0 ? (
