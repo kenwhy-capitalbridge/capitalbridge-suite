@@ -120,21 +120,44 @@ const STRESS_SECTION_BLOCK: React.CSSProperties = {
   pageBreakInside: 'avoid',
 };
 
+/**
+ * Section H2 style used across Section B / C blocks.
+ * Uses `pt` (not `px`) so it scales with the rest of the print stylesheet.
+ */
 const STRESS_SECTION_H2: React.CSSProperties = {
   fontFamily: CB_FONT_SERIF,
-  fontSize: '13px',
+  fontSize: '12pt',
   fontWeight: 700,
   color: PRINT_TEXT,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
-  marginBottom: '10px',
-  paddingBottom: '6px',
+  marginTop: 0,
+  marginBottom: '0.6em',
+  paddingBottom: '0.35em',
   borderBottom: `1px solid ${PRINT_BORDER}`,
   lineHeight: 1.35,
 };
 
-function PrintStageLabel({ children }: { children: React.ReactNode }) {
-  return <p className="cb-print-stage-label">{children}</p>;
+/**
+ * Print-only stage label. `keepWithNext` pins the label to the block that
+ * follows it (prevents "Charts and visuals" ending up alone on a page
+ * when the next chart wraps to the following page).
+ */
+function PrintStageLabel({
+  children,
+  keepWithNext,
+}: {
+  children: React.ReactNode;
+  keepWithNext?: boolean;
+}) {
+  const style: React.CSSProperties | undefined = keepWithNext
+    ? { pageBreakAfter: 'avoid', breakAfter: 'avoid' }
+    : undefined;
+  return (
+    <p className="cb-print-stage-label" style={style}>
+      {children}
+    </p>
+  );
 }
 
 type StressVerdictBucket = 'Safe' | 'Fragile' | 'Dangerous';
@@ -546,37 +569,51 @@ export function PrintReport(props: PrintReportProps) {
           <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.55em' }}>
             A structure that looks fine in one scenario may fail in others.
           </p>
-          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>This helps you understand:</p>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>This step helps you understand:</p>
           <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.25em', paddingLeft: '1.3em' }}>
-            <li>how stable your structure really is</li>
-            <li>where risks begin to build</li>
-            <li>whether your plan can hold over time</li>
+            <li>How stable your structure really is</li>
+            <li>Where risks begin to build</li>
+            <li>Whether your plan can hold over time</li>
           </ul>
         </header>
         <section style={STRESS_SECTION_BLOCK}>
-          <p style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.35em', letterSpacing: '0.04em' }}>
-            CAPITAL BRIDGE JOURNEY
+          <p style={{ fontSize: '12pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.25em', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            Capital Bridge Journey
           </p>
-          <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.85em' }}>How to read this report</p>
-          <p style={{ fontSize: '10.5pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.35em' }}>
-            Step 3 — Capital Stress-Test
+          <p style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 1em', letterSpacing: '0.03em' }}>
+            How to read this report
           </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.85em' }}>
-            How does your structure behave under stress?
+          {/* Highlight Step 3 so the reader immediately sees where they are in the Capital Bridge arc. */}
+          <div
+            style={{
+              borderLeft: `3px solid ${CHART_MEDIAN_BAR}`,
+              padding: '0.35em 0.85em',
+              marginBottom: '1em',
+              background: 'rgba(230, 187, 82, 0.08)',
+            }}
+          >
+            <p style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT, margin: '0 0 0.2em' }}>
+              Step 3 — Capital Stress-Test
+            </p>
+            <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.5, margin: 0 }}>
+              How does your structure behave under stress?
+            </p>
+          </div>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.45em' }}>
+            This report follows your full journey:
           </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.45em' }}>This report follows:</p>
-          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.9em', paddingLeft: '1.3em' }}>
-            <li style={{ marginBottom: '0.45em' }}>
+          <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em', paddingLeft: '1.3em' }}>
+            <li style={{ marginBottom: '0.4em' }}>
               <span style={{ fontWeight: 700 }}>Step 1 — Forever Income</span>
               <br />
               <span>Can your structure last?</span>
             </li>
-            <li style={{ marginBottom: '0.45em' }}>
+            <li style={{ marginBottom: '0.4em' }}>
               <span style={{ fontWeight: 700 }}>Step 1B — Income Engineering</span>
               <br />
               <span>How is your capital structured?</span>
             </li>
-            <li style={{ marginBottom: '0.45em' }}>
+            <li style={{ marginBottom: '0.4em' }}>
               <span style={{ fontWeight: 700 }}>Step 2 — Capital Health</span>
               <br />
               <span>Is the structure sustainable?</span>
@@ -587,35 +624,13 @@ export function PrintReport(props: PrintReportProps) {
               <span>What happens when conditions change?</span>
             </li>
           </ul>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.45em' }}>At this stage:</p>
-          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em', paddingLeft: '1.3em' }}>
+          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.45em' }}>
+            At this stage, the focus is simple:
+          </p>
+          <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.6, margin: 0, paddingLeft: '1.3em' }}>
             <li>Does your structure hold under pressure?</li>
             <li>Where do risks begin to appear?</li>
             <li>How stable is it over time?</li>
-          </ul>
-          <p style={{ fontSize: '8.5pt', fontWeight: 700, color: PRINT_TEXT, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.4em' }}>
-            What this model does
-          </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.4em' }}>
-            The Capital Stress Model simulates many possible market paths using your current assumptions.
-          </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>It shows:</p>
-          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.9em', paddingLeft: '1.3em' }}>
-            <li>How capital may evolve under uncertainty</li>
-            <li>How often outcomes fall within expected ranges</li>
-            <li>Where downside risk becomes meaningful</li>
-          </ul>
-          <p style={{ fontSize: '8.5pt', fontWeight: 700, color: PRINT_TEXT, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.4em' }}>
-            Why this matters
-          </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.55em' }}>
-            A structure that works in one scenario may not hold across many.
-          </p>
-          <p style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.3em' }}>This model allows:</p>
-          <ul style={{ fontSize: '9.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: 0, paddingLeft: '1.3em' }}>
-            <li>Resilience to be tested beyond a single projection</li>
-            <li>Downside risk to be understood clearly</li>
-            <li>Confidence to be built before execution</li>
           </ul>
         </section>
       </PdfSection>
@@ -639,11 +654,16 @@ export function PrintReport(props: PrintReportProps) {
                  * the Top Summary panel. The other Lion fields (quote, why, system
                  * state, actions) still come from the engine.
                  */
+                /**
+                 * Yearly framing — user choice. Puts income and withdrawal on the same
+                 * time basis so the "annual gap" figure is mathematically consistent.
+                 * midReturnRate is the midpoint of the assumed return range.
+                 */
                 const midReturnRate = ((lowerPct + upperPct) / 2) / 100;
-                const monthlyIncome = (investment * midReturnRate) / 12;
-                const monthlyWithdrawalLocal = withdrawal / 12;
-                const monthlyGapLocal = monthlyIncome - monthlyWithdrawalLocal;
-                const incomeCovers = monthlyGapLocal >= 0;
+                const yearlyIncomeLocal = investment * midReturnRate;
+                const yearlyWithdrawalLocal = withdrawal;
+                const annualGapLocal = yearlyWithdrawalLocal - yearlyIncomeLocal;
+                const incomeCovers = annualGapLocal <= 0;
                 const verdictNow = computeStressVerdict({
                   fiTier,
                   survivalProbability: mcResult.survivalProbability,
@@ -660,11 +680,13 @@ export function PrintReport(props: PrintReportProps) {
                 const incomeClause = incomeCovers
                   ? 'and your income currently covers your withdrawals.'
                   : 'but your income does not cover your withdrawals.';
-                const amountsLine = `You are generating ${formatCurrency(monthlyIncome)} against ${formatCurrency(monthlyWithdrawalLocal)} monthly, resulting in a monthly gap of ${monthlyGapLocal >= 0 ? '+' : '−'}${formatCurrency(Math.abs(monthlyGapLocal))}.`;
+                const gapLine = incomeCovers
+                  ? `You are generating ${formatCurrency(yearlyIncomeLocal)} against ${formatCurrency(yearlyWithdrawalLocal)}, leaving an annual surplus of ${formatCurrency(Math.abs(annualGapLocal))}.`
+                  : `You are generating ${formatCurrency(yearlyIncomeLocal)} against ${formatCurrency(yearlyWithdrawalLocal)}, resulting in an annual gap of ${formatCurrency(Math.abs(annualGapLocal))}.`;
                 const bulletsBlock = incomeCovers
-                  ? `This means:\n• ongoing withdrawals are supported by current income\n• the structure ${bucket === 'Safe' ? 'supports itself without drawing down capital' : 'is holding, but sensitive to change'}`
-                  : `This means:\n• capital is being drawn down to support your lifestyle\n• ${bucket === 'Dangerous' ? 'the structure is on course to deplete under current conditions' : 'the structure survives, but depends on depletion'}`;
-                const inputDrivenSummary = `${stabilityClause}, ${incomeClause}\n\n${amountsLine}\n\n${bulletsBlock}`;
+                  ? `This means:\n• Ongoing withdrawals are supported by current income\n• The structure ${bucket === 'Safe' ? 'supports itself without drawing down capital' : 'is holding, but sensitive to change'}`
+                  : `This means:\n• Capital is being drawn down to support your lifestyle\n• ${bucket === 'Dangerous' ? 'The structure is on course to deplete under current conditions' : 'The structure survives, but depends on depletion'}`;
+                const inputDrivenSummary = `${stabilityClause}, ${incomeClause}\n\n${gapLine}\n\n${bulletsBlock}`;
                 return (
                   <PdfLionsVerdictBlock
                     scoreAndStatusLine={`Lion score: ${lionScorePrint} / 100 · ${lionPublicLabelPrint}`}
@@ -768,17 +790,25 @@ export function PrintReport(props: PrintReportProps) {
                 {(() => {
                   const erosionPctDisplay = Math.round(verdict.erosionPct * 100);
                   const bucket = verdictChip.bucket;
-                  const detailLine =
+                  const detailLines =
                     bucket === 'Safe'
-                      ? `Your structure is stable across the ${years}-year horizon, with capital largely preserved.`
+                      ? [`Your structure is stable across the ${years}-year horizon, with capital largely preserved.`]
                       : bucket === 'Fragile'
                         ? erosionPctDisplay >= 5
-                          ? `Your structure remains stable, but capital gradually declines (~${erosionPctDisplay}%) over time. It does not run out, but it weakens under long-term pressure.`
-                          : `Your structure is holding, but sensitive to market or withdrawal pressure over the ${years}-year horizon.`
-                        : `Your structure is under meaningful pressure and depletes under current conditions.`;
+                          ? [
+                              `Your structure remains stable, but capital gradually declines (~${erosionPctDisplay}%) over time.`,
+                              `It does not run out, but it weakens under long-term pressure.`,
+                            ]
+                          : [`Your structure is holding, but sensitive to market or withdrawal pressure over the ${years}-year horizon.`]
+                        : [`Your structure is under meaningful pressure and depletes under current conditions.`];
                   return (
-                    <div style={{ fontSize: '9.5pt', color: verdictChip.text, lineHeight: 1.5 }}>
-                      <span style={{ fontWeight: 700 }}>Detail:</span> {detailLine}
+                    <div style={{ fontSize: '9.5pt', color: verdictChip.text, lineHeight: 1.55, marginTop: 2 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 2 }}>Detail:</div>
+                      {detailLines.map((line, idx) => (
+                        <div key={idx} style={{ marginBottom: idx < detailLines.length - 1 ? 2 : 0 }}>
+                          {line}
+                        </div>
+                      ))}
                     </div>
                   );
                 })()}
@@ -1013,7 +1043,7 @@ export function PrintReport(props: PrintReportProps) {
           <div><strong style={{ color: PRINT_TEXT }}>Withdrawal</strong><br />{formatCurrency(withdrawal)}</div>
         </div>
 
-        <PrintStageLabel>Charts and visuals</PrintStageLabel>
+        <PrintStageLabel keepWithNext>Charts and visuals</PrintStageLabel>
 
         <PdfChartBlock
           title="Structural Stability Map"
@@ -1924,8 +1954,11 @@ export function PrintReport(props: PrintReportProps) {
             <li>test time horizon</li>
             <li>test return assumptions</li>
           </ul>
-          <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1.75em' }}>
+          <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.45em' }}>
             Treat scenarios as guidance, not prediction.
+          </p>
+          <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1.75em' }}>
+            Update inputs when your situation changes.
           </p>
 
           <div
@@ -1966,9 +1999,9 @@ export function PrintReport(props: PrintReportProps) {
                 paddingLeft: '1.3em',
               }}
             >
-              <li>evaluated for sustainability</li>
-              <li>structured for income</li>
-              <li>tested under stress</li>
+              <li>Evaluated for sustainability</li>
+              <li>Structured for income</li>
+              <li>Tested under stress</li>
             </ul>
             <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em' }}>
               When these align, the next step is execution.
