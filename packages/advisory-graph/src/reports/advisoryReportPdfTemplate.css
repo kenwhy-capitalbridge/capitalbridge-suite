@@ -178,9 +178,15 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
     page-break-inside: auto !important;
   }
 
+  /* Section C is long; must not use global `.section` avoid — see PrintReport PdfSection className. */
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc section.cb-page.cb-stress-pdf-section-c {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
   .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-timeline-gauge-panel {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 }
 

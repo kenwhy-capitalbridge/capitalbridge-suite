@@ -1111,7 +1111,14 @@ export function PrintReport(props: PrintReportProps) {
         </section>
       </PdfSection>
 
-      <PdfSection className="print-section section print-page-break-before" aria-label="Section C — Deeper look">
+      {/*
+        Do not add the global `section` class here: reportsPrint.css applies `break-inside: avoid` to `.section`,
+        which made this entire chapter one giant unbreakable box and Chromium left a full page gap before the timeline gauge.
+      */}
+      <PdfSection
+        className="print-section cb-print-section print-page-break-before cb-stress-pdf-section-c"
+        aria-label="Section C — Deeper look"
+      >
         <PdfAdvisorySectionLead
           stageLabel="Section C — Deeper look"
           title="Deeper look"
@@ -1557,8 +1564,6 @@ export function PrintReport(props: PrintReportProps) {
                   border: `1px solid ${PRINT_BORDER}`,
                   borderRadius: 8,
                   background: CB_REPORT_SOFT_PANEL_BG,
-                  breakInside: 'avoid',
-                  pageBreakInside: 'avoid',
                 }}
               >
                 <p
