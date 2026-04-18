@@ -149,16 +149,46 @@ type StressVerdictChip = {
   text: string;
 };
 
+const STRESS_CHIP_SAFE: Omit<StressVerdictChip, 'bucket'> = { fill: '#D4ECDB', border: '#55B685', text: '#134F2C' };
+const STRESS_CHIP_FRAGILE: Omit<StressVerdictChip, 'bucket'> = { fill: '#F9E2BE', border: '#D9A441', text: '#6A4B15' };
+const STRESS_CHIP_DANGEROUS: Omit<StressVerdictChip, 'bucket'> = { fill: '#F4D6D2', border: '#CD5B52', text: '#7A1D16' };
+
+/** Base 5-tier -> 3-bucket mapping (no context overrides applied). */
+function baseVerdictFromFiTier(fiTier: FragilityIndexTier): StressVerdictChip {
+  if (fiTier === 'Critical') return { bucket: 'Dangerous', ...STRESS_CHIP_DANGEROUS };
+  if (fiTier === 'Fragile') return { bucket: 'Fragile', ...STRESS_CHIP_FRAGILE };
+  return { bucket: 'Safe', ...STRESS_CHIP_SAFE };
+}
+
 /**
- * 5-tier FragilityIndexTier -> 3-bucket {Safe, Fragile, Dangerous} per dashboard spec.
- * FORTIFIED / Highly Robust / Stable -> Safe (green)
- * Fragile -> Fragile (amber)
- * Critical -> Dangerous (red)
+ * 5-tier FragilityIndexTier -> 3-bucket {Safe, Fragile, Dangerous} with override:
+ *
+ *   If base verdict is Safe AND survivalProbability is high AND capital erosion > 25%,
+ *   the verdict is downgraded to Fragile. This avoids the "safe but eroding capital"
+ *   contradiction where paths don't deplete but typical ending capital is meaningfully
+ *   lower than what was put in.
+ *
+ * "Capital erosion" is measured as `1 - typicalEndingCapital / initialCapital`, i.e. how
+ * much lower the median outcome is than the starting capital (purchasing power before
+ * inflation is handled elsewhere in the report).
  */
-function stressVerdictFromFiTier(fiTier: FragilityIndexTier): StressVerdictChip {
-  if (fiTier === 'Critical') return { bucket: 'Dangerous', fill: '#F4D6D2', border: '#CD5B52', text: '#7A1D16' };
-  if (fiTier === 'Fragile') return { bucket: 'Fragile', fill: '#F9E2BE', border: '#D9A441', text: '#6A4B15' };
-  return { bucket: 'Safe', fill: '#D4ECDB', border: '#55B685', text: '#134F2C' };
+function computeStressVerdict(args: {
+  fiTier: FragilityIndexTier;
+  survivalProbability: number;
+  initialCapital: number;
+  typicalEndingCapital: number;
+}): { chip: StressVerdictChip; erosionPct: number; overrideApplied: boolean } {
+  const base = baseVerdictFromFiTier(args.fiTier);
+  const erosionPct =
+    args.initialCapital > 0
+      ? Math.max(0, 1 - args.typicalEndingCapital / args.initialCapital)
+      : 0;
+  const overrideApplied =
+    base.bucket === 'Safe' && args.survivalProbability >= 0.9 && erosionPct >= 0.25;
+  if (overrideApplied) {
+    return { chip: { bucket: 'Fragile', ...STRESS_CHIP_FRAGILE }, erosionPct, overrideApplied };
+  }
+  return { chip: base, erosionPct, overrideApplied };
 }
 
 /** High (>=75) / Medium (50-74) / Low (<50) from the 0-100 resilience score. */
@@ -167,6 +197,13 @@ function confidenceLevelFromScore(score0to100: number): 'High' | 'Medium' | 'Low
   if (score0to100 >= 50) return 'Medium';
   return 'Low';
 }
+
+/** One-line explainer for each confidence level (shown next to the label). */
+const CONFIDENCE_EXPLAINER: Record<'High' | 'Medium' | 'Low', string> = {
+  High: 'Outcomes are consistent across most scenarios.',
+  Medium: 'Outcomes may vary depending on market conditions.',
+  Low: 'Results are highly sensitive and may change significantly.',
+};
 
 /** Plain-English runway read from engine outputs. */
 function capitalRunwayLabel(
@@ -546,16 +583,56 @@ export function PrintReport(props: PrintReportProps) {
         />
         <PrintStageLabel>Top summary</PrintStageLabel>
         {(() => {
-          const verdictChip = stressVerdictFromFiTier(fiTier);
+          const verdict = computeStressVerdict({
+            fiTier,
+            survivalProbability: mcResult.survivalProbability,
+            initialCapital: investment,
+            typicalEndingCapital: mcResult.percentile50,
+          });
+          const verdictChip = verdict.chip;
           const confidenceLabel = confidenceLevelFromScore(lionScorePrint);
+          const confidenceExplainer = CONFIDENCE_EXPLAINER[confidenceLabel];
           const runwayLabel = capitalRunwayLabel(
             mcResult.survivalProbability,
             mcResult.depletionRateByYear,
             years,
           );
+          const assumedAnnualReturn = ((lowerPct + upperPct) / 2) / 100;
+          const monthlyIncomeFromCapital = (investment * assumedAnnualReturn) / 12;
+          const monthlyWithdrawal = withdrawal / 12;
+          const monthlyGap = monthlyIncomeFromCapital - monthlyWithdrawal;
+          const monthlyGapLabel = `${monthlyGap >= 0 ? '+' : '−'}${formatCurrency(Math.abs(monthlyGap))}`;
+          const monthlyGapTone: 'surplus' | 'deficit' = monthlyGap >= 0 ? 'surplus' : 'deficit';
           return (
             <section style={STRESS_SECTION_BLOCK}>
               <h2 style={STRESS_SECTION_H2}>Top summary</h2>
+              {/* Focal element: Stress Verdict across full width. */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: 6,
+                  padding: '14px 16px',
+                  background: verdictChip.fill,
+                  border: `1.5px solid ${verdictChip.border}`,
+                  borderRadius: 6,
+                  marginBottom: '0.85em',
+                }}
+              >
+                <div style={{ fontSize: '9pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: verdictChip.text }}>
+                  Stress verdict
+                </div>
+                <div style={{ fontSize: '22pt', fontWeight: 800, color: verdictChip.text, lineHeight: 1.1, letterSpacing: '0.02em' }}>
+                  {verdictChip.bucket}
+                </div>
+                <div style={{ fontSize: '9pt', color: verdictChip.text }}>
+                  Detail tier: {fiTier}
+                  {verdict.overrideApplied
+                    ? ` · Downgraded from Safe — capital erodes by ~${Math.round(verdict.erosionPct * 100)}% even though paths don't deplete`
+                    : ''}
+                </div>
+              </div>
               <div
                 style={{
                   display: 'grid',
@@ -567,34 +644,22 @@ export function PrintReport(props: PrintReportProps) {
               >
                 <div>
                   <div style={{ fontSize: '9pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
-                    Stress verdict
+                    Monthly gap
                   </div>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      padding: '3px 10px',
-                      borderRadius: 4,
-                      background: verdictChip.fill,
-                      border: `1px solid ${verdictChip.border}`,
-                      color: verdictChip.text,
-                      fontWeight: 700,
-                      fontSize: '10pt',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    {verdictChip.bucket}
-                  </span>
+                  <div style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT }}>
+                    {monthlyGapLabel}
+                  </div>
                   <div style={{ fontSize: '8.5pt', color: PRINT_TEXT, marginTop: 4 }}>
-                    Detail tier: {fiTier}
+                    Expected monthly return on capital {monthlyGapTone === 'surplus' ? 'exceeds' : 'falls short of'} monthly withdrawal ({formatCurrency(monthlyWithdrawal)}).
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: '9pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
-                    Confidence level
+                    Typical outcome
                   </div>
-                  <div style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT }}>{confidenceLabel}</div>
+                  <div style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT }}>{formatCurrency(mcResult.simulatedAverage)}</div>
                   <div style={{ fontSize: '8.5pt', color: PRINT_TEXT, marginTop: 4 }}>
-                    Based on resilience score {lionScorePrint}/100
+                    Range (Downside → Favourable): {formatCurrency(mcResult.percentile5)} — {formatCurrency(mcResult.percentile95)}
                   </div>
                 </div>
                 <div>
@@ -608,11 +673,11 @@ export function PrintReport(props: PrintReportProps) {
                 </div>
                 <div>
                   <div style={{ fontSize: '9pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
-                    Typical outcome
+                    Confidence level
                   </div>
-                  <div style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT }}>{formatCurrency(mcResult.simulatedAverage)}</div>
+                  <div style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT }}>{confidenceLabel}</div>
                   <div style={{ fontSize: '8.5pt', color: PRINT_TEXT, marginTop: 4 }}>
-                    Range (Downside → Favourable): {formatCurrency(mcResult.percentile5)} — {formatCurrency(mcResult.percentile95)}
+                    {confidenceExplainer}
                   </div>
                 </div>
               </div>
@@ -623,39 +688,80 @@ export function PrintReport(props: PrintReportProps) {
           );
         })()}
         <section style={STRESS_SECTION_BLOCK}>
-          <PrintStageLabel>What this means</PrintStageLabel>
-          <h2 style={{ ...STRESS_SECTION_H2, marginTop: 0 }}>What this means</h2>
+          <PrintStageLabel>What this means for you</PrintStageLabel>
+          <h2 style={{ ...STRESS_SECTION_H2, marginTop: 0 }}>What this means for you</h2>
           <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.65em' }}>{overallAssessment}</p>
           <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.65em' }}>{riskDriversText}</p>
           <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: 0 }}>{suggestedFocus}</p>
         </section>
         {(() => {
-          const verdictChip = stressVerdictFromFiTier(fiTier);
-          const guidance =
+          const verdict = computeStressVerdict({
+            fiTier,
+            survivalProbability: mcResult.survivalProbability,
+            initialCapital: investment,
+            typicalEndingCapital: mcResult.percentile50,
+          });
+          const verdictChip = verdict.chip;
+          /**
+           * Three decision paths aligned with the Capital Bridge framework:
+           * Evaluate -> Engineer -> Stress -> Execute. Exactly one path is shown,
+           * driven by the verdict bucket (including the Safe->Fragile override).
+           */
+          const path =
             verdictChip.bucket === 'Safe'
               ? {
-                  title: 'Deploy capital with discipline',
-                  lines: [
-                    'The structure shows resilience under many simulated paths.',
-                    'The next step is putting surplus capital to work — align flows, rebalance, and keep rules simple.',
-                    'Review withdrawals and return assumptions periodically so the plan stays current.',
+                  key: 'STRENGTHEN',
+                  headline: 'Strengthen your position',
+                  body: [
+                    'Your structure is stable and holding well.',
+                    'The next step is not further analysis — it’s execution.',
+                  ],
+                  actions: [
+                    'Validate your structure for execution readiness',
+                    'Align capital for income and growth objectives',
+                    'Request access to Strategic Execution',
+                  ],
+                  changes: [
+                    'Turns a stable plan into an active structure',
+                    'Converts surplus into long-term income',
+                    'Moves from planning into implementation',
                   ],
                 }
               : verdictChip.bucket === 'Fragile'
                 ? {
-                    title: 'Improve resilience',
-                    lines: [
-                      'The structure holds up on average but is sensitive to market or withdrawal pressure.',
-                      'Small moves help: trim non-essential withdrawals, extend the horizon, or rebalance toward steadier returns.',
-                      'Re-run this model after any change so the new read is clear.',
+                    key: 'STABILISE',
+                    headline: 'Stabilise your structure',
+                    body: [
+                      'Your structure is holding, but under pressure.',
+                      'Small adjustments can significantly improve resilience.',
+                    ],
+                    actions: [
+                      'Reduce the income gap where possible',
+                      'Rebalance how capital supports your income',
+                      'Extend your capital runway',
+                    ],
+                    changes: [
+                      'Improves consistency across scenarios',
+                      'Reduces risk of future capital depletion',
+                      'Strengthens stability under changing conditions',
                     ],
                   }
                 : {
-                    title: 'Reduce the gap — or make it intentional',
-                    lines: [
-                      'Under the current assumptions, the structure is under meaningful pressure.',
-                      'Either close the gap (lower withdrawals, raise returns within reason, or extend the horizon) — or decide the drawdown is intentional and plan for it.',
-                      'Pairing this report with your income and structure reports gives a single picture of the trade-off.',
+                    key: 'CORRECT',
+                    headline: 'Correct the structure immediately',
+                    body: [
+                      'Your current structure is not sustainable.',
+                      'Capital will be depleted under current conditions.',
+                    ],
+                    actions: [
+                      'Reduce withdrawals or expenses',
+                      'Increase income or restructure capital',
+                      'Close the gap or make it intentional with a clear plan',
+                    ],
+                    changes: [
+                      'Prevents early capital depletion',
+                      'Restores sustainability to the structure',
+                      'Brings the system back into a viable range',
                     ],
                   };
           return (
@@ -666,27 +772,53 @@ export function PrintReport(props: PrintReportProps) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 8,
+                  gap: 10,
                   marginBottom: '0.65em',
                 }}
               >
                 <span
                   style={{
                     display: 'inline-block',
-                    width: 10,
-                    height: 10,
-                    borderRadius: 10,
-                    background: verdictChip.border,
+                    padding: '2px 8px',
+                    fontSize: '8pt',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    color: verdictChip.text,
+                    background: verdictChip.fill,
+                    border: `1px solid ${verdictChip.border}`,
+                    borderRadius: 3,
                   }}
                   aria-hidden
-                />
-                <span style={{ fontSize: '11pt', fontWeight: 700, color: PRINT_TEXT }}>{guidance.title}</span>
+                >
+                  {path.key}
+                </span>
+                <span style={{ fontSize: '12pt', fontWeight: 700, color: PRINT_TEXT }}>{path.headline}</span>
               </div>
-              <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: 0, paddingLeft: '1.2em' }}>
-                {guidance.lines.map((line) => (
-                  <li key={line} style={{ marginBottom: '0.35em' }}>{line}</li>
-                ))}
-              </ul>
+              {path.body.map((line) => (
+                <p key={line} style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.5em' }}>
+                  {line}
+                </p>
+              ))}
+              <div style={{ marginTop: '0.75em' }}>
+                <div style={{ fontSize: '8.5pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
+                  Actions
+                </div>
+                <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: 0, paddingLeft: '1.2em' }}>
+                  {path.actions.map((line) => (
+                    <li key={line} style={{ marginBottom: '0.3em' }}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{ marginTop: '0.75em' }}>
+                <div style={{ fontSize: '8.5pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
+                  What this changes
+                </div>
+                <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: 0, paddingLeft: '1.2em' }}>
+                  {path.changes.map((line) => (
+                    <li key={line} style={{ marginBottom: '0.3em' }}>{line}</li>
+                  ))}
+                </ul>
+              </div>
             </section>
           );
         })()}
