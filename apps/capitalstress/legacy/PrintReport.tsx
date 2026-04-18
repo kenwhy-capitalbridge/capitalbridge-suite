@@ -929,11 +929,21 @@ export function PrintReport(props: PrintReportProps) {
           );
         })()}
         <section style={STRESS_SECTION_BLOCK}>
-          <PrintStageLabel>What this means for you</PrintStageLabel>
           <h2 style={{ ...STRESS_SECTION_H2, marginTop: 0 }}>What this means for you</h2>
-          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.65em' }}>{overallAssessment}</p>
-          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.65em' }}>{riskDriversText}</p>
-          <p style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: 0 }}>{suggestedFocus}</p>
+          <ul
+            style={{
+              fontSize: '10pt',
+              color: PRINT_TEXT,
+              lineHeight: 1.55,
+              margin: 0,
+              paddingLeft: '1.2em',
+              listStyleType: 'disc',
+            }}
+          >
+            <li style={{ marginBottom: '0.45em' }}>{overallAssessment}</li>
+            <li style={{ marginBottom: '0.45em' }}>{riskDriversText}</li>
+            <li style={{ marginBottom: 0 }}>{suggestedFocus}</li>
+          </ul>
         </section>
         {(() => {
           const verdict = computeStressVerdict({
