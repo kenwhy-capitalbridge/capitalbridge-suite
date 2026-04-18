@@ -168,6 +168,19 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
   .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-capital-stress-timeline-section {
     break-before: page !important;
     page-break-before: always !important;
+    /* Was nested with `.section` + `cb-report-chart-wrap` avoid — Chromium left a full page gap before the gauge. */
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc figure.cb-stress-timeline-standalone {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-timeline-gauge-panel {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }
 
@@ -180,6 +193,7 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
 
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-chart-container svg,
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-report-chart-wrap svg,
+.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-timeline-standalone svg,
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .print-chart-wrap svg {
   overflow: visible !important;
 }

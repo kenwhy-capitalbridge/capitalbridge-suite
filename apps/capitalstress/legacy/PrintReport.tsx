@@ -1527,19 +1527,14 @@ export function PrintReport(props: PrintReportProps) {
         </PdfChartBlock>
       </div>
 
-      {/* Capital Stress Timeline: depletion gauge only (line chart removed for print). Always opens a new page. */}
+      {/* Capital Stress Timeline: depletion gauge only (line chart removed for print). Always opens a new page.
+          Do not use `section` / full-figure `cb-report-chart-wrap` break-inside:avoid here — nested huge avoid
+          blocks caused Chromium to leave a blank page between intro copy and the gauge. */}
       <div
-        className="print-section section print-page-break-before cb-capital-stress-timeline-section"
+        className="print-section print-page-break-before cb-capital-stress-timeline-section"
         style={{ pageBreakBefore: 'always', breakBefore: 'page' }}
       >
-        <figure
-          className="cb-report-chart-wrap cb-stress-timeline-standalone"
-          style={{
-            margin: '0.5em 0',
-            pageBreakInside: 'avoid',
-            breakInside: 'avoid',
-          }}
-        >
+        <figure className="cb-stress-timeline-standalone" style={{ margin: '0.35em 0 0' }}>
           <h2 style={{ ...STRESS_CHART_TITLE_STYLE, marginTop: 0 }}>Capital Stress Timeline</h2>
           <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, lineHeight: 1.45, margin: '0 0 0.45em' }}>
             Same headline gauge as the live model. Path dispersion over time is shown in the Capital Durability Curve and outcome distribution earlier in this
@@ -1556,6 +1551,7 @@ export function PrintReport(props: PrintReportProps) {
             const gradId = 'pdf-depletion-grad-stress';
             return (
               <div
+                className="cb-stress-timeline-gauge-panel"
                 style={{
                   padding: '10px 12px',
                   border: `1px solid ${PRINT_BORDER}`,
