@@ -1505,13 +1505,14 @@ export function PrintReport(props: PrintReportProps) {
         <PdfChartBlock
           title="Capital Stress Timeline"
           titleStyle={STRESS_CHART_TITLE_STYLE}
-          whatThisShows="Headline depletion pressure (withdrawal sustainability) plus year-by-year probability of depletion versus structural stress."
-          whyThisMatters="The gauge gives a single directional read; the lines show when stress tends to build across the horizon."
+          className="cb-stress-timeline-tight"
+          whatThisShows="Depletion pressure (gauge) and, directly beneath it, year-by-year path outcomes."
+          whyThisMatters="Gauge for the headline sustainability read; chart for when pressure tends to build."
           interpretation={
             <>
               <p style={{ fontSize: BODY_PT, color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.45 }}>
                 The <strong>depletion pressure</strong> strip matches the live scenario view: it summarises whether yearly withdrawals are straining long-term
-                sustainability. Below it, two lines by year: share of paths with capital fully depleted (≤ 0) vs. share with capital below half of starting
+                sustainability. The chart shows, by year, the share of paths with capital fully depleted (≤ 0) vs. the share with capital below half of starting
                 capital (structural stress).
               </p>
               <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, marginBottom: '0.35em', lineHeight: 1.45 }}>
@@ -1526,7 +1527,7 @@ export function PrintReport(props: PrintReportProps) {
             </>
           }
         >
-        <div style={{ marginBottom: '0.85em' }}>
+        <div style={{ marginBottom: 2 }}>
           {(() => {
             const dep = depletionBarOutput ?? getDepletionBarOutput(mcResult.depletionPressurePct);
             const s = dep.segmentStops;
@@ -1539,7 +1540,7 @@ export function PrintReport(props: PrintReportProps) {
             return (
               <div
                 style={{
-                  padding: '12px 14px',
+                  padding: '10px 12px',
                   border: `1px solid ${PRINT_BORDER}`,
                   borderRadius: 8,
                   background: CB_REPORT_SOFT_PANEL_BG,
@@ -1559,13 +1560,13 @@ export function PrintReport(props: PrintReportProps) {
                 >
                   Depletion pressure
                 </p>
-                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0 0 0.5em', lineHeight: 1.45 }}>
+                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0 0 0.2em', lineHeight: 1.4 }}>
                   Step 3: are withdrawals creating pressure? The lower the marker, the better.
                 </p>
                 <svg
-                  viewBox="0 0 480 92"
+                  viewBox="0 0 480 58"
                   preserveAspectRatio="xMidYMid meet"
-                  style={{ width: '100%', maxHeight: 100, display: 'block' }}
+                  style={{ width: '100%', height: 'auto', maxHeight: 72, display: 'block' }}
                   aria-label="Depletion pressure gauge"
                 >
                   <defs>
@@ -1575,23 +1576,23 @@ export function PrintReport(props: PrintReportProps) {
                       ))}
                     </linearGradient>
                   </defs>
-                  <text x={barX} y={12} fontSize="9" fill={PRINT_TEXT} fontWeight="700" opacity={0.75}>
+                  <text x={barX} y={10} fontSize="9" fill={PRINT_TEXT} fontWeight="700" opacity={0.75}>
                     Critical
                   </text>
-                  <text x={barX + barW} y={12} fontSize="9" fill={PRINT_TEXT} fontWeight="700" textAnchor="end" opacity={0.75}>
+                  <text x={barX + barW} y={10} fontSize="9" fill={PRINT_TEXT} fontWeight="700" textAnchor="end" opacity={0.75}>
                     Stable
                   </text>
                   <rect x={barX} y={barY} width={barW} height={barH} rx={barH / 2} fill={`url(#${gradId})`} stroke={PRINT_BORDER} strokeWidth="0.6" />
                   <line
                     x1={markerX}
-                    y1={barY - 10}
+                    y1={barY - 8}
                     x2={markerX}
-                    y2={barY + barH + 10}
+                    y2={barY + barH + 8}
                     stroke="#D9A441"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                   />
-                  <text x={barX + barW / 2} y={barY + barH + 28} fontSize="11" fill={PRINT_TEXT} textAnchor="middle" fontWeight="800">
+                  <text x={barX + barW / 2} y={52} fontSize="11" fill={PRINT_TEXT} textAnchor="middle" fontWeight="800">
                     {formatSignedPct(dep.displayValue)}
                   </text>
                 </svg>
@@ -1620,7 +1621,7 @@ export function PrintReport(props: PrintReportProps) {
           })()}
         </div>
 
-        <div className="print-chart-wrap chart-block" style={{ minHeight: 260 }}>
+        <div className="print-chart-wrap chart-block" style={{ marginTop: 0, paddingTop: 0 }}>
           {mcResult.depletionRateByYear && mcResult.depletionRateByYear.length > 0 && (() => {
             const depletionData = mcResult.depletionRateByYear;
             const stressData = mcResult.structuralStressRateByYear ?? depletionData.map(() => 0);
@@ -1667,8 +1668,9 @@ export function PrintReport(props: PrintReportProps) {
               <svg
                 viewBox="0 0 520 228"
                 preserveAspectRatio="xMidYMid meet"
-                style={{ width: '100%', height: 270 }}
-                aria-label="Capital Stress Timeline"
+                style={{ width: '100%', height: 'auto', maxHeight: 220, display: 'block' }}
+                role="img"
+                aria-label="Stress rates by year"
                 shapeRendering="geometricPrecision"
               >
                 <text x={axisTitleX} y={axisTitleY - 14} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
@@ -1850,7 +1852,7 @@ export function PrintReport(props: PrintReportProps) {
                   <div style={cardLabel}>Within expected range</div>
                   <div style={cardValue}>{withinRangePct.toFixed(1)}%</div>
                   <p style={cardDesc}>
-                    Share of simulated paths whose ending capital fell between the 25th and 75th percentiles (middle half of outcomes).
+                    If you ran this plan many times, the percentage of your ending capital would land in this typical range.
                   </p>
                 </div>
               </div>
@@ -2272,18 +2274,9 @@ export function PrintReport(props: PrintReportProps) {
             This report helps you understand how your capital structure behaves. It is not personal advice.
           </p>
 
-          <h3
-            style={{
-              fontSize: '10.5pt',
-              fontWeight: 700,
-              color: PRINT_TEXT,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              margin: '0 0 0.4em',
-            }}
-          >
-            How to use this report
-          </h3>
+          <p style={{ fontSize: '10.5pt', fontWeight: 700, color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.4em', letterSpacing: '0.06em' }}>
+            HOW TO USE THIS REPORT
+          </p>
           <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.35em' }}>Use it to:</p>
           <ul
             style={{
@@ -2292,11 +2285,12 @@ export function PrintReport(props: PrintReportProps) {
               lineHeight: 1.65,
               margin: '0 0 0.85em',
               paddingLeft: '1.3em',
+              listStyleType: 'disc',
             }}
           >
-            <li>test withdrawals</li>
-            <li>test time horizon</li>
-            <li>test return assumptions</li>
+            <li style={{ marginBottom: '0.25em' }}>Test withdrawals</li>
+            <li style={{ marginBottom: '0.25em' }}>Test time horizon</li>
+            <li style={{ marginBottom: '0.25em' }}>Test return assumptions</li>
           </ul>
           <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.45em' }}>
             Treat scenarios as guidance, not prediction.
@@ -2341,25 +2335,17 @@ export function PrintReport(props: PrintReportProps) {
                 lineHeight: 1.65,
                 margin: '0 0 0.9em',
                 paddingLeft: '1.3em',
+                listStyleType: 'disc',
               }}
             >
-              <li>Evaluated for sustainability</li>
-              <li>Structured for income</li>
-              <li>Tested under stress</li>
+              <li style={{ marginBottom: '0.25em' }}>Evaluated for sustainability</li>
+              <li style={{ marginBottom: '0.25em' }}>Structured for income</li>
+              <li style={{ marginBottom: '0.25em' }}>Tested under stress</li>
             </ul>
-            <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 1em' }}>
+            <p style={{ fontSize: '10.5pt', color: PRINT_TEXT, lineHeight: 1.6, margin: '0 0 0.65em' }}>
               When these align, the next step is execution.
             </p>
-            <p
-              style={{
-                fontSize: '11.5pt',
-                fontWeight: 700,
-                color: PRINT_TEXT,
-                margin: '0 0 0.35em',
-                lineHeight: 1.45,
-              }}
-            >
-              <span aria-hidden style={{ marginRight: 6 }}>👉</span>
+            <p style={{ fontSize: '10.5pt', fontWeight: 700, color: PRINT_TEXT, lineHeight: 1.55, margin: '0 0 0.35em' }}>
               <a href={strategicExecutionUrl} style={{ color: PRINT_TEXT, textDecoration: 'underline' }}>
                 Click here to Request Execution Plan
               </a>
