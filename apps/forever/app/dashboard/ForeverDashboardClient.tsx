@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import ForeverApp, { type ForeverAppHandle } from "@/legacy/App";
 import { AdvisoryShell } from "./AdvisoryShell";
+import type { ApplyInputsMeta } from "@cb/advisory-graph/ModelSaveHandlersContext";
 import { useForeverCalculatorContext } from "../ForeverCalculatorProvider";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
@@ -24,7 +25,8 @@ export function ForeverDashboardClient({
     const handlers = {
       getInputs: () => appRef.current?.getInputs() ?? {},
       getResults: () => appRef.current?.getResults() ?? {},
-      applyInputs: (inputs: Record<string, unknown>) => appRef.current?.applyInputs(inputs),
+      applyInputs: (inputs: Record<string, unknown>, meta?: ApplyInputsMeta) =>
+        appRef.current?.applyInputs(inputs, meta),
     };
     setHandlers(handlers);
     return () => setHandlers(null);

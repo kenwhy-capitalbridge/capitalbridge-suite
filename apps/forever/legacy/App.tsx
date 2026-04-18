@@ -50,7 +50,7 @@ type ForeverAppProps = {
 export type ForeverAppHandle = {
   getInputs: () => Record<string, unknown>;
   getResults: () => Record<string, unknown>;
-  applyInputs: (inputs: Record<string, unknown>) => void;
+  applyInputs: (inputs: Record<string, unknown>, meta?: { fromRollingSave?: boolean }) => void;
 };
 
 // Updated currencies as per the latest request
@@ -290,7 +290,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
           : {}),
       };
     },
-    applyInputs: (raw: Record<string, unknown>) => {
+    applyInputs: (raw: Record<string, unknown>, _meta?: { fromRollingSave?: boolean }) => {
       const num = (k: string) => (typeof raw[k] === "number" && !Number.isNaN(raw[k] as number) ? (raw[k] as number) : undefined);
       const str = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string) : undefined);
       const et = raw["expenseType"];

@@ -183,7 +183,7 @@ export function ModelHeaderSaveRestore({
         setSelectValue("");
         return;
       }
-      apply(report.inputs ?? {});
+      apply(report.inputs ?? {}, { fromRollingSave: true });
     },
     [getHandlers, logTag],
   );

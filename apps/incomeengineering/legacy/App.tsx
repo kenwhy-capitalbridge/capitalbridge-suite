@@ -35,7 +35,7 @@ import { createSupabaseBrowserClient } from '@cb/advisory-graph/supabaseClient';
 export type IncomeEngineeringAppHandle = {
   getInputs: () => Record<string, unknown>;
   getResults: () => Record<string, unknown>;
-  applyInputs: (inputs: Record<string, unknown>) => void;
+  applyInputs: (inputs: Record<string, unknown>, meta?: { fromRollingSave?: boolean }) => void;
 };
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -143,7 +143,7 @@ const AppInner = forwardRef<
           }),
         ) as Record<string, unknown>;
       },
-      applyInputs: (raw) => dispatch({ type: 'HYDRATE', payload: raw }),
+      applyInputs: (raw, _meta) => dispatch({ type: 'HYDRATE', payload: raw }),
     }),
     [state, result, dispatch, currency, investmentBuckets, lionAccessEnabled]
   );

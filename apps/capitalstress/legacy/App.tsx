@@ -151,7 +151,7 @@ const ChevronDownIcon = () => (
 export type CapitalStressAppHandle = {
   getInputs: () => Record<string, unknown>;
   getResults: () => Record<string, unknown>;
-  applyInputs: (inputs: Record<string, unknown>) => void;
+  applyInputs: (inputs: Record<string, unknown>, meta?: { fromRollingSave?: boolean }) => void;
 };
 
 /** Combined resilience view — same logic as in-app STRUCTURE HEALTH badge (watermark risk driver). */
@@ -284,6 +284,8 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const [radarLabelTooltip, setRadarLabelTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
   const [pdfDownloadBusy, setPdfDownloadBusy] = useState(false);
+  /** Rolling-save restore must prompt “run simulation” until the queued run finishes (see needsSimulationRefresh). */
+  const [rollingSavePending, setRollingSavePending] = useState(false);
   const stressPrintPropsRef = useRef<PrintReportProps | null>(null);
   const [hasStrategicInterest, setHasStrategicInterest] = useState(false);
   const [stressTimelineSaved, setStressTimelineSaved] = useState<CapitalTimelinePoint[] | undefined>(
@@ -347,6 +349,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     setTimeout(() => {
       const result = runMonteCarlo(investment, withdrawal, lowerPct, upperPct, years, stressSeverity, undefined, confidence);
       setMcResult(result);
+      setRollingSavePending(false);
       setTimeout(() => {
         const scenarios = runStressScenarios(investment, withdrawal, lowerPct, upperPct, years, stressSeverity);
         setStressScenarioResults(scenarios);
@@ -418,6 +421,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   }, [isRunning, mcResult, inputsKey]);
 
   const needsSimulationRefresh =
+    rollingSavePending ||
     mcResult == null ||
     (lastSyncedInputsKeyRef.current != null && lastSyncedInputsKeyRef.current !== inputsKey);
 
@@ -685,8 +689,11 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
           return {};
         }
       },
-      applyInputs: (raw) => {
+      applyInputs: (raw, meta) => {
         const p = raw as Record<string, unknown>;
+        if (meta?.fromRollingSave) {
+          setRollingSavePending(true);
+        }
         if (typeof p.investment === "number") setInvestment(p.investment);
         if (typeof p.withdrawal === "number") setWithdrawal(p.withdrawal);
         if (typeof p.lowerPct === "number") setLowerPct(p.lowerPct);

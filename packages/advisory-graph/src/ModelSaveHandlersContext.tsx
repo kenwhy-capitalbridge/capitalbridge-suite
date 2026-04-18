@@ -9,10 +9,15 @@ import {
   type ReactNode,
 } from "react";
 
+/** Passed when restoring from the header “Rolling saves” picker (model-specific UX). */
+export type ApplyInputsMeta = {
+  fromRollingSave?: boolean;
+};
+
 export type ModelSaveHandlers = {
   getInputs: () => Record<string, unknown>;
   getResults: () => Record<string, unknown>;
-  applyInputs: (inputs: Record<string, unknown>) => void;
+  applyInputs: (inputs: Record<string, unknown>, meta?: ApplyInputsMeta) => void;
 };
 
 type Ctx = {

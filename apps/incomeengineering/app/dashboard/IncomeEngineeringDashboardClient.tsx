@@ -2,7 +2,10 @@
 
 import { useLayoutEffect, useRef } from "react";
 import LegacyApp, { type IncomeEngineeringAppHandle } from "@/legacy/App";
-import { useModelSaveHandlers } from "@cb/advisory-graph/ModelSaveHandlersContext";
+import {
+  type ApplyInputsMeta,
+  useModelSaveHandlers,
+} from "@cb/advisory-graph/ModelSaveHandlersContext";
 import type { CurrencyCode } from "@/legacy/config/currency";
 import type { LionAccessUser } from "../../../../packages/lion-verdict/access";
 
@@ -24,7 +27,8 @@ export function IncomeEngineeringDashboardClient({
     const handlers = {
       getInputs: () => appRef.current?.getInputs() ?? {},
       getResults: () => appRef.current?.getResults() ?? {},
-      applyInputs: (inputs: Record<string, unknown>) => appRef.current?.applyInputs(inputs),
+      applyInputs: (inputs: Record<string, unknown>, meta?: ApplyInputsMeta) =>
+        appRef.current?.applyInputs(inputs, meta),
     };
     setHandlers(handlers);
     return () => setHandlers(null);

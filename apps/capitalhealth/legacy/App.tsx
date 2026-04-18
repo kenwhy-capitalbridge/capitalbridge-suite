@@ -264,7 +264,7 @@ const HISTORY_SIZE = 10;
 export type CapitalHealthAppHandle = {
   getInputs: () => Record<string, unknown>;
   getResults: () => Record<string, unknown>;
-  applyInputs: (inputs: Record<string, unknown>) => void;
+  applyInputs: (inputs: Record<string, unknown>, meta?: { fromRollingSave?: boolean }) => void;
 };
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -409,7 +409,7 @@ const CalculatorScreen = forwardRef<
           return {};
         }
       },
-      applyInputs: (raw) => applySavedInputs(raw),
+      applyInputs: (raw, _meta) => applySavedInputs(raw),
     }),
     [inputs, result, applySavedInputs, props.canSeeVerdict, lionAccessEnabled]
   );
