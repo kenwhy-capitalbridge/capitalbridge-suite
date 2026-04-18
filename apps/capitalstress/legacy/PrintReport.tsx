@@ -1561,7 +1561,7 @@ export function PrintReport(props: PrintReportProps) {
                   Depletion pressure
                 </p>
                 <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0 0 0.2em', lineHeight: 1.4 }}>
-                  Step 3: are withdrawals creating pressure? The lower the marker, the better.
+                  Step 3: are withdrawals creating pressure? Further toward <strong>Stable</strong> on the right is better — left is heavier pressure.
                 </p>
                 <svg
                   viewBox="0 0 480 58"
