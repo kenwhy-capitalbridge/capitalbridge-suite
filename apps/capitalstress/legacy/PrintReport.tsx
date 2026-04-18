@@ -1007,7 +1007,6 @@ export function PrintReport(props: PrintReportProps) {
                   };
           return (
             <section style={STRESS_SECTION_BLOCK}>
-              <PrintStageLabel>What to do next</PrintStageLabel>
               <h2 style={{ ...STRESS_SECTION_H2, marginTop: 0 }}>What to do next</h2>
               <div
                 style={{
@@ -1044,7 +1043,16 @@ export function PrintReport(props: PrintReportProps) {
                 <div style={{ fontSize: '8.5pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
                   Actions
                 </div>
-                <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: 0, paddingLeft: '1.2em' }}>
+                <ul
+                  style={{
+                    fontSize: '10pt',
+                    color: PRINT_TEXT,
+                    lineHeight: 1.55,
+                    margin: 0,
+                    paddingLeft: '1.2em',
+                    listStyleType: 'disc',
+                  }}
+                >
                   {path.actions.map((line) => (
                     <li key={line} style={{ marginBottom: '0.3em' }}>{line}</li>
                   ))}
@@ -1054,7 +1062,16 @@ export function PrintReport(props: PrintReportProps) {
                 <div style={{ fontSize: '8.5pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: PRINT_TEXT, marginBottom: 4 }}>
                   What this changes
                 </div>
-                <ul style={{ fontSize: '10pt', color: PRINT_TEXT, lineHeight: 1.55, margin: 0, paddingLeft: '1.2em' }}>
+                <ul
+                  style={{
+                    fontSize: '10pt',
+                    color: PRINT_TEXT,
+                    lineHeight: 1.55,
+                    margin: 0,
+                    paddingLeft: '1.2em',
+                    listStyleType: 'disc',
+                  }}
+                >
                   {path.changes.map((line) => (
                     <li key={line} style={{ marginBottom: '0.3em' }}>{line}</li>
                   ))}
@@ -1500,34 +1517,21 @@ export function PrintReport(props: PrintReportProps) {
         </PdfChartBlock>
       </div>
 
-      {/* Capital Stress Timeline + Capital Breakpoint Indicator */}
+      {/* Capital Stress Timeline: depletion gauge only (keeps gauge on same page as title; line chart removed for print). */}
       <div className="print-section section print-page-break-before">
-        <PdfChartBlock
-          title="Capital Stress Timeline"
-          titleStyle={STRESS_CHART_TITLE_STYLE}
-          className="cb-stress-timeline-tight"
-          whatThisShows="Depletion pressure (gauge) and, directly beneath it, year-by-year path outcomes."
-          whyThisMatters="Gauge for the headline sustainability read; chart for when pressure tends to build."
-          interpretation={
-            <>
-              <p style={{ fontSize: BODY_PT, color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.45 }}>
-                The <strong>depletion pressure</strong> strip matches the live scenario view: it summarises whether yearly withdrawals are straining long-term
-                sustainability. The chart shows, by year, the share of paths with capital fully depleted (≤ 0) vs. the share with capital below half of starting
-                capital (structural stress).
-              </p>
-              <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, marginBottom: '0.35em', lineHeight: 1.45 }}>
-                Solid line: depletion. Dashed line: structural stress. When the highest year-end values stay below roughly 6%, the chart uses a{' '}
-                <strong>square-root</strong> vertical scale so small changes are easier to read — tick labels remain true percentages.
-              </p>
-              <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, fontStyle: 'italic', marginBottom: '0.75em', lineHeight: 1.45 }}>
-                {mcResult.structuralStressRateByYear
-                  ? 'Even when full depletion stays rare, structural stress can rise later in the horizon — read the gauge and the dashed line together.'
-                  : 'Structural stress and depletion series are shown when available.'}
-              </p>
-            </>
-          }
+        <figure
+          className="cb-report-chart-wrap cb-stress-timeline-standalone"
+          style={{
+            margin: '0.5em 0',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid',
+          }}
         >
-        <div style={{ marginBottom: 2 }}>
+          <h2 style={{ ...STRESS_CHART_TITLE_STYLE, marginTop: 0 }}>Capital Stress Timeline</h2>
+          <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, lineHeight: 1.45, margin: '0 0 0.45em' }}>
+            Same headline gauge as the live model. Path dispersion over time is shown in the Capital Durability Curve and outcome distribution earlier in this
+            report.
+          </p>
           {(() => {
             const dep = depletionBarOutput ?? getDepletionBarOutput(mcResult.depletionPressurePct);
             const s = dep.segmentStops;
@@ -1536,7 +1540,7 @@ export function PrintReport(props: PrintReportProps) {
             const barY = 22;
             const barH = 14;
             const markerX = barX + (dep.pos / 100) * barW;
-            const gradId = 'pdf-depletion-grad';
+            const gradId = 'pdf-depletion-grad-stress';
             return (
               <div
                 style={{
@@ -1560,13 +1564,13 @@ export function PrintReport(props: PrintReportProps) {
                 >
                   Depletion pressure
                 </p>
-                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0 0 0.2em', lineHeight: 1.4 }}>
+                <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, margin: '0 0 0.15em', lineHeight: 1.4 }}>
                   Step 3: are withdrawals creating pressure? Further toward <strong>Stable</strong> on the right is better — left is heavier pressure.
                 </p>
                 <svg
                   viewBox="0 0 480 58"
                   preserveAspectRatio="xMidYMid meet"
-                  style={{ width: '100%', height: 'auto', maxHeight: 72, display: 'block' }}
+                  style={{ width: '100%', height: 'auto', maxHeight: 72, display: 'block', marginTop: 2 }}
                   aria-label="Depletion pressure gauge"
                 >
                   <defs>
@@ -1619,146 +1623,28 @@ export function PrintReport(props: PrintReportProps) {
               </div>
             );
           })()}
-        </div>
-
-        <div className="print-chart-wrap chart-block" style={{ marginTop: 0, paddingTop: 0 }}>
-          {mcResult.depletionRateByYear && mcResult.depletionRateByYear.length > 0 && (() => {
-            const depletionData = mcResult.depletionRateByYear;
-            const stressData = mcResult.structuralStressRateByYear ?? depletionData.map(() => 0);
-            const allPcts = [...depletionData.map((d) => d * 100), ...stressData.map((s) => s * 100)];
-            const maxPct = Math.max(...allPcts, 0);
-            const yMax =
-              maxPct < 1
-                ? 1
-                : maxPct < 5
-                  ? Math.max(1, Math.ceil(maxPct * 2) / 2)
-                  : maxPct < 25
-                    ? Math.ceil(maxPct / 5) * 5
-                    : Math.ceil(maxPct / 10) * 10;
-            const useSqrtScale = maxPct > 0 && maxPct < 6;
-            const plotLeft = 78;
-            const plotRight = 498;
-            const plotTop = 24;
-            const plotBottom = 188;
-            const plotWidth = plotRight - plotLeft;
-            const plotHeight = plotBottom - plotTop;
-            const scaleY = (pct: number) => {
-              const clamped = Math.min(yMax, Math.max(0, pct));
-              const t = clamped / yMax;
-              const visual = useSqrtScale ? Math.sqrt(t) : t;
-              return plotBottom - visual * plotHeight;
-            };
-            const n = depletionData.length;
-            const step = n > 1 ? plotWidth / (n - 1) : 0;
-            const xFor = (i: number) => plotLeft + i * step;
-            const depletionPts = depletionData.map((d, i) => `${xFor(i)},${scaleY(d * 100)}`).join(' ');
-            const stressPts =
-              stressData.length >= n ? stressData.slice(0, n).map((s, i) => `${xFor(i)},${scaleY(s * 100)}`).join(' ') : depletionPts;
-            const xStep = years <= 10 ? 2 : years <= 20 ? 5 : Math.ceil(years / 6);
-            const xTickYears = Array.from({ length: Math.floor(years / xStep) + 1 }, (_, i) => i * xStep).filter((y) => y <= years);
-            if (!xTickYears.includes(years)) xTickYears.push(years);
-            const yTickCount = 5;
-            const yTicks = Array.from({ length: yTickCount }, (_, i) => (i / (yTickCount - 1)) * yMax);
-            const yTickLabel = (v: number) => (yMax <= 1 ? `${v.toFixed(2)}%` : yMax <= 5 ? `${v.toFixed(1)}%` : `${Math.round(v)}%`);
-            const depletionColor = '#0D3A1D';
-            const stressColor = '#D9A441';
-            const axisTitleX = 22;
-            const axisTitleY = plotTop + plotHeight / 2;
-            return (
-              <svg
-                viewBox="0 0 520 228"
-                preserveAspectRatio="xMidYMid meet"
-                style={{ width: '100%', height: 'auto', maxHeight: 220, display: 'block' }}
-                role="img"
-                aria-label="Stress rates by year"
-                shapeRendering="geometricPrecision"
-              >
-                <text x={axisTitleX} y={axisTitleY - 14} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
-                  %
-                </text>
-                <text x={axisTitleX} y={axisTitleY} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="500">
-                  of
-                </text>
-                <text x={axisTitleX} y={axisTitleY + 14} fontSize="10" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
-                  Paths
-                </text>
-                <line x1={plotLeft} y1={plotTop} x2={plotLeft} y2={plotBottom} stroke={PRINT_TEXT} strokeWidth="1.1" strokeOpacity="0.9" />
-                <line x1={plotLeft} y1={plotBottom} x2={plotRight} y2={plotBottom} stroke={PRINT_TEXT} strokeWidth="1.1" strokeOpacity="0.9" />
-                {yTicks.map((pct, i) => {
-                  const y = scaleY(pct);
-                  return (
-                    <g key={`sy-${i}`}>
-                      <line x1={plotLeft} y1={y} x2={plotRight} y2={y} stroke={PRINT_BORDER} strokeWidth="0.55" strokeDasharray="2 3" />
-                      <line x1={plotLeft - 5} y1={y} x2={plotLeft} y2={y} stroke={PRINT_TEXT} strokeWidth="1" strokeOpacity="0.9" />
-                      <text x={plotLeft - 9} y={y} fontSize="9.5" fill={PRINT_TEXT} textAnchor="end" dominantBaseline="middle" fontWeight="600">
-                        {yTickLabel(pct)}
-                      </text>
-                    </g>
-                  );
-                })}
-                {xTickYears.map((yt) => {
-                  const x = n > 1 ? plotLeft + (yt / (n - 1)) * plotWidth : plotLeft;
-                  return (
-                    <g key={`sxt-${yt}`}>
-                      <line x1={x} y1={plotBottom} x2={x} y2={plotBottom + 5} stroke={PRINT_TEXT} strokeWidth="1" strokeOpacity="0.9" />
-                      <text x={x} y={plotBottom + 16} fontSize="9.5" fill={PRINT_TEXT} textAnchor="middle" fontWeight="600">
-                        {yt}
-                      </text>
-                    </g>
-                  );
-                })}
-                <text x={(plotLeft + plotRight) / 2} y={plotBottom + 32} fontSize="10.5" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
-                  Years
-                </text>
-                <polyline
-                  fill="none"
-                  stroke={stressColor}
-                  strokeWidth="2.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeDasharray="6,4"
-                  points={stressPts}
-                />
-                {stressData.slice(0, n).map((s, i) => (
-                  <circle key={`s-${i}`} cx={xFor(i)} cy={scaleY(s * 100)} r="2.8" fill={stressColor} stroke="#ffffff" strokeWidth="0.7" />
-                ))}
-                <polyline
-                  fill="none"
-                  stroke={depletionColor}
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={depletionPts}
-                />
-                {depletionData.map((d, i) => (
-                  <circle key={`d-${i}`} cx={xFor(i)} cy={scaleY(d * 100)} r="2.9" fill={depletionColor} stroke="#ffffff" strokeWidth="0.7" />
-                ))}
-                <g>
-                  <rect
-                    x={plotRight - 138}
-                    y={plotTop - 8}
-                    width="138"
-                    height="30"
-                    fill="#ffffff"
-                    fillOpacity="0.92"
-                    stroke={PRINT_BORDER}
-                    strokeWidth="0.55"
-                    rx="4"
-                  />
-                  <line x1={plotRight - 130} y1={plotTop + 2} x2={plotRight - 114} y2={plotTop + 2} stroke={depletionColor} strokeWidth="3" />
-                  <text x={plotRight - 108} y={plotTop + 5} fontSize="8.5" fill={PRINT_TEXT} fontWeight="700">
-                    Depletion
-                  </text>
-                  <line x1={plotRight - 130} y1={plotTop + 14} x2={plotRight - 114} y2={plotTop + 14} stroke={stressColor} strokeWidth="2.8" strokeDasharray="4,3" />
-                  <text x={plotRight - 108} y={plotTop + 17} fontSize="8.5" fill={PRINT_TEXT} fontWeight="700">
-                    Structural stress
-                  </text>
-                </g>
-              </svg>
-            );
-          })()}
-        </div>
-        </PdfChartBlock>
+          <h3
+            className="cb-avoid-orphan-heading"
+            style={{
+              fontSize: '10pt',
+              fontWeight: 700,
+              color: PRINT_TEXT,
+              marginTop: '0.85em',
+              marginBottom: '0.4em',
+            }}
+          >
+            Interpretation
+          </h3>
+          <p style={{ fontSize: BODY_PT, color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.45, marginTop: 0 }}>
+            The <strong>depletion pressure</strong> strip matches the live scenario view: it summarises whether yearly withdrawals are straining long-term
+            sustainability. Further toward <strong>Stable</strong> (right) means lower pressure; toward <strong>Critical</strong> (left) means withdrawals are
+            consuming more runway.
+          </p>
+          <p style={{ fontSize: BODY_PT_SMALL, color: PRINT_TEXT, lineHeight: 1.45, margin: 0 }}>
+            Use the <strong>Capital Durability Curve</strong> and <strong>Capital Outcome Probability Distribution</strong> in this report for how capital may
+            evolve year by year and how ending outcomes spread across simulated paths.
+          </p>
+        </figure>
 
         <div style={{ border: `1px solid ${PRINT_BORDER}`, borderRadius: 4, padding: '0.75em 1em', marginTop: '0.75em' }}>
           <h3 style={{ fontSize: '10pt', fontWeight: 700, color: PRINT_TEXT, marginBottom: '0.25em' }}>Capital Breakpoint Indicator</h3>
