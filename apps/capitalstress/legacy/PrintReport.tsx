@@ -1446,7 +1446,8 @@ export function PrintReport(props: PrintReportProps) {
           const viewHeight = plotBase + marginBottom;
           const yAxisTitleX = -26;
           const yAxisTitleMidY = plotTop + plotH / 2;
-          const yAxisTitleLine = 5.1;
+          /** PDF: separate <text> nodes (not tspans) — Chromium print often collapses tspan stacks to one line. */
+          const yAxisTitleGap = 6.8;
           const barW = plotWidth / bins;
           const yTickCount = 5;
           const yTicks = Array.from({ length: yTickCount }, (_, i) => Math.round((i / (yTickCount - 1)) * maxCount));
@@ -1510,12 +1511,42 @@ export function PrintReport(props: PrintReportProps) {
                   <text x={plotWidth / 2} y={plotBase + 16} fontSize="4.4" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
                     Ending capital after {years} year{years !== 1 ? 's' : ''}
                   </text>
-                  {/* Y-axis title — “Number of Paths” stacked (0°), not rotated — matches print sample. */}
-                  <text fontSize="4.5" fill={PRINT_TEXT} textAnchor="middle">
-                    <tspan x={yAxisTitleX} y={yAxisTitleMidY - yAxisTitleLine} fontWeight="700">Number</tspan>
-                    <tspan x={yAxisTitleX} dy={yAxisTitleLine} fontWeight="500">of</tspan>
-                    <tspan x={yAxisTitleX} dy={yAxisTitleLine} fontWeight="700">Paths</tspan>
-                  </text>
+                  {/* Y-axis title — three lines, horizontal type (Chromium PDF-friendly). */}
+                  <g transform={`translate(${yAxisTitleX},${yAxisTitleMidY})`} aria-label="Number of paths">
+                    <text
+                      x={0}
+                      y={-yAxisTitleGap}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize="4.6"
+                      fill={PRINT_TEXT}
+                      fontWeight="700"
+                    >
+                      Number
+                    </text>
+                    <text
+                      x={0}
+                      y={0}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize="4.6"
+                      fill={PRINT_TEXT}
+                      fontWeight="500"
+                    >
+                      of
+                    </text>
+                    <text
+                      x={0}
+                      y={yAxisTitleGap}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize="4.6"
+                      fill={PRINT_TEXT}
+                      fontWeight="700"
+                    >
+                      Paths
+                    </text>
+                  </g>
                 </svg>
                 {/* Legend */}
                 <div
