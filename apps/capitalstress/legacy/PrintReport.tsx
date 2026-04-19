@@ -1410,6 +1410,7 @@ export function PrintReport(props: PrintReportProps) {
       <div className="print-section cb-print-section print-page-break-before cb-stress-outcome-dist-section">
         <PdfChartBlock
           className="cb-stress-outcome-dist-pdf"
+          title={null}
           whatThisShows={false}
           whyThisMatters="A tight cluster means similar endings; weight on the left means more paths finish with little capital — worth weighing against how much downside you can live with."
           interpretation={
