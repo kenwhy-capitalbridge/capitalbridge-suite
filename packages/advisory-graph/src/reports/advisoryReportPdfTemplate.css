@@ -209,6 +209,13 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
   overflow: visible !important;
 }
 
+/* Capital Stress: outcome distribution — use full column width (drop default 12px figure padding). */
+.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-report-chart-wrap.cb-stress-outcome-dist-pdf .cb-pdf-chart-block-figure,
+.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-report-chart-wrap.cb-stress-outcome-dist-pdf .print-chart-wrap.chart-block {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
 /* Capital Stress: depletion gauge + timeline — pull figure in tight (PdfChartBlock uses my-3 on figure wrapper). */
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-report-chart-wrap.cb-stress-timeline-tight .cb-pdf-chart-block-figure {
   margin-top: 0.2rem !important;

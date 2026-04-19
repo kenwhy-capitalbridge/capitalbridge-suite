@@ -1404,9 +1404,11 @@ export function PrintReport(props: PrintReportProps) {
       {/* Outcome Probability Distribution — avoid global `.section` break-inside:avoid on this tall block. */}
       <div className="print-section cb-print-section print-page-break-before">
         <PdfChartBlock
+          className="cb-stress-outcome-dist-pdf"
           title="Capital Outcome Probability Distribution"
           titleStyle={STRESS_CHART_TITLE_STYLE}
-          whatThisShows="How often test paths finish with different ending capital amounts."
+          whatThisShowsHeading={false}
+          whatThisShows="This chart shows how your ending capital varies across thousands of simulated market scenarios:"
           whyThisMatters="A tight cluster means similar endings; weight on the left means more paths finish with little capital — worth weighing against how much downside you can live with."
           interpretation={
             <p style={{ fontSize: '9pt', color: PRINT_TEXT, lineHeight: 1.5, margin: 0 }}>
@@ -1435,12 +1437,13 @@ export function PrintReport(props: PrintReportProps) {
           const maxCount = Math.max(...hist, 1);
           const medianVal = mcResult.percentile50;
           const medianBin = Math.min(bins - 1, Math.max(0, Math.floor((medianVal - minV) / step)));
-          const marginLeft = 44;
+          const marginLeft = 38;
           const marginRight = 6;
           const marginBottom = 24;
           const plotTop = 6;
           const plotBase = 78;
-          const plotWidth = 240;
+          /** Wide plot area (viewBox) — pairs with `.cb-stress-outcome-dist-pdf` zero horizontal padding. */
+          const plotWidth = 352;
           const plotH = plotBase - plotTop;
           const viewWidth = marginLeft + plotWidth + marginRight;
           const viewHeight = plotBase + marginBottom;

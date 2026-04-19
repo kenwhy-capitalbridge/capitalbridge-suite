@@ -13,6 +13,11 @@ export type PdfChartBlockProps = {
   title?: string;
   /** Optional title colour / font override (e.g. Capital Stress print gold). */
   titleStyle?: CSSProperties;
+  /**
+   * Label above `whatThisShows` prose. Default "What this shows".
+   * Pass `false` to omit the heading so microcopy can sit directly under the chart title.
+   */
+  whatThisShowsHeading?: string | false;
   whatThisShows: ReactNode;
   whyThisMatters: ReactNode;
   children: ReactNode;
@@ -28,6 +33,7 @@ export type PdfChartBlockProps = {
 export function PdfChartBlock({
   title,
   titleStyle,
+  whatThisShowsHeading,
   whatThisShows,
   whyThisMatters,
   children,
@@ -45,9 +51,11 @@ export function PdfChartBlock({
           {title}
         </div>
       ) : null}
-      <ReportHeading level={3} variant="inline" keepWithNext className="cb-avoid-orphan-heading">
-        What this shows
-      </ReportHeading>
+      {whatThisShowsHeading !== false ? (
+        <ReportHeading level={3} variant="inline" keepWithNext className="cb-avoid-orphan-heading">
+          {whatThisShowsHeading ?? "What this shows"}
+        </ReportHeading>
+      ) : null}
       <ReportProse className="text-[rgba(43,43,43,0.95)]">{whatThisShows}</ReportProse>
       <ReportHeading level={3} variant="inline" keepWithNext className="cb-avoid-orphan-heading">
         Why this matters
