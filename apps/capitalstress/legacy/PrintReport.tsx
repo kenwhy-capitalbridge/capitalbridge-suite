@@ -159,10 +159,10 @@ const STRESS_CHART_TITLE_STYLE: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
-/** Outcome histogram — copy is fixed (not input-derived); hoisted above `PdfChartBlock` so PDF engines always paint it. */
+/** Outcome histogram — static chart headline + lead line (not input-derived). */
 const STRESS_OUTCOME_DISTRIBUTION_CHART_TITLE = 'Capital Outcome Probability Distribution';
 const STRESS_OUTCOME_DISTRIBUTION_MICROCOPY =
-  'This chart shows how your ending capital varies across thousands of simulated market scenarios:';
+  'This chart shows how your ending capital varies across thousands of simulated market scenarios';
 
 const STRESS_SECTION_BLOCK: React.CSSProperties = {
   marginBottom: '1.25em',
@@ -1447,12 +1447,13 @@ export function PrintReport(props: PrintReportProps) {
           </h2>
           <p
             style={{
-              fontSize: BODY_PT,
+              fontSize: '8pt',
               color: PRINT_TEXT,
               margin: '0 auto',
-              lineHeight: 1.55,
+              lineHeight: 1.35,
               textAlign: 'center',
-              maxWidth: '42em',
+              maxWidth: '100%',
+              whiteSpace: 'nowrap',
             }}
           >
             {STRESS_OUTCOME_DISTRIBUTION_MICROCOPY}
