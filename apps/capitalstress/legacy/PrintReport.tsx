@@ -1435,7 +1435,7 @@ export function PrintReport(props: PrintReportProps) {
           const maxCount = Math.max(...hist, 1);
           const medianVal = mcResult.percentile50;
           const medianBin = Math.min(bins - 1, Math.max(0, Math.floor((medianVal - minV) / step)));
-          const marginLeft = 34;
+          const marginLeft = 40;
           const marginRight = 6;
           const marginBottom = 24;
           const plotTop = 6;
@@ -1444,6 +1444,9 @@ export function PrintReport(props: PrintReportProps) {
           const plotH = plotBase - plotTop;
           const viewWidth = marginLeft + plotWidth + marginRight;
           const viewHeight = plotBase + marginBottom;
+          const yAxisTitleX = -26;
+          const yAxisTitleMidY = plotTop + plotH / 2;
+          const yAxisTitleLine = 5.1;
           const barW = plotWidth / bins;
           const yTickCount = 5;
           const yTicks = Array.from({ length: yTickCount }, (_, i) => Math.round((i / (yTickCount - 1)) * maxCount));
@@ -1507,10 +1510,12 @@ export function PrintReport(props: PrintReportProps) {
                   <text x={plotWidth / 2} y={plotBase + 16} fontSize="4.4" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
                     Ending capital after {years} year{years !== 1 ? 's' : ''}
                   </text>
-                  {/* Y-axis title — stacked (Number / of / Paths) */}
-                  <text x={-24} y={plotTop + plotH / 2 - 6} fontSize="4.6" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">Number</text>
-                  <text x={-24} y={plotTop + plotH / 2} fontSize="4.6" fill={PRINT_TEXT} textAnchor="middle" fontWeight="500">of</text>
-                  <text x={-24} y={plotTop + plotH / 2 + 6} fontSize="4.6" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">Paths</text>
+                  {/* Y-axis title — “Number of Paths” stacked (0°), not rotated — matches print sample. */}
+                  <text fontSize="4.5" fill={PRINT_TEXT} textAnchor="middle">
+                    <tspan x={yAxisTitleX} y={yAxisTitleMidY - yAxisTitleLine} fontWeight="700">Number</tspan>
+                    <tspan x={yAxisTitleX} dy={yAxisTitleLine} fontWeight="500">of</tspan>
+                    <tspan x={yAxisTitleX} dy={yAxisTitleLine} fontWeight="700">Paths</tspan>
+                  </text>
                 </svg>
                 {/* Legend */}
                 <div
