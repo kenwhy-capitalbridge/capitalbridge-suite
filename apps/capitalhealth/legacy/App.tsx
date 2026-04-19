@@ -38,7 +38,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import { CapitalStrengthBar } from './src/components/CapitalStrengthBar';
 import { runSimulation } from './calculator-engine';
 import { getRiskTier } from './src/lib/riskTier';
-import { ChromeSpinnerGlyph, ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
+import { ChromeSpinnerGlyph, FormattedNumberInput, ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
 import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 import { pricingReturnModelDashboardUrl } from '@cb/shared/urls';
 
@@ -879,16 +879,14 @@ const CalculatorScreen = forwardRef<
               </label>
               <div className="flex items-center gap-2 border border-[#FFCC6A]/50 rounded-lg overflow-hidden bg-[#F0F7F0] focus-within:border-[#FFCC6A]">
                 <span className="pl-3 text-[#0D3A1D] font-semibold">{inputs.currency.symbol}</span>
-                        <input 
-                          type="text"
-                  inputMode="decimal"
-                  value={formatNum(inputs.targetMonthlyIncome)}
-                  onChange={(e) => {
-                    const v = parseNum(e.target.value);
-                    update({ targetMonthlyIncome: v });
-                  }}
-                  className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
-                  aria-label="Desired Monthly Income"
+                        <FormattedNumberInput
+                          value={inputs.targetMonthlyIncome}
+                          onChange={(v) => update({ targetMonthlyIncome: v })}
+                          allowDecimals
+                          decimalPlaces={2}
+                          min={0}
+                          className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
+                          aria-label="Desired Monthly Income"
                         />
                       </div>
               {(() => {
@@ -920,14 +918,15 @@ const CalculatorScreen = forwardRef<
               <label className="block text-sm font-medium text-white">Desired Future Capital</label>
               <div className="flex items-center gap-2 border border-[#FFCC6A]/50 rounded-lg overflow-hidden bg-[#F0F7F0] focus-within:border-[#FFCC6A]">
                 <span className="pl-3 text-[#0D3A1D] font-semibold">{inputs.currency.symbol}</span>
-                              <input 
-                                type="text"
-                  inputMode="decimal"
-                  value={formatNum(inputs.targetFutureCapital)}
-                  onChange={(e) => update({ targetFutureCapital: parseNum(e.target.value) })}
-                  className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
-                  aria-label="Desired Future Capital"
-                />
+                              <FormattedNumberInput
+                                value={inputs.targetFutureCapital}
+                                onChange={(v) => update({ targetFutureCapital: v })}
+                                allowDecimals
+                                decimalPlaces={2}
+                                min={0}
+                                className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
+                                aria-label="Desired Future Capital"
+                              />
                             </div>
               {(() => {
                 const config = FUTURE_CAPITAL_SLIDER[inputs.currency.code] ?? FUTURE_CAPITAL_SLIDER.USD;
@@ -1032,13 +1031,14 @@ const CalculatorScreen = forwardRef<
               <label className="block text-sm font-medium mb-1 text-white min-h-[2.5rem]">Starting Capital</label>
               <div className="flex items-center gap-2 border border-[#FFCC6A]/50 rounded-lg overflow-hidden bg-[#F0F7F0] focus-within:border-[#FFCC6A]">
                 <span className="pl-3 text-[#0D3A1D] font-semibold">{inputs.currency.symbol}</span>
-                              <input 
-                                type="text"
-                  inputMode="decimal"
-                  value={formatNum(inputs.startingCapital)}
-                  onChange={(e) => update({ startingCapital: parseNum(e.target.value) })}
-                  className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
-                />
+                              <FormattedNumberInput
+                                value={inputs.startingCapital}
+                                onChange={(v) => update({ startingCapital: v })}
+                                allowDecimals
+                                decimalPlaces={2}
+                                min={0}
+                                className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
+                              />
                             </div>
               {(() => {
                 const config = STARTING_CAPITAL_SLIDER[inputs.currency.code] ?? STARTING_CAPITAL_SLIDER.USD;
@@ -1070,14 +1070,13 @@ const CalculatorScreen = forwardRef<
                 )}
               </label>
               <div className="flex items-center gap-2 border border-[#FFCC6A]/50 rounded-lg overflow-hidden bg-[#F0F7F0] focus-within:border-[#FFCC6A]">
-                <input
-                  type="number"
-                  inputMode="decimal"
+                <FormattedNumberInput
+                  value={inputs.expectedAnnualReturnPct}
+                  onChange={(v) => update({ expectedAnnualReturnPct: v })}
+                  allowDecimals
+                  decimalPlaces={1}
                   min={0}
                   max={15}
-                  step={0.1}
-                  value={inputs.expectedAnnualReturnPct}
-                  onChange={(e) => update({ expectedAnnualReturnPct: parseNum(e.target.value) })}
                   className="flex-1 py-2 pl-3 pr-2 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
                 />
                 <span className="pr-3 text-[#0D3A1D] font-semibold">%</span>
@@ -1101,11 +1100,12 @@ const CalculatorScreen = forwardRef<
               <label className="block text-sm font-medium mb-2.5 text-white">Monthly Top‑Up (Optional)</label>
               <div className="flex items-center gap-2 border border-[#FFCC6A]/50 rounded-lg overflow-hidden bg-[#F0F7F0] focus-within:border-[#FFCC6A]">
                 <span className="pl-3 text-[#0D3A1D] font-semibold">{inputs.currency.symbol}</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={formatNum(inputs.monthlyTopUp)}
-                  onChange={(e) => update({ monthlyTopUp: parseNum(e.target.value) })}
+                <FormattedNumberInput
+                  value={inputs.monthlyTopUp}
+                  onChange={(v) => update({ monthlyTopUp: v })}
+                  allowDecimals
+                  decimalPlaces={2}
+                  min={0}
                   className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
                 />
               </div>
@@ -1190,14 +1190,13 @@ const CalculatorScreen = forwardRef<
                   >
                     −
                   </button>
-                 <input 
-                    type="number"
-                    inputMode="decimal"
+                 <FormattedNumberInput
+                    value={inputs.cashAPY}
+                    onChange={(v) => update({ cashAPY: v })}
+                    allowDecimals
+                    decimalPlaces={1}
                     min={0}
                     max={20}
-                    step={0.1}
-                    value={inputs.cashAPY}
-                    onChange={(e) => update({ cashAPY: parseNum(e.target.value) })}
                     className="w-16 sm:w-20 py-2 px-2 border border-[#FFCC6A]/50 rounded-lg bg-[#F0F7F0] text-[#0D3A1D] focus:outline-none focus:border-[#FFCC6A]"
                   />
                   <button

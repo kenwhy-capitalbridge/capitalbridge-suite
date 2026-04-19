@@ -46,6 +46,7 @@ import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import {
   ChromeSpinnerGlyph,
+  FormattedNumberInput,
   ModelReportDownloadFooter,
   useModelMetricSpine,
 } from "@cb/ui";
@@ -292,11 +293,11 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
     undefined,
   );
   const [collapsedSections, setCollapsedSections] = useState({
-    structuralStabilityMap: true,
-    capitalOutcomeDist: true,
-    capitalStressRadar: true,
-    furtherStressTest: true,
-    capitalAdjustmentSimulator: true,
+    structuralStabilityMap: false,
+    capitalOutcomeDist: false,
+    capitalStressRadar: false,
+    furtherStressTest: false,
+    capitalAdjustmentSimulator: false,
   });
   const toggleSection = (key: keyof typeof collapsedSections) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
   const toggleExpandAllSections = useCallback(() => {
@@ -543,25 +544,6 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
   const formatPercentSmall = (val: number) => val.toFixed(2) + '%';
   const formatSignedPct = (val: number) => `${val >= 0 ? '+' : ''}${val.toFixed(1)}%`;
   
-  const formatNumber = (val: number) => 
-    new Intl.NumberFormat(selectedCurrency.locale, {
-      maximumFractionDigits: 0
-    }).format(val);
-
-  const handleInvestmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/,/g, '');
-    const numericValue = parseInt(rawValue, 10);
-    if (!isNaN(numericValue)) setInvestment(numericValue);
-    else if (rawValue === '') setInvestment(0);
-  };
-
-  const handleWithdrawalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/,/g, '');
-    const numericValue = parseInt(rawValue, 10);
-    if (!isNaN(numericValue)) setWithdrawal(numericValue);
-    else if (rawValue === '') setWithdrawal(0);
-  };
-
   const handleDownloadPdf = async () => {
     if (!mcResult || pdfDownloadBusy) return;
     const props = stressPrintPropsRef.current;
@@ -857,11 +839,13 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-3">The initial capital to be invested at the start of the simulation.</p>
 <div className="relative bg-[#0D3A1D]/80 border border-[#FFCC6A]/20 rounded-sm focus-within:border-[#FFCC6A]/50 transition-all h-12 md:h-14">
                   <span className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-[#FFCC6A]/40 text-[9px] md:text-[11px] font-bold uppercase tracking-tight">{selectedCurrency.label}</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={investment === 0 ? '' : investment.toLocaleString()}
-                    onChange={handleInvestmentChange}
+                  <FormattedNumberInput
+                    value={investment}
+                    onChange={setInvestment}
+                    allowDecimals
+                    decimalPlaces={2}
+                    min={0}
+                    emptyWhenZero
                     className="scenario-amount-input w-full h-full pl-16 md:pl-32 pr-4 md:pr-10 bg-transparent text-white outline-none font-bold tracking-tight"
                     placeholder="0"
                   />
@@ -874,11 +858,13 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                 <p className="text-[9px] md:text-sm text-[#FFCC6A]/60 mb-3">Annual outflow for expenses, subtracted at the end of each simulated year.</p>
                 <div className="relative bg-[#0D3A1D]/80 border border-[#FFCC6A]/20 rounded-sm focus-within:border-[#FFCC6A]/50 transition-all h-12 md:h-14">
 <span className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-[#FFCC6A]/40 text-[9px] md:text-[11px] font-bold uppercase tracking-tight">{selectedCurrency.label}</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={withdrawal === 0 ? '' : withdrawal.toLocaleString()}
-                    onChange={handleWithdrawalChange}
+                  <FormattedNumberInput
+                    value={withdrawal}
+                    onChange={setWithdrawal}
+                    allowDecimals
+                    decimalPlaces={2}
+                    min={0}
+                    emptyWhenZero
                     className="scenario-amount-input w-full h-full pl-16 md:pl-32 pr-4 md:pr-10 bg-transparent text-white outline-none font-bold tracking-tight"
                     placeholder="0"
                   />
@@ -2058,11 +2044,13 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       <div
         className="fixed bottom-5 left-3 z-[9998] no-print flex w-[min(10.25rem,calc(100vw-1.5rem))] max-w-full flex-col items-stretch gap-1.5 drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] sm:bottom-6 sm:left-4 sm:w-[min(11rem,calc(100vw-2rem))] sm:gap-2 md:bottom-10 md:left-10 md:w-[clamp(10.75rem,14vw,12.35rem)]"
       >
-        {needsSimulationRefresh && !isRunning ? (
-          <p className="min-w-0 w-full max-w-full break-words px-0.5 text-center text-[0.58rem] leading-snug text-[#FFCC6A]/90 sm:text-[0.62rem] md:text-[11px] md:leading-snug lg:text-xs">
-            Inputs changed — run simulation so the header and results match your settings.
-          </p>
-        ) : null}
+        <p
+          className={`min-w-0 w-full max-w-full break-words px-0.5 text-center text-[0.62rem] leading-snug sm:text-[0.65rem] md:text-[11px] md:leading-snug lg:text-xs ${
+            needsSimulationRefresh && !isRunning ? "text-[#FFCC6A] font-semibold" : "text-[#FFCC6A]/75"
+          }`}
+        >
+          Inputs changed — run simulation so the header and results match your settings.
+        </p>
         <button
           type="button"
           onClick={runCalculation}

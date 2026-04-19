@@ -28,6 +28,7 @@ export {
   type ModelReportDownloadFooterProps,
 } from "./ModelReportDownloadFooter";
 export { ChromeSpinnerGlyph, type ChromeSpinnerGlyphProps } from "./ChromeSpinnerGlyph";
+export { FormattedNumberInput, type FormattedNumberInputProps } from "./FormattedNumberInput";
 export { ChromePendingNavLink } from "./ChromePendingNavLink";
 export {
   ReportPrintChrome,
