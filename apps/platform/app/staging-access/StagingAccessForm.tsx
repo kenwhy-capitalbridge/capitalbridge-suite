@@ -24,13 +24,13 @@ export function StagingAccessForm() {
       });
       if (!res.ok) {
         const j = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(j?.error ?? "Could not unlock staging");
+        setError(j?.error ?? "We could not unlock staging. Please try again.");
         return;
       }
       router.replace(from.startsWith("/") ? from : "/");
       router.refresh();
     } catch {
-      setError("Network error — try again.");
+      setError("We could not reach the server. Check your connection and try again.");
     } finally {
       setPending(false);
     }

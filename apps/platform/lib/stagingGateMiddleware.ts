@@ -21,7 +21,7 @@ export async function stagingHostGateResponse(req: NextRequest): Promise<NextRes
 
   if (!process.env.STAGING_GATE_PASSWORD?.trim()) {
     return new NextResponse(
-      "Staging is not configured: set STAGING_GATE_PASSWORD on this deployment (Vercel → Environment Variables).",
+      "Staging sign-in is not configured yet. Add STAGING_GATE_PASSWORD to this deployment’s environment variables in Vercel, then redeploy.",
       { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }

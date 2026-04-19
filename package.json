@@ -28,6 +28,7 @@
     "lion:sync-copy": "node ./scripts/sync-lion-copy.mjs",
     "lion:check-copy": "node ./scripts/sync-lion-copy.mjs --check",
     "verify:pdf-standard": "node ./scripts/enforce-pdf-standard.mjs",
+    "verify:staging-helpers": "node node_modules/tsx/dist/cli.mjs scripts/verify-staging-helpers.ts",
     "ci:pdf-render-smoke": "node node_modules/tsx/dist/cli.mjs scripts/ci/pdf-render-smoke.ts",
     "ci:income-engineering-pdf-smoke": "node node_modules/tsx/dist/cli.mjs scripts/ci/income-engineering-pdf-smoke.ts",
     "brand:sync": "node ./scripts/sync-brand-assets.mjs",

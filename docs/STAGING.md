@@ -1,19 +1,24 @@
 # Staging environment (Capital Bridge)
 
-This monorepo supports a **dedicated staging deployment** without forking code. Production behaviour is unchanged unless the HTTP host is exactly the staging hostname (default: `staging.thecapitalbridge.com`).
+**Quick handover (env + Supabase + tests):** [`STAGING_HANDOVER.md`](./STAGING_HANDOVER.md)
+
+This monorepo supports a **dedicated staging deployment** without forking code. Production behaviour is unchanged unless the HTTP host matches the resolved staging hostname (default: `staging.thecapitalbridge.com`).
 
 ## What was implemented
 
 1. **Host detection** (`@cb/shared/staging`)  
-   - `isStagingCapitalBridgeHost(host)` is true only for `staging.thecapitalbridge.com` (override with `NEXT_PUBLIC_CB_STAGING_HOSTNAME` for local tests).
+   - `getStagingCapitalBridgeHostname()` resolves the staging hostname from `NEXT_PUBLIC_APP_URL` (if safe), else `NEXT_PUBLIC_CB_STAGING_HOSTNAME`, else `staging.thecapitalbridge.com`. Known production hosts in `NEXT_PUBLIC_APP_URL` are **ignored** so misconfiguration cannot point the gate at live.  
+   - `isStagingCapitalBridgeHost(host)` / `isStagingHost(host)` — gate + ribbon + `noindex` metadata.  
+   - `getAppEnv(hostHeader)` — `development` | `staging` | `production` (staging **only** when the host matches; `NEXT_PUBLIC_APP_ENV` alone does not enable the gate).
 
 2. **Staging access gate** (`apps/platform` only)  
    - Edge middleware runs first on every request. On the staging host, requests must present a signed **httpOnly** cookie (`cb_staging_gate`), except for exempt paths (`/_next/*`, `/staging-access`, `/api/staging-gate/*`, common static extensions).  
    - Password is checked only on the server via `POST /api/staging-gate/login` (body: `{ "password": "…" } }`).  
    - **Logout / clear access:** `GET /api/staging-gate/logout` clears the cookie. The top ribbon also links here.
 
-3. **Staging ribbon**  
-   - Server-rendered in `apps/platform/app/layout.tsx` when the host matches staging. Not shown on `platform.thecapitalbridge.com` or any other production host.
+3. **Staging ribbon + SEO**  
+   - Server-rendered in `apps/platform/app/layout.tsx` when the host matches staging. Not shown on `platform.thecapitalbridge.com` or any other production host.  
+   - `generateMetadata` sets `robots: { index: false, follow: false }` and title suffix on staging only.
 
 4. **Auth cookie scope** (`@cb/supabase`)  
    - Set `NEXT_PUBLIC_CB_AUTH_COOKIE_SCOPE=host` on staging so Supabase auth cookies are **host-only** (not `Domain=.thecapitalbridge.com`). This prevents staging sessions from being visible on other subdomains and is the recommended default for `staging.thecapitalbridge.com` unless you deliberately use a separate Supabase project and still want suite-wide cookies.
@@ -39,6 +44,8 @@ Create a **second Vercel project** (e.g. `capitalbridge-platform-staging`) point
 | Variable | Purpose |
 |----------|---------|
 | `STAGING_GATE_PASSWORD` | Password for `/staging-access` (required on staging host; missing → HTTP 503 text) |
+| `NEXT_PUBLIC_APP_URL` | Optional: `https://staging.thecapitalbridge.com` — hostname used for gate match if not a blocked production host |
+| `NEXT_PUBLIC_APP_ENV` | Optional: `staging` — documentation / future use only; **gate is hostname-based** |
 | `NEXT_PUBLIC_CB_AUTH_COOKIE_SCOPE` | Set to `host` for isolated cookies on the staging hostname |
 | `NEXT_PUBLIC_SUPABASE_URL` | Prefer a **staging** Supabase project URL, not production |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Staging project anon key |
@@ -52,7 +59,7 @@ Optional:
 | Variable | Purpose |
 |----------|---------|
 | `STAGING_GATE_SIGNING_SECRET` | Separate secret for HMAC signing the staging cookie (defaults to `STAGING_GATE_PASSWORD`) |
-| `NEXT_PUBLIC_CB_STAGING_HOSTNAME` | Override detected staging hostname |
+| `NEXT_PUBLIC_CB_STAGING_HOSTNAME` | Override staging hostname (used when `NEXT_PUBLIC_APP_URL` is unset or invalid) |
 | All `NEXT_PUBLIC_*_APP_URL` for model apps | Set to preview URLs or future `*.staging` hosts so tiles and redirects never send users to production models by mistake |
 
 Production platform project: **do not** set `STAGING_GATE_PASSWORD` unless you intentionally want the gate on another host (it only activates when the request host matches the staging hostname).

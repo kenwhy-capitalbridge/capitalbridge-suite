@@ -1,21 +1,72 @@
 /**
- * Staging deployment helpers for Capital Bridge (host-based gate + signed cookie).
- * Production hosts are unaffected unless they match the staging hostname explicitly.
+ * Staging deployment helpers (Capital Bridge platform).
+ * Gate + UI use **hostname only** so production is never toggled by env flags alone.
+ *
+ * Optional `NEXT_PUBLIC_APP_URL` may define the staging canonical origin; its hostname
+ * is used only if it is not a known production app host (safety guard).
  */
 
-/** Primary staging dashboard host (override for tests / alternate staging). */
-export const STAGING_CAPITAL_BRIDGE_HOSTNAME =
-  (typeof process !== "undefined" &&
-    process.env.NEXT_PUBLIC_CB_STAGING_HOSTNAME?.trim().toLowerCase()) ||
-  "staging.thecapitalbridge.com";
+/** Hosts that must never be treated as staging via `NEXT_PUBLIC_APP_URL` misconfiguration. */
+const DISALLOWED_AS_STAGING_HOST = new Set(
+  [
+    "platform.thecapitalbridge.com",
+    "login.thecapitalbridge.com",
+    "api.thecapitalbridge.com",
+    "thecapitalbridge.com",
+    "www.thecapitalbridge.com",
+    "forever.thecapitalbridge.com",
+    "incomeengineering.thecapitalbridge.com",
+    "capitalhealth.thecapitalbridge.com",
+    "capitalstress.thecapitalbridge.com",
+  ].map((h) => h.toLowerCase()),
+);
 
 export function normalizeRequestHost(hostHeader: string | null): string {
   if (!hostHeader) return "";
   return hostHeader.split(":")[0]?.trim().toLowerCase() ?? "";
 }
 
+/**
+ * Resolved staging hostname for gate + banner (default `staging.thecapitalbridge.com`).
+ * Order: `NEXT_PUBLIC_APP_URL` hostname (if safe) → `NEXT_PUBLIC_CB_STAGING_HOSTNAME` → default.
+ */
+export function getStagingCapitalBridgeHostname(): string {
+  const fromAppUrl = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_APP_URL?.trim()) || "";
+  if (fromAppUrl) {
+    try {
+      const h = new URL(fromAppUrl).hostname.toLowerCase();
+      if (h && !DISALLOWED_AS_STAGING_HOST.has(h)) {
+        return h;
+      }
+    } catch {
+      /* ignore invalid URL */
+    }
+  }
+  const override = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_CB_STAGING_HOSTNAME?.trim()) || "";
+  if (override) return override.toLowerCase();
+  return "staging.thecapitalbridge.com";
+}
+
+/** True when request host is the configured staging hostname (Preview / custom domain). */
 export function isStagingCapitalBridgeHost(host: string): boolean {
-  return host === STAGING_CAPITAL_BRIDGE_HOSTNAME;
+  if (!host) return false;
+  return host === getStagingCapitalBridgeHostname();
+}
+
+/** Alias — same as {@link isStagingCapitalBridgeHost}. */
+export const isStagingHost = isStagingCapitalBridgeHost;
+
+/**
+ * Coarse deployment label for logging / UI hints. Staging is detected **by host only**
+ * so `NEXT_PUBLIC_APP_ENV=staging` alone cannot mark production traffic as staging.
+ */
+export function getAppEnv(hostHeader: string | null): "development" | "staging" | "production" {
+  if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
+    return "development";
+  }
+  const host = normalizeRequestHost(hostHeader);
+  if (isStagingCapitalBridgeHost(host)) return "staging";
+  return "production";
 }
 
 export const STAGING_GATE_COOKIE_NAME = "cb_staging_gate";

@@ -3,7 +3,7 @@ import { isStagingCapitalBridgeHost, normalizeRequestHost, STAGING_GATE_COOKIE_N
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const host = normalizeRequestHost(url.hostname);
+  const host = normalizeRequestHost(url.host);
   if (!isStagingCapitalBridgeHost(host)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

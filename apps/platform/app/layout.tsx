@@ -17,12 +17,25 @@ import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
 import { StagingEnvironmentBanner } from "./components/StagingEnvironmentBanner";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
 
-export const metadata: Metadata = {
+const BASE_METADATA: Metadata = {
   title: "Capital Bridge Advisory Platform",
   description:
     "Capital Bridge Advisory Platform — institutional-grade capital modelling for income sustainability, risk resilience, and long-term financial structure.",
   icons: CB_SITE_FAVICON_ICONS,
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const host = normalizeRequestHost(h.get("host"));
+  if (!isStagingCapitalBridgeHost(host)) {
+    return BASE_METADATA;
+  }
+  return {
+    ...BASE_METADATA,
+    title: "Capital Bridge — Staging",
+    robots: { index: false, follow: false },
+  };
+}
 
 const CB_MBR_SAFE = "cb_mbr_safe";
 
