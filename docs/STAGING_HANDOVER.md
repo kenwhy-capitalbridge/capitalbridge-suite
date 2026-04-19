@@ -102,7 +102,7 @@ npm run typecheck -w @cb/platform
 | `packages/supabase/src/server.ts` | Comment only |
 | `packages/shared/src/urls.ts` | `foreverDashboardUrl()` |
 | `apps/platform/middleware.ts` | Runs staging gate before existing auth |
-| `apps/platform/lib/stagingGateMiddleware.ts` | Staging gate redirect / 401 API |
+| `apps/platform/lib/stagingGateMiddleware.ts` | Staging gate redirect / 401 API; **`/access` → `LOGIN_APP_URL/access`** (query preserved) on staging host only |
 | `apps/platform/app/layout.tsx` | Staging ribbon + **noindex** `generateMetadata` on staging host |
 | `apps/platform/app/components/StagingEnvironmentBanner.tsx` | Staging ribbon UI |
 | `apps/platform/app/staging-access/*` | Access form |
