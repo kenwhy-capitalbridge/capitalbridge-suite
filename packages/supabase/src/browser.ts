@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { suiteWideAuthCookieDomain } from "./suiteAuthCookieDomain";
 
 const PLACEHOLDER_URL = "https://placeholder.supabase.co";
 const PLACEHOLDER_KEY = "placeholder-key";
@@ -23,13 +24,13 @@ export function createAppBrowserClient(): SupabaseClient {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? PLACEHOLDER_KEY;
   /**
    * Important: to share sessions across subdomains (login + platform), the browser
-   * must set cookies on `.thecapitalbridge.com` in production. Otherwise the user
-   * can be “signed in” on login.* but appear signed out on platform.*.
+   * sets cookies on `.thecapitalbridge.com` in production unless
+   * `NEXT_PUBLIC_CB_AUTH_COOKIE_SCOPE=host` (host-only; use on isolated staging).
    */
-  const cookieOptions =
-    process.env.NODE_ENV === "production"
-      ? { domain: ".thecapitalbridge.com", path: "/", sameSite: "lax" as const, secure: true }
-      : undefined;
+  const domain = suiteWideAuthCookieDomain();
+  const cookieOptions = domain
+    ? { domain, path: "/", sameSite: "lax" as const, secure: true }
+    : undefined;
   const opts = cookieOptions ? { cookieOptions } : undefined;
 
   if (typeof window !== "undefined") {

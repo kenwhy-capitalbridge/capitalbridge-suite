@@ -5,7 +5,7 @@ import { withSuiteAuthCookieOptions, type AuthCookieOptions } from "./authCookie
 
 /**
  * Server Supabase client for Server Components / Route Handlers.
- * Uses cookie domain `.thecapitalbridge.com` in production so login + platform share sessions.
+ * Uses suite-wide cookie domain in production unless `NEXT_PUBLIC_CB_AUTH_COOKIE_SCOPE=host`.
  */
 export async function createAppServerClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

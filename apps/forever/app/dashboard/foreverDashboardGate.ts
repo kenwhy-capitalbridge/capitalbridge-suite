@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAppServerClient } from "@cb/supabase/server";
 import { reportClientDisplayNameFromAuth } from "@cb/shared/reportIdentity";
-import { LOGIN_APP_URL, PLATFORM_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { foreverDashboardUrl, LOGIN_APP_URL, PLATFORM_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
 import { isGitexGuidedAccess } from "@cb/shared/gitexCampaign";
 import {
   marketIdToReportExportTimeZone,
@@ -33,9 +33,7 @@ export async function requireForeverDashboardAuth(): Promise<ForeverDashboardAut
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect(
-      `${LOGIN_APP_URL}/access?redirectTo=${encodeURIComponent("https://forever.thecapitalbridge.com/dashboard")}`,
-    );
+    redirect(`${LOGIN_APP_URL}/access?redirectTo=${encodeURIComponent(foreverDashboardUrl())}`);
   }
 
   const userId = user.id;

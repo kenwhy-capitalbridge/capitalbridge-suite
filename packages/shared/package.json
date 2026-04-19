@@ -18,6 +18,7 @@
     "./formatCurrency": "./src/formatCurrency.ts",
     "./markets": "./src/markets.ts",
     "./gitexCampaign": "./src/gitexCampaign.ts",
-    "./pdfCaptureToken": "./src/pdfCaptureToken.ts"
+    "./pdfCaptureToken": "./src/pdfCaptureToken.ts",
+    "./staging": "./src/staging.ts"
   }
 }

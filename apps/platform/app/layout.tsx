@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Tinos } from "next/font/google";
 import { createAppServerClient } from "@cb/supabase/server";
+import { isStagingCapitalBridgeHost, normalizeRequestHost } from "@cb/shared/staging";
 import "./globals.css";
 
 const cbFrameworkFont = Tinos({
@@ -13,6 +14,7 @@ const cbFrameworkFont = Tinos({
 import { CbLegalSiteFooter, ElfsightChatbot } from "@cb/ui";
 import { CB_SITE_FAVICON_ICONS } from "@cb/ui/siteFaviconMetadata";
 import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
+import { StagingEnvironmentBanner } from "./components/StagingEnvironmentBanner";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
 
 export const metadata: Metadata = {
@@ -42,10 +44,13 @@ async function readInitialSafeMode(): Promise<boolean> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialSafeMode = await readInitialSafeMode();
+  const host = normalizeRequestHost((await headers()).get("host"));
+  const showStagingRibbon = isStagingCapitalBridgeHost(host);
 
   return (
     <html lang="en" className={cbFrameworkFont.variable}>
-      <body className="flex min-h-screen flex-col">
+      <body className={`flex min-h-screen flex-col${showStagingRibbon ? " pt-11" : ""}`}>
+        <StagingEnvironmentBanner show={showStagingRibbon} />
         <MembershipSessionCheck initialSafeMode={initialSafeMode} />
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         <CbLegalSiteFooter />

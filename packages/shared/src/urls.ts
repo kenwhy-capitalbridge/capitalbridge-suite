@@ -98,3 +98,15 @@ export function platformPostLogoutUrl(): string {
   return `${base}/#:~:text=FRAMEWORK-,LOGOUT,-CAPITAL%20BRIDGE%20ADVISORY`;
 }
 
+const FOREVER_APP_DEFAULT_ORIGIN = "https://forever.thecapitalbridge.com";
+
+/** Forever app origin without trailing slash (uses `NEXT_PUBLIC_FOREVER_APP_URL` when set). */
+export function foreverAppBaseUrl(): string {
+  return envUrl(process.env.NEXT_PUBLIC_FOREVER_APP_URL, FOREVER_APP_DEFAULT_ORIGIN).replace(/\/+$/, "");
+}
+
+/** Canonical `/dashboard` URL for Forever (login redirects, gate). */
+export function foreverDashboardUrl(): string {
+  return `${foreverAppBaseUrl()}/dashboard`;
+}
+

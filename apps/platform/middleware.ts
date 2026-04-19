@@ -18,6 +18,7 @@ import {
   verifyAdminGateCookieValueEdge,
 } from "./lib/platformAdminGate.edge";
 import { isAdminPasswordGateEnabled } from "./lib/platformAdminGateShared";
+import { stagingHostGateResponse } from "./lib/stagingGateMiddleware";
 
 const CB_MBR_SAFE = "cb_mbr_safe";
 
@@ -164,6 +165,11 @@ function applySafeModeCookie(response: NextResponse, userId: string): void {
  * Platform: Supabase session + active membership. Transient membership DB errors → short safe mode (no access if truly inactive).
  */
 export async function middleware(req: NextRequest) {
+  const stagingRes = await stagingHostGateResponse(req);
+  if (stagingRes) {
+    return stagingRes;
+  }
+
   if (!isProtected(req.nextUrl.pathname)) {
     return NextResponse.next();
   }
