@@ -2049,7 +2049,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
             needsSimulationRefresh && !isRunning ? "text-[#FFCC6A] font-semibold" : "text-[#FFCC6A]/75"
           }`}
         >
-          Inputs changed — run simulation so the header and results match your settings.
+          Run simulation to apply your changes.
         </p>
         <button
           type="button"
