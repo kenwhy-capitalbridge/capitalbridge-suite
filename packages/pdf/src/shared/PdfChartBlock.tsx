@@ -9,16 +9,20 @@ import {
 } from "@cb/advisory-graph/reports";
 
 export type PdfChartBlockProps = {
-  /** Chart / figure title */
-  title?: string;
-  /** Optional title colour / font override (e.g. Capital Stress print gold). */
+  /**
+   * Chart title (plain string uses default title chrome + `titleStyle`).
+   * Pass a React node to render a custom title block (e.g. title + subtitle in one unit).
+   */
+  title?: ReactNode;
+  /** Optional title colour / font override (e.g. Capital Stress print gold). Applied when `title` is a string. */
   titleStyle?: CSSProperties;
   /**
    * Label above `whatThisShows` prose. Default "What this shows".
    * Pass `false` to omit the heading so microcopy can sit directly under the chart title.
    */
   whatThisShowsHeading?: string | false;
-  whatThisShows: ReactNode;
+  /** Pass `false` to omit the whole “What this shows” block (use when title slot already includes lead copy). */
+  whatThisShows: ReactNode | false;
   whyThisMatters: ReactNode;
   children: ReactNode;
   /** Optional narrative below the chart */
@@ -41,22 +45,32 @@ export function PdfChartBlock({
   className = "",
 }: PdfChartBlockProps) {
   const wrap = `${CB_REPORT_CHART_WRAP} ${className}`.trim();
+  const titleIsString = typeof title === "string";
+
   return (
     <figure className={wrap} style={{ margin: "1em 0", pageBreakInside: "avoid" as const }}>
-      {title ? (
-        <div
-          className="cb-pdf-chart-block-title m-0 mb-2 text-[11pt] font-bold leading-snug text-[#0d3a1d] print:mb-2"
-          style={{ fontFamily: REPORT_FONT_DISPLAY, ...titleStyle }}
-        >
-          {title}
-        </div>
+      {title != null && title !== false ? (
+        titleIsString ? (
+          <div
+            className="cb-pdf-chart-block-title m-0 mb-2 text-[11pt] font-bold leading-snug text-[#0d3a1d] print:mb-2"
+            style={{ fontFamily: REPORT_FONT_DISPLAY, ...titleStyle }}
+          >
+            {title}
+          </div>
+        ) : (
+          <div className="cb-pdf-chart-block-title-slot m-0 mb-2 print:mb-2">{title}</div>
+        )
       ) : null}
-      {whatThisShowsHeading !== false ? (
-        <ReportHeading level={3} variant="inline" keepWithNext className="cb-avoid-orphan-heading">
-          {whatThisShowsHeading ?? "What this shows"}
-        </ReportHeading>
+      {whatThisShows !== false ? (
+        <>
+          {whatThisShowsHeading !== false ? (
+            <ReportHeading level={3} variant="inline" keepWithNext className="cb-avoid-orphan-heading">
+              {whatThisShowsHeading ?? "What this shows"}
+            </ReportHeading>
+          ) : null}
+          <ReportProse className="text-[rgba(43,43,43,0.95)]">{whatThisShows}</ReportProse>
+        </>
       ) : null}
-      <ReportProse className="text-[rgba(43,43,43,0.95)]">{whatThisShows}</ReportProse>
       <ReportHeading level={3} variant="inline" keepWithNext className="cb-avoid-orphan-heading">
         Why this matters
       </ReportHeading>

@@ -1405,10 +1405,15 @@ export function PrintReport(props: PrintReportProps) {
       <div className="print-section cb-print-section print-page-break-before">
         <PdfChartBlock
           className="cb-stress-outcome-dist-pdf"
-          title="Capital Outcome Probability Distribution"
-          titleStyle={STRESS_CHART_TITLE_STYLE}
-          whatThisShowsHeading={false}
-          whatThisShows="This chart shows how your ending capital varies across thousands of simulated market scenarios:"
+          title={
+            <>
+              <div style={{ ...STRESS_CHART_TITLE_STYLE, marginBottom: '0.4em' }}>Capital Outcome Probability Distribution</div>
+              <p style={{ fontSize: BODY_PT, color: PRINT_TEXT, margin: 0, lineHeight: 1.55, maxWidth: '48em' }}>
+                This chart shows how your ending capital varies across thousands of simulated market scenarios:
+              </p>
+            </>
+          }
+          whatThisShows={false}
           whyThisMatters="A tight cluster means similar endings; weight on the left means more paths finish with little capital — worth weighing against how much downside you can live with."
           interpretation={
             <p style={{ fontSize: '9pt', color: PRINT_TEXT, lineHeight: 1.5, margin: 0 }}>
