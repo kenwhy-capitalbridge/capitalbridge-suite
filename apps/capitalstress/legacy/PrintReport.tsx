@@ -1408,22 +1408,6 @@ export function PrintReport(props: PrintReportProps) {
 
       {/* Outcome Probability Distribution — avoid global `.section` break-inside:avoid on this tall block. */}
       <div className="print-section cb-print-section print-page-break-before cb-stress-outcome-dist-section">
-        <div
-          className="cb-stress-outcome-dist-lead"
-          style={{
-            position: 'relative',
-            zIndex: 2,
-            marginBottom: '0.65em',
-            breakAfter: 'avoid',
-            pageBreakAfter: 'avoid',
-          }}
-        >
-          <div style={{ ...STRESS_CHART_TITLE_STYLE, marginBottom: '0.4em' }}>{STRESS_OUTCOME_DISTRIBUTION_CHART_TITLE}</div>
-          <p style={{ fontSize: BODY_PT, color: PRINT_TEXT, margin: 0, lineHeight: 1.55, maxWidth: '48em' }}>
-            {STRESS_OUTCOME_DISTRIBUTION_MICROCOPY}
-          </p>
-        </div>
-        <div className="cb-stress-outcome-dist-chart-mount">
         <PdfChartBlock
           className="cb-stress-outcome-dist-pdf"
           whatThisShows={false}
@@ -1437,6 +1421,43 @@ export function PrintReport(props: PrintReportProps) {
         <p style={{ fontSize: '10pt', color: PRINT_TEXT, marginBottom: '0.5em', lineHeight: 1.5 }}>
           Each bar is a band of <strong>ending capital</strong> after {years} year{years !== 1 ? 's' : ''}; bar height is how many of the {mcResult.simulationCount.toLocaleString()} tested paths landed there. The <strong style={{ color: CHART_MEDIAN_BAR }}>highlighted</strong> bar sits in the band that contains the <strong>typical (median)</strong> outcome.
         </p>
+        <header
+          className="cb-stress-outcome-chart-head"
+          style={{
+            textAlign: 'center',
+            margin: '0.85em 0 1em',
+            padding: '0 0.5em',
+            breakInside: 'avoid',
+            pageBreakInside: 'avoid',
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact',
+          }}
+        >
+          <h2
+            style={{
+              ...STRESS_CHART_TITLE_STYLE,
+              textAlign: 'center',
+              marginTop: 0,
+              marginBottom: '0.45em',
+              fontSize: '12pt',
+              letterSpacing: '0.06em',
+            }}
+          >
+            {STRESS_OUTCOME_DISTRIBUTION_CHART_TITLE}
+          </h2>
+          <p
+            style={{
+              fontSize: BODY_PT,
+              color: PRINT_TEXT,
+              margin: '0 auto',
+              lineHeight: 1.55,
+              textAlign: 'center',
+              maxWidth: '42em',
+            }}
+          >
+            {STRESS_OUTCOME_DISTRIBUTION_MICROCOPY}
+          </p>
+        </header>
         {(() => {
           const finals = mcResult.paths.map((p) => p.finalCapital).filter((x) => x >= 0);
           if (finals.length === 0) {
@@ -1585,7 +1606,6 @@ export function PrintReport(props: PrintReportProps) {
           );
         })()}
         </PdfChartBlock>
-        </div>
       </div>
 
       {/* Capital Stress Timeline — PDF-only CSS bar (no SVG/figure): Chromium was inserting a full-page gap before the SVG gauge. */}

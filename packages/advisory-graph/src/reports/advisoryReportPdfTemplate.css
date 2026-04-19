@@ -216,15 +216,22 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
   padding-right: 0 !important;
 }
 
-/* Static title + microcopy sit above `PdfChartBlock`; keep lead above chart stacking and flush chart block top margin. */
-.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-dist-lead {
+/* Outcome histogram: chart title + microcopy sit after “Why this matters” prose, above the plot (sample layout). */
+.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-chart-head {
   position: relative;
   z-index: 2;
   isolation: isolate;
 }
 
-.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-dist-chart-mount .cb-pdf-chart-block {
-  margin-top: 0;
+@media print {
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-chart-head,
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-chart-head h2,
+  .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-chart-head p {
+    visibility: visible !important;
+    opacity: 1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 
 /* Capital Stress: depletion gauge + timeline — pull figure in tight (PdfChartBlock uses my-3 on figure wrapper). */
