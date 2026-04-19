@@ -20,9 +20,9 @@ export function PlatformHeaderAuthCluster() {
       }}
     >
       <Link
-        href="/profile"
+        href="/settings"
         className="pf-chrome-gold-btn pf-chrome-gold-btn--header-inline"
-        aria-label="Settings — account and profile"
+        aria-label="SETTINGS — account and membership"
         title="Settings"
         aria-busy={isPending}
         aria-disabled={isPending}
@@ -33,7 +33,7 @@ export function PlatformHeaderAuthCluster() {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
           e.preventDefault();
           startTransition(() => {
-            router.push("/profile");
+            router.push("/settings");
           });
         }}
         style={{

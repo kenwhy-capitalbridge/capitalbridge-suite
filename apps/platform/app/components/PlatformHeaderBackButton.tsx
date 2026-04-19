@@ -8,8 +8,8 @@ export type PlatformHeaderBackButtonProps = {
   /** When `history.length` is 1 (e.g. direct open), navigate here instead of `router.back()`. */
   fallbackHref: string;
   /**
-   * When set, always `router.push` here (skips `history.back()`). Use on `/profile` to always return to
-   * platform home and avoid loops (e.g. Profile → external plans → Back).
+   * When set, always `router.push` here (skips `history.back()`). Use on `/settings` to always return to
+   * platform home and avoid loops (e.g. SETTINGS → external plans → Back).
    */
   pushHref?: string;
   /** Accessible name; defaults to `"Back"`. */

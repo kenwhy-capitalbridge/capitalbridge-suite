@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
@@ -12,6 +13,12 @@ import { ProfilePlansLink } from "../components/ProfilePlansLink";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: "SETTINGS — Capital Bridge Advisory Platform",
+  description:
+    "SETTINGS — manage your Capital Bridge advisory account, membership, sign-in email, and regional preferences.",
+};
+
 function formatDateIso(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -23,14 +30,14 @@ function formatDateIso(iso: string | null | undefined): string | null {
   });
 }
 
-export default async function ProfilePage() {
+export default async function SettingsPage() {
   const { user, membership } = await getServerUserAndMembership();
 
   if (!user) {
     const h = await headers();
     const host = h.get("host") ?? "platform.thecapitalbridge.com";
     const proto = h.get("x-forwarded-proto") === "https" ? "https" : "http";
-    const back = `${proto}://${host}/profile`;
+    const back = `${proto}://${host}/settings`;
     const loginUrl = new URL(`${LOGIN_APP_URL}/access`);
     loginUrl.searchParams.set("redirectTo", back);
     redirect(loginUrl.toString());
@@ -92,10 +99,10 @@ export default async function ProfilePage() {
   const avatarSize = "clamp(40px, 10.5vw, 48px)";
 
   return (
-    <div className="profile-page" style={{ minHeight: "100vh", backgroundColor: "#0D3A1D" }}>
+    <div className="settings-page" style={{ minHeight: "100vh", backgroundColor: "#0D3A1D" }}>
       <PlatformFrameworkHeader
         verifiedUserEmail={user.email}
-        centerTitle="USER PROFILE"
+        centerTitle="SETTINGS"
         profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}
         membershipPlanSlug={membership?.plan ?? null}
         showBackBeforeHome
@@ -152,7 +159,7 @@ export default async function ProfilePage() {
                 lineHeight: 1.2,
               }}
             >
-              Your Profile
+              SETTINGS
             </h1>
             {displayName ? (
               <p

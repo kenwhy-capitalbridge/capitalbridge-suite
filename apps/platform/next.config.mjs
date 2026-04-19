@@ -14,6 +14,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/profile",
+        destination: "/settings",
+        permanent: true,
+      },
+      {
         source: "/admin/strategic",
         destination: "/admin/login/strategic",
         permanent: true,

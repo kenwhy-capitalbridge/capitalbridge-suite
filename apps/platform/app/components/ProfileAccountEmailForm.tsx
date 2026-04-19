@@ -97,7 +97,7 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
       </p>
 
       <label
-        htmlFor="profile-new-email"
+        htmlFor="settings-new-email"
         style={{
           display: "block",
           marginTop: "clamp(0.85rem, 2.5vw, 1.1rem)",
@@ -110,15 +110,15 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
       >
         New email
       </label>
-      <div className="profile-page-email-row">
+      <div className="settings-page-email-row">
         <input
-          id="profile-new-email"
+          id="settings-new-email"
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
           value={newEmail}
           disabled={busy}
-          className="profile-page-email-input"
+          className="settings-page-email-input"
           onChange={(e) => {
             setNewEmail(e.target.value);
             setError(null);
@@ -144,7 +144,7 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
           onClick={() => void submit()}
           disabled={busy}
           aria-busy={busy}
-          className="profile-page-email-submit cb-profile-gold-cta-hover"
+          className="settings-page-email-submit cb-settings-gold-cta-hover"
           style={{
             flexShrink: 0,
             padding: "clamp(0.42rem, 1.4vw, 0.45rem) clamp(0.85rem, 2.5vw, 1.1rem)",
@@ -181,7 +181,7 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
 
       {message && (
         <p
-          className="profile-page-callout profile-page-callout--success"
+          className="settings-page-callout settings-page-callout--success"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
             padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",
@@ -200,7 +200,7 @@ export function ProfileAccountEmailForm({ currentEmail }: Props) {
       )}
       {error && (
         <p
-          className="profile-page-callout profile-page-callout--error"
+          className="settings-page-callout settings-page-callout--error"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
             padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",

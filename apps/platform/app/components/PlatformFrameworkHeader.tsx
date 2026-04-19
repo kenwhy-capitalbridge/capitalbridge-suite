@@ -27,7 +27,7 @@ export type PlatformFrameworkHeaderProps = {
   showBackBeforeHome?: boolean;
   /** Used when history is empty (direct navigation). Default `/framework` → `/`. */
   backFallbackHref?: string;
-  /** When set with `showBackBeforeHome`, BACK always navigates here (e.g. `/profile` → `/`). */
+  /** When set with `showBackBeforeHome`, BACK always navigates here (e.g. `/settings` → `/`). */
   backPushHref?: string;
   /** Optional accessible name for BACK (e.g. profile home navigation). */
   backAriaLabel?: string;

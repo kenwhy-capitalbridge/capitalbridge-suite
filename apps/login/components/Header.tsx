@@ -13,7 +13,7 @@ import { BRAND_LIONHEAD_GOLD } from "@cb/ui/brandPaths";
 /** Logo + exit link to marketing site (default https://thecapitalbridge.com/) */
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_SITE_URL ?? "https://thecapitalbridge.com";
 
-const platformProfileHref = `${PLATFORM_APP_URL.replace(/\/+$/, "")}/profile`;
+const platformSettingsHref = `${PLATFORM_APP_URL.replace(/\/+$/, "")}/settings`;
 
 /** Gold header actions — same as platform LOGOUT (`packages/ui/cb-model-base.css` `.pf-chrome-gold-btn`). */
 const headerGoldBtnClass = "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline shrink-0";
@@ -103,7 +103,7 @@ function HeaderChrome({
 
         {isPlansBrowse ? (
           <div className="login-header-pricing-actions flex shrink-0 flex-nowrap items-center justify-end gap-1 justify-self-end overflow-visible sm:gap-2">
-            <ChromePendingNavLink href={platformProfileHref} className={headerGoldBtnClass}>
+            <ChromePendingNavLink href={platformSettingsHref} className={headerGoldBtnClass}>
               BACK
             </ChromePendingNavLink>
             <span className="shrink-0 text-[#FFCC6A]/70 max-[380px]:text-[9px] sm:text-xs" aria-hidden>

@@ -193,7 +193,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
       </p>
 
       <label
-        htmlFor="profile-advisory-market"
+        htmlFor="settings-advisory-market"
         style={{
           display: "block",
           marginTop: "clamp(0.85rem, 2.5vw, 1.1rem)",
@@ -206,9 +206,9 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
       >
         Country / region
       </label>
-      <div className="profile-page-email-row">
+      <div className="settings-page-email-row">
         <select
-          id="profile-advisory-market"
+          id="settings-advisory-market"
           value={selected}
           onChange={(e) => {
             setSelected(e.target.value as MarketId);
@@ -216,7 +216,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
             setMessage(null);
           }}
           disabled={busy}
-          className="profile-page-email-input"
+          className="settings-page-email-input"
           style={{
             flex: "1 1 220px",
             minWidth: "min(100%, 11rem)",
@@ -244,7 +244,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
           onClick={() => void submit()}
           disabled={busy}
           aria-busy={busy}
-          className="profile-page-email-submit cb-profile-gold-cta-hover"
+          className="settings-page-email-submit cb-settings-gold-cta-hover"
           style={{
             flexShrink: 0,
             padding: "clamp(0.42rem, 1.4vw, 0.45rem) clamp(0.85rem, 2.5vw, 1.1rem)",
@@ -281,7 +281,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
 
       {message ? (
         <p
-          className="profile-page-callout profile-page-callout--success"
+          className="settings-page-callout settings-page-callout--success"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
             padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",
@@ -301,7 +301,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
 
       {error ? (
         <p
-          className="profile-page-callout profile-page-callout--error"
+          className="settings-page-callout settings-page-callout--error"
           style={{
             margin: "clamp(0.65rem, 2vw, 0.85rem) 0 0",
             padding: "clamp(0.55rem, 1.8vw, 0.65rem) clamp(0.6rem, 2vw, 0.75rem)",
@@ -324,7 +324,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="topup-title"
-          className="profile-page-advisory-modal-backdrop"
+          className="settings-page-advisory-modal-backdrop"
           style={{
             position: "fixed",
             inset: 0,
@@ -336,7 +336,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
           }}
         >
           <div
-            className="profile-page-advisory-modal-panel"
+            className="settings-page-advisory-modal-panel"
             style={{
               maxWidth: 440,
               width: "100%",
@@ -376,7 +376,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
               (MYR) to align your membership before the region changes.
             </p>
             <div
-              className="profile-page-advisory-modal-actions"
+              className="settings-page-advisory-modal-actions"
               style={{
                 marginTop: "clamp(0.85rem, 2.5vw, 1.1rem)",
                 display: "flex",
@@ -390,7 +390,7 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
                 onClick={() => void proceedToPayment()}
                 disabled={busy}
                 aria-busy={busy}
-                className="cb-profile-gold-cta-hover"
+                className="cb-settings-gold-cta-hover"
                 style={{
                   padding: "clamp(0.42rem, 1.4vw, 0.45rem) clamp(0.85rem, 2.5vw, 1.1rem)",
                   minHeight: 44,

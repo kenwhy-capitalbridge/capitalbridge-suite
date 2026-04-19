@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 type Body = { to_market?: string; preview_only?: boolean };
 
 function redirectUrlForBillplz(): string {
-  return process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com/profile";
+  return process.env.BILLPLZ_REDIRECT_URL ?? "https://platform.thecapitalbridge.com/settings";
 }
 
 /**
