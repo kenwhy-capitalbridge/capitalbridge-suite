@@ -159,6 +159,11 @@ const STRESS_CHART_TITLE_STYLE: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
+/** Outcome histogram — copy is fixed (not input-derived); hoisted above `PdfChartBlock` so PDF engines always paint it. */
+const STRESS_OUTCOME_DISTRIBUTION_CHART_TITLE = 'Capital Outcome Probability Distribution';
+const STRESS_OUTCOME_DISTRIBUTION_MICROCOPY =
+  'This chart shows how your ending capital varies across thousands of simulated market scenarios:';
+
 const STRESS_SECTION_BLOCK: React.CSSProperties = {
   marginBottom: '1.25em',
   padding: '16px 18px',
@@ -1402,17 +1407,25 @@ export function PrintReport(props: PrintReportProps) {
       </div>
 
       {/* Outcome Probability Distribution — avoid global `.section` break-inside:avoid on this tall block. */}
-      <div className="print-section cb-print-section print-page-break-before">
+      <div className="print-section cb-print-section print-page-break-before cb-stress-outcome-dist-section">
+        <div
+          className="cb-stress-outcome-dist-lead"
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            marginBottom: '0.65em',
+            breakAfter: 'avoid',
+            pageBreakAfter: 'avoid',
+          }}
+        >
+          <div style={{ ...STRESS_CHART_TITLE_STYLE, marginBottom: '0.4em' }}>{STRESS_OUTCOME_DISTRIBUTION_CHART_TITLE}</div>
+          <p style={{ fontSize: BODY_PT, color: PRINT_TEXT, margin: 0, lineHeight: 1.55, maxWidth: '48em' }}>
+            {STRESS_OUTCOME_DISTRIBUTION_MICROCOPY}
+          </p>
+        </div>
+        <div className="cb-stress-outcome-dist-chart-mount">
         <PdfChartBlock
           className="cb-stress-outcome-dist-pdf"
-          title={
-            <>
-              <div style={{ ...STRESS_CHART_TITLE_STYLE, marginBottom: '0.4em' }}>Capital Outcome Probability Distribution</div>
-              <p style={{ fontSize: BODY_PT, color: PRINT_TEXT, margin: 0, lineHeight: 1.55, maxWidth: '48em' }}>
-                This chart shows how your ending capital varies across thousands of simulated market scenarios:
-              </p>
-            </>
-          }
           whatThisShows={false}
           whyThisMatters="A tight cluster means similar endings; weight on the left means more paths finish with little capital — worth weighing against how much downside you can live with."
           interpretation={
@@ -1572,6 +1585,7 @@ export function PrintReport(props: PrintReportProps) {
           );
         })()}
         </PdfChartBlock>
+        </div>
       </div>
 
       {/* Capital Stress Timeline — PDF-only CSS bar (no SVG/figure): Chromium was inserting a full-page gap before the SVG gauge. */}

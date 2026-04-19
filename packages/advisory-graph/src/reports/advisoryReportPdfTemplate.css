@@ -216,6 +216,17 @@ html.cb-html2pdf-capture .cb-advisory-pdf-doc .cb-page {
   padding-right: 0 !important;
 }
 
+/* Static title + microcopy sit above `PdfChartBlock`; keep lead above chart stacking and flush chart block top margin. */
+.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-dist-lead {
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+}
+
+.cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-stress-outcome-dist-chart-mount .cb-pdf-chart-block {
+  margin-top: 0;
+}
+
 /* Capital Stress: depletion gauge + timeline — pull figure in tight (PdfChartBlock uses my-3 on figure wrapper). */
 .cb-capital-stress-pdf-doc.cb-advisory-pdf-doc .cb-report-chart-wrap.cb-stress-timeline-tight .cb-pdf-chart-block-figure {
   margin-top: 0.2rem !important;
