@@ -1435,7 +1435,7 @@ export function PrintReport(props: PrintReportProps) {
           const maxCount = Math.max(...hist, 1);
           const medianVal = mcResult.percentile50;
           const medianBin = Math.min(bins - 1, Math.max(0, Math.floor((medianVal - minV) / step)));
-          const marginLeft = 40;
+          const marginLeft = 44;
           const marginRight = 6;
           const marginBottom = 24;
           const plotTop = 6;
@@ -1444,10 +1444,9 @@ export function PrintReport(props: PrintReportProps) {
           const plotH = plotBase - plotTop;
           const viewWidth = marginLeft + plotWidth + marginRight;
           const viewHeight = plotBase + marginBottom;
-          const yAxisTitleX = -26;
+          /** Y-axis title: rotate −90° so label runs vertically along the axis (PDF reads as “not horizontal”). */
+          const yAxisTitleX = -30;
           const yAxisTitleMidY = plotTop + plotH / 2;
-          /** PDF: separate <text> nodes (not tspans) — Chromium print often collapses tspan stacks to one line. */
-          const yAxisTitleGap = 6.8;
           const barW = plotWidth / bins;
           const yTickCount = 5;
           const yTicks = Array.from({ length: yTickCount }, (_, i) => Math.round((i / (yTickCount - 1)) * maxCount));
@@ -1511,42 +1510,18 @@ export function PrintReport(props: PrintReportProps) {
                   <text x={plotWidth / 2} y={plotBase + 16} fontSize="4.4" fill={PRINT_TEXT} textAnchor="middle" fontWeight="700">
                     Ending capital after {years} year{years !== 1 ? 's' : ''}
                   </text>
-                  {/* Y-axis title — three lines, horizontal type (Chromium PDF-friendly). */}
-                  <g transform={`translate(${yAxisTitleX},${yAxisTitleMidY})`} aria-label="Number of paths">
-                    <text
-                      x={0}
-                      y={-yAxisTitleGap}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize="4.6"
-                      fill={PRINT_TEXT}
-                      fontWeight="700"
-                    >
-                      Number
-                    </text>
-                    <text
-                      x={0}
-                      y={0}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize="4.6"
-                      fill={PRINT_TEXT}
-                      fontWeight="500"
-                    >
-                      of
-                    </text>
-                    <text
-                      x={0}
-                      y={yAxisTitleGap}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize="4.6"
-                      fill={PRINT_TEXT}
-                      fontWeight="700"
-                    >
-                      Paths
-                    </text>
-                  </g>
+                  <text
+                    x={yAxisTitleX}
+                    y={yAxisTitleMidY}
+                    fontSize="4.5"
+                    fill={PRINT_TEXT}
+                    fontWeight="700"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    transform={`rotate(-90 ${yAxisTitleX} ${yAxisTitleMidY})`}
+                  >
+                    Number of Paths
+                  </text>
                 </svg>
                 {/* Legend */}
                 <div
