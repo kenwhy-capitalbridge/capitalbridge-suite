@@ -842,8 +842,6 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                   <FormattedNumberInput
                     value={investment}
                     onChange={setInvestment}
-                    allowDecimals
-                    decimalPlaces={2}
                     min={0}
                     emptyWhenZero
                     className="scenario-amount-input w-full h-full pl-16 md:pl-32 pr-4 md:pr-10 bg-transparent text-white outline-none font-bold tracking-tight"
@@ -861,8 +859,6 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
                   <FormattedNumberInput
                     value={withdrawal}
                     onChange={setWithdrawal}
-                    allowDecimals
-                    decimalPlaces={2}
                     min={0}
                     emptyWhenZero
                     className="scenario-amount-input w-full h-full pl-16 md:pl-32 pr-4 md:pr-10 bg-transparent text-white outline-none font-bold tracking-tight"

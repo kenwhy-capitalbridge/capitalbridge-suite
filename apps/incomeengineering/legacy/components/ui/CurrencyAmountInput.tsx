@@ -34,7 +34,7 @@ export function CurrencyAmountInput({
         onChange={onChange}
         min={min}
         max={max}
-        inputMode="decimal"
+        inputMode="numeric"
         aria-label={ariaLabel}
         className={inputInnerClass}
       />

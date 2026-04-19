@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
 
 function formatWithCommasInteger(value: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -18,21 +18,6 @@ function formatNumberWithDecimals(value: number, decimals: number): string {
   return decimals > 0 ? parts.join(".") : parts[0];
 }
 
-/** Group integer part of a raw digit string; preserve optional fractional tail while typing. */
-function formatRawWithCommas(raw: string, allowDecimals: boolean): string {
-  const stripped = raw.replace(/,/g, "");
-  if (stripped === "" || stripped === ".") return stripped;
-  if (allowDecimals && stripped.includes(".")) {
-    const [intPart, decPart] = stripped.split(".");
-    const formattedInt =
-      intPart === "" ? "" : new Intl.NumberFormat("en-US").format(parseInt(intPart || "0", 10));
-    return decPart === undefined ? formattedInt : `${formattedInt}.${decPart}`;
-  }
-  const num = parseInt(stripped, 10);
-  if (!Number.isFinite(num)) return stripped;
-  return new Intl.NumberFormat("en-US").format(num);
-}
-
 function parseDisplayValue(raw: string, allowDecimals: boolean): number {
   const stripped = raw.replace(/,/g, "");
   if (stripped === "" || stripped === ".") return 0;
@@ -40,13 +25,46 @@ function parseDisplayValue(raw: string, allowDecimals: boolean): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function positionAfterNDigits(formatted: string, n: number): number {
-  let digits = 0;
-  for (let i = 0; i < formatted.length; i++) {
-    if (digits === n) return i;
-    if (/\d/.test(formatted[i])) digits++;
+function roundToDecimals(n: number, dp: number): number {
+  if (!Number.isFinite(n)) return 0;
+  const f = 10 ** dp;
+  return Math.round(n * f) / f;
+}
+
+function trimTrailingZeros(s: string): string {
+  if (!s.includes(".")) return s;
+  return s.replace(/\.?0+$/, "");
+}
+
+/** Stable string when focusing a numeric value (no grouping; trim useless fraction zeros). */
+function valueToEditingString(value: number, allowDecimals: boolean, decimalPlaces: number): string {
+  if (!Number.isFinite(value) || value === 0) return "";
+  if (!allowDecimals) return String(Math.round(value));
+  const r = roundToDecimals(value, decimalPlaces);
+  return trimTrailingZeros(r.toFixed(decimalPlaces));
+}
+
+function finalizedNumeric(
+  raw: string,
+  allowDecimals: boolean,
+  decimalPlaces: number,
+  clamp: (n: number) => number,
+): number {
+  const trimmed = raw.trim();
+  if (trimmed === "" || trimmed === ".") {
+    return clamp(0);
   }
-  return formatted.length;
+  const parsed = parseDisplayValue(trimmed, allowDecimals);
+  const clamped = clamp(parsed);
+  if (allowDecimals) return roundToDecimals(clamped, decimalPlaces);
+  return Math.round(clamped);
+}
+
+function numericChanged(a: number, b: number, allowDecimals: boolean, decimalPlaces: number): boolean {
+  if (allowDecimals) {
+    return Math.abs(roundToDecimals(a, decimalPlaces) - roundToDecimals(b, decimalPlaces)) > 1e-12;
+  }
+  return Math.round(a) !== Math.round(b);
 }
 
 export type FormattedNumberInputProps = Omit<
@@ -61,11 +79,17 @@ export type FormattedNumberInputProps = Omit<
   max?: number;
   /** When true, show an empty field (not "0") while blurred if `value` is exactly 0. */
   emptyWhenZero?: boolean;
+  /**
+   * When true, `onChange` runs on blur (after clamp/round) instead of every keystroke.
+   * Default: same as `allowDecimals` — decimal fields commit on blur; integer/currency fields update live.
+   */
+  commitOnBlur?: boolean;
 };
 
 /**
- * Text input with thousand separators; keeps a stable draft while focused so values like
- * `3.0` can be edited without the decimal disappearing (controlled `number` + `toLocaleString` bug).
+ * Number input: thousand separators when blurred; while focused, shows the raw typing string
+ * (no per-keystroke grouping) so decimals and caret behave naturally. Decimal fields default to
+ * `commitOnBlur` so the parent state is not rewritten on each keypress.
  */
 export function FormattedNumberInput({
   value,
@@ -75,13 +99,14 @@ export function FormattedNumberInput({
   min,
   max,
   emptyWhenZero = false,
+  commitOnBlur: commitOnBlurProp,
   className = "",
   ...rest
 }: FormattedNumberInputProps) {
+  const commitOnBlur = commitOnBlurProp ?? allowDecimals;
+
   const [focused, setFocused] = useState(false);
   const [localRaw, setLocalRaw] = useState("");
-  const digitsBeforeCursorRef = useRef(0);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const clamp = useCallback(
     (n: number) => {
@@ -93,66 +118,60 @@ export function FormattedNumberInput({
     [min, max],
   );
 
-  const formattedFromRaw = formatRawWithCommas(localRaw, allowDecimals);
   const displayValue = focused
     ? localRaw === "" && value === 0
       ? ""
-      : formattedFromRaw || "0"
+      : localRaw
     : emptyWhenZero && value === 0
       ? ""
       : allowDecimals
         ? formatNumberWithDecimals(value, decimalPlaces)
         : formatWithCommasInteger(value);
 
-  useEffect(() => {
-    if (focused && inputRef.current && document.activeElement === inputRef.current) {
-      const pos = positionAfterNDigits(displayValue, digitsBeforeCursorRef.current);
-      inputRef.current.setSelectionRange(pos, pos);
-    }
-  }, [displayValue, focused]);
-
   const handleFocus = useCallback(() => {
     setFocused(true);
-    const raw = value === 0 ? "" : allowDecimals ? String(value) : String(Math.round(value));
-    setLocalRaw(raw);
-    digitsBeforeCursorRef.current = (raw.replace(/,/g, "").match(/\d/g) || []).length;
-  }, [value, allowDecimals]);
+    if (value === 0) {
+      setLocalRaw("");
+      return;
+    }
+    setLocalRaw(valueToEditingString(value, allowDecimals, decimalPlaces));
+  }, [value, allowDecimals, decimalPlaces]);
 
   const handleBlur = useCallback(() => {
     setFocused(false);
-    const parsed = parseDisplayValue(localRaw || String(value), allowDecimals);
-    const clamped = clamp(parsed);
-    if (clamped !== value) onChange(clamped);
+    const next = finalizedNumeric(localRaw, allowDecimals, decimalPlaces, clamp);
+    if (numericChanged(next, value, allowDecimals, decimalPlaces)) {
+      onChange(next);
+    }
     setLocalRaw("");
-  }, [localRaw, value, allowDecimals, onChange, clamp]);
+  }, [localRaw, value, allowDecimals, decimalPlaces, clamp, onChange]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const input = e.target;
-      const raw = input.value.replace(/,/g, "");
-      const digitsBeforeCursor = (input.value.slice(0, input.selectionStart ?? 0).match(/\d/g) || []).length;
+      const raw = e.target.value.replace(/,/g, "");
 
       if (allowDecimals) {
         if (raw === "" || raw === "." || /^\d*\.?\d*$/.test(raw)) {
           setLocalRaw(raw);
-          digitsBeforeCursorRef.current = digitsBeforeCursor;
-          const n = clamp(parseDisplayValue(raw, true));
+          if (!commitOnBlur) {
+            const n = clamp(parseDisplayValue(raw, true));
+            onChange(n);
+          }
+        }
+      } else if (raw === "" || /^\d*$/.test(raw)) {
+        setLocalRaw(raw);
+        if (!commitOnBlur) {
+          const n = clamp(parseDisplayValue(raw === "" ? "0" : raw, false));
           onChange(n);
         }
-      } else if (raw === "" || /^\d+$/.test(raw)) {
-        setLocalRaw(raw);
-        digitsBeforeCursorRef.current = digitsBeforeCursor;
-        const n = clamp(parseDisplayValue(raw, false));
-        onChange(n);
       }
     },
-    [allowDecimals, onChange, clamp],
+    [allowDecimals, commitOnBlur, onChange, clamp],
   );
 
   return (
     <input
       {...rest}
-      ref={inputRef}
       type="text"
       inputMode={allowDecimals ? "decimal" : "numeric"}
       value={displayValue}

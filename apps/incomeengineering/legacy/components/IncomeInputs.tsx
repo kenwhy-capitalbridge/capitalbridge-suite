@@ -48,7 +48,7 @@ export const IncomeInputs: React.FC = () => {
                     value={row.amount}
                     onChange={(v) => setIncomeRow(row.id, v)}
                     min={0}
-                    inputMode="decimal"
+                    inputMode="numeric"
                     aria-label={`Amount for ${row.label}`}
                     className="min-h-[40px] flex-1 min-w-0 border-0 bg-transparent p-0 text-sm text-[#F6F5F1] focus:ring-0 focus:outline-none touch-manipulation"
                   />

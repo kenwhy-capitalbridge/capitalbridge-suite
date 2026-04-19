@@ -882,8 +882,6 @@ const CalculatorScreen = forwardRef<
                         <FormattedNumberInput
                           value={inputs.targetMonthlyIncome}
                           onChange={(v) => update({ targetMonthlyIncome: v })}
-                          allowDecimals
-                          decimalPlaces={2}
                           min={0}
                           className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
                           aria-label="Desired Monthly Income"
@@ -921,8 +919,6 @@ const CalculatorScreen = forwardRef<
                               <FormattedNumberInput
                                 value={inputs.targetFutureCapital}
                                 onChange={(v) => update({ targetFutureCapital: v })}
-                                allowDecimals
-                                decimalPlaces={2}
                                 min={0}
                                 className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
                                 aria-label="Desired Future Capital"
@@ -1034,8 +1030,6 @@ const CalculatorScreen = forwardRef<
                               <FormattedNumberInput
                                 value={inputs.startingCapital}
                                 onChange={(v) => update({ startingCapital: v })}
-                                allowDecimals
-                                decimalPlaces={2}
                                 min={0}
                                 className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
                               />
@@ -1074,7 +1068,7 @@ const CalculatorScreen = forwardRef<
                   value={inputs.expectedAnnualReturnPct}
                   onChange={(v) => update({ expectedAnnualReturnPct: v })}
                   allowDecimals
-                  decimalPlaces={1}
+                  decimalPlaces={2}
                   min={0}
                   max={15}
                   className="flex-1 py-2 pl-3 pr-2 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
@@ -1103,8 +1097,6 @@ const CalculatorScreen = forwardRef<
                 <FormattedNumberInput
                   value={inputs.monthlyTopUp}
                   onChange={(v) => update({ monthlyTopUp: v })}
-                  allowDecimals
-                  decimalPlaces={2}
                   min={0}
                   className="flex-1 py-2 pl-2 pr-3 bg-transparent text-[#0D3A1D] min-w-0 focus:outline-none"
                 />

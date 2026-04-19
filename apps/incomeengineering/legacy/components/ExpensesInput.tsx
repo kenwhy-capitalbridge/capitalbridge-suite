@@ -36,7 +36,7 @@ export const ExpensesInput: React.FC = () => {
             onChange={handleChange}
             min={0}
             max={maxDisplay}
-            inputMode="decimal"
+            inputMode="numeric"
             aria-label={viewMode === 'annual' ? 'Yearly Expenses Amount' : 'Monthly Expenses Amount'}
             className="min-h-[40px] flex-1 min-w-0 border-0 bg-transparent p-0 text-sm text-[#F6F5F1] focus:ring-0 focus:outline-none touch-manipulation"
           />
