@@ -47,20 +47,32 @@ export function PdfChartBlock({
   const wrap = `${CB_REPORT_CHART_WRAP} ${className}`.trim();
   const titleIsString = typeof title === "string";
 
+  const titleNode =
+    title != null && title !== false ? (
+      titleIsString ? (
+        <div
+          className="cb-pdf-chart-block-title m-0 mb-2 text-[11pt] font-bold leading-snug text-[#0d3a1d] print:mb-2"
+          style={{ fontFamily: REPORT_FONT_DISPLAY, ...titleStyle }}
+        >
+          {title}
+        </div>
+      ) : (
+        <div className="cb-pdf-chart-block-title-slot m-0 mb-2 print:mb-2">{title}</div>
+      )
+    ) : null;
+
+  /** Title / lead copy stay with the chart but outside `<figure>` (figure = plot + legend only). */
   return (
-    <figure className={wrap} style={{ margin: "1em 0", pageBreakInside: "avoid" as const }}>
-      {title != null && title !== false ? (
-        titleIsString ? (
-          <div
-            className="cb-pdf-chart-block-title m-0 mb-2 text-[11pt] font-bold leading-snug text-[#0d3a1d] print:mb-2"
-            style={{ fontFamily: REPORT_FONT_DISPLAY, ...titleStyle }}
-          >
-            {title}
-          </div>
-        ) : (
-          <div className="cb-pdf-chart-block-title-slot m-0 mb-2 print:mb-2">{title}</div>
-        )
-      ) : null}
+    <div
+      className="cb-pdf-chart-block"
+      style={{
+        margin: "1em 0",
+        breakInside: "avoid" as const,
+        pageBreakInside: "avoid" as const,
+      }}
+    >
+      {titleNode}
+      <figure className={wrap} style={{ margin: 0, breakInside: "avoid" as const, pageBreakInside: "avoid" as const }}>
       {whatThisShows !== false ? (
         <>
           {whatThisShowsHeading !== false ? (
@@ -85,5 +97,6 @@ export function PdfChartBlock({
         </>
       ) : null}
     </figure>
+    </div>
   );
 }
