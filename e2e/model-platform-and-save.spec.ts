@@ -25,6 +25,23 @@ function platformOrigin(): string {
   return envOrigin("CB_E2E_PLATFORM_ORIGIN", "https://platform.thecapitalbridge.com");
 }
 
+async function assertNotAtLoginGate(page: import("@playwright/test").Page, contextLabel: string): Promise<void> {
+  const url = page.url();
+  const pathName = new URL(url).pathname;
+  const onAccessPath = pathName === "/access" || pathName === "/access/";
+  const hasWelcomeBackHeading = await page
+    .getByRole("heading", { name: /welcome back/i })
+    .isVisible()
+    .catch(() => false);
+
+  if (onAccessPath || hasWelcomeBackHeading) {
+    throw new Error(
+      `[E2E auth] ${contextLabel}: landed on login gate (${url}). ` +
+        `The storage state is likely expired. Regenerate and update CB_E2E_STORAGE_JSON.`,
+    );
+  }
+}
+
 test.describe("Forever model (signed-in)", () => {
   test.beforeEach(() => {
     test.skip(
@@ -40,6 +57,7 @@ test.describe("Forever model (signed-in)", () => {
     const wantHost = new URL(platformOrigin()).hostname;
 
     await page.goto(`${forever}/dashboard`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await assertNotAtLoginGate(page, "BACK link reaches platform hostname");
 
     const back = page.getByRole("link", { name: /back to capital bridge platform/i });
     await back.waitFor({ state: "visible", timeout: 30_000 });
@@ -58,6 +76,7 @@ test.describe("Forever model (signed-in)", () => {
     const forever = foreverOrigin();
 
     await page.goto(`${forever}/dashboard`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await assertNotAtLoginGate(page, "Save posts advisory snapshot");
 
     const saveOff = page.getByText("Save off", { exact: true });
     if (await saveOff.isVisible().catch(() => false)) {
