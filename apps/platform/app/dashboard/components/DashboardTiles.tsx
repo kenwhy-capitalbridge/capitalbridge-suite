@@ -29,8 +29,8 @@ const MODEL_URLS: Record<string, string> = {
       : "https://capitalstress.thecapitalbridge.com",
 };
 
-/** In-app priority access flow (auth required by /solutions). */
-const STRATEGIC_EXECUTION_HREF = "/solutions";
+/** In-app Strategic Execution flow. */
+const STRATEGIC_EXECUTION_HREF = "/solutions/strategic-execution";
 
 /** Trial-tier SPAs (Vite); open at site root — no `/dashboard`, no Supabase model hub. */
 const TRIAL_MODEL_URLS: Record<string, string> = {

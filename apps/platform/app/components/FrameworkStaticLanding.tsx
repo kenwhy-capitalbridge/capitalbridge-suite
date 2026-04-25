@@ -208,7 +208,7 @@ export async function FrameworkStaticLanding({
                   <hr className="cb-module-divider" />
                   <p className="cb-module-desc">Early access when structured execution goes live.</p>
                   <span className="cb-module-label">Next step:</span>
-                  <FrameworkLaunchRow buttons={[{ href: "/solutions", label: "Request Access" }]} />
+                  <FrameworkLaunchRow buttons={[{ href: "/solutions/strategic-execution", label: "Request Access" }]} />
                 </div>
               </article>
             </div>
