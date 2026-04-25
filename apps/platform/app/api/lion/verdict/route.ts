@@ -1,0 +1,287 @@
+import { NextResponse } from "next/server";
+import { createAppServerClient } from "@cb/supabase/server";
+import {
+  runLionPipeline,
+  type LionPipelineModelRunInput,
+  type NormalizedMetrics,
+} from "@cb/lion-verdict";
+
+export const dynamic = "force-dynamic";
+
+type ModelKey =
+  | "income-engineering-model"
+  | "capital-health-model"
+  | "capital-stress-model"
+  | "forever-income-model";
+
+type RequiredModel = {
+  model_key: ModelKey;
+  criticality: "HIGH" | "MEDIUM";
+};
+
+type JsonObject = Record<string, unknown>;
+
+const REQUIRED_MODELS: RequiredModel[] = [
+  { model_key: "income-engineering-model", criticality: "HIGH" },
+  { model_key: "capital-health-model", criticality: "HIGH" },
+  { model_key: "capital-stress-model", criticality: "MEDIUM" },
+  { model_key: "forever-income-model", criticality: "MEDIUM" },
+];
+
+const MODEL_KEYS = new Set<string>(
+  REQUIRED_MODELS.map((model) => model.model_key)
+);
+
+function isObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeReason(reason: unknown): string[] {
+  if (Array.isArray(reason)) {
+    return Array.from(
+      new Set(reason.filter((value): value is string => typeof value === "string"))
+    ).sort();
+  }
+
+  if (typeof reason === "string" && reason.trim()) {
+    return [reason.trim()];
+  }
+
+  return [];
+}
+
+function actionLabel(actionCode: string): string {
+  switch (actionCode) {
+    case "increase_income":
+      return "Increase income";
+    case "reduce_obligations":
+    case "reduce_obligation":
+      return "Reduce obligations";
+    case "increase_liquidity_buffer":
+      return "Increase liquidity buffer";
+    case "extend_runway":
+      return "Extend runway";
+    case "improve_resilience":
+      return "Improve resilience";
+    case "define_income_streams":
+      return "Define income streams";
+    case "define_obligations":
+      return "Define obligations";
+    case "establish_capital_base":
+      return "Define capital base";
+    case "define_withdrawal_strategy":
+      return "Define withdrawal strategy";
+    case "complete_required_inputs":
+      return "Complete required inputs";
+    default:
+      return actionCode
+        .split("_")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+  }
+}
+
+function actionDeepLink(actionCode: string): string | undefined {
+  switch (actionCode) {
+    case "increase_income":
+    case "define_income_streams":
+      return "/framework";
+    case "reduce_obligations":
+    case "reduce_obligation":
+    case "define_obligations":
+      return "/framework";
+    case "establish_capital_base":
+    case "define_withdrawal_strategy":
+    case "complete_required_inputs":
+      return "/framework";
+    default:
+      return undefined;
+  }
+}
+
+function priorityForIndex(index: number): 1 | 2 | 3 {
+  if (index <= 0) return 1;
+  if (index === 1) return 2;
+  return 3;
+}
+
+function fallbackRunForMissingModel(model: RequiredModel): LionPipelineModelRunInput {
+  return {
+    model_key: model.model_key,
+    status: "invalid_preconditions",
+    output_normalized: {
+      metrics: null,
+      reason:
+        model.criticality === "HIGH"
+          ? ["preconditions_not_met"]
+          : [],
+    },
+  };
+}
+
+export async function GET() {
+  try {
+    const supabase = await createAppServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    const { data: runs, error: runsError } = await supabase
+      .schema("public")
+      .from("model_runs")
+      .select("id, model_key, status, created_at, updated_at")
+      .eq("user_id", user.id)
+      .in("model_key", Array.from(MODEL_KEYS))
+      .order("updated_at", { ascending: false });
+
+    if (runsError) {
+      console.error("[api/lion/verdict] model_runs query failed", runsError.message);
+      return NextResponse.json({ error: "model_runs_query_failed" }, { status: 500 });
+    }
+
+    const latestRuns = new Map<string, {
+      id: string;
+      model_key: string;
+      status: "completed" | "invalid_preconditions" | "failed" | string;
+    }>();
+
+    for (const run of runs ?? []) {
+      if (typeof run.model_key !== "string" || latestRuns.has(run.model_key)) {
+        continue;
+      }
+
+      latestRuns.set(run.model_key, {
+        id: String(run.id),
+        model_key: run.model_key,
+        status: String(run.status),
+      });
+    }
+
+    const runIds = Array.from(latestRuns.values()).map((run) => run.id);
+    const outputsByRunId = new Map<string, JsonObject>();
+
+    if (runIds.length > 0) {
+      const { data: outputs, error: outputsError } = await supabase
+        .schema("public")
+        .from("model_outputs")
+        .select("run_id, payload, created_at")
+        .in("run_id", runIds)
+        .order("created_at", { ascending: false });
+
+      if (outputsError) {
+        console.error("[api/lion/verdict] model_outputs query failed", outputsError.message);
+        return NextResponse.json({ error: "model_outputs_query_failed" }, { status: 500 });
+      }
+
+      for (const output of outputs ?? []) {
+        const runId = String(output.run_id);
+        if (outputsByRunId.has(runId)) continue;
+        outputsByRunId.set(
+          runId,
+          isObject(output.payload) ? output.payload : {}
+        );
+      }
+    }
+
+    const modelRuns: LionPipelineModelRunInput[] = REQUIRED_MODELS.map((model) => {
+      const run = latestRuns.get(model.model_key);
+      if (!run) return fallbackRunForMissingModel(model);
+
+      const payload = outputsByRunId.get(run.id) ?? {};
+      const normalized = isObject(payload.output_normalized)
+        ? payload.output_normalized
+        : {};
+
+      if (run.status === "completed") {
+        return {
+          model_key: model.model_key,
+          status: "completed",
+          output_normalized: {
+            metrics: isObject(normalized.metrics)
+              ? (normalized.metrics as NormalizedMetrics)
+              : null,
+            reason: normalizeReason(normalized.reason),
+          },
+        };
+      }
+
+      if (run.status === "invalid_preconditions") {
+        return {
+          model_key: model.model_key,
+          status: "invalid_preconditions",
+          output_normalized: {
+            metrics: null,
+            reason: normalizeReason(normalized.reason),
+          },
+        };
+      }
+
+      return {
+        model_key: model.model_key,
+        status: "failed",
+        output_normalized: {
+          metrics: null,
+          reason: ["preconditions_not_met"],
+        },
+      };
+    });
+
+    const missingModels = REQUIRED_MODELS.filter(
+      (model) => !latestRuns.has(model.model_key)
+    );
+    const hasMissingCritical = missingModels.some(
+      (model) => model.criticality === "HIGH"
+    );
+    const executionGate = hasMissingCritical
+      ? {
+          level: "BLOCKED" as const,
+          reason: "MISSING_CRITICAL_MODELS" as const,
+        }
+      : missingModels.length > 0
+        ? {
+            level: "RESTRICTED" as const,
+            reason: "MISSING_NON_CRITICAL_MODELS" as const,
+          }
+        : {
+            level: "ALLOWED" as const,
+            reason: "VALID" as const,
+          };
+
+    const pipeline = runLionPipeline(modelRuns, {
+      capital_graph_id: user.id,
+      version: 0,
+      model_key: "multi_model",
+      tier: "STRATEGIC",
+    });
+
+    return NextResponse.json({
+      lion_status: pipeline.verdict.lion_status,
+      agreement_level: pipeline.verdict.agreement_level,
+      signal_summary: pipeline.verdict.signal_summary,
+      reason: pipeline.verdict.reason,
+      missing_models: missingModels,
+      execution_gate: executionGate,
+      progress: pipeline.progress,
+      narrative: {
+        headline: pipeline.verdict.headline,
+        what_is_happening: pipeline.verdict.narrative.what_is_happening,
+        what_will_happen: pipeline.verdict.narrative.what_will_happen,
+        what_must_be_done: pipeline.verdict.narrative.what_must_be_done,
+      },
+      actions: pipeline.verdict.action_codes.map((actionCode, index) => ({
+        action_code: actionCode,
+        label: actionLabel(actionCode),
+        priority: priorityForIndex(index),
+        deep_link: actionDeepLink(actionCode),
+      })),
+    });
+  } catch (error) {
+    console.error("[api/lion/verdict]", error);
+    return NextResponse.json({ error: "lion_verdict_failed" }, { status: 500 });
+  }
+}

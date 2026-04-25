@@ -1,0 +1,894 @@
+{
+  "schema_version": "1.0.0",
+  "id": "capital-core-phase1-spec",
+  "title": "Capital Core Phase 1 Specification",
+  "purpose": "Implementation-ready data contracts for Capital Bridge Phase 1 foundation: canonical capital state, model output normalization, execution plan primitives, and reconciliation baseline.",
+  "status": {
+    "layer": "[B-LAYER -> implementation target]",
+    "rollout_rule": "Phase 1 contracts must ship before dashboard becomes system authority."
+  },
+  "global_conventions": {
+    "id_format": "UUID v4",
+    "timestamp_format": "ISO-8601 UTC",
+    "currency_format": "ISO 4217 code (e.g. MYR, SGD, USD)",
+    "decimal_policy": "Store high precision decimals as strings in persistence; cast to number in app layer where safe.",
+    "soft_delete_policy": "Use deleted_at nullable timestamp for records requiring auditability.",
+    "source_of_truth_priority": [
+      "partner_feed",
+      "user_confirmed",
+      "user_manual",
+      "model_derived"
+    ]
+  },
+  "enums": {
+    "entity_type": [
+      "person",
+      "trust",
+      "company"
+    ],
+    "asset_type": [
+      "cash",
+      "portfolio",
+      "property",
+      "insurance",
+      "private_asset",
+      "other"
+    ],
+    "liability_type": [
+      "mortgage",
+      "term_loan",
+      "credit_facility",
+      "margin",
+      "other"
+    ],
+    "income_type": [
+      "salary",
+      "dividend",
+      "coupon",
+      "rental",
+      "business",
+      "other"
+    ],
+    "obligation_type": [
+      "living_expense",
+      "debt_service",
+      "insurance_premium",
+      "education",
+      "other"
+    ],
+    "partner_type": [
+      "bank",
+      "broker",
+      "platform",
+      "trustee",
+      "accounting_firm",
+      "insurer",
+      "other_regulated_counterparty"
+    ],
+    "record_source": [
+      "user_manual",
+      "user_confirmed",
+      "partner_feed",
+      "system_generated",
+      "model_derived"
+    ],
+    "model_key": [
+      "forever_income",
+      "income_engineering",
+      "capital_health",
+      "capital_stress"
+    ],
+    "execution_action_type": [
+      "allocate",
+      "rebalance",
+      "refinance",
+      "de_risk",
+      "increase_income",
+      "reduce_obligation",
+      "redeem",
+      "transfer",
+      "other"
+    ],
+    "execution_status": [
+      "draft",
+      "pending_client_confirmation",
+      "submitted_to_partner",
+      "in_progress",
+      "completed",
+      "cancelled",
+      "failed"
+    ],
+    "variance_level": [
+      "normal",
+      "watch",
+      "warning",
+      "critical"
+    ],
+    "metric_semantic_scope": [
+      "model_scoped",
+      "cross_model_canonical"
+    ]
+  },
+  "core_entities_contracts": {
+    "capital_graph": {
+      "description": "Canonical state container for one client profile.",
+      "required_fields": [
+        "capital_graph_id",
+        "user_id",
+        "base_currency",
+        "as_of",
+        "version",
+        "created_at",
+        "updated_at"
+      ],
+      "shape": {
+        "capital_graph_id": "uuid",
+        "user_id": "uuid",
+        "base_currency": "currency_code",
+        "as_of": "timestamp",
+        "version": "integer",
+        "notes": "string|null",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    },
+    "entities": {
+      "description": "People or legal entities linked to the capital graph.",
+      "required_fields": [
+        "entity_id",
+        "capital_graph_id",
+        "entity_type",
+        "display_name",
+        "ownership_ratio",
+        "is_primary",
+        "source",
+        "as_of"
+      ],
+      "shape": {
+        "entity_id": "uuid",
+        "capital_graph_id": "uuid",
+        "entity_type": "enum:entity_type",
+        "display_name": "string",
+        "jurisdiction": "string|null",
+        "ownership_ratio": "decimal_string_0_to_1",
+        "is_primary": "boolean",
+        "source": "enum:record_source",
+        "as_of": "timestamp",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    },
+    "assets": {
+      "required_fields": [
+        "asset_id",
+        "capital_graph_id",
+        "entity_id",
+        "asset_type",
+        "label",
+        "market_value",
+        "currency",
+        "liquidity_days",
+        "source",
+        "as_of"
+      ],
+      "shape": {
+        "asset_id": "uuid",
+        "capital_graph_id": "uuid",
+        "entity_id": "uuid",
+        "asset_type": "enum:asset_type",
+        "label": "string",
+        "market_value": "decimal_string",
+        "cost_basis": "decimal_string|null",
+        "currency": "currency_code",
+        "liquidity_days": "integer_non_negative",
+        "income_yield_annual_pct": "decimal_string|null",
+        "risk_bucket": "string|null",
+        "partner_link_id": "uuid|null",
+        "source": "enum:record_source",
+        "as_of": "timestamp",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    },
+    "liabilities": {
+      "required_fields": [
+        "liability_id",
+        "capital_graph_id",
+        "entity_id",
+        "liability_type",
+        "label",
+        "outstanding_balance",
+        "currency",
+        "minimum_monthly_payment",
+        "source",
+        "as_of"
+      ],
+      "shape": {
+        "liability_id": "uuid",
+        "capital_graph_id": "uuid",
+        "entity_id": "uuid",
+        "liability_type": "enum:liability_type",
+        "label": "string",
+        "outstanding_balance": "decimal_string",
+        "interest_rate_annual_pct": "decimal_string|null",
+        "maturity_date": "date|null",
+        "currency": "currency_code",
+        "minimum_monthly_payment": "decimal_string",
+        "secured_by_asset_id": "uuid|null",
+        "partner_link_id": "uuid|null",
+        "source": "enum:record_source",
+        "as_of": "timestamp",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    },
+    "income_streams": {
+      "required_fields": [
+        "income_stream_id",
+        "capital_graph_id",
+        "entity_id",
+        "income_type",
+        "label",
+        "gross_amount_monthly",
+        "currency",
+        "stability_score",
+        "source",
+        "as_of"
+      ],
+      "shape": {
+        "income_stream_id": "uuid",
+        "capital_graph_id": "uuid",
+        "entity_id": "uuid",
+        "income_type": "enum:income_type",
+        "label": "string",
+        "gross_amount_monthly": "decimal_string",
+        "currency": "currency_code",
+        "stability_score": "integer_0_to_100",
+        "frequency": "string",
+        "is_active": "boolean",
+        "partner_link_id": "uuid|null",
+        "source": "enum:record_source",
+        "as_of": "timestamp",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    },
+    "obligations": {
+      "required_fields": [
+        "obligation_id",
+        "capital_graph_id",
+        "entity_id",
+        "obligation_type",
+        "label",
+        "amount_monthly",
+        "currency",
+        "is_discretionary",
+        "source",
+        "as_of"
+      ],
+      "shape": {
+        "obligation_id": "uuid",
+        "capital_graph_id": "uuid",
+        "entity_id": "uuid",
+        "obligation_type": "enum:obligation_type",
+        "label": "string",
+        "amount_monthly": "decimal_string",
+        "currency": "currency_code",
+        "is_discretionary": "boolean",
+        "notes": "string|null",
+        "source": "enum:record_source",
+        "as_of": "timestamp",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    },
+    "structures": {
+      "required_fields": [
+        "structure_id",
+        "capital_graph_id",
+        "name",
+        "target_income_monthly",
+        "target_return_annual_pct",
+        "liquidity_buffer_months",
+        "source",
+        "as_of"
+      ],
+      "shape": {
+        "structure_id": "uuid",
+        "capital_graph_id": "uuid",
+        "name": "string",
+        "target_income_monthly": "decimal_string",
+        "target_return_annual_pct": "decimal_string",
+        "liquidity_buffer_months": "integer_non_negative",
+        "max_drawdown_tolerance_pct": "decimal_string|null",
+        "reinvestment_policy": "string|null",
+        "source": "enum:record_source",
+        "as_of": "timestamp",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    },
+    "partner_links": {
+      "required_fields": [
+        "partner_link_id",
+        "capital_graph_id",
+        "partner_type",
+        "partner_name",
+        "account_reference_masked",
+        "integration_mode",
+        "status",
+        "as_of"
+      ],
+      "shape": {
+        "partner_link_id": "uuid",
+        "capital_graph_id": "uuid",
+        "partner_type": "enum:partner_type",
+        "partner_name": "string",
+        "account_reference_masked": "string",
+        "integration_mode": "string",
+        "status": "string",
+        "jurisdiction": "string|null",
+        "last_sync_at": "timestamp|null",
+        "as_of": "timestamp",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "deleted_at": "timestamp|null"
+      }
+    }
+  },
+  "snapshot_contracts": {
+    "capital_snapshot": {
+      "description": "Periodic aggregate state from canonical entities.",
+      "determinism_rules": [
+        "For identical input state, snapshot output must be identical.",
+        "No hidden randomness, no time-dependent mutation, and no partial-read aggregation.",
+        "Snapshot generation must run after a committed state write boundary."
+      ],
+      "inclusion_rules": [
+        "Only records with deleted_at IS NULL are included.",
+        "Only records with as_of <= capital_graph.as_of are included.",
+        "All records must match the same capital_graph_id.",
+        "Snapshot must be computed against a consistent read of all tables within a single transaction boundary."
+      ],
+      "transaction_requirements": [
+        "Snapshot must execute within a single database transaction.",
+        "Transaction isolation level must guarantee a consistent snapshot (REPEATABLE READ or stronger).",
+        "All aggregation queries must execute within the same transaction context.",
+        "No external reads or cross-request aggregation allowed."
+      ],
+      "transaction_isolation_operational_note": "Isolation is primarily enforced via version pinning and transactional RPC execution. Database isolation level should be configured at the infrastructure level to guarantee consistent reads; do not rely on SET TRANSACTION ISOLATION LEVEL inside the function body/header.",
+      "authority_anchor": "capital_graph_id + version",
+      "anchor_enforcement_rules": [
+        "Snapshot must only be generated after capital_graph.version is finalized for the write operation.",
+        "Snapshot queries must explicitly filter by capital_graph_id AND capital_graph_version.",
+        "No 'latest state' queries are allowed in snapshot generation."
+      ],
+      "validation_expectations": [
+        "computed_from.assets_count must equal actual counted rows used in aggregation.",
+        "computed_from.liabilities_count must equal actual counted rows used in aggregation.",
+        "computed_from.income_streams_count must equal actual counted rows used in aggregation.",
+        "computed_from.obligations_count must equal actual counted rows used in aggregation.",
+        "If any count mismatch or null aggregation occurs, snapshot generation must fail rather than return partial data."
+      ],
+      "domain_completeness_boundary": "Snapshot validity is structural (internal consistency) and does not require income presence. Economic completeness requirements (for example income-required flows) are enforced at model/Lion precondition layers.",
+      "observability_flags": {
+        "status": "[B-LAYER future]",
+        "flags": [
+          "snapshot_row_count_anomaly_detection",
+          "sudden_drop_or_spike_in_counts_flag"
+        ]
+      },
+      "required_fields": [
+        "snapshot_id",
+        "capital_graph_id",
+        "capital_graph_version",
+        "snapshot_at",
+        "base_currency",
+        "total_assets",
+        "total_liabilities",
+        "net_worth",
+        "monthly_income_total",
+        "monthly_obligations_total",
+        "liquidity_buffer_months",
+        "computed_from"
+      ],
+      "shape": {
+        "snapshot_id": "uuid",
+        "capital_graph_id": "uuid",
+        "capital_graph_version": "integer",
+        "snapshot_at": "timestamp",
+        "base_currency": "currency_code",
+        "total_assets": "decimal_string",
+        "total_liabilities": "decimal_string",
+        "net_worth": "decimal_string",
+        "monthly_income_total": "decimal_string",
+        "monthly_obligations_total": "decimal_string",
+        "monthly_surplus": "decimal_string",
+        "liquidity_buffer_months": "decimal_string",
+        "computed_from_record_count": "integer",
+        "computed_from": {
+          "assets_count": "integer",
+          "liabilities_count": "integer",
+          "income_streams_count": "integer",
+          "obligations_count": "integer"
+        },
+        "created_at": "timestamp"
+      }
+    },
+    "model_run_snapshot": {
+      "description": "Normalized output envelope for each model run.",
+      "required_fields": [
+        "model_run_id",
+        "capital_graph_id",
+        "model_key",
+        "run_at",
+        "input_signature",
+        "output_normalized"
+      ],
+      "shape": {
+        "model_run_id": "uuid",
+        "capital_graph_id": "uuid",
+        "model_key": "enum:model_key",
+        "run_at": "timestamp",
+        "input_signature": "string",
+        "output_normalized": {
+          "metric_scope": "enum:metric_semantic_scope",
+          "metrics": {
+            "cashflow_coverage_ratio": "decimal_string|null",
+            "withdrawal_sustainability_ratio": "decimal_string|null",
+            "required_capital": "decimal_string|null",
+            "capital_gap": "decimal_string|null",
+            "runway_months": "decimal_string|null",
+            "resilience_score_0_100": "decimal_string|null",
+            "survival_probability_pct": "decimal_string|null",
+            "income_gap_monthly": "decimal_string|null"
+          },
+          "model_specific_payload": "json_object"
+        },
+        "created_at": "timestamp"
+      }
+    }
+  },
+  "model_preconditions_contract": {
+    "purpose": "Model-layer domain completeness rules. These are enforced at model execution time, not snapshot generation time.",
+    "run_state_authority": "model_runs.status is authoritative for run state. output_normalized carries explanatory payload and metrics, but does not override model_runs.status.",
+    "invalid_run_state": {
+      "status": "invalid_preconditions",
+      "required_fields": [
+        "model_key",
+        "status",
+        "reason"
+      ],
+      "reason_shape": "string (single taxonomy code) OR string[] (multiple codes, deduped and sorted in API responses)",
+      "reason_taxonomy": [
+        "no_income_streams",
+        "no_obligations",
+        "no_assets",
+        "withdrawal_not_defined",
+        "preconditions_not_met"
+      ]
+    },
+    "run_state_invariants": [
+      "If model_runs.status = invalid_preconditions, output_normalized.metrics MUST be null.",
+      "If model_runs.status = invalid_preconditions, output_normalized.model_specific_payload MUST be null only (empty object is not allowed; avoids dual semantics downstream).",
+      "If model_runs.status = completed, output_normalized.metrics MUST NOT be null.",
+      "If model_runs.status = completed, all model-required metric keys for that model_key MUST be present and non-null (no partial completion)."
+    ],
+    "completed_metric_keys_by_model_key": {
+      "income-engineering-model": ["cashflow_coverage_ratio", "income_gap_monthly"],
+      "capital-stress-model": ["survival_probability_pct", "resilience_score_0_100"],
+      "capital-health-model": ["withdrawal_sustainability_ratio", "runway_months"],
+      "forever-income-model": ["required_capital", "runway_months"]
+    },
+    "lion_invalid_preconditions_contract": {
+      "authority_doc": "docs/LION_DECISION_SYSTEM_MASTER.md",
+      "behavior": "Lion maps output_normalized.reason (taxonomy string[]) deterministically to three blocks: what_is_happening, what_will_happen, what_must_be_done. Full lion_status mapping, signal→band→status rules, tier slicing, and headline determinism are defined only in authority_doc. No invented numbers, inferred income, or inferred expenses.",
+      "non_goals": [
+        "Do not reinterpret taxonomy codes into new semantics.",
+        "Do not soften refusal into speculative yield or expense estimates."
+      ],
+      "reference_example_reasons": ["no_income_streams", "no_obligations"]
+    },
+    "rules": {
+      "income_engineering": {
+        "requires": [
+          "computed_from.income_streams_count > 0",
+          "computed_from.obligations_count > 0"
+        ],
+        "on_fail": "invalid_preconditions"
+      },
+      "capital_health_withdrawal_mode": {
+        "requires_any": [
+          "computed_from.income_streams_count > 0",
+          "withdrawal_defined = true"
+        ],
+        "on_fail": "invalid_preconditions"
+      },
+      "capital_stress": {
+        "requires": [
+          "computed_from.assets_count > 0"
+        ],
+        "on_fail": "invalid_preconditions"
+      },
+      "forever_income": {
+        "requires": [
+          "computed_from.assets_count > 0"
+        ],
+        "on_fail": "invalid_preconditions"
+      }
+    }
+  },
+  "execution_action_schema": {
+    "description": "Manual-first execution coordination primitives (no custody, no direct trade execution in platform).",
+    "required_fields": [
+      "execution_action_id",
+      "capital_graph_id",
+      "action_type",
+      "title",
+      "rationale",
+      "partner_type",
+      "status",
+      "priority",
+      "created_by",
+      "created_at"
+    ],
+    "shape": {
+      "execution_action_id": "uuid",
+      "capital_graph_id": "uuid",
+      "action_type": "enum:execution_action_type",
+      "title": "string",
+      "rationale": "string",
+      "recommended_amount": "decimal_string|null",
+      "currency": "currency_code|null",
+      "target_effect_metric": "string|null",
+      "partner_type": "enum:partner_type",
+      "partner_link_id": "uuid|null",
+      "status": "enum:execution_status",
+      "priority": "integer_1_to_5",
+      "due_date": "date|null",
+      "owner_user_id": "uuid|null",
+      "created_by": "uuid",
+      "last_status_change_at": "timestamp",
+      "created_at": "timestamp",
+      "updated_at": "timestamp",
+      "deleted_at": "timestamp|null"
+    },
+    "status_transition_rules": [
+      "draft -> pending_client_confirmation",
+      "pending_client_confirmation -> submitted_to_partner | cancelled",
+      "submitted_to_partner -> in_progress | failed",
+      "in_progress -> completed | failed | cancelled",
+      "failed -> in_progress | cancelled",
+      "completed is terminal",
+      "cancelled is terminal"
+    ],
+    "audit_event_shape": {
+      "execution_event_id": "uuid",
+      "execution_action_id": "uuid",
+      "from_status": "enum:execution_status|null",
+      "to_status": "enum:execution_status",
+      "actor_user_id": "uuid|null",
+      "actor_type": "string",
+      "note": "string|null",
+      "metadata": "json_object",
+      "event_at": "timestamp"
+    }
+  },
+  "reconciliation_schema": {
+    "description": "Baseline expected-versus-actual comparison contract powering alerts.",
+    "required_fields": [
+      "reconciliation_id",
+      "capital_graph_id",
+      "period_start",
+      "period_end",
+      "expected_snapshot_id",
+      "actual_snapshot_id",
+      "generated_at"
+    ],
+    "shape": {
+      "reconciliation_id": "uuid",
+      "capital_graph_id": "uuid",
+      "period_start": "date",
+      "period_end": "date",
+      "expected_snapshot_id": "uuid",
+      "actual_snapshot_id": "uuid",
+      "generated_at": "timestamp",
+      "variance": {
+        "income_gap_amount": "decimal_string",
+        "income_gap_pct": "decimal_string",
+        "return_deviation_pct": "decimal_string|null",
+        "obligation_overrun_amount": "decimal_string",
+        "structure_drift_score_0_100": "decimal_string",
+        "liquidity_risk_level": "enum:variance_level"
+      },
+      "summary_level": "enum:variance_level",
+      "recommended_actions": [
+        {
+          "action_hint": "string",
+          "reason": "string",
+          "linked_execution_action_id": "uuid|null"
+        }
+      ]
+    },
+    "alert_contract": {
+      "required_fields": [
+        "alert_id",
+        "capital_graph_id",
+        "reconciliation_id",
+        "alert_type",
+        "severity",
+        "title",
+        "message",
+        "triggered_at",
+        "status"
+      ],
+      "shape": {
+        "alert_id": "uuid",
+        "capital_graph_id": "uuid",
+        "reconciliation_id": "uuid",
+        "alert_type": "string",
+        "severity": "enum:variance_level",
+        "title": "string",
+        "message": "string",
+        "metric_key": "string|null",
+        "threshold_value": "decimal_string|null",
+        "actual_value": "decimal_string|null",
+        "triggered_at": "timestamp",
+        "status": "string",
+        "acknowledged_by": "uuid|null",
+        "acknowledged_at": "timestamp|null",
+        "resolved_at": "timestamp|null"
+      }
+    }
+  },
+  "minimal_api_contracts_phase1": {
+    "description": "Implementation bootstrap endpoints; map to Next.js route handlers or service layer.",
+    "commands": [
+      {
+        "name": "upsert_capital_graph_snapshot",
+        "request_shape": {
+          "capital_graph": "core_entities_contracts.capital_graph.shape",
+          "entities": "array<core_entities_contracts.entities.shape> (optional; defer usage in Step 1)",
+          "assets": "array<core_entities_contracts.assets.shape>",
+          "liabilities": "array<core_entities_contracts.liabilities.shape>",
+          "income_streams": "array<core_entities_contracts.income_streams.shape>",
+          "obligations": "array<core_entities_contracts.obligations.shape>",
+          "structures": "array<core_entities_contracts.structures.shape> (optional; defer usage in Step 1)",
+          "partner_links": "array<core_entities_contracts.partner_links.shape> (optional; defer usage in Step 1)"
+        },
+        "response_shape": {
+          "capital_graph_id": "uuid",
+          "version": "integer",
+          "updated_at": "timestamp"
+        }
+      },
+      {
+        "name": "record_model_run_snapshot",
+        "request_shape": "snapshot_contracts.model_run_snapshot.shape",
+        "response_shape": {
+          "model_run_id": "uuid",
+          "stored": "boolean"
+        }
+      },
+      {
+        "name": "create_execution_action",
+        "request_shape": "execution_action_schema.shape",
+        "response_shape": {
+          "execution_action_id": "uuid",
+          "status": "enum:execution_status"
+        }
+      },
+      {
+        "name": "transition_execution_action_status",
+        "request_shape": {
+          "execution_action_id": "uuid",
+          "to_status": "enum:execution_status",
+          "note": "string|null"
+        },
+        "response_shape": {
+          "execution_action_id": "uuid",
+          "status": "enum:execution_status",
+          "last_status_change_at": "timestamp"
+        }
+      },
+      {
+        "name": "generate_reconciliation",
+        "request_shape": {
+          "capital_graph_id": "uuid",
+          "period_start": "date",
+          "period_end": "date",
+          "expected_snapshot_id": "uuid",
+          "actual_snapshot_id": "uuid"
+        },
+        "response_shape": "reconciliation_schema.shape"
+      }
+    ]
+  },
+  "phase1_execution_constraints": {
+    "intent": "Prevent Step 1 overbuild and preserve delivery velocity.",
+    "brutal_constraints": [
+      "Step 1 (core_state_bootstrap) must be completable in <= 2-3 engineering days.",
+      "If Step 1 exceeds this window, reduce scope immediately rather than expanding architecture.",
+      "Phase 1 assumes one capital_graph per user for operational proof.",
+      "Do not optimize multi-entity ownership graphs in Step 1."
+    ],
+    "step1_strict_scope_includes": [
+      "capital_graphs",
+      "capital_assets",
+      "capital_liabilities",
+      "capital_income_streams",
+      "capital_obligations",
+      "upsert_capital_graph_snapshot command"
+    ],
+    "step1_strict_scope_excludes": [
+      "capital_entities table usage beyond defaulting entity_id to user context",
+      "capital_partner_links table usage",
+      "execution_actions tables",
+      "reconciliations tables",
+      "snapshot and model-run tables beyond what Step 2/3 require"
+    ],
+    "temporary_simplification_rule": "For Step 1, entity_id may map to the user context directly; full multi-entity semantics are deferred."
+  },
+  "phase1_unresolved_and_known_gaps": {
+    "a_live_progress": [
+      "[A-LIVE] Step 1 migration is applied: advisory_v2.capital_graphs, capital_assets, capital_liabilities, capital_income_streams, capital_obligations, and upsert_capital_graph_snapshot are live in Supabase."
+    ],
+    "c_decisions_remaining": [
+      {
+        "topic": "metric_authority_layer",
+        "status": "[C-DECISION]",
+        "question": "Should cross-model metrics (for example coverage) become canonical or remain model-scoped permanently?",
+        "interim_rule": "Continue with metric_semantic_scope and explicit model-scoped labels."
+      },
+      {
+        "topic": "source_of_truth_conflict_policy",
+        "status": "[C-DECISION]",
+        "question": "How should conflicts be resolved when partner_feed and user-confirmed values disagree?",
+        "interim_rule": "Use source_of_truth_priority ordering, log conflict, require explicit operator resolution."
+      },
+      {
+        "topic": "override_permissions",
+        "status": "[C-DECISION]",
+        "question": "Who can override partner values and under what approvals/audit requirements?",
+        "interim_rule": "No silent overrides; all overrides require audit event with actor and reason."
+      }
+    ],
+    "a_live_structural_gaps": [
+      "[A-LIVE] Decision engine not implemented: no automated transformation from model outputs to execution actions.",
+      "[A-LIVE] Reconciliation-to-execution linkage not implemented: recommended actions are not rule-generated yet.",
+      "[A-LIVE] Timeline authority incomplete: no canonical rollback/version stitching API finalized."
+    ]
+  },
+  "phase1_delivery_playbook": {
+    "objective": "Ship a minimal, truthful, operational backbone before dashboard authority work.",
+    "anti_stall_rules": [
+      "Do not expand schema surface before first working vertical slice.",
+      "Do not add new enum families unless directly required by active implementation.",
+      "Do not optimize naming or abstraction beyond immediate build needs."
+    ],
+    "strict_build_sequence": [
+      {
+        "step": 1,
+        "name": "core_state_bootstrap",
+        "status": "completed",
+        "completed_at": "2026-04-23",
+        "migration_reference": "supabase/migrations/20260423130000_capital_core_phase1_step1.sql",
+        "verification": {
+          "write_path_tested": true,
+          "read_after_write_consistency": true,
+          "multi_update_version_increment_verified": true
+        },
+        "scope": [
+          "Create tables: capital_graphs, capital_assets, capital_liabilities, capital_income_streams, capital_obligations.",
+          "Implement command: upsert_capital_graph_snapshot.",
+          "Apply single-user assumption and defer entities/partner_links complexity."
+        ],
+        "exit_criteria": [
+          "One user capital graph can be created and updated end-to-end.",
+          "Assets, liabilities, income streams, and obligations persist with versioned graph context.",
+          "Implementation completes within 2-3 engineering days; otherwise scope is reduced."
+        ]
+      },
+      {
+        "step": 2,
+        "name": "snapshot_baseline",
+        "status": "active",
+        "non_goals": [
+          "No dashboard or reporting UX work.",
+          "No analytics expansion beyond required aggregate snapshot fields.",
+          "No partner integration or execution layer work in this step."
+        ],
+        "scope": [
+          "Create capital_snapshots table and basic aggregate computation.",
+          "Persist snapshot totals (assets, liabilities, net worth, monthly income, obligations, surplus).",
+          "Bind each snapshot to capital_graph_id + version."
+        ],
+        "exit_criteria": [
+          "At least one deterministic snapshot can be generated from stored core records.",
+          "Re-running snapshot generation for unchanged capital_graph_id + version produces identical values.",
+          "Snapshot generation fails explicitly on any validation_expectations breach (no partial or fallback output).",
+          "No downstream service reads aggregate data from base tables once snapshot is introduced."
+        ]
+      },
+      {
+        "step": 3,
+        "name": "single_model_wiring",
+        "scope": [
+          "Select one model (recommended: income_engineering).",
+          "Write normalized output to capital_model_run_snapshots using model_run_snapshot contract."
+        ],
+        "exit_criteria": [
+          "Model run can be recorded with output_normalized and metric_semantic_scope."
+        ]
+      },
+      {
+        "step": 4,
+        "name": "manual_execution_actions",
+        "scope": [
+          "Create execution_actions and execution_action_events tables.",
+          "Support create, status transition, and audit trail events."
+        ],
+        "exit_criteria": [
+          "Execution action can move through allowed state transitions with immutable event history."
+        ]
+      },
+      {
+        "step": 5,
+        "name": "minimal_reconciliation",
+        "scope": [
+          "Implement reconciliation generation for one period.",
+          "Compute at least income_gap variance and emit at least one alert contract record."
+        ],
+        "exit_criteria": [
+          "System can produce one reconciliation and one alert from expected vs actual snapshots."
+        ]
+      }
+    ],
+    "stop_condition_before_phase2": "After Step 5 succeeds in production-like environment, pause and review before any unified dashboard authority rollout."
+  },
+  "rollout_state": {
+    "step1_migration_applied": true,
+    "step1_migration_file": "supabase/migrations/20260423130000_capital_core_phase1_step1.sql",
+    "next_active_step": 2,
+    "next_required_artifact": "capital_snapshots (deterministic, anchored to capital_graph_id + version)",
+    "phase2_dashboard_authority_blocked_until_step5": true
+  },
+  "criteria_status": {
+    "step1_core_state_bootstrap": "satisfied",
+    "step1_migration_applied_in_supabase": "satisfied",
+    "step1_verification_completed": "satisfied",
+    "step2_plus_remaining": "pending"
+  },
+  "phase1_database_table_suggestions": [
+    "capital_graphs",
+    "capital_entities",
+    "capital_assets",
+    "capital_liabilities",
+    "capital_income_streams",
+    "capital_obligations",
+    "capital_structures",
+    "capital_partner_links",
+    "capital_snapshots",
+    "capital_model_run_snapshots",
+    "execution_actions",
+    "execution_action_events",
+    "reconciliations",
+    "reconciliation_alerts"
+  ],
+  "implementation_acceptance_criteria": [
+    "At least one canonical capital_graph per user can be created and versioned.",
+    "Each model can write normalized outputs into model_run_snapshot contract.",
+    "Execution actions can be created and progressed through valid status transitions with audit events.",
+    "A reconciliation can be generated for a period using expected and actual snapshots.",
+    "At least one alert can be generated from reconciliation variance.",
+    "Dashboard work may begin only after these criteria are met.",
+    "Phase 2 authority rollout is blocked until phase1_delivery_playbook Step 1-5 exit criteria are satisfied."
+  ]
+}

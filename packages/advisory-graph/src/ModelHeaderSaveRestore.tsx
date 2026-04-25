@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { ChromeSpinnerGlyph } from "@cb/ui";
+import { emitCapitalUpdatedDebounced } from "@cb/shared/capitalEvents";
 import { formatRollingSaveTimestamp } from "@cb/shared/reportIdentity";
 import { deriveEntitlements, type Persona } from "./platformAccess";
 import { useModelSaveHandlers } from "./ModelSaveHandlersContext";
@@ -165,6 +166,7 @@ export function ModelHeaderSaveRestore({
       return;
     }
     setSaveStatus("ok");
+    emitCapitalUpdatedDebounced();
     setRefreshToken((n) => n + 1);
     setTimeout(() => setSaveStatus("idle"), 2000);
   }, [userId, canSave, getHandlers, resolveSessionId, logTag]);

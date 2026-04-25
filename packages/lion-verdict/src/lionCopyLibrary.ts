@@ -1,4 +1,5 @@
 import { LION_COPY as BASE_LION_COPY, type Tier } from "../copy";
+import { deterministicPick } from "./utils/deterministic";
 
 export const LION_COPY: Record<Tier, { headlines: string[]; guidance: string[] }> = {
   STRONG: {
@@ -23,19 +24,9 @@ export const LION_COPY: Record<Tier, { headlines: string[]; guidance: string[] }
   },
 };
 
-export function pickRandom(arr: string[]) {
-  return arr[Math.floor(Math.random() * arr.length)];
+export function pickRandom(arr: string[], seed = "lion-copy") {
+  return deterministicPick(arr, seed);
 }
-
-function pickUnique(arr: string[], usedSet: Set<string>) {
-  const available = arr.filter((item) => !usedSet.has(item));
-  const choice = available.length > 0 ? pickRandom(available) : pickRandom(arr);
-  usedSet.add(choice);
-  return choice;
-}
-
-const usedHeadlines = new Set<string>();
-const usedGuidance = new Set<string>();
 
 export function getLionTone(score: number): Tier {
   if (score >= 85) return "STRONG";
@@ -45,13 +36,13 @@ export function getLionTone(score: number): Tier {
   return "NOT_SUSTAINABLE";
 }
 
-export function generateLionToneCopy(score: number) {
+export function generateLionToneCopy(score: number, seed = `score:${score}`) {
   const tier = getLionTone(score);
   const pool = LION_COPY[tier];
 
   return {
-    headline: pickUnique(pool.headlines, usedHeadlines),
-    guidance: pickUnique(pool.guidance, usedGuidance),
+    headline: deterministicPick(pool.headlines, `${seed}:${tier}:headline`),
+    guidance: deterministicPick(pool.guidance, `${seed}:${tier}:guidance`),
     tier,
   };
 }

@@ -31,6 +31,7 @@ import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdi
 import type { SummaryKPIs } from './types/calculator';
 import { formatCurrency } from './utils/format';
 import { createSupabaseBrowserClient } from '@cb/advisory-graph/supabaseClient';
+import { emitCapitalUpdatedSafely } from '@/core/events/capital';
 
 export type IncomeEngineeringAppHandle = {
   getInputs: () => Record<string, unknown>;
@@ -277,6 +278,7 @@ const AppInner = forwardRef<
         window.alert('PDF export could not be created. Please try again.');
         return;
       }
+      emitCapitalUpdatedSafely();
       const pdfRes = await fetch(`/api/income-engineering/report-pdf/${exportId}`, {
         credentials: 'same-origin',
       });

@@ -43,6 +43,7 @@ import { SystemInsightLimited } from "../../../packages/lion-verdict/SystemInsig
 import { canAccessLion, type LionAccessUser } from "../../../packages/lion-verdict/access";
 import type { Tier } from "../../../packages/lion-verdict/copy";
 import { LOGIN_APP_URL, withPricingReturnModel } from "@cb/shared/urls";
+import { emitCapitalUpdatedSafely } from "@/core/events/capital";
 import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import {
   ChromeSpinnerGlyph,
@@ -351,6 +352,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
       const result = runMonteCarlo(investment, withdrawal, lowerPct, upperPct, years, stressSeverity, undefined, confidence);
       setMcResult(result);
       setRollingSavePending(false);
+      emitCapitalUpdatedSafely();
       setTimeout(() => {
         const scenarios = runStressScenarios(investment, withdrawal, lowerPct, upperPct, years, stressSeverity);
         setStressScenarioResults(scenarios);
@@ -582,6 +584,7 @@ const App = forwardRef<CapitalStressAppHandle, CapitalStressAppProps>(function A
         window.alert("PDF export could not be created. Please try again.");
         return;
       }
+      emitCapitalUpdatedSafely();
       const pdfRes = await fetch(`/api/capital-stress/report-pdf/${exportId}`, {
         credentials: "same-origin",
       });

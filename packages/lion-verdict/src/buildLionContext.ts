@@ -1,4 +1,9 @@
 export type LionContextInput = {
+  /**
+   * Optional deterministic seed. Preferred shape:
+   * `${capital_graph_id}:${version}:${model_key}`.
+   */
+  seed?: string;
   currency?: string;
   monthlyIncome?: number;
   monthlyExpense?: number;
@@ -12,6 +17,7 @@ export type LionContextInput = {
 };
 
 export type LionContext = {
+  seed?: string;
   currency?: string;
   monthlyIncome?: number;
   monthlyExpense?: number;
@@ -33,6 +39,7 @@ export function buildLionContext(input: LionContextInput): LionContext {
   const hasTarget = typeof input.targetCapital === "number";
 
   return {
+    seed: input.seed,
     currency: input.currency,
     monthlyIncome: input.monthlyIncome,
     monthlyExpense: input.monthlyExpense,

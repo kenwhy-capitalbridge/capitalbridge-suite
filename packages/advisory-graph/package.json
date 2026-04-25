@@ -25,6 +25,7 @@
     "./clientScoreDashboard": "./src/clientScoreDashboard/index.ts"
   },
   "dependencies": {
+    "@cb/lion-verdict": "*",
     "@cb/shared": "*",
     "@cb/supabase": "*",
     "@cb/ui": "*"

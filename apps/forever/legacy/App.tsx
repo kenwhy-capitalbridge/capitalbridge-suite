@@ -35,6 +35,7 @@ import type { Tier } from "../../../packages/lion-verdict/copy";
 import type { GetLionVerdictOutput } from "../../../packages/lion-verdict/getLionVerdict";
 import { ModelReportDownloadFooter, useModelMetricSpine } from "@cb/ui";
 import type { ForeverPrintSnapshotV1 } from "@/app/dashboard/print/foreverPrintSnapshot";
+import { emitCapitalUpdatedSafely } from "@/core/events/capital";
 import "./index.css";
 
 const DEFAULT_LION_ACCESS_USER: LionAccessUser = { isPaid: true, hasActiveTrialUpgrade: false };
@@ -433,6 +434,7 @@ const ForeverApp = forwardRef<ForeverAppHandle, ForeverAppProps>(function Foreve
       }
       const { exportId } = (await startRes.json()) as { exportId?: string };
       if (!exportId) return;
+      emitCapitalUpdatedSafely();
       const pdfRes = await fetch(`/api/forever/report-pdf/${exportId}`, {
         credentials: "same-origin",
       });

@@ -1,0 +1,698 @@
+{
+  "schema_version": "1.1.0",
+  "id": "capitalbridge-suite-founder-mode-monorepo",
+  "title": "Capital Bridge Suite — Founder-mode monorepo knowledge base",
+  "generated_for": "Custom GPT / chatbot training (internal founder context)",
+  "repo": {
+    "npm_name": "capitalbridge-suite",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": ["apps/*", "packages/*"],
+    "stack": {
+      "language": "TypeScript",
+      "runtime": "Node.js",
+      "framework": "Next.js 15 (App Router) across apps",
+      "package_manager": "npm workspaces",
+      "database_auth": "Supabase (Postgres + Auth + RLS)",
+      "payments": "Billplz (via apps/api billing routes)",
+      "testing": "Playwright (e2e), Vitest (advisory-graph)",
+      "pdf": "Playwright capture + @cb/pdf React layouts",
+      "hosting": "Vercel (one project per app, monorepo root install)"
+    }
+  },
+  "authority_and_conflicts": {
+    "code_is_ultimate_source_of_truth": true,
+    "when_docs_conflict": [
+      "Prefer executable code in-repo for behaviour.",
+      "Then INTERNAL_TRUTH_OVERRIDES.md for headline vs secondary metrics.",
+      "Then INTERNAL_FULL_SYSTEM_SPEC.md for mechanics and file paths.",
+      "README.md billing wording may lag; VERCEL-SETUP.md and ARCHITECTURE.md describe API-as-billing-authority with login proxy."
+    ],
+    "notable_readme_vs_other_docs": {
+      "readme_claim": "README.md states that all backend APIs run on the login app at login.thecapitalbridge.com/api/* to avoid CORS.",
+      "engineering_canonical": "VERCEL-SETUP.md and ARCHITECTURE.md: apps/api is the billing authority (Billplz, service role for billing); apps/login POST /api/bill/create proxies to API_APP_URL/billing/create with the user's Bearer token. Frontends use same-origin /api/* on login for browser calls; heavy billing logic targets the API deployment."
+    }
+  },
+  "domains_and_vercel": {
+    "source_doc": "VERCEL_MONOREPO.md",
+    "projects": [
+      {"vercel_project_hint": "capitalbridgelogin", "root_directory": "apps/login", "domain": "login.thecapitalbridge.com"},
+      {"vercel_project_hint": "advisoryplatform", "root_directory": "apps/platform", "domain": "platform.thecapitalbridge.com"},
+      {"vercel_project_hint": "capital-stress-model", "root_directory": "apps/capitalstress", "domain": "capitalstress.thecapitalbridge.com"},
+      {"vercel_project_hint": "capital-health-calculator", "root_directory": "apps/capitalhealth", "domain": "capitalhealth.thecapitalbridge.com"},
+      {"vercel_project_hint": "incomeengineeringmodel", "root_directory": "apps/incomeengineering", "domain": "incomeengineering.thecapitalbridge.com"},
+      {"vercel_project_hint": "forever-income-calculator", "root_directory": "apps/forever", "domain": "forever.thecapitalbridge.com"},
+      {"vercel_project_hint": "api", "root_directory": "apps/api", "domain": "api.thecapitalbridge.com", "notes": "Optional/legacy for some narratives; canonical Billplz webhook and billing/create live here per VERCEL-SETUP."}
+    ],
+    "monorepo_install_on_vercel": "Each app vercel.json uses installCommand cd ../.. && npm install so workspace packages resolve."
+  },
+  "local_dev_ports": {
+    "@cb/platform": 3000,
+    "@cb/login": 3001,
+    "@cb/api": 3002,
+    "@cb/capitalstress": 3003,
+    "@cb/capitalhealth": 3004,
+    "@cb/incomeengineering": 3005,
+    "@cb/forever": 3006
+  },
+  "applications": [
+    {
+      "workspace": "@cb/login",
+      "path": "apps/login",
+      "role": "Authentication UI, pricing, signup, session cookies, same-origin /api/* for browser (bill create proxy, membership status, billing recovery, Gitex, auth helpers). Uses SUPABASE_SERVICE_ROLE_KEY on selected server routes per VERCEL-SETUP.",
+      "key_dependencies": ["@cb/supabase", "@cb/auth", "@cb/membership", "@cb/advisory-graph", "@cb/shared", "@cb/ui"]
+    },
+    {
+      "workspace": "@cb/api",
+      "path": "apps/api",
+      "role": "Billing authority: pending membership, Billplz bill creation, webhook idempotency, admin recovery, request-bill flows. Uses SUPABASE_SERVICE_ROLE_KEY and BILLPLZ_*.",
+      "key_dependencies": ["@cb/supabase", "@cb/membership", "@cb/db-types", "@cb/shared", "@cb/advisory-graph", "@cb/ui"]
+    },
+    {
+      "workspace": "@cb/platform",
+      "path": "apps/platform",
+      "role": "Advisory / marketing dashboard shell; membership gate; model run and admin routes; redirects to login for payment when needed.",
+      "key_dependencies": ["@cb/advisory-graph", "@cb/db-types", "@cb/shared", "@cb/supabase", "@cb/ui"]
+    },
+    {
+      "workspace": "@cb/capitalstress",
+      "path": "apps/capitalstress",
+      "role": "Capital Stress — Monte Carlo / stress engine UX; Lion verdict integration; PDF export routes.",
+      "key_dependencies": ["@cb/advisory-graph", "@cb/lion-verdict", "@cb/pdf", "@cb/shared", "@cb/supabase", "@cb/ui"]
+    },
+    {
+      "workspace": "@cb/capitalhealth",
+      "path": "apps/capitalhealth",
+      "role": "Capital Health — monthly simulation trajectory / withdrawal sustainability; advisory report APIs; no @cb/lion-verdict dependency (Lion via advisory-graph only).",
+      "key_dependencies": ["@cb/advisory-graph", "@cb/pdf", "@cb/shared", "@cb/supabase", "@cb/ui"]
+    },
+    {
+      "workspace": "@cb/incomeengineering",
+      "path": "apps/incomeengineering",
+      "role": "Income Engineering (Capital Engineering) — single-period cash-flow coverage snapshot; advisory + PDF.",
+      "key_dependencies": ["@cb/advisory-graph", "@cb/lion-verdict", "@cb/pdf", "@cb/shared", "@cb/supabase", "@cb/ui"]
+    },
+    {
+      "workspace": "@cb/forever",
+      "path": "apps/forever",
+      "role": "Forever Income — closed-form / runway style model; Playwright PDF pipeline; advisory + export APIs.",
+      "key_dependencies": ["@cb/advisory-graph", "@cb/lion-verdict", "@cb/pdf", "@cb/shared", "@cb/supabase", "@cb/ui"]
+    }
+  ],
+  "packages": [
+    {
+      "name": "@cb/advisory-graph",
+      "path": "packages/advisory-graph",
+      "role": "Lion engines, client report JSON builders, ModelSaveHandlersContext, server advisoryRoutes, platformAccess entitlements, lionsVerdict schemas (JSON), reports index, clientScoreDashboard.",
+      "type": "module",
+      "tests": "vitest"
+    },
+    {
+      "name": "@cb/lion-verdict",
+      "path": "packages/lion-verdict",
+      "role": "Runtime Lion verdict UI copy picker; getLionVerdict; not used by capitalhealth."
+    },
+    {
+      "name": "@cb/pdf",
+      "path": "packages/pdf",
+      "role": "renderPdf (Playwright), reportReady contract, PDF React primitives, BaseReport, narrative helpers."
+    },
+    {
+      "name": "@cb/shared",
+      "path": "packages/shared",
+      "role": "urls (NEXT_PUBLIC_* app origins), plans, markets, legalMonocopy, reportTraceability, staging helpers, pdfCaptureToken, currency formatting."
+    },
+    {
+      "name": "@cb/supabase",
+      "path": "packages/supabase",
+      "role": "Browser, server (cookies), and service-role Supabase clients shared across apps."
+    },
+    {
+      "name": "@cb/auth",
+      "path": "packages/auth",
+      "role": "Session validation utilities for login and platform."
+    },
+    {
+      "name": "@cb/membership",
+      "path": "packages/membership",
+      "role": "hasActiveMembership and related access checks."
+    },
+    {
+      "name": "@cb/db-types",
+      "path": "packages/db-types",
+      "role": "Generated or shared Supabase TypeScript types (e.g. report_exports)."
+    },
+    {
+      "name": "@cb/ui",
+      "path": "packages/ui",
+      "role": "ModelAppHeader, report chrome, watermarks, metric spine hooks — shared model-app shell."
+    }
+  ],
+  "cross_cutting_architecture": {
+    "no_cross_app_imports_of_model_math": "Each model app's calculator lives under that app's legacy/ or lib paths; consistency is via shared packages and parallel patterns per INTERNAL_FULL_SYSTEM_SPEC.md.",
+    "advisory_persistence": "Advisory reports and sessions use Supabase schema advisory_v2 (e.g. advisory_reports) via shared advisory route handlers; model_type discriminates Forever, Income Engineering, Capital Health, Capital Stress.",
+    "cookie_domain": "Production auth cookies use .thecapitalbridge.com for SSO across subdomains.",
+    "lion_public_bands": "Documented in INTERNAL_FULL_SYSTEM_SPEC: 0–38 / 39–56 / 57–76 / 77–89 / 90–100 with STRONG gated by eligibility rules; Income Engineering blocks STRONG via capitalSufficientVsTarget false in strong eligibility.",
+    "stochastic_note": "Capital Stress Monte Carlo is non-reproducible between runs unless a seed is introduced (no UI seed in repo per internal spec)."
+  },
+  "operating_system_target_architecture": {
+    "status_label": "[B-LAYER]",
+    "summary": "Target system architecture evolves from independent model apps into a state-driven capital operating system loop: State -> Models -> Decisions -> Execution coordination -> Actuals -> Reconciliation -> Updated state.",
+    "current_state_label": "[A-LIVE]",
+    "current_state": "Current implementation is primarily model-centric and app-separated with shared packages, advisory persistence, and report generation.",
+    "target_components": [
+      {
+        "name": "capital_graph",
+        "role": "Canonical client capital state across entities, assets, liabilities, income streams, obligations, structures, partner links, and snapshots."
+      },
+      {
+        "name": "engine_layer",
+        "role": "Forever, Income Engineering, Capital Health, and Capital Stress run as engines reading from and writing to shared capital state."
+      },
+      {
+        "name": "decision_layer",
+        "role": "Synthesize model outputs plus constraints into explicit strategic actions before execution coordination."
+      },
+      {
+        "name": "execution_plan",
+        "role": "Track partner-routed implementation actions and lifecycle statuses without custody or direct trade execution by Capital Bridge."
+      },
+      {
+        "name": "actuals_feed",
+        "role": "Ingest partner/API/manual data to reflect real balances, transactions, income events, liabilities, and statements."
+      },
+      {
+        "name": "reconciliation_engine",
+        "role": "Compare expected plan outcomes against actual outcomes; compute variance, drift, and required strategic response."
+      }
+    ],
+    "execution_layer_truth": {
+      "label": "[B-LAYER]",
+      "statement": "Execution is available through selected partners; Capital Bridge coordinates and governs implementation but does not custody assets or directly execute trades in the software."
+    },
+    "migration_shape": {
+      "new_shared_package": "packages/capital-core",
+      "initial_contents": [
+        "capital graph state contracts",
+        "decision synthesis contracts",
+        "reconciliation contracts",
+        "execution plan tracking contracts"
+      ],
+      "app_role_after_migration": "Apps become experience surfaces and engine views over shared state, not isolated systems."
+    },
+    "founder_decisions_required": [
+      "Execution model boundary: advisory-only vs assisted execution operational model.",
+      "Partner operating model: curated network vs broader marketplace.",
+      "Data authority hierarchy: user input vs partner feed vs reconciled truth.",
+      "Metric unification policy: model-specific definitions vs canonical cross-model definitions."
+    ],
+    "response_guardrail": "When discussing this architecture, GPT must explicitly mark it as [B-LAYER] target unless the underlying capability is confirmed in code as [A-LIVE]."
+  },
+  "os_migration_readiness_and_phasing": {
+    "current_truth": {
+      "resolved_conceptual": [
+        "Framework narrative now aligns with operating system framing.",
+        "Execution is framed as available via partner institutions with explicit non-custody boundaries.",
+        "A/B/C labeling protocol reduces overstatement risk.",
+        "Lion is framed as interpretation and decision communication, not execution authority."
+      ],
+      "unresolved_structural": [
+        "No canonical cross-app capital_graph implemented as single source of truth.",
+        "Cross-model metric names still diverge by calculation meaning.",
+        "No implemented decision_engine that converts model outputs into action objects.",
+        "No production execution tracking backbone (execution_plan lifecycle data).",
+        "No actuals_feed + reconciliation baseline powering alert logic."
+      ]
+    },
+    "hard_gate_rule": "Do not describe the unified dashboard as complete system authority until Phase 1 data and decision primitives are live.",
+    "phase_1_foundation_mandatory": [
+      {
+        "name": "capital_core_minimum",
+        "deliverables": [
+          "canonical user capital snapshot schema",
+          "core state objects for assets, liabilities, income, obligations",
+          "central persistence contracts for shared state"
+        ]
+      },
+      {
+        "name": "model_output_standardization",
+        "deliverables": [
+          "shared output schema across model apps",
+          "explicit metric naming to avoid semantic collision",
+          "mapping contracts from app-specific outputs to shared schema"
+        ]
+      },
+      {
+        "name": "execution_plan_minimum",
+        "deliverables": [
+          "manual execution action records",
+          "status lifecycle states",
+          "operator notes and timestamp trail"
+        ]
+      },
+      {
+        "name": "reconciliation_minimum",
+        "deliverables": [
+          "expected vs user-confirmed actual comparison",
+          "basic variance outputs (income gap, structure drift, liquidity risk)",
+          "baseline alert trigger contracts"
+        ]
+      }
+    ],
+    "phase_2_experience": [
+      "Unified operating dashboard surfaces",
+      "Execution tracking UI connected to execution_plan backend",
+      "Alerts fed by reconciliation outputs",
+      "Decision guidance views backed by decision primitives"
+    ],
+    "metric_semantics_policy": {
+      "default_rule": "Assume same labels across models are non-equivalent until canonicalized.",
+      "required_labeling_examples": [
+        "Cashflow Coverage (Income Engineering)",
+        "Withdrawal Sustainability (Capital Health)"
+      ],
+      "founder_decision": "Choose canonical metric layer or maintain explicit model-scoped terminology."
+    },
+    "gpt_response_rule": "For migration questions, answer in order: (1) what is solved conceptually, (2) what is unresolved structurally, (3) Phase 1 mandatory build list, (4) Phase 2 dashboard rollout."
+  },
+  "os_status_snapshot_and_next_actions": {
+    "diagnosis_canonical": "Conceptually complete, structurally incomplete, and correctly staged.",
+    "a_live_status_snapshot": {
+      "system_identity": "Multi-model advisory system with shared persistence and reporting.",
+      "capabilities_live": [
+        "Model apps run independently with shared package patterns.",
+        "Advisory reports and sessions persist via shared advisory routes.",
+        "Lion layer supports interpretation and communication.",
+        "Billing and auth production architecture is implemented.",
+        "PDF/report generation is operational across model flows."
+      ]
+    },
+    "b_layer_target_snapshot": {
+      "system_identity": "State-driven capital operating system with execution coordination and feedback loop.",
+      "target_capabilities": [
+        "Unified capital_graph state authority across modules.",
+        "Decision layer converting outputs into actionable strategic directives.",
+        "Execution coordination layer with partner-linked action lifecycle tracking.",
+        "Actuals ingestion and reconciliation-based alerting."
+      ]
+    },
+    "remaining_gaps_isolated": [
+      "[A-LIVE] No canonical cross-app capital_graph in production.",
+      "[A-LIVE] No implemented decision_engine outputs-to-actions primitive.",
+      "[A-LIVE] No execution_plan lifecycle backbone with durable statuses.",
+      "[A-LIVE] No actuals_feed plus reconciliation engine for signal-grade alerts.",
+      "[C-DECISION] Metric semantics policy not fully locked (canonical vs model-scoped)."
+    ],
+    "implementation_order_lock": [
+      "Step 1: Build capital_core minimal state contracts and persistence.",
+      "Step 2: Standardize model output contracts and metric naming.",
+      "Step 3: Implement execution_plan primitives (manual first).",
+      "Step 4: Implement baseline reconciliation (expected vs confirmed actual).",
+      "Step 5: Launch unified dashboard as system authority."
+    ],
+    "ui_change_guardrail": "Do not prioritize dashboard authority or alert-heavy UI changes before Steps 1-4 are shipped."
+  },
+  "billing_flow_summary": {
+    "steps": [
+      "User selects plan on login → confirm-payment.",
+      "Browser POST /api/bill/create on login origin with credentials.",
+      "Login reads session, forwards to API POST /billing/create with Authorization Bearer access_token and plan payload.",
+      "API validates JWT, creates pending membership, creates Billplz bill, upserts payment row, returns checkoutUrl.",
+      "User pays at Billplz; webhook POST /billing/billplz-webhook (preferred) or login /api/webhooks/billplz if configured.",
+      "Webhook updates payment and membership idempotently."
+    ],
+    "api_endpoints_api_app": [
+      {"path": "/billing/create", "method": "POST", "purpose": "Create pending membership + Billplz bill (Bearer)."},
+      {"path": "/billing/billplz-webhook", "method": "POST", "purpose": "Billplz callback; activate membership."},
+      {"path": "/billing/request-bill", "method": "POST", "purpose": "Create bill without login (pending_bills); CORS for login origin."},
+      {"path": "/billing/create-account", "method": "POST", "purpose": "Account creation flow (see route implementation)."},
+      {"path": "/billing/create-session", "method": "POST", "purpose": "Billing session helper."},
+      {"path": "/billing/status", "method": "POST", "purpose": "Billing status query."},
+      {"path": "/billing/confirm-payment", "method": "POST", "purpose": "Payment confirmation handling."},
+      {"path": "/billing/request-market-change", "method": "POST", "purpose": "Market change request."},
+      {"path": "/billing/admin/recover-email", "method": "POST", "purpose": "Support-only recovery; BILLING_ADMIN_RECOVERY_SECRET bearer."}
+    ],
+    "login_proxy_and_related": [
+      {"path": "/api/bill/create", "method": "POST", "purpose": "Proxy to API /billing/create."},
+      {"path": "/api/webhooks/billplz", "method": "POST", "purpose": "Optional webhook host."},
+      {"path": "/api/membership-status", "method": "GET", "purpose": "active boolean."},
+      {"path": "/api/membership/status", "method": "GET", "purpose": "status, plan, expires_at, active."}
+    ]
+  },
+  "environment_variables": {
+    "login_project": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "PAYMENT_RECOVERY_JWT_SECRET",
+      "NEXT_PUBLIC_LOGIN_APP_URL or LOGIN_APP_URL",
+      "API_APP_URL",
+      "NEXT_PUBLIC_EXIT_LOGIN_URL (optional)",
+      "NEXT_PUBLIC_MARKETING_SITE_URL (optional)"
+    ],
+    "api_project": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "BILLPLZ_API_KEY",
+      "BILLPLZ_COLLECTION_ID",
+      "BILLPLZ_CALLBACK_URL",
+      "BILLPLZ_REDIRECT_URL (optional)",
+      "BILLING_ADMIN_RECOVERY_SECRET",
+      "LOGIN_APP_URL or NEXT_PUBLIC_LOGIN_APP_URL"
+    ],
+    "platform_and_model_apps": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "NEXT_PUBLIC_LOGIN_APP_URL",
+      "NEXT_PUBLIC_PLATFORM_APP_URL (where used)",
+      "NEXT_PUBLIC_*_APP_URL per-model deep links from packages/shared/src/urls.ts",
+      "STAGING_GATE_SIGNING_SECRET or STAGING_GATE_PASSWORD (staging gate)",
+      "NEXT_PUBLIC_APP_URL / NEXT_PUBLIC_CB_STAGING_HOSTNAME / NEXT_PUBLIC_APP_ENV (staging detection in packages/shared/src/staging.ts)"
+    ],
+    "pdf_capture": [
+      "REPORT_PDF_CAPTURE_SECRET or fallback secret pattern described in packages/shared/src/pdfCaptureToken.ts"
+    ]
+  },
+  "nextjs_route_handlers_inventory": {
+    "description": "App Router route.ts files under apps/*/app — snapshot at knowledge-base authoring time.",
+    "apps": {
+      "login": [
+        "app/api/billing/confirm-payment/route.ts",
+        "app/api/billing/create-session/route.ts",
+        "app/api/billing/recover-correct-email/route.ts",
+        "app/api/billing/recovery-token/route.ts",
+        "app/api/billing/request-email-change/route.ts",
+        "app/api/billing/send-setup-email-for-bill/route.ts",
+        "app/api/billing/status/route.ts",
+        "app/api/bill/create/route.ts",
+        "app/api/bill/request/route.ts",
+        "app/api/webhooks/billplz/route.ts",
+        "app/api/membership-status/route.ts",
+        "app/api/membership/status/route.ts",
+        "app/api/set-pending-plan/route.ts",
+        "app/api/register-session/route.ts",
+        "app/api/can-start-trial/route.ts",
+        "app/api/geo/route.ts",
+        "app/api/user/plan-change-intent/route.ts",
+        "app/api/auth/create-account/route.ts",
+        "app/api/auth/complete-login/route.ts",
+        "app/api/auth/validate-payment-email/route.ts",
+        "app/api/auth/user-exists/route.ts",
+        "app/api/auth/smart-lock/route.ts",
+        "app/api/auth/sign-out/route.ts",
+        "app/api/auth/revoke-other-sessions/route.ts",
+        "app/api/auth/other-sessions/route.ts",
+        "app/api/auth/clear-active-session/route.ts",
+        "app/api/gitex/redeem/route.ts",
+        "app/api/gitex/admin/stats/route.ts",
+        "app/api/gitex/admin/coupons/route.ts"
+      ],
+      "api": [
+        "app/billing/create/route.ts",
+        "app/billing/billplz-webhook/route.ts",
+        "app/billing/request-bill/route.ts",
+        "app/billing/create-account/route.ts",
+        "app/billing/create-session/route.ts",
+        "app/billing/status/route.ts",
+        "app/billing/confirm-payment/route.ts",
+        "app/billing/request-market-change/route.ts",
+        "app/billing/admin/recover-email/route.ts"
+      ],
+      "platform": [
+        "app/api/check-membership/route.ts",
+        "app/api/sync-user-active-session/route.ts",
+        "app/api/clear-active-session/route.ts",
+        "app/api/build-info/route.ts",
+        "app/api/model/run/route.ts",
+        "app/api/model/shared-facts/route.ts",
+        "app/api/staging-gate/login/route.ts",
+        "app/api/staging-gate/logout/route.ts",
+        "app/api/strategic-interest/route.ts",
+        "app/api/billing/request-market-change/route.ts",
+        "app/api/admin/gate/route.ts",
+        "app/api/admin/strategic-briefing/route.ts",
+        "app/api/admin/strategic-interest/route.ts"
+      ],
+      "capitalstress": [
+        "app/api/advisory-session/route.ts",
+        "app/api/advisory-report/route.ts",
+        "app/api/advisory-persona/route.ts",
+        "app/api/capital-stress/report-export/start/route.ts",
+        "app/api/capital-stress/report-pdf/[exportId]/route.ts"
+      ],
+      "capitalhealth": [
+        "app/api/advisory-session/route.ts",
+        "app/api/advisory-report/route.ts",
+        "app/api/advisory-persona/route.ts"
+      ],
+      "incomeengineering": [
+        "app/api/advisory-session/route.ts",
+        "app/api/advisory-report/route.ts",
+        "app/api/advisory-persona/route.ts",
+        "app/api/income-engineering/report-export/start/route.ts",
+        "app/api/income-engineering/report-pdf/[exportId]/route.ts"
+      ],
+      "forever": [
+        "app/api/advisory-session/route.ts",
+        "app/api/advisory-report/route.ts",
+        "app/api/advisory-persona/route.ts",
+        "app/api/forever/report-export/start/route.ts",
+        "app/api/forever/report-export/lion-config/route.ts",
+        "app/api/forever/report-pdf/[exportId]/route.ts"
+      ]
+    }
+  },
+  "supabase_migrations_themes": {
+    "path": "supabase/migrations",
+    "migration_files": [
+      "20260315000000_fix_active_memberships_security_invoker.sql",
+      "20260316000000_fix_function_search_path_warnings.sql",
+      "20260317000000_plans_rls_policies.sql",
+      "20260318000000_pending_bills.sql",
+      "20260319000000_billing_lifecycle_and_events.sql",
+      "20260320000000_plans_seed.sql",
+      "20260320000000_profiles_plan_change_intent.sql",
+      "20260321000000_billing_sessions_and_idempotency.sql",
+      "20260322000000_billing_diagnostics_and_analytics.sql",
+      "20260323000000_payment_first_billing_sessions.sql",
+      "20260324000000_billing_sessions_plan_slug_column.sql",
+      "20260324000000_memberships_starts_at_for_trigger.sql",
+      "20260325000000_pricing_and_trial_limit_2.sql",
+      "20260326000000_activate_membership_rpc.sql",
+      "20260326000001_payments_recovery_email_sent.sql",
+      "20260327000000_activate_membership_for_billplz.sql",
+      "20260328000000_trial_max_one_and_fingerprints.sql",
+      "20260329000000_admin_billing_email_recoveries.sql",
+      "20260329100000_admin_billing_email_recoveries_grants.sql",
+      "20260310000000_user_sessions_and_trial_limit.sql",
+      "20260331000000_user_active_session.sql",
+      "20260401000000_model_data_hub.sql",
+      "20260402100000_user_active_session_unique_user_id.sql",
+      "20260402200000_user_active_session_user_id_unique.sql",
+      "20260403000000_payments_activate_membership_columns.sql",
+      "20260404000000_activate_membership_payments_user_id.sql",
+      "20260405000000_activate_membership_timestamptz_membership_dates.sql",
+      "20260406000000_activate_membership_profiles_email.sql",
+      "20260407000000_advisory_v2_sessions_reports.sql",
+      "20260407150000_gitex_asia_2026_coupons.sql",
+      "20260408000000_strategic_interest_priority_access.sql",
+      "20260408000000_profiles_first_last_name.sql",
+      "20260409120000_profiles_advisory_market.sql",
+      "20260409120000_strategic_interest_contact_phone.sql",
+      "20260410120000_strategic_interest_pipeline.sql",
+      "20260411120000_billing_sessions_checkout_metadata.sql",
+      "20260416120000_trial_plan_duration_10_days.sql",
+      "20260417120000_trial_plan_10_days_backfill.sql",
+      "20260418120000_strategic_interest_subscriber_message.sql",
+      "20260419120000_strategic_interest_grants_authenticated.sql",
+      "20260420120000_profiles_advisory_market_ensure.sql",
+      "20260421120000_report_exports.sql",
+      "20260422120000_report_exports_update_policy.sql"
+    ],
+    "inferred_concerns": [
+      "memberships, payments, plans, pending_bills, billing_sessions",
+      "trial limits, fingerprints, user_sessions",
+      "activate_membership RPC and Billplz alignment",
+      "advisory_v2 advisory sessions/reports",
+      "report_exports storage and RLS",
+      "strategic_interest pipeline",
+      "Gitex 2026 coupons",
+      "profiles advisory market and naming fields",
+      "model_data_hub"
+    ]
+  },
+  "github_actions_workflows": [
+    { "file": ".github/workflows/e2e-model-platform.yml", "purpose": "E2E model + platform" },
+    { "file": ".github/workflows/lion-copy-guard.yml", "purpose": "Lion copy consistency guard" },
+    { "file": ".github/workflows/pdf-render-smoke.yml", "purpose": "PDF render smoke" },
+    { "file": ".github/workflows/pdf-standard.yml", "purpose": "PDF standard enforcement" }
+  ],
+  "root_npm_scripts": {
+    "dev": "npm run dev -w @cb/login",
+    "dev:platform": "next dev platform workspace",
+    "dev:api": "next dev api workspace",
+    "dev:capitalstress": "capitalstress workspace",
+    "dev:capitalhealth": "capitalhealth workspace",
+    "dev:incomeengineering": "incomeengineering workspace",
+    "dev:forever": "forever workspace",
+    "build": "login + platform + api",
+    "build:all": "all apps",
+    "typecheck": "login + platform + api",
+    "typecheck:all": "all workspaces with script",
+    "lion:sync-copy": "scripts/sync-lion-copy.mjs",
+    "lion:check-copy": "sync-lion-copy --check",
+    "verify:pdf-standard": "scripts/enforce-pdf-standard.mjs",
+    "test:e2e": "playwright test",
+    "e2e:storage": "e2e/scripts/create-storage-state.cjs",
+    "generate:pdf": "scripts/generate-pdf.ts",
+    "docs:sample-pdfs": "scripts/render-all-sample-pdfs.ts"
+  },
+  "internal_documentation_index": {
+    "purpose": "Founder / engineering truth and GPT routing — read these for depth beyond this JSON.",
+    "files": [
+      {"path": "INTERNAL_GPT_OPERATING_SYSTEM.md", "role": "Orchestrates question routing, doc priority, disclosure, consistency across INTERNAL_* docs."},
+      {"path": "INTERNAL_FULL_SYSTEM_SPEC.md", "role": "Deepest technical spec: per-app pipelines, PDF, Lion, gating, formula inventory, risks, file map."},
+      {"path": "INTERNAL_TRUTH_OVERRIDES.md", "role": "Headline metric vs secondary pipelines; founder decision markers."},
+      {"path": "INTERNAL_FORMULA_INDEX.md", "role": "Formula registry and thresholds; verify against code if stale."},
+      {"path": "INTERNAL_ALIGNMENT_TABLES.md", "role": "Screen vs PDF vs Lion divergence."},
+      {"path": "INTERNAL_DISCLOSURE_BOUNDARY.md", "role": "Zones A–D for external vs internal disclosure."},
+      {"path": "INTERNAL_INVESTMENT_AND_FLOW_SPEC.md", "role": "Subscription vs investment; Billplz; no custody in-repo."},
+      {"path": "INTERNAL_REGULATORY_POSITIONING.md", "role": "Regulatory positioning notes; counsel gaps."},
+      {"path": "INTERNAL_LIABILITY_MAP.md", "role": "Responsibility matrix."},
+      {"path": "INTERNAL_COMMUNICATION_RULES.md", "role": "Allowed / restricted phrasing."},
+      {"path": "INTERNAL_PARTNER_INTEGRATION_AUDIT.md", "role": "Partner integration audit."},
+      {"path": "INTERNAL_PARTNER_INTEGRATION_AND_REPORTING_SPEC.md", "role": "Partner integration and reporting spec."},
+      {"path": "INTERNAL_PRICING_BY_MARKET.md", "role": "Pricing by market."},
+      {"path": "docs/ARCHITECTURE_AUDIT_REPORT.md", "role": "Billing and monorepo audit snapshot."},
+      {"path": "ARCHITECTURE.md", "role": "Billing endpoints and verification checklist."},
+      {"path": "VERCEL-SETUP.md", "role": "Env vars and three-project Vercel layout."},
+      {"path": "VERCEL_MONOREPO.md", "role": "Per-app Root Directory and domain table; build troubleshooting."},
+      {"path": "HANDOFF.md", "role": "Handoff notes."},
+      {"path": "SHIP.md", "role": "Shipping checklist."},
+      {"path": "supabase/README_SESSIONS_AND_TRIAL.md", "role": "Sessions and trial behaviour."},
+      {"path": "docs/LION_DECISION_SYSTEM_MASTER.md", "role": "Authoritative Lion pipeline: verdict engine vs tiered presentation; invalid_preconditions→lion_status; signal bands; deterministic headline; copy pools only (Lion Verdict dynamic copy.txt)."}
+    ]
+  },
+  "client_facing_gpt_assets": {
+    "note": "For customer-facing bots, pair with guardrails — not founder-full-disclosure.",
+    "files": [
+      "EXTERNAL_GPT_PROMPT.json",
+      "EXTERNAL_GPT_GUARDRAILS.json",
+      "docs/ai-systems/el-capitan-gpt.json",
+      "docs/ai-systems/live-support-chatbot-training.md",
+      "docs/ai-systems/chatbot-guardrails-proprietary-protection.md",
+      "docs/ELFSIGHT_CHATBOT_TRAINING.json"
+    ]
+  },
+  "model_implementation_anchors": {
+    "source": "INTERNAL_FULL_SYSTEM_SPEC.md §1 and §4 summaries",
+    "forever_income": {
+      "primary_math": "apps/forever/legacy/foreverModel.ts computeForeverResults",
+      "ui": "apps/forever/legacy/App.tsx"
+    },
+    "income_engineering": {
+      "primary_math": "apps/incomeengineering/legacy/lib/simulation.ts runSimulation",
+      "note": "Internal spec warns some store toggles are not consumed by runSimulation — verify code before claiming behaviour."
+    },
+    "capital_health": {
+      "primary_math": "apps/capitalhealth/legacy/calculator-engine.ts runSimulation",
+      "auxiliary": ["evaluatePlan", "simulateTargetWithdrawal", "buildCalculatorResults.ts"],
+      "note": "Multiple related pipelines — use INTERNAL_TRUTH_OVERRIDES for headline vs engine-only questions."
+    },
+    "capital_stress": {
+      "primary_math": "apps/capitalstress/legacy/services/mathUtils.ts runMonteCarlo / runStressScenarios",
+      "lion": "@cb/advisory-graph lionsVerdict / engine integration; tier mapping in capitalstress legacy App.tsx mapStressStatusToTier"
+    }
+  },
+  "founder_gpt_system_instructions": {
+    "execution_canonical_framing": {
+      "headline": "Execution is AVAILABLE.",
+      "definition": "After the user finalises the structure, Capital Bridge does not take custody of capital or execute trades directly. The approved structure is implemented through partner institutions such as banks, brokers, platforms, trustees, accounting firms, or other regulated counterparties across operating markets.",
+      "mechanics": [
+        "Monthly distributions are paid by external institutions according to the underlying asset, mandate, or product terms.",
+        "Redemptions are processed by relevant external institutions under their own liquidity terms.",
+        "Capital Bridge designs the structure, facilitates and coordinates implementation, and evolves as the reporting and governance layer monitoring actual outcomes versus plan."
+      ],
+      "correct_framing": [
+        "Capital Bridge guides what to do at a strategic level.",
+        "Execution access exists if aligned to structure and eligibility.",
+        "Direction can be guided, but specific products, instruments, or providers are not prescribed in GPT responses."
+      ],
+      "never_say": [
+        "We do not execute",
+        "We have no partners"
+      ]
+    },
+    "founder_positioning_lock": {
+      "primary_statement": "Capital Bridge is the only Operating System between Money and People: a structure-first capital operating layer that connects strategy, diagnostics, governance, and strategic execution pathways through selected partners across markets we operate.",
+      "must_include_when_positioning": [
+        "Capital Bridge is an operating system, not a product catalog.",
+        "Strategic Execution is included as a layer through selected partners (for example: banks, trustees, accounting firms), market-by-market.",
+        "Execution language must be presented as a governed partner layer aligned to structure, not as direct trade execution inside chat.",
+        "Do not deny partner pathways when asked about implementation."
+      ],
+      "forbidden_positioning_errors": [
+        "Do not frame Capital Bridge as calculator-only tooling.",
+        "Do not frame Capital Bridge as a broker, custodian, or pooled-fund ledger in this repository.",
+        "Do not state or imply that chat itself executes transactions."
+      ]
+    },
+    "conflict_resolution_protocol": {
+      "time_layer_model": {
+        "A_live_now": "What is implemented and executable in current code and deployed workflows.",
+        "B_strategic_execution_layer": "Partner-enabled execution, reconciliation, monitoring, and governance pathways that are part of Capital Bridge strategic architecture and rollout.",
+        "C_founder_decisions": "Commercial, licensing, market, and operating-model decisions still requiring explicit founder lock."
+      },
+      "required_output_labeling": [
+        "For architecture or execution questions, always label statements as [A-LIVE], [B-LAYER], or [C-DECISION].",
+        "Never mix A and B in one sentence without labels.",
+        "If a user asks for absolute capability, answer with both A and B where relevant."
+      ],
+      "framework_vs_product_rule": "If asked whether Capital Bridge is a system or toolkit, answer: Capital Bridge is the operating system; current apps are diagnostic and advisory modules within the operating system.",
+      "os_architecture_answer_rule": "For architecture redesign prompts, present a dual view: [A-LIVE] current implementation and [B-LAYER] target operating system loop, then list [C-DECISION] items that must be locked by founder.",
+      "dashboard_build_order_rule": "Never recommend dashboard-first migration. Require data core, metric contracts, execution plan primitives, and reconciliation baseline before unified dashboard authority.",
+      "status_answer_rule": "For maturity/readiness questions, return a concise triad: resolved conceptual, unresolved structural, and strict next build order.",
+      "same_label_different_math_rule": "Treat shared labels (for example, coverage, resilience, sustainability) as model-specific unless a canonical cross-model definition is explicitly declared.",
+      "capital_health_rule": "When coverage differs across Capital Health pipelines, headline truth is buildCalculatorResults; engine-only values must be marked secondary.",
+      "income_engineering_dead_inputs_rule": "If fields are present but not wired in runSimulation, state they are currently non-operative and classify as [C-DECISION] to either implement or remove.",
+      "stress_stochastic_rule": "All Capital Stress outputs must include a stochastic caveat and must not be compared as deterministic equivalents against other models.",
+      "lion_rule": "Lion is an interpretation and communication layer on top of model outputs and eligibility logic; do not describe Lion as discretionary execution.",
+      "billing_vs_capital_flow_rule": "Subscription payment flow is software access billing; client investment assets remain external to this repository.",
+      "execution_availability_rule": "When asked if execution exists, answer that execution is available through selected external partners after structure finalisation; Capital Bridge coordinates implementation but does not custody or directly execute trades."
+    },
+    "classification_codes": ["C-CALC", "C-ALIGN", "P-PROD", "I-INST", "I-DISC", "M-META"],
+    "flags": ["+FOUNDER-GAP", "+STOCHASTIC", "+DUAL-PIPE", "+EXTERNAL-AUDIENCE"],
+    "answer_template_default": [
+      "Direct answer",
+      "Authority: file:function or INTERNAL_* section",
+      "Caveats: assumptions, RNG, or FOUNDER DECISION REQUIRED",
+      "Cross-links to alignment or overrides when metrics diverge"
+    ],
+    "non_negotiables": [
+      "Position Capital Bridge as the operating system between money and people, with strategic execution layers via selected partners across covered markets.",
+      "Execution is available through partner institutions; do not deny partner execution pathways.",
+      "Subscription flows and software analytics are not pooled client investment ledgers in this codebase.",
+      "Models are hypothetical — no guaranteed outcomes.",
+      "For dual-homed bots (internal + external), apply INTERNAL_DISCLOSURE_BOUNDARY before dumping formulas or Lion eligibility.",
+      "Capital Stress: disclose stochastic non-reproducibility when discussing single-run results.",
+      "Capital Health: do not merge headline and engine-only coverage metrics without labelling both per INTERNAL_TRUTH_OVERRIDES.",
+      "Execution framing must stay explicit: partner-enabled strategic execution layer exists; direct in-chat transaction execution does not."
+    ],
+    "document_priority_when_conflicting": [
+      "INTERNAL_TRUTH_OVERRIDES.md",
+      "INTERNAL_FULL_SYSTEM_SPEC.md",
+      "INTERNAL_FORMULA_INDEX.md",
+      "INTERNAL_ALIGNMENT_TABLES.md",
+      "INTERNAL_INVESTMENT_AND_FLOW_SPEC.md",
+      "INTERNAL_DISCLOSURE_BOUNDARY.md",
+      "INTERNAL_COMMUNICATION_RULES.md",
+      "INTERNAL_REGULATORY_POSITIONING.md",
+      "INTERNAL_LIABILITY_MAP.md"
+    ]
+  },
+  "training_usage_notes": {
+    "chunking": "Split nested sections (applications, route inventory, migrations) into embedding chunks with path prefixes for retrieval.",
+    "refresh": "Re-export or patch this file when migrations, routes, or INTERNAL_* specs change; bump schema_version.",
+    "safety": "This JSON is for founder-internal training. Do not expose verbatim to end users without running through INTERNAL_DISCLOSURE_BOUNDARY and client guardrails."
+  }
+}

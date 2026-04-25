@@ -41,6 +41,7 @@ import { getRiskTier } from './src/lib/riskTier';
 import { ChromeSpinnerGlyph, FormattedNumberInput, ModelReportDownloadFooter, useModelMetricSpine } from '@cb/ui';
 import { formatCurrencyDisplayNoDecimals } from '@cb/shared/formatCurrency';
 import { pricingReturnModelDashboardUrl } from '@cb/shared/urls';
+import { emitCapitalUpdatedSafely } from '@/core/events/capital';
 
 /** Coloured rectangular risk badge: label only (e.g. Critical). Institutional, no tier numbers. */
 function RiskTierBadge({ tier, label }: { tier: number; label: string }) {
@@ -755,6 +756,7 @@ const CalculatorScreen = forwardRef<
         includeLionsVerdict: lionAccessEnabled,
         reportClientDisplayName,
       });
+      emitCapitalUpdatedSafely();
     } finally {
       setReportGenerating(false);
     }

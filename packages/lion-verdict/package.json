@@ -8,6 +8,17 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./adapters/to-legacy-client-report": "./src/adapters/to-legacy-client-report.ts",
+    "./adapters/to-legacy-pdf": "./src/adapters/to-legacy-pdf.ts",
+    "./alerts": "./src/alerts.ts",
+    "./arbitration": "./src/arbitration.ts",
+    "./execution-actions": "./src/execution-actions.ts",
+    "./model-key-map": "./src/model-key-map.ts",
+    "./migration": "./src/migration.ts",
+    "./pipeline": "./src/pipeline.ts",
+    "./signal-adapter": "./src/signal-adapter.ts",
+    "./tier": "./src/tier.ts",
+    "./verdict": "./src/verdict.ts",
     "./access": "./access.ts",
     "./copy": "./copy.ts",
     "./get-lion-verdict": "./getLionVerdict.ts"

@@ -1,6 +1,7 @@
 import type { LionContext } from "./buildLionContext";
 import { formatCurrencyDisplayNoDecimals } from "@cb/shared/formatCurrency";
 import { generateLionToneCopy } from "./lionCopyLibrary";
+import { deterministicPick } from "./utils/deterministic";
 
 export type LionNarrative = {
   headline: string;
@@ -23,8 +24,22 @@ function formatYears(value?: number): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: value % 1 === 0 ? 0 : 1 });
 }
 
-function vary(sentenceA: string, sentenceB: string) {
-  return Math.random() > 0.5 ? sentenceA : sentenceB;
+function contextSeed(ctx: LionContext): string {
+  return (
+    ctx.seed ??
+    [
+      ctx.modelType ?? "UNKNOWN",
+      ctx.lionScore ?? "no-score",
+      ctx.monthlyIncome ?? "no-income",
+      ctx.monthlyExpense ?? "no-expense",
+      ctx.totalCapital ?? "no-capital",
+      ctx.targetCapital ?? "no-target",
+    ].join(":")
+  );
+}
+
+function vary(seed: string, sentenceA: string, sentenceB: string) {
+  return deterministicPick([sentenceA, sentenceB], seed);
 }
 
 export function generateLionNarrative(ctx: LionContext): LionNarrative {
@@ -35,12 +50,14 @@ export function generateLionNarrative(ctx: LionContext): LionNarrative {
       : undefined;
   const lionScore = typeof ctx.lionScore === "number" && Number.isFinite(ctx.lionScore) ? ctx.lionScore : 0;
   const capitalGap = typeof ctx.capitalGap === "number" && Number.isFinite(ctx.capitalGap) ? ctx.capitalGap : 0;
-  const tone = generateLionToneCopy(lionScore);
+  const seed = contextSeed(ctx);
+  const tone = generateLionToneCopy(lionScore, seed);
   const outcome =
     netMonthly < 0
       ? `a deficit of ${formatAmount(Math.abs(netMonthly), ctx.currency)}`
       : `a surplus of ${formatAmount(netMonthly, ctx.currency)}`;
   const personalised = vary(
+    `${seed}:personalised`,
     `You are generating ${formatAmount(ctx.monthlyIncome, ctx.currency)} against ${formatAmount(ctx.monthlyExpense, ctx.currency)}, resulting in ${outcome}.`,
     `Your current structure produces ${formatAmount(ctx.monthlyIncome, ctx.currency)} against ${formatAmount(ctx.monthlyExpense, ctx.currency)}, leaving ${outcome}.`,
   );

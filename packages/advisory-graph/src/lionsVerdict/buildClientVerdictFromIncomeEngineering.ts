@@ -4,6 +4,14 @@
 
 import type { LionClientCapitalUnlockDecision, LionVerdictClientReport } from './clientVerdictTypes';
 import {
+  getLionMigrationConfig,
+  inputSignature,
+  recordLionMismatch,
+  runLionPipeline,
+  shouldServeCanonicalLion,
+  toLegacyClientReport,
+} from '@cb/lion-verdict';
+import {
   incomeEngineeringCoverageToLion0to100,
   lionPublicStatusFromScore0to100,
   lionStrongEligibilityFromIncomeEngineering,
@@ -23,7 +31,91 @@ export type IncomeEngineeringClientVerdictInputs = {
 
 export type BuildIncomeEngineeringClientVerdictOptions = {
   formatCurrency: (n: number) => string;
+  userId?: string;
 };
+
+function incomeEngineeringCanonicalRun(input: IncomeEngineeringClientVerdictInputs) {
+  const signature = inputSignature({
+    model_key: 'income-engineering-model',
+    input,
+  });
+
+  return runLionPipeline(
+    [
+      input.sustainabilityStatus === 'invalid'
+        ? {
+            model_key: 'income-engineering-model',
+            status: 'invalid_preconditions' as const,
+            output_normalized: {
+              metrics: null,
+              reason: ['preconditions_not_met'],
+            },
+          }
+        : {
+            model_key: 'income-engineering-model',
+            status: 'completed' as const,
+            output_normalized: {
+              metrics: {
+                cashflow_coverage_ratio: String(
+                  Math.min(input.medianCoveragePct, input.worstMonthCoveragePct) / 100,
+                ),
+                income_gap_monthly: String(input.monthlyNetCashflow),
+              },
+            },
+          },
+    ],
+    {
+      capital_graph_id: `income_engineering:${signature}`,
+      version: 0,
+      model_key: 'income_engineering',
+      tier: 'STRATEGIC',
+    },
+  );
+}
+
+function resolveIncomeEngineeringMigrationOutput(args: {
+  input: IncomeEngineeringClientVerdictInputs;
+  options: BuildIncomeEngineeringClientVerdictOptions;
+  legacyOutput: LionVerdictClientReport;
+}): LionVerdictClientReport {
+  const signature = inputSignature({
+    model_key: 'income-engineering-model',
+    input: args.input,
+  });
+  const canonical = incomeEngineeringCanonicalRun(args.input);
+
+  recordLionMismatch({
+    model_keys_used: ['income_engineering'],
+    legacy_status: args.legacyOutput.verdict.status,
+    canonical_status: canonical.verdict.lion_status,
+    agreement_level: canonical.verdict.agreement_level,
+    canonical_signals: canonical.verdict.signal_summary,
+    legacy_summary: args.legacyOutput.verdict.summary,
+    reasons: canonical.verdict.reason,
+    input_signature: signature,
+    legacy_invalid_preconditions: args.input.sustainabilityStatus === 'invalid',
+    canonical_invalid_preconditions: canonical.verdict.reason.length > 0,
+  });
+
+  const migration = getLionMigrationConfig();
+
+  if (migration.state === 'SHADOW') {
+    return args.legacyOutput;
+  }
+
+  if (migration.state === 'FULL') {
+    return toLegacyClientReport(canonical.verdict) as LionVerdictClientReport;
+  }
+
+  if (
+    migration.state === 'PARTIAL' &&
+    shouldServeCanonicalLion(args.options.userId ?? signature, migration)
+  ) {
+    return toLegacyClientReport(canonical.verdict) as LionVerdictClientReport;
+  }
+
+  return args.legacyOutput;
+}
 
 export function buildLionVerdictClientReportFromIncomeEngineering(
   input: IncomeEngineeringClientVerdictInputs,
@@ -105,7 +197,7 @@ export function buildLionVerdictClientReportFromIncomeEngineering(
   if (status === 'NOT_SUSTAINABLE' || status === 'AT_RISK') unlockDecision = 'WORSENS';
   else if (status === 'STRONG') unlockDecision = 'IMPROVES';
 
-  return {
+  const legacyOutput: LionVerdictClientReport = {
     verdict: {
       status,
       score,
@@ -180,4 +272,10 @@ export function buildLionVerdictClientReportFromIncomeEngineering(
           : 'If nothing changes, a workable month-to-month picture can still crack if income or returns slip.',
     closing_line: 'Strength Behind Every Structure — keep assumptions visible and rerun after major changes.',
   };
+
+  return resolveIncomeEngineeringMigrationOutput({
+    input,
+    options,
+    legacyOutput,
+  });
 }
