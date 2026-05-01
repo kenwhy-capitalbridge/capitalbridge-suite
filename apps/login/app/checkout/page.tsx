@@ -487,7 +487,7 @@ function CheckoutContent() {
             <span className="text-sm font-medium text-cb-green">Mobile number</span>
             <div className="flex min-w-0 gap-2">
               <span
-                className="cb-input flex shrink-0 items-center justify-center gap-1.5 px-3 font-mono text-sm text-cb-green/90"
+                className="cb-input inline-flex w-auto shrink-0 items-center justify-center gap-1.5 whitespace-nowrap px-3 font-mono text-sm text-cb-green/90"
                 aria-hidden
               >
                 <span>{countryRow?.flag}</span>
