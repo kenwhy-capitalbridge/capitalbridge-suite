@@ -35,6 +35,14 @@ export async function POST(req: Request) {
     const xri = req.headers.get("x-real-ip");
     if (xff) fwdHeaders["x-forwarded-for"] = xff;
     if (xri) fwdHeaders["x-real-ip"] = xri;
+
+    /** Browser geo — same conventions as `/api/geo`. Omitting lets billing infer region from the login→API hop and reject with region_mismatch. */
+    const vercelCc = req.headers.get("x-vercel-ip-country");
+    if (vercelCc) fwdHeaders["x-vercel-ip-country"] = vercelCc;
+    const cfCc = req.headers.get("cf-ipcountry");
+    if (cfCc) fwdHeaders["cf-ipcountry"] = cfCc;
+    const gaeCc = req.headers.get("x-appengine-country");
+    if (gaeCc) fwdHeaders["x-appengine-country"] = gaeCc;
     const UPSTREAM_MS = Math.min(
       Number(process.env.BILL_PROXY_UPSTREAM_MS) || 110_000,
       260_000,

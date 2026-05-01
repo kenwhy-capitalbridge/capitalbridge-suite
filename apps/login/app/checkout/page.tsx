@@ -520,13 +520,18 @@ function CheckoutContent() {
             >
               {CHECKOUT_COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
-                  {c.flag} {c.label}
+                  {c.label}
                 </option>
               ))}
             </select>
             <p id="checkout-country-hint" className="text-xs leading-relaxed text-cb-green/65">
+              {geoLocked && countryRow && (
+                <span className="mb-1 block font-medium text-cb-green/85">
+                  <span aria-hidden>{countryRow.flag}</span> Billing region: {countryRow.label}
+                </span>
+              )}
               {geoLocked
-                ? "Your plan price is set for your region (from your connection). The country shown must match where you are paying from."
+                ? "Your plan price follows this region. It must match where you are paying from (turn off mismatched VPNs)."
                 : "Detecting your region…"}
             </p>
             {countryFieldError && (
