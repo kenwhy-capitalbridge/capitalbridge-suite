@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { verifyBillplzWebhookSignature } from "@/lib/billplz";
 import { loadPlanMap } from "@cb/advisory-graph/plans/planMap";
+import {
+  billingSessionSelectColumns,
+  billingSessionsCheckoutMetadataColumnAvailable,
+  type BillingSessionFinalizeSelectRow,
+} from "@/lib/billingSessionsCheckoutMetadataColumn";
 import { ensureBillingSessionUser } from "@/lib/ensureBillingSessionUser";
 import { finalizePaidBillingSession } from "@/lib/finalizePaidBillingSession";
 
@@ -48,10 +53,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid_signature" }, { status: 401 });
   }
 
-  const { data: sessionByBill, error: sessionErr } = await svc
+  const metaCol = await billingSessionsCheckoutMetadataColumnAvailable(svc);
+  const { data: sessionRow, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
-    .select("id, email, plan_id, status, user_id, membership_id, checkout_metadata")
+    .select(billingSessionSelectColumns(metaCol))
     .eq("bill_id", billId)
     .maybeSingle();
 
@@ -59,13 +65,15 @@ export async function POST(req: Request) {
     console.warn("[billplz-webhook] billing_sessions query error", { billId, error: sessionErr.message });
   }
 
-  if (!sessionByBill) {
+  if (!sessionRow) {
     console.warn("[billplz-webhook] no billing_sessions row for bill", { billId });
     return NextResponse.json({ ok: false, error: "billing_session_not_found" }, { status: 404 });
   }
 
+  const sessionByBill = sessionRow as unknown as BillingSessionFinalizeSelectRow;
   const billingSessionId = sessionByBill.id;
-  const checkoutMeta = parseCheckoutMetadata(sessionByBill.checkout_metadata);
+  const checkoutRaw = metaCol ? sessionByBill.checkout_metadata : undefined;
+  const checkoutMeta = parseCheckoutMetadata(checkoutRaw ?? null);
 
   if (!paid) {
     return NextResponse.json({ ok: true });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
 import { hashTrialCheckoutIp, parseClientIpFromRequest } from "@/lib/trialCheckoutSignals";
+import { billingSessionsCheckoutMetadataColumnAvailable } from "@/lib/billingSessionsCheckoutMetadataColumn";
 import { parseRequestCountryCode } from "@/lib/requestGeo";
 import {
   getBillplzChargeAmountSen,
@@ -162,6 +163,8 @@ export async function POST(req: Request) {
     }
   }
 
+  const checkoutMetaColAvailable = await billingSessionsCheckoutMetadataColumnAvailable(svc);
+
   const { data: session, error: sessionErr } = await svc
     .schema("public")
     .from("billing_sessions")
@@ -174,7 +177,7 @@ export async function POST(req: Request) {
       updated_at: new Date().toISOString(),
       ...(checkoutIpHash ? { checkout_ip_hash: checkoutIpHash } : {}),
       ...(deviceId ? { checkout_device_id: deviceId } : {}),
-      checkout_metadata: checkoutMetadata,
+      ...(checkoutMetaColAvailable ? { checkout_metadata: checkoutMetadata } : {}),
     })
     .select("id")
     .single();
