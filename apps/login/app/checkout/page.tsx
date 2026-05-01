@@ -15,6 +15,7 @@ import {
   CHECKOUT_ERROR_NETWORK,
   CHECKOUT_ERROR_PROVIDER_MAINTENANCE,
   CHECKOUT_ERROR_REGION_MISMATCH,
+  CHECKOUT_ERROR_REQUEST_TIMEOUT,
   CHECKOUT_ERROR_START_PAYMENT,
 } from "@/lib/checkoutMessages";
 import {
@@ -59,6 +60,17 @@ const PLAN_LABELS: Record<string, string> = {
   yearly_full: "Strategic (365 Days)",
   strategic: "Strategic Execution (365 Days)",
 };
+
+const CHECKOUT_EMAIL_CHECK_MS = 20_000;
+const CHECKOUT_BILL_REQUEST_MS = 90_000;
+
+/** Safari & older browsers may lack AbortSignal.timeout — degrade to no deadline. */
+function billRequestAbortSignal(timeoutMs: number): AbortSignal | undefined {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(timeoutMs);
+  }
+  return undefined;
+}
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -208,7 +220,23 @@ function CheckoutContent() {
     const fullPhone = `${row.dial.replace(/\s/g, "")}${digits}`;
 
     try {
-      const exists = await emailExists(supabase, normalizedEmail);
+      let exists: boolean;
+      try {
+        exists = await Promise.race([
+          emailExists(supabase, normalizedEmail),
+          new Promise<boolean>((_, reject) => {
+            window.setTimeout(() => reject(new Error("email_check_timeout")), CHECKOUT_EMAIL_CHECK_MS);
+          }),
+        ]);
+      } catch (raceErr) {
+        if (raceErr instanceof Error && raceErr.message === "email_check_timeout") {
+          setError(CHECKOUT_ERROR_REQUEST_TIMEOUT);
+        } else {
+          setError(CHECKOUT_ERROR_NETWORK);
+        }
+        return;
+      }
+
       if (exists) {
         setError(CHECKOUT_ACCOUNT_EXISTS);
         setEmailAlreadyExists(true);
@@ -224,21 +252,39 @@ function CheckoutContent() {
       } catch {
         /* ignore */
       }
-      const res = await fetch("/api/bill/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          email: normalizedEmail,
-          firstName: fn,
-          lastName: ln,
-          plan,
-          checkoutCountry: country,
-          checkoutPhone: fullPhone,
-          market: row.market,
-          ...(deviceId ? { deviceId } : {}),
-        }),
-      });
+
+      let res: Response;
+      try {
+        res = await fetch("/api/bill/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          signal: billRequestAbortSignal(CHECKOUT_BILL_REQUEST_MS),
+          body: JSON.stringify({
+            email: normalizedEmail,
+            firstName: fn,
+            lastName: ln,
+            plan,
+            checkoutCountry: country,
+            checkoutPhone: fullPhone,
+            market: row.market,
+            ...(deviceId ? { deviceId } : {}),
+          }),
+        });
+      } catch (fetchErr) {
+        const nm =
+          fetchErr instanceof DOMException
+            ? fetchErr.name
+            : fetchErr instanceof Error
+              ? fetchErr.name
+              : "";
+        if (nm === "TimeoutError" || nm === "AbortError") {
+          setError(CHECKOUT_ERROR_REQUEST_TIMEOUT);
+        } else {
+          setError(CHECKOUT_ERROR_NETWORK);
+        }
+        return;
+      }
 
       const data = await res.json().catch(() => ({}));
 
@@ -278,6 +324,12 @@ function CheckoutContent() {
           setError(CHECKOUT_ERROR_REGION_MISMATCH);
           return;
         }
+        if (data?.error === "upstream_timeout" || res.status === 504) {
+          setError(
+            typeof data?.message === "string" ? data.message : CHECKOUT_ERROR_REQUEST_TIMEOUT,
+          );
+          return;
+        }
         const message = typeof data?.message === "string" ? data.message : null;
         const detail = typeof data?.detail === "string" ? data.detail : null;
         const errorCode = typeof data?.error === "string" ? data.error : null;
@@ -296,6 +348,7 @@ function CheckoutContent() {
       const billId = typeof data?.billId === "string" ? data.billId : null;
       if (typeof checkoutUrl === "string" && checkoutUrl) {
         redirectingRef.current = true;
+        submittingRef.current = false;
         persistCheckoutEmail(normalizedEmail);
         setSecuring(true);
         setLoading(false);

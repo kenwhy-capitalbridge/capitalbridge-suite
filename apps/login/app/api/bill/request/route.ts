@@ -35,22 +35,47 @@ export async function POST(req: Request) {
     const xri = req.headers.get("x-real-ip");
     if (xff) fwdHeaders["x-forwarded-for"] = xff;
     if (xri) fwdHeaders["x-real-ip"] = xri;
-    const res = await fetch(apiUrl, {
-      method: "POST",
-      headers: fwdHeaders,
-      body: JSON.stringify({
-        email: body.email ?? "",
-        name: body.name ?? "",
-        firstName: typeof body.firstName === "string" ? body.firstName : undefined,
-        lastName: typeof body.lastName === "string" ? body.lastName : undefined,
-        plan: body.plan ?? "trial",
-        deviceId: typeof body.deviceId === "string" ? body.deviceId : undefined,
-        checkoutCountry: typeof body.checkoutCountry === "string" ? body.checkoutCountry : undefined,
-        checkoutPhone: typeof body.checkoutPhone === "string" ? body.checkoutPhone : undefined,
-        market: typeof body.market === "string" ? body.market : undefined,
-      }),
-      cache: "no-store",
-    });
+    const UPSTREAM_MS = Math.min(
+      Number(process.env.BILL_PROXY_UPSTREAM_MS) || 110_000,
+      260_000,
+    );
+
+    let res: Response;
+    try {
+      res = await fetch(apiUrl, {
+        method: "POST",
+        headers: fwdHeaders,
+        body: JSON.stringify({
+          email: body.email ?? "",
+          name: body.name ?? "",
+          firstName: typeof body.firstName === "string" ? body.firstName : undefined,
+          lastName: typeof body.lastName === "string" ? body.lastName : undefined,
+          plan: body.plan ?? "trial",
+          deviceId: typeof body.deviceId === "string" ? body.deviceId : undefined,
+          checkoutCountry: typeof body.checkoutCountry === "string" ? body.checkoutCountry : undefined,
+          checkoutPhone: typeof body.checkoutPhone === "string" ? body.checkoutPhone : undefined,
+          market: typeof body.market === "string" ? body.market : undefined,
+        }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(UPSTREAM_MS),
+      });
+    } catch (fetchErr) {
+      const name =
+        fetchErr && typeof fetchErr === "object" && "name" in fetchErr
+          ? String((fetchErr as { name: unknown }).name)
+          : "";
+      if (name === "TimeoutError" || name === "AbortError") {
+        return NextResponse.json(
+          {
+            error: "upstream_timeout",
+            message:
+              "Our payment service took too long to respond. Please try again in a moment.",
+          },
+          { status: 504 },
+        );
+      }
+      throw fetchErr;
+    }
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
