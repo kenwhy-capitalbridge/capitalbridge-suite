@@ -459,7 +459,6 @@ export function PricingContent() {
   const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
   const [isOutcomeExpanded, setIsOutcomeExpanded] = useState(false);
   const [market, setMarket] = useState<MarketId>("MY");
-  const [geoReady, setGeoReady] = useState(false);
   const recentlyExpired = searchParams.get("message") === "recently_expired";
 
   useEffect(() => {
@@ -467,7 +466,7 @@ export function PricingContent() {
     supabase.auth.getSession().then(({ data: { session } }) => setIsLoggedIn(!!session));
   }, []);
 
-  /** Pricing tier follows IP geo only (server enforces the same on payment). */
+  /** Default market from connection; users can switch to compare list prices by currency. */
   useEffect(() => {
     void fetch("/api/geo")
       .then((r) => r.json())
@@ -475,9 +474,8 @@ export function PricingContent() {
         const m = typeof d?.market === "string" && isMarketId(d.market) ? d.market : "MY";
         setMarket(m);
         persistAdvisoryMarketPreference(m);
-        setGeoReady(true);
       })
-      .catch(() => setGeoReady(true));
+      .catch(() => {});
   }, []);
 
   function handlePay(planId: string) {
@@ -741,15 +739,21 @@ export function PricingContent() {
               Choose a plan that fits your advisory needs — start with a low‑cost trial, stay
               flexible with monthly access, or upgrade to quarterly or strategic yearly tiers.
             </p>
+            <p className="mx-auto mt-2 max-w-3xl text-xs leading-relaxed text-cb-cream/65 sm:text-sm">
+              Switch markets to compare currency labels; you&apos;ll confirm your country on checkout.
+            </p>
             <div className="mx-auto mt-4 flex max-w-3xl flex-wrap items-center justify-center gap-2">
               <span className="text-xs text-cb-cream/70 sm:text-sm">Markets:</span>
               {PRICING_MARKET_IDS.map((id) => (
                 <button
                   key={id}
                   type="button"
-                  disabled={!geoReady || id !== market}
-                  title={geoReady && id !== market ? "Pricing is locked to your region" : undefined}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:text-sm disabled:cursor-not-allowed disabled:opacity-45 ${
+                  onClick={() => {
+                    setMarket(id);
+                    persistAdvisoryMarketPreference(id);
+                  }}
+                  aria-pressed={market === id}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:text-sm ${
                     market === id
                       ? "border-cb-gold bg-cb-gold/20 text-cb-gold"
                       : "border-cb-cream/30 text-cb-cream/80 hover:border-cb-gold/50"

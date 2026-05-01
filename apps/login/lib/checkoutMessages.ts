@@ -13,6 +13,7 @@ export const CHECKOUT_ERROR_NETWORK = "Please check your connection and try agai
 export const CHECKOUT_ERROR_REQUEST_TIMEOUT =
   "That took too long — your connection or our servers may be busy. Please try again in a moment.";
 
+export const CHECKOUT_ERROR_COUNTRY_REQUIRED = "Please select a country.";
 
-export const CHECKOUT_ERROR_REGION_MISMATCH =
-  "Pricing is locked to your region. Refresh the page and try again, or contact support if you are travelling.";
+export const CHECKOUT_ERROR_COUNTRY_UNSUPPORTED =
+  "That country isn’t available for checkout yet. Please pick another or contact support.";

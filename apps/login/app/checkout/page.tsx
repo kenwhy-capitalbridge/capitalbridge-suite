@@ -11,10 +11,11 @@ import { NavAssignButton } from "@/components/NavAssignButton";
 import { CalmAuthMessage } from "@/components/CalmAuthMessage";
 import {
   CHECKOUT_ACCOUNT_EXISTS,
+  CHECKOUT_ERROR_COUNTRY_REQUIRED,
+  CHECKOUT_ERROR_COUNTRY_UNSUPPORTED,
   CHECKOUT_ERROR_INVALID_RESPONSE,
   CHECKOUT_ERROR_NETWORK,
   CHECKOUT_ERROR_PROVIDER_MAINTENANCE,
-  CHECKOUT_ERROR_REGION_MISMATCH,
   CHECKOUT_ERROR_REQUEST_TIMEOUT,
   CHECKOUT_ERROR_START_PAYMENT,
 } from "@/lib/checkoutMessages";
@@ -94,14 +95,13 @@ function CheckoutContent() {
   const [mobileNational, setMobileNational] = useState("");
   const [countryFieldError, setCountryFieldError] = useState<string | null>(null);
   const [mobileFieldError, setMobileFieldError] = useState<string | null>(null);
-  const [geoLocked, setGeoLocked] = useState(false);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
   const submittingRef = useRef(false);
   /** Avoid `finally` re-enabling submit while redirecting (stale `securing` closure). */
   const redirectingRef = useRef(false);
 
-  /** Country / price tier follows IP geo (server enforces the same). Not driven by ?market= or cookies. */
+  /** Prefill country from geo; user can override (billing uses selected country only). */
   useEffect(() => {
     let cancelled = false;
     void fetch("/api/geo")
@@ -112,13 +112,10 @@ function CheckoutContent() {
         const row = iso && CHECKOUT_COUNTRIES.find((c) => c.code === iso);
         if (row) {
           setCountry(row.code);
-        } else {
-          setCountry("MY");
         }
-        setGeoLocked(true);
       })
       .catch(() => {
-        if (!cancelled) setGeoLocked(true);
+        /* keep default MY */
       });
     return () => {
       cancelled = true;
@@ -316,12 +313,12 @@ function CheckoutContent() {
           );
           return;
         }
-        if (data?.error === "region_mismatch") {
-          setError(CHECKOUT_ERROR_REGION_MISMATCH);
+        if (data?.error === "checkout_country_required") {
+          setError(CHECKOUT_ERROR_COUNTRY_REQUIRED);
           return;
         }
-        if (data?.error === "checkout_country_required" || data?.error === "invalid_checkout_country") {
-          setError(CHECKOUT_ERROR_REGION_MISMATCH);
+        if (data?.error === "invalid_checkout_country") {
+          setError(CHECKOUT_ERROR_COUNTRY_UNSUPPORTED);
           return;
         }
         if (data?.error === "upstream_timeout" || res.status === 504) {
@@ -505,9 +502,8 @@ function CheckoutContent() {
           <label className="grid gap-1.5 text-left">
             <span className="text-sm font-medium text-cb-green">Country</span>
             <select
-              className="cb-input disabled:cursor-not-allowed disabled:opacity-70"
+              className="cb-input"
               value={country}
-              disabled={geoLocked}
               onChange={(e) => {
                 setCountry(e.target.value as CheckoutCountryCode);
                 setCountryFieldError(null);
@@ -525,14 +521,12 @@ function CheckoutContent() {
               ))}
             </select>
             <p id="checkout-country-hint" className="text-xs leading-relaxed text-cb-green/65">
-              {geoLocked && countryRow && (
+              {countryRow && (
                 <span className="mb-1 block font-medium text-cb-green/85">
-                  <span aria-hidden>{countryRow.flag}</span> Billing region: {countryRow.label}
+                  <span aria-hidden>{countryRow.flag}</span> Pricing display: {countryRow.label}
                 </span>
               )}
-              {geoLocked
-                ? "Your plan price follows this region. It must match where you are paying from (turn off mismatched VPNs)."
-                : "Detecting your region…"}
+              Choose the country for your plan — currency and labels follow this selection. You can change it before paying.
             </p>
             {countryFieldError && (
               <p id="checkout-country-error" className="cb-message-error mt-1 text-sm">

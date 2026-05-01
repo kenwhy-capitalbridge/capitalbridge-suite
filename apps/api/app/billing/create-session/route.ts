@@ -5,7 +5,6 @@ import { parseRequestCountryCode } from "@/lib/requestGeo";
 import {
   getBillplzChargeAmountSen,
   normalizeMarketId,
-  validateBillingRegionForRequest,
   type MarketId,
 } from "@cb/shared/markets";
 
@@ -68,23 +67,7 @@ export async function POST(req: Request) {
   const requestedPlan = (body.plan ?? "trial").toString();
   const marketRaw = typeof body.market === "string" ? body.market.trim().slice(0, 8) : "";
   const ipCountry = parseRequestCountryCode(req);
-  const allowAnyRegion = process.env.BILLING_ALLOW_ANY_REGION === "1";
-  let billingMarket: MarketId;
-  if (allowAnyRegion) {
-    billingMarket = normalizeMarketId(marketRaw || null);
-  } else {
-    const region = validateBillingRegionForRequest({
-      ipCountry,
-      clientMarket: marketRaw,
-      checkoutCountry: null,
-      requireCheckoutCountry: false,
-    });
-    if (!region.ok) {
-      const status = region.code === "invalid_checkout_country" ? 400 : 403;
-      return NextResponse.json({ error: region.code }, { status, headers });
-    }
-    billingMarket = region.market;
-  }
+  const billingMarket: MarketId = normalizeMarketId(marketRaw || null);
   const billAmountSen = getBillplzChargeAmountSen(billingMarket, requestedPlan);
   const name = typeof body.name === "string" ? body.name.trim() : email || "Customer";
 

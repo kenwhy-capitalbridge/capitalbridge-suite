@@ -195,45 +195,6 @@ export function solutionsFamilyOfficeCopyForAdvisoryMarket(raw: string | null | 
   return SOLUTIONS_FAMILY_OFFICE_BY_MARKET[mid] ?? SOLUTIONS_FAMILY_OFFICE_BY_MARKET.MY;
 }
 
-export type BillingRegionValidationCode =
-  | "region_mismatch"
-  | "checkout_country_required"
-  | "invalid_checkout_country";
-
-export type BillingRegionValidationResult =
-  | { ok: true; market: MarketId }
-  | { ok: false; code: BillingRegionValidationCode };
-
-/**
- * Lock billing to the market implied by IP geo. Client `market` and optional `checkoutCountry`
- * must match that market (prevents picking a cheaper region). Cookies/localStorage are not inputs.
- */
-export function validateBillingRegionForRequest(args: {
-  ipCountry: string | null | undefined;
-  clientMarket: string | null | undefined;
-  checkoutCountry: string | null | undefined;
-  /** Payment-first checkout must send checkout country; other flows can omit. */
-  requireCheckoutCountry: boolean;
-}): BillingRegionValidationResult {
-  const ipMarket = marketFromCountryCode(args.ipCountry);
-  const clientM = typeof args.clientMarket === "string" ? args.clientMarket.trim() : "";
-  if (clientM !== "" && normalizeMarketId(clientM) !== ipMarket) {
-    return { ok: false, code: "region_mismatch" };
-  }
-  const rawCc = (args.checkoutCountry ?? "").trim().toUpperCase();
-  if (args.requireCheckoutCountry) {
-    if (!rawCc) return { ok: false, code: "checkout_country_required" };
-    const row = getCheckoutCountry(rawCc.slice(0, 8));
-    if (!row) return { ok: false, code: "invalid_checkout_country" };
-    if (row.market !== ipMarket) return { ok: false, code: "region_mismatch" };
-  } else if (rawCc) {
-    const row = getCheckoutCountry(rawCc.slice(0, 8));
-    if (!row) return { ok: false, code: "invalid_checkout_country" };
-    if (row.market !== ipMarket) return { ok: false, code: "region_mismatch" };
-  }
-  return { ok: true, market: ipMarket };
-}
-
 /** MYR sen to pass to Billplz `amount` for this advisory market and plan slug. */
 export function getBillplzChargeAmountSen(market: string | null | undefined, planSlug: string): number {
   const m = normalizeMarketId(market);

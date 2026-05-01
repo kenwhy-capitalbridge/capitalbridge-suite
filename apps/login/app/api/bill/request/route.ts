@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     if (xff) fwdHeaders["x-forwarded-for"] = xff;
     if (xri) fwdHeaders["x-real-ip"] = xri;
 
-    /** Browser geo — same conventions as `/api/geo`. Omitting lets billing infer region from the login→API hop and reject with region_mismatch. */
+    /** Browser geo forwarded for analytics (e.g. billing session metadata), not for locking market. */
     const vercelCc = req.headers.get("x-vercel-ip-country");
     if (vercelCc) fwdHeaders["x-vercel-ip-country"] = vercelCc;
     const cfCc = req.headers.get("cf-ipcountry");

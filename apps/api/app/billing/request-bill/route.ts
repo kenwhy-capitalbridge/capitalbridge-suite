@@ -5,8 +5,7 @@ import { hashTrialCheckoutIp, parseClientIpFromRequest } from "@/lib/trialChecko
 import { parseRequestCountryCode } from "@/lib/requestGeo";
 import {
   getBillplzChargeAmountSen,
-  normalizeMarketId,
-  validateBillingRegionForRequest,
+  getCheckoutCountry,
   type MarketId,
 } from "@cb/shared/markets";
 
@@ -79,29 +78,20 @@ export async function POST(req: Request) {
   const deviceIdRaw = typeof body.deviceId === "string" ? body.deviceId.trim() : "";
   const deviceId = deviceIdRaw.length > 0 && deviceIdRaw.length <= 128 ? deviceIdRaw : "";
   const checkoutIpHash = hashTrialCheckoutIp(parseClientIpFromRequest(req));
-  const checkoutCountry =
-    typeof body.checkoutCountry === "string" ? body.checkoutCountry.trim().slice(0, 8) : "";
+  const checkoutCountryRaw =
+    typeof body.checkoutCountry === "string" ? body.checkoutCountry.trim().slice(0, 8).toUpperCase() : "";
   const checkoutPhone = typeof body.checkoutPhone === "string" ? body.checkoutPhone.trim().slice(0, 32) : "";
-  const marketRaw = typeof body.market === "string" ? body.market.trim().slice(0, 8) : "";
   const ipCountry = parseRequestCountryCode(req);
-  const allowAnyRegion = process.env.BILLING_ALLOW_ANY_REGION === "1";
-  let billingMarket: MarketId;
-  if (allowAnyRegion) {
-    billingMarket = normalizeMarketId(marketRaw || null);
-  } else {
-    const region = validateBillingRegionForRequest({
-      ipCountry,
-      clientMarket: marketRaw,
-      checkoutCountry,
-      requireCheckoutCountry: true,
-    });
-    if (!region.ok) {
-      const status =
-        region.code === "checkout_country_required" || region.code === "invalid_checkout_country" ? 400 : 403;
-      return NextResponse.json({ error: region.code }, { status, headers });
-    }
-    billingMarket = region.market;
+
+  const checkoutCountryRow = checkoutCountryRaw ? getCheckoutCountry(checkoutCountryRaw) : undefined;
+  if (!checkoutCountryRaw) {
+    return NextResponse.json({ error: "checkout_country_required" }, { status: 400, headers });
   }
+  if (!checkoutCountryRow) {
+    return NextResponse.json({ error: "invalid_checkout_country" }, { status: 400, headers });
+  }
+  const billingMarket: MarketId = checkoutCountryRow.market;
+  const checkoutCountry = checkoutCountryRow.code;
   const billAmountSen = getBillplzChargeAmountSen(billingMarket, requestedPlan);
   const checkoutMetadata: Record<string, string> = {
     bill_amount_sen: String(billAmountSen),
