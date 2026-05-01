@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@cb/supabase/service";
 import { createBillplzBill } from "@/lib/billplz";
 import { billingSessionsCheckoutMetadataColumnAvailable } from "@/lib/billingSessionsCheckoutMetadataColumn";
-import {
-  computeMarketChangeDeltaSen,
-  normalizeMarketId,
-  type MarketId,
-} from "@cb/shared/markets";
+import { normalizeMarketId, type MarketId } from "@cb/shared/markets";
 
 export const runtime = "nodejs";
 
@@ -17,8 +13,9 @@ function redirectUrlForBillplz(): string {
 }
 
 /**
- * Authenticated: change advisory region. If new regional price (same plan) is higher, creates a
- * Billplz bill for the MYR delta; otherwise updates profile immediately.
+ * Authenticated: change advisory `profiles.advisory_market` (currency / labels in model apps).
+ * Billplz top-up for regional price deltas is disabled — list amounts are treated as aligned per plan tier.
+ * Set `BILLING_REGION_CHANGE_CHARGE_DELTA=1` to restore delta charging via `computeMarketChangeDeltaSen`.
  */
 export async function POST(req: Request) {
   const authHeader = req.headers.get("Authorization") ?? "";
@@ -44,12 +41,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "email_required" }, { status: 400 });
   }
 
-  const { data: profile } = await svc
+  const { data: profile, error: profileErr } = await svc
     .schema("public")
     .from("profiles")
     .select("advisory_market")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (profileErr) {
+    console.error("[request-market-change] profiles select failed:", profileErr.message);
+    return NextResponse.json(
+      { error: "profile_load_failed", detail: profileErr.message },
+      { status: 500 },
+    );
+  }
 
   const fromMarket: MarketId = normalizeMarketId(
     typeof profile?.advisory_market === "string" ? profile.advisory_market : null
@@ -111,7 +116,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true as const, mode: "updated" as const, to_market: toMarket });
   }
 
-  const deltaSen = computeMarketChangeDeltaSen(fromMarket, toMarket, planSlug);
+  let deltaSen = 0;
+  if (process.env.BILLING_REGION_CHANGE_CHARGE_DELTA === "1") {
+    const { computeMarketChangeDeltaSen } = await import("@cb/shared/markets");
+    deltaSen = computeMarketChangeDeltaSen(fromMarket, toMarket, planSlug);
+  }
   const deltaMyr = deltaSen / 100;
 
   if (previewOnly) {

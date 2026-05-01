@@ -36,12 +36,6 @@ type Props = {
 
 function friendlyMarketChangeApiError(detail: string | undefined, fallback: string): string {
   const raw = (detail || "").trim();
-  if (
-    raw.includes("advisory_market") &&
-    (raw.includes("schema cache") || /could not find.*column/i.test(raw))
-  ) {
-    return "Region change is temporarily unavailable while the database is updated. Please try again in a few minutes, or contact support if this continues.";
-  }
   return raw || fallback;
 }
 
@@ -188,8 +182,9 @@ export function ProfileAdvisoryMarketForm({ currentMarket }: Props) {
           color: "rgba(246, 245, 241, 0.72)",
         }}
       >
-        Your model apps use the currency for the region you first checked out with. To use a higher-priced region for
-        your current plan, you may need a one-time top-up (charged in MYR via our payment provider).
+        Plans are billed on a consistent basis; switching region mainly updates currency labels and
+        formatting in your model apps. If you choose a region, we save it to your profile—no extra
+        payment step for a region change alone.
       </p>
 
       <label
