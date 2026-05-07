@@ -58,16 +58,16 @@ const contentWrap: CSSProperties = {
   zIndex: 1,
   maxWidth: 1440,
   margin: "0 auto",
-  padding: "20px clamp(16px, 3vw, 32px) 8px",
+  padding: "22px clamp(16px, 3vw, 32px) 12px",
   display: "flex",
   flexDirection: "column",
-  gap: 20,
+  gap: 26,
 };
 
 const hero: CSSProperties = {
   position: "relative",
   zIndex: 1,
-  padding: "8px 0 4px",
+  padding: "6px 0 2px",
   maxWidth: "min(920px, 100%)",
 };
 
@@ -100,7 +100,7 @@ const heroSub: CSSProperties = {
 };
 
 const banner: CSSProperties = {
-  marginTop: 18,
+  marginTop: 16,
   display: "flex",
   alignItems: "flex-start",
   gap: 12,

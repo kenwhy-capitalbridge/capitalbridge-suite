@@ -72,7 +72,7 @@ function Insight({
 
 const headerGrid: CSSProperties = {
   display: "flex",
-  gap: 16,
+  gap: 20,
   alignItems: "flex-start",
 };
 
@@ -91,23 +91,23 @@ const titleIncomplete: CSSProperties = {
 };
 
 const descStyle: CSSProperties = {
-  margin: "0 0 14px",
+  margin: "0 0 20px",
   fontSize: 14,
-  lineHeight: 1.5,
+  lineHeight: 1.55,
   color: "rgba(246,245,241,0.92)",
   fontFamily: fontSans,
 };
 
 const rows: CSSProperties = {
   display: "grid",
-  gap: 10,
+  gap: 14,
 };
 
 const insightStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "24px 1fr",
-  gap: 10,
-  padding: "11px 12px",
+  gap: 12,
+  padding: "14px 16px",
   borderRadius: CB.radiusMd,
   border: `1px solid rgba(255,204,106,0.22)`,
   background: "rgba(4,22,14,0.45)",

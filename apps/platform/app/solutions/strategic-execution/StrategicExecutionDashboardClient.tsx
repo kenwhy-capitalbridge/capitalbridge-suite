@@ -118,7 +118,7 @@ export function StrategicExecutionDashboardClient() {
           statusLineIncomplete="Complete the required models to unlock execution pathways and decision clarity."
           statusLineComplete="Your system is execution ready. All required models are completed and verified."
         >
-          <div style={{ display: "grid", gap: 20, paddingBottom: 24, flex: 1 }}>
+          <div className={gridStyles.dashboardBody}>
             <AdvisoryModuleFlowNavClient activeStepKey="strategic" />
 
             {isLoading ? (

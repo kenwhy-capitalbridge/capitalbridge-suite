@@ -8,7 +8,15 @@ export default async function StrategicExecutionContainer() {
   if (!user) redirect("/");
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#0D3A1D" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "#0D3A1D",
+        overflowX: "hidden",
+      }}
+    >
       <PlatformFrameworkHeader
         verifiedUserEmail={user.email}
         profileNames={{ firstName: user.firstName ?? null, lastName: user.lastName ?? null }}

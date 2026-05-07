@@ -22,6 +22,13 @@ import { stagingHostGateResponse } from "./lib/stagingGateMiddleware";
 
 const CB_MBR_SAFE = "cb_mbr_safe";
 
+/** Forward pathname for root layout (e.g. hide global footer on dashboard-only routes). */
+function nextWithRequestPathname(req: NextRequest): NextResponse {
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-cb-pathname", req.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 /** Avoid stale HTML at CDNs; helps confirm deploys via curl -I (X-CB-Commit). */
 function applyHtmlNoStoreHeaders(res: NextResponse): void {
   res.headers.set(
@@ -172,7 +179,7 @@ export async function middleware(req: NextRequest) {
   }
 
   if (!isProtected(req.nextUrl.pathname)) {
-    return NextResponse.next();
+    return nextWithRequestPathname(req);
   }
 
   const pathname = req.nextUrl.pathname;
@@ -193,10 +200,10 @@ export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.next();
+    return nextWithRequestPathname(req);
   }
 
-  let response = NextResponse.next({ request: req });
+  let response = nextWithRequestPathname(req);
   applyHtmlNoStoreHeaders(response);
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
