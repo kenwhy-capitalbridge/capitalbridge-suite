@@ -24,7 +24,7 @@
   --pf-chrome-pad-x: 0.75rem;
   --pf-chrome-font: 0.65rem;
   --pf-header-auth-size: 26px;
-  --pf-chrome-pad-x-inline: 0.65rem;
+  --pf-chrome-pad-x-inline: 0.42rem;
   /**
    * Sticky header logos — scale up to nearly fill the bar (login sm:h-14 ≈ 56px; mobile min-h-11 ≈ 44px).
    * ~25% smaller than original caps (user request ~20–30% reduction across apps).
@@ -36,7 +36,7 @@
   :root {
     --pf-chrome-font: clamp(0.5rem, 2.35vw, 0.65rem);
     --pf-header-auth-size: clamp(22px, 6.5vw, 26px);
-    --pf-chrome-pad-x-inline: clamp(0.42rem, 2vw, 0.65rem);
+    --pf-chrome-pad-x-inline: clamp(0.34rem, 1.75vw, 0.48rem);
   }
 }
 
@@ -503,6 +503,15 @@ a {
   padding-left: var(--pf-chrome-pad-x-inline);
   padding-right: var(--pf-chrome-pad-x-inline);
   align-self: center;
+}
+
+/* Square icon-only control (settings gear) — same height as BACK / SAVE. */
+.pf-chrome-gold-btn.pf-chrome-gold-btn--header-icon {
+  padding-left: 0;
+  padding-right: 0;
+  width: var(--pf-header-auth-size);
+  min-width: var(--pf-header-auth-size);
+  letter-spacing: normal;
 }
 
 /* Print / save / download report — same gold chrome as header LOGOUT; centered via block flex + width + margin auto. */

@@ -1,7 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MARKETING_SITE_URL, platformBackThroughSessionSyncUrl } from "@cb/shared/urls";
+import {
+  MARKETING_SITE_URL,
+  platformBackThroughSessionSyncUrl,
+  platformSettingsUrlForHost,
+} from "@cb/shared/urls";
+import { ChromeHeaderSettingsGearSvg } from "./ChromeHeaderSettingsGearSvg";
 import { ChromePendingNavLink } from "./ChromePendingNavLink";
 import { HeaderBrandPicture } from "./HeaderBrandPicture";
 import { ModelAppHeaderBackButton } from "./ModelAppHeaderBackButton";
@@ -16,6 +21,27 @@ function marketingHomeUrl(): string {
 function platformHomeUrl(): string {
   return platformBackThroughSessionSyncUrl("/");
 }
+
+function platformSettingsUrl(): string {
+  if (typeof window !== "undefined") {
+    return platformSettingsUrlForHost(window.location.hostname);
+  }
+  return platformSettingsUrlForHost(null);
+}
+
+function settingsWithReturnTo(baseSettingsUrl: string): string {
+  if (typeof window === "undefined") return baseSettingsUrl;
+  try {
+    const target = new URL(baseSettingsUrl);
+    target.searchParams.set("returnTo", window.location.href);
+    return target.toString();
+  } catch {
+    return baseSettingsUrl;
+  }
+}
+
+const HEADER_SETTINGS_ICON_BTN =
+  "pf-chrome-gold-btn pf-chrome-gold-btn--header-inline pf-chrome-gold-btn--header-icon shrink-0";
 
 export type ModelAppHeaderProps = {
   titleDesktop: string;
@@ -65,6 +91,7 @@ function MetricBlockMobile({
  */
 export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, compactTitle }: ModelAppHeaderProps) {
   const home = marketingHomeUrl();
+  const settings = platformSettingsUrl();
   const back = backHref ?? platformHomeUrl();
   const short = titleMobile?.trim();
   const { spine } = useModelMetricSpine();
@@ -107,6 +134,14 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
                 <MetricBlockDesktop labelDesktop={spine.slot3.labelDesktop} value={spine.slot3.value} />
               </div>
               <div className={styles.actionsCluster}>
+                <ChromePendingNavLink
+                  href={settings}
+                  className={HEADER_SETTINGS_ICON_BTN}
+                  ariaLabel="SETTINGS — account and membership"
+                  resolveHrefOnClick={settingsWithReturnTo}
+                >
+                  <ChromeHeaderSettingsGearSvg />
+                </ChromePendingNavLink>
                 <ModelAppHeaderBackButton href={back} />
                 {actions}
               </div>
@@ -127,6 +162,14 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
                   <span className={styles.titleMobileCentered}>{short ?? titleDesktop}</span>
                 </div>
                 <div className={styles.headerRight}>
+                  <ChromePendingNavLink
+                    href={settings}
+                    className={HEADER_SETTINGS_ICON_BTN}
+                    ariaLabel="SETTINGS — account and membership"
+                    resolveHrefOnClick={settingsWithReturnTo}
+                  >
+                    <ChromeHeaderSettingsGearSvg />
+                  </ChromePendingNavLink>
                   <ModelAppHeaderBackButton href={back} />
                   {actions}
                 </div>
@@ -149,6 +192,14 @@ export function ModelAppHeader({ titleDesktop, titleMobile, backHref, actions, c
             </div>
             <div className={styles.legacyRightGroup}>
               <span className={styles.legacyBackSlot}>
+                <ChromePendingNavLink
+                  href={settings}
+                  className={HEADER_SETTINGS_ICON_BTN}
+                  ariaLabel="SETTINGS — account and membership"
+                  resolveHrefOnClick={settingsWithReturnTo}
+                >
+                  <ChromeHeaderSettingsGearSvg />
+                </ChromePendingNavLink>
                 <ModelAppHeaderBackButton href={back} />
               </span>
               <div className={styles.legacyActionsSlot}>{actions}</div>

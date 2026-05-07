@@ -40,7 +40,7 @@ export function PlatformHeaderBackButton({
         flexShrink: 0,
         ...(isPending
           ? {
-              minWidth: "3.25rem",
+              minWidth: "2.85rem",
               justifyContent: "center",
             }
           : {}),
@@ -48,6 +48,10 @@ export function PlatformHeaderBackButton({
       onClick={() => {
         startTransition(() => {
           if (pushHref) {
+            if (typeof window !== "undefined" && /^https?:\/\//i.test(pushHref)) {
+              window.location.assign(pushHref);
+              return;
+            }
             router.push(pushHref);
             return;
           }

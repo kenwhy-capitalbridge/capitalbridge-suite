@@ -24,12 +24,14 @@ export function ChromePendingNavLink({
   children,
   ariaLabel,
   style,
+  resolveHrefOnClick,
 }: {
   href: string;
   className: string;
   children: ReactNode;
   ariaLabel?: string;
   style?: CSSProperties;
+  resolveHrefOnClick?: (fallbackHref: string) => string;
 }) {
   const [pending, setPending] = useState(false);
 
@@ -39,9 +41,10 @@ export function ChromePendingNavLink({
       e.preventDefault();
       if (pending) return;
       setPending(true);
-      window.location.assign(href);
+      const target = resolveHrefOnClick?.(href) ?? href;
+      window.location.assign(target);
     },
-    [href, pending]
+    [href, pending, resolveHrefOnClick]
   );
 
   const mergedStyle: CSSProperties = {
@@ -53,7 +56,7 @@ export function ChromePendingNavLink({
           opacity: 0.9,
           justifyContent: "center",
           alignItems: "center",
-          minWidth: "3.15rem",
+          minWidth: "max(2.65rem, var(--pf-header-auth-size, 26px))",
           transform: "none",
           position: "relative",
           overflow: "visible",

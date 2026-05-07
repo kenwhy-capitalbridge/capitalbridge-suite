@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { PlatformFrameworkHeader } from "@/app/components/PlatformFrameworkHeader";
-import { StrategicExecutionClient } from "@/app/solutions/strategic-execution/StrategicExecutionClient";
+import { StrategicExecutionDashboardClient } from "@/app/solutions/strategic-execution/StrategicExecutionDashboardClient";
 import { getServerUserAndMembership } from "@/lib/auth";
 
 export default async function StrategicExecutionContainer() {
@@ -17,7 +17,7 @@ export default async function StrategicExecutionContainer() {
         showBackBeforeHome
         backFallbackHref="/framework"
       />
-      <StrategicExecutionClient />
+      <StrategicExecutionDashboardClient />
     </div>
   );
 }

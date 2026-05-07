@@ -14,6 +14,29 @@ export const PLATFORM_APP_URL = envUrl(
 );
 
 /**
+ * Optional preview platform URL used by model-app previews so Settings opens
+ * the preview Platform app instead of production (e.g. https://advisoryplatform-<id>.vercel.app).
+ */
+export const PLATFORM_PREVIEW_APP_URL = process.env.NEXT_PUBLIC_PLATFORM_PREVIEW_APP_URL?.trim() ?? "";
+
+function isVercelPreviewHost(hostname: string | null | undefined): boolean {
+  if (!hostname) return false;
+  return hostname.trim().toLowerCase().endsWith(".vercel.app");
+}
+
+export function platformSettingsBaseUrlForHost(currentHostname?: string | null): string {
+  if (isVercelPreviewHost(currentHostname)) {
+    return envUrl(PLATFORM_PREVIEW_APP_URL, PLATFORM_APP_URL);
+  }
+  return PLATFORM_APP_URL;
+}
+
+export function platformSettingsUrlForHost(currentHostname?: string | null): string {
+  const base = platformSettingsBaseUrlForHost(currentHostname).replace(/\/+$/, "");
+  return `${base}/settings`;
+}
+
+/**
  * Platform route that syncs `user_active_session` to the current JWT, then redirects.
  * Use as the model-app BACK target so middleware does not treat the slot as stale and sign out.
  */

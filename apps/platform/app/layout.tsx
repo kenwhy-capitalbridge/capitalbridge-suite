@@ -14,7 +14,6 @@ const cbFrameworkFont = Tinos({
 import { CbLegalSiteFooter, ElfsightChatbot } from "@cb/ui";
 import { CB_SITE_FAVICON_ICONS } from "@cb/ui/siteFaviconMetadata";
 import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
-import { StagingEnvironmentBanner } from "./components/StagingEnvironmentBanner";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
 
 const BASE_METADATA: Metadata = {
@@ -57,13 +56,10 @@ async function readInitialSafeMode(): Promise<boolean> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialSafeMode = await readInitialSafeMode();
-  const host = normalizeRequestHost((await headers()).get("host"));
-  const showStagingRibbon = isStagingCapitalBridgeHost(host);
 
   return (
     <html lang="en" className={cbFrameworkFont.variable}>
-      <body className={`flex min-h-screen flex-col${showStagingRibbon ? " pt-11" : ""}`}>
-        <StagingEnvironmentBanner show={showStagingRibbon} />
+      <body className="flex min-h-screen flex-col">
         <MembershipSessionCheck initialSafeMode={initialSafeMode} />
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         <CbLegalSiteFooter />

@@ -1,10 +1,13 @@
 import { HeaderBrandPicture } from "@cb/ui";
+import { headers } from "next/headers";
 import { createAppServerClient } from "@cb/supabase/server";
 import { MARKETING_SITE_URL } from "@cb/shared/urls";
+import { isStagingCapitalBridgeHost, normalizeRequestHost } from "@cb/shared/staging";
 import { PlatformLoginButton } from "./PlatformLoginButton";
 import { PlatformHeaderAuthCluster } from "./PlatformHeaderAuthCluster";
 import { PlatformMarketingHomeLink } from "./PlatformMarketingHomeLink";
 import { PlatformHeaderBackButton } from "./PlatformHeaderBackButton";
+import { PlatformHeaderSettingsIconLink } from "./PlatformHeaderSettingsIconLink";
 
 function marketingHomeUrl(): string {
   const base = MARKETING_SITE_URL.replace(/\/+$/, "");
@@ -23,7 +26,7 @@ export type PlatformFrameworkHeaderProps = {
   publicBrowse?: boolean;
   /** Center label in the sticky bar (default: Framework). */
   centerTitle?: string;
-  /** Show BACK in the right cluster (before profile / LOGOUT), matching model-app chrome — e.g. `/solutions`. */
+  /** Show BACK in the right cluster (settings gear immediately before BACK; trial pill after BACK) — e.g. `/solutions`. */
   showBackBeforeHome?: boolean;
   /** Used when history is empty (direct navigation). Default `/framework` → `/`. */
   backFallbackHref?: string;
@@ -105,6 +108,8 @@ export async function PlatformFrameworkHeader({
 
   const home = marketingHomeUrl();
   const showTrialPill = membershipPlanSlug === "trial";
+  const host = normalizeRequestHost((await headers()).get("host"));
+  const showStagingBadge = isStagingCapitalBridgeHost(host);
 
   return (
     <header
@@ -135,18 +140,41 @@ export async function PlatformFrameworkHeader({
         <span className="cb-header-chrome-title">{centerTitle}</span>
 
         <div className="platform-header-right-cluster">
+          {showStagingBadge ? (
+            <span
+              title="Preview environment"
+              style={{
+                border: "1px solid rgba(255, 204, 106, 0.62)",
+                borderRadius: 999,
+                color: "#FFCC6A",
+                background: "rgba(255, 204, 106, 0.1)",
+                padding: "0.35rem 0.55rem",
+                fontSize: "0.62rem",
+                fontWeight: 900,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+              }}
+            >
+              STAGING SERVER
+            </span>
+          ) : null}
           {showBackBeforeHome ? (
-            <PlatformHeaderBackButton
-              fallbackHref={backFallbackHref}
-              pushHref={backPushHref}
-              ariaLabel={backAriaLabel}
-            />
+            <>
+              <PlatformHeaderSettingsIconLink />
+              <PlatformHeaderBackButton
+                fallbackHref={backFallbackHref}
+                pushHref={backPushHref}
+                ariaLabel={backAriaLabel}
+              />
+            </>
           ) : null}
           {showTrialPill ? (
             <span className="platform-header-trial-badge" title="Trial plan">
               TRIAL
             </span>
           ) : null}
+          {!showBackBeforeHome ? <PlatformHeaderSettingsIconLink /> : null}
           <PlatformHeaderAuthCluster />
         </div>
       </div>

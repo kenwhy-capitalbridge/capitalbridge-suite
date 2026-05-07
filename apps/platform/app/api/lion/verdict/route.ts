@@ -120,6 +120,128 @@ function fallbackRunForMissingModel(model: RequiredModel): LionPipelineModelRunI
   };
 }
 
+function parseMetricNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function metricsFromOutputPayload(payload: JsonObject): JsonObject | null {
+  const normalized = payload.output_normalized;
+  if (!isObject(normalized)) return null;
+  const metrics = normalized.metrics;
+  return isObject(metrics) ? metrics : null;
+}
+
+/** Values read from latest `model_outputs.output_normalized.metrics` only (no invented figures). */
+function buildMetricsSnapshot(args: {
+  latestRuns: Map<
+    string,
+    { id: string; model_key: string; status: string }
+  >;
+  outputsByRunId: Map<string, JsonObject>;
+}): {
+  income_engineering: {
+    monthly_net_cashflow: number | null;
+    cashflow_coverage_ratio: number | null;
+  } | null;
+  forever_income: {
+    runway_months: number | null;
+    required_capital: number | null;
+  } | null;
+  capital_health: {
+    runway_months: number | null;
+    withdrawal_sustainability_ratio: number | null;
+  } | null;
+  capital_stress: {
+    survival_probability_pct: number | null;
+    resilience_score_0_100: number | null;
+  } | null;
+  capital_gap: number | null;
+} {
+  const { latestRuns, outputsByRunId } = args;
+
+  let income_engineering: {
+    monthly_net_cashflow: number | null;
+    cashflow_coverage_ratio: number | null;
+  } | null = null;
+  let forever_income: {
+    runway_months: number | null;
+    required_capital: number | null;
+  } | null = null;
+  let capital_health: {
+    runway_months: number | null;
+    withdrawal_sustainability_ratio: number | null;
+  } | null = null;
+  let capital_stress: {
+    survival_probability_pct: number | null;
+    resilience_score_0_100: number | null;
+  } | null = null;
+  let capital_gap: number | null = null;
+
+  const readModel = (modelKey: ModelKey) => {
+    const run = latestRuns.get(modelKey);
+    if (!run || run.status !== "completed") return null;
+    const payload = outputsByRunId.get(run.id);
+    if (!payload) return null;
+    return metricsFromOutputPayload(payload);
+  };
+
+  const ie = readModel("income-engineering-model");
+  if (ie) {
+    income_engineering = {
+      monthly_net_cashflow: parseMetricNumber(ie.income_gap_monthly),
+      cashflow_coverage_ratio: parseMetricNumber(ie.cashflow_coverage_ratio),
+    };
+  }
+
+  const fi = readModel("forever-income-model");
+  if (fi) {
+    forever_income = {
+      runway_months: parseMetricNumber(fi.runway_months),
+      required_capital: parseMetricNumber(fi.required_capital),
+    };
+  }
+
+  const ch = readModel("capital-health-model");
+  if (ch) {
+    capital_health = {
+      runway_months: parseMetricNumber(ch.runway_months),
+      withdrawal_sustainability_ratio: parseMetricNumber(ch.withdrawal_sustainability_ratio),
+    };
+  }
+
+  const cs = readModel("capital-stress-model");
+  if (cs) {
+    capital_stress = {
+      survival_probability_pct: parseMetricNumber(cs.survival_probability_pct),
+      resilience_score_0_100: parseMetricNumber(cs.resilience_score_0_100),
+    };
+  }
+
+  for (const model of REQUIRED_MODELS) {
+    const m = readModel(model.model_key);
+    if (!m) continue;
+    const cg = parseMetricNumber(m.capital_gap);
+    if (cg !== null) {
+      capital_gap = cg;
+      break;
+    }
+  }
+
+  return {
+    income_engineering,
+    forever_income,
+    capital_health,
+    capital_stress,
+    capital_gap,
+  };
+}
+
 export async function GET() {
   try {
     const supabase = await createAppServerClient();
@@ -259,6 +381,8 @@ export async function GET() {
       tier: "STRATEGIC",
     });
 
+    const metrics_snapshot = buildMetricsSnapshot({ latestRuns, outputsByRunId });
+
     return NextResponse.json({
       lion_status: pipeline.verdict.lion_status,
       agreement_level: pipeline.verdict.agreement_level,
@@ -267,6 +391,7 @@ export async function GET() {
       missing_models: missingModels,
       execution_gate: executionGate,
       progress: pipeline.progress,
+      metrics_snapshot,
       narrative: {
         headline: pipeline.verdict.headline,
         what_is_happening: pipeline.verdict.narrative.what_is_happening,

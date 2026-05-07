@@ -19,6 +19,47 @@ export const metadata: Metadata = {
     "SETTINGS — manage your Capital Bridge advisory account, membership, sign-in email, and regional preferences.",
 };
 
+type SettingsPageProps = {
+  searchParams?: Promise<{ returnTo?: string }>;
+};
+
+const ALLOWED_RETURN_HOSTS = new Set([
+  "platform.thecapitalbridge.com",
+  "incomeengineering.thecapitalbridge.com",
+  "capitalhealth.thecapitalbridge.com",
+  "capitalstress.thecapitalbridge.com",
+  "forever.thecapitalbridge.com",
+  "staging.thecapitalbridge.com",
+]);
+
+function isAllowedReturnHost(hostname: string): boolean {
+  if (ALLOWED_RETURN_HOSTS.has(hostname)) return true;
+  if (
+    hostname.endsWith(".vercel.app") &&
+    (hostname.startsWith("capitalbridge-suite-") || hostname.startsWith("advisoryplatform-"))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function resolveSettingsReturnTarget(raw: string | null | undefined): string {
+  if (!raw || raw.length > 2048) return "/";
+
+  if (raw.startsWith("/") && !raw.startsWith("//")) {
+    return raw;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "https:") return "/";
+    if (!isAllowedReturnHost(parsed.hostname)) return "/";
+    return parsed.toString();
+  } catch {
+    return "/";
+  }
+}
+
 function formatDateIso(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -30,14 +71,19 @@ function formatDateIso(iso: string | null | undefined): string | null {
   });
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const params = searchParams ? await searchParams : undefined;
+  const rawReturnTo = params?.returnTo ?? null;
+  const backTarget = resolveSettingsReturnTarget(params?.returnTo ?? null);
+  const backLabel = backTarget === "/" ? "Back to Capital Bridge platform home" : "Back to previous page";
   const { user, membership } = await getServerUserAndMembership();
 
   if (!user) {
     const h = await headers();
     const host = h.get("host") ?? "platform.thecapitalbridge.com";
     const proto = h.get("x-forwarded-proto") === "https" ? "https" : "http";
-    const back = `${proto}://${host}/settings`;
+    const backPath = rawReturnTo ? `/settings?returnTo=${encodeURIComponent(rawReturnTo)}` : "/settings";
+    const back = `${proto}://${host}${backPath}`;
     const loginUrl = new URL(`${LOGIN_APP_URL}/access`);
     loginUrl.searchParams.set("redirectTo", back);
     redirect(loginUrl.toString());
@@ -107,8 +153,8 @@ export default async function SettingsPage() {
         membershipPlanSlug={membership?.plan ?? null}
         showBackBeforeHome
         backFallbackHref="/"
-        backPushHref="/"
-        backAriaLabel="Back to Capital Bridge platform home"
+        backPushHref={backTarget}
+        backAriaLabel={backLabel}
       />
 
       <main

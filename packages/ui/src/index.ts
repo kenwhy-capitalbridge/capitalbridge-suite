@@ -30,6 +30,7 @@ export {
 export { ChromeSpinnerGlyph, type ChromeSpinnerGlyphProps } from "./ChromeSpinnerGlyph";
 export { FormattedNumberInput, type FormattedNumberInputProps } from "./FormattedNumberInput";
 export { ChromePendingNavLink } from "./ChromePendingNavLink";
+export { ChromeHeaderSettingsGearSvg } from "./ChromeHeaderSettingsGearSvg";
 export {
   ReportPrintChrome,
   ReportPrintFooter,
