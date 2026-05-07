@@ -15,7 +15,7 @@ export function DecisionIntegrityPanel({ incomplete, agreement }: Props) {
     <DashboardPanel title="Decision Integrity">
       <div style={row}>
         <div style={iconBox}>
-          <Fingerprint size={18} color={CB.gold} />
+          <Fingerprint size={16} color={CB.gold} />
         </div>
         <div>
           <p style={title}>
@@ -38,34 +38,34 @@ export function DecisionIntegrityPanel({ incomplete, agreement }: Props) {
 
 const row: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "40px 1fr",
-  gap: 12,
+  gridTemplateColumns: "34px 1fr",
+  gap: 10,
   alignItems: "start",
   fontFamily: fontSans,
 };
 
 const iconBox: CSSProperties = {
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  border: `1px solid rgba(255,204,106,0.4)`,
+  width: 34,
+  height: 34,
+  borderRadius: 9,
+  border: `1px solid rgba(255,204,106,0.42)`,
   display: "grid",
   placeItems: "center",
-  background: "rgba(0,0,0,0.15)",
+  background: "rgba(0,0,0,0.18)",
 };
 
 const title: CSSProperties = {
-  margin: "0 0 6px",
+  margin: "0 0 5px",
   fontFamily: fontSerif,
-  fontSize: 26,
+  fontSize: "clamp(20px, 1.8vw, 24px)",
   fontWeight: 600,
   color: CB.white,
-  lineHeight: 1.05,
+  lineHeight: 1.08,
 };
 
 const body: CSSProperties = {
   margin: 0,
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: "rgba(246,245,241,0.9)",
+  fontSize: 13,
+  lineHeight: 1.4,
+  color: "rgba(246,245,241,0.88)",
 };

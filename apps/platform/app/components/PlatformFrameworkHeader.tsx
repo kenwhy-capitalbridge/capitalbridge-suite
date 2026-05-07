@@ -129,7 +129,7 @@ export async function PlatformFrameworkHeader({
           gridTemplateColumns: "minmax(0, 1fr) auto minmax(4.5rem, 1fr)",
           alignItems: "center",
           columnGap: "clamp(16px, 2vw, 32px)",
-          minHeight: 48,
+          minHeight: 44,
           maxWidth: 1280,
           margin: "0 auto",
           boxSizing: "border-box",
@@ -144,12 +144,12 @@ export async function PlatformFrameworkHeader({
             <span
               title="Preview environment"
               style={{
-                border: "1px solid rgba(255, 204, 106, 0.62)",
+                border: "1px solid rgba(255, 204, 106, 0.55)",
                 borderRadius: 999,
                 color: "#FFCC6A",
-                background: "rgba(255, 204, 106, 0.1)",
-                padding: "0.35rem 0.55rem",
-                fontSize: "0.62rem",
+                background: "rgba(255, 204, 106, 0.08)",
+                padding: "0.28rem 0.5rem",
+                fontSize: "0.58rem",
                 fontWeight: 900,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",

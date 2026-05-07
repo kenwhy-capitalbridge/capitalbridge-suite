@@ -18,10 +18,10 @@ export function DashboardFooter() {
 }
 
 const foot: CSSProperties = {
-  borderTop: `1px solid rgba(255,204,106,0.25)`,
+  borderTop: `1px solid rgba(255,204,106,0.22)`,
   marginTop: "auto",
-  padding: "20px 24px 28px",
-  background: "rgba(8,32,22,0.92)",
+  padding: "12px 20px 14px",
+  background: "rgba(6,28,18,0.96)",
   fontFamily: fontSans,
 };
 
@@ -30,24 +30,24 @@ const inner: CSSProperties = {
   margin: "0 auto",
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: 20,
+  alignItems: "center",
+  gap: 16,
   flexWrap: "wrap",
 };
 
 const left: CSSProperties = {
   margin: 0,
-  fontSize: 11,
-  lineHeight: 1.55,
-  color: "rgba(246,245,241,0.55)",
-  maxWidth: 720,
+  fontSize: 10,
+  lineHeight: 1.45,
+  color: "rgba(246,245,241,0.52)",
+  maxWidth: "min(680px, 100%)",
 };
 
 const right: CSSProperties = {
   margin: 0,
-  fontSize: 11,
+  fontSize: 10,
   fontWeight: 800,
-  letterSpacing: "0.1em",
+  letterSpacing: "0.12em",
   textTransform: "uppercase",
   color: CB.gold,
 };

@@ -3,7 +3,7 @@
 import { BRAND_LIONHEAD_GOLD } from "@cb/ui";
 import { CB } from "./cbDashboardTokens";
 
-/** Premium sculptural lion — upper-right, non-interactive, does not block text. */
+/** Premium sculptural lion — upper-right, integrated into cockpit background. */
 export function LionWatermark() {
   return (
     <div
@@ -12,8 +12,8 @@ export function LionWatermark() {
         position: "absolute",
         top: 0,
         right: 0,
-        width: "min(42vw, 380px)",
-        height: "min(48vh, 420px)",
+        width: "min(40vw, 360px)",
+        height: "min(42vh, 380px)",
         pointerEvents: "none",
         zIndex: 0,
         overflow: "hidden",
@@ -22,11 +22,11 @@ export function LionWatermark() {
       <div
         style={{
           position: "absolute",
-          right: "-6%",
-          top: "-4%",
-          width: "110%",
-          height: "110%",
-          background: `radial-gradient(ellipse at 70% 30%, rgba(255,204,106,0.12) 0%, transparent 55%)`,
+          right: "-4%",
+          top: "-2%",
+          width: "108%",
+          height: "108%",
+          background: `radial-gradient(ellipse at 72% 28%, rgba(255,204,106,0.14) 0%, transparent 52%)`,
         }}
       />
       <img
@@ -34,21 +34,21 @@ export function LionWatermark() {
         alt=""
         style={{
           position: "absolute",
-          right: "-40px",
-          top: "-20px",
+          right: "-36px",
+          top: "-16px",
           width: "auto",
-          height: "108%",
+          height: "105%",
           maxWidth: "none",
-          opacity: 0.22,
+          opacity: 0.21,
           mixBlendMode: "soft-light",
-          filter: "saturate(1.05) contrast(1.08)",
+          filter: "saturate(1.08) contrast(1.1)",
         }}
       />
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: `linear-gradient(210deg, transparent 40%, ${CB.green} 92%)`,
+          background: `linear-gradient(205deg, transparent 38%, ${CB.green} 90%)`,
         }}
       />
     </div>

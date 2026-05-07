@@ -18,7 +18,7 @@ export function PathwayPanel({ incomplete, bodyWhenReady }: Props) {
     >
       <div style={row}>
         <div style={iconBox}>
-          <Flag size={18} color={CB.gold} />
+          <Flag size={16} color={CB.gold} />
         </div>
         <p style={text}>
           {incomplete
@@ -32,23 +32,23 @@ export function PathwayPanel({ incomplete, bodyWhenReady }: Props) {
 
 const row: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "40px 1fr",
-  gap: 12,
+  gridTemplateColumns: "34px 1fr",
+  gap: 10,
   alignItems: "start",
   fontFamily: fontSans,
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: "rgba(246,245,241,0.92)",
+  fontSize: 13,
+  lineHeight: 1.42,
+  color: "rgba(246,245,241,0.9)",
 };
 
 const iconBox: CSSProperties = {
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  border: `1px solid rgba(255,204,106,0.4)`,
+  width: 34,
+  height: 34,
+  borderRadius: 9,
+  border: `1px solid rgba(255,204,106,0.42)`,
   display: "grid",
   placeItems: "center",
-  background: "rgba(0,0,0,0.15)",
+  background: "rgba(0,0,0,0.18)",
 };
 
 const text: CSSProperties = { margin: 0 };

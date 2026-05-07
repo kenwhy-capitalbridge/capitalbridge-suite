@@ -57,7 +57,7 @@ export function ModuleFlowNav({ steps, missing, completionState, allModulesCompl
             <div style={rowStyle}>
               <span style={indexStyle}>{index + 1}</span>
               {done && (isStrategic || step.href) ? (
-                <CheckCircle2 size={14} color={CB.success} style={{ flexShrink: 0 }} aria-hidden />
+                <CheckCircle2 size={13} color={CB.success} style={{ flexShrink: 0 }} aria-hidden />
               ) : (
                 <span style={pillStyle}>{statusLabel}</span>
               )}
@@ -78,19 +78,20 @@ const navStyle: CSSProperties = {
 const cardStyle: CSSProperties = {
   textDecoration: "none",
   color: CB.white,
-  border: CB.cardBorder,
+  border: CB.panelBorder,
   borderRadius: CB.radiusMd,
-  background: CB.cardBg,
+  background: CB.panelSurface,
   boxShadow: CB.shadowCard,
-  padding: "12px 10px",
+  padding: "8px 8px 7px",
   display: "grid",
-  gap: 6,
-  minHeight: 72,
+  gap: 3,
+  minHeight: 56,
+  maxHeight: 72,
 };
 
 const cardActive: CSSProperties = {
-  borderColor: CB.gold,
-  boxShadow: `0 0 0 1px rgba(255,204,106,0.35), ${CB.shadowCard}`,
+  border: "1px solid rgba(255,204,106,0.72)",
+  boxShadow: `0 0 0 1px rgba(255,204,106,0.45), 0 6px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,204,106,0.12)`,
 };
 
 const cardDisabled: CSSProperties = {
@@ -102,39 +103,45 @@ const rowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: 6,
+  gap: 4,
 };
 
 const indexStyle: CSSProperties = {
-  width: 22,
-  height: 22,
+  width: 20,
+  height: 20,
   borderRadius: "50%",
-  border: `1px solid rgba(255,204,106,0.45)`,
+  border: `1px solid rgba(255,204,106,0.48)`,
   color: CB.gold,
   display: "grid",
   placeItems: "center",
-  fontSize: 11,
+  fontSize: 10,
   fontWeight: 800,
 };
 
 const pillStyle: CSSProperties = {
   borderRadius: 999,
-  border: `1px solid rgba(255,204,106,0.4)`,
+  border: `1px solid rgba(255,204,106,0.38)`,
   color: CB.gold,
-  padding: "2px 7px",
-  fontSize: 9,
+  padding: "1px 5px",
+  fontSize: 8,
   fontWeight: 700,
-  letterSpacing: "0.06em",
+  letterSpacing: "0.05em",
   textTransform: "uppercase",
+  maxWidth: "100%",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 };
 
 const nameStyle: CSSProperties = {
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 700,
   letterSpacing: "0.02em",
+  lineHeight: 1.2,
 };
 
 const metaStyle: CSSProperties = {
-  fontSize: 10,
-  color: "rgba(246,245,241,0.7)",
+  fontSize: 9,
+  color: "rgba(246,245,241,0.65)",
+  lineHeight: 1.15,
 };

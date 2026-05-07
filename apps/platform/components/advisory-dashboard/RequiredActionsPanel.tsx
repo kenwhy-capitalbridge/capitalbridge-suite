@@ -87,7 +87,7 @@ export function RequiredActionsPanel({ incomplete, moduleLinks }: Props) {
 
   return (
     <DashboardPanel title="Required Actions">
-      <div style={{ display: "grid", gap: 10, fontFamily: fontSans }}>
+      <div style={{ display: "grid", gap: 7, fontFamily: fontSans }}>
         {rows.map((row) => {
           const disabled = !row.href;
           const label = disabled ? "Staging destination pending" : row.cta.toUpperCase();
@@ -95,7 +95,7 @@ export function RequiredActionsPanel({ incomplete, moduleLinks }: Props) {
             <div key={row.p} style={rowStyle}>
               <span style={badge}>{row.p}</span>
               <div style={ico}>
-                <ClipboardList size={14} color={CB.gold} />
+                <ClipboardList size={13} color={CB.gold} />
               </div>
               <div style={{ minWidth: 0 }}>
                 <p style={t}>{row.title}</p>
@@ -120,55 +120,56 @@ export function RequiredActionsPanel({ incomplete, moduleLinks }: Props) {
 
 const rowStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "44px 32px minmax(0,1fr) auto",
-  gap: 12,
+  gridTemplateColumns: "34px 26px minmax(0, 1fr) auto",
+  gap: 8,
   alignItems: "center",
-  padding: "12px 14px",
-  borderRadius: CB.radiusMd,
-  border: `1px solid rgba(255,204,106,0.28)`,
-  background: "rgba(4,22,14,0.4)",
+  padding: "8px 10px",
+  borderRadius: 12,
+  border: `1px solid rgba(255,204,106,0.32)`,
+  background: "rgba(4,22,14,0.55)",
 };
 
 const badge: CSSProperties = {
-  width: 44,
-  height: 44,
+  width: 34,
+  height: 34,
   borderRadius: "50%",
-  border: `1px solid rgba(255,204,106,0.55)`,
+  border: `1px solid rgba(255,204,106,0.5)`,
   color: CB.gold,
   display: "grid",
   placeItems: "center",
   fontWeight: 900,
-  fontSize: 12,
+  fontSize: 11,
 };
 
 const ico: CSSProperties = {
-  width: 30,
-  height: 30,
-  borderRadius: 8,
+  width: 26,
+  height: 26,
+  borderRadius: 7,
   border: `1px solid rgba(255,204,106,0.35)`,
   display: "grid",
   placeItems: "center",
-  background: "rgba(0,0,0,0.15)",
+  background: "rgba(0,0,0,0.2)",
 };
 
-const t: CSSProperties = { margin: 0, fontWeight: 700, fontSize: 14, color: CB.white };
+const t: CSSProperties = { margin: 0, fontWeight: 700, fontSize: 13, color: CB.white, lineHeight: 1.25 };
 const r: CSSProperties = {
-  margin: "4px 0 0",
-  fontSize: 12,
-  lineHeight: 1.4,
-  color: "rgba(246,245,241,0.78)",
+  margin: "3px 0 0",
+  fontSize: 11,
+  lineHeight: 1.28,
+  color: "rgba(246,245,241,0.76)",
 };
 
 const btn: CSSProperties = {
   color: CB.gold,
   textDecoration: "none",
-  border: `1px solid ${CB.gold}`,
-  borderRadius: 10,
-  padding: "8px 14px",
-  fontSize: 10,
+  border: `1px solid rgba(255,204,106,0.65)`,
+  borderRadius: 8,
+  padding: "6px 11px",
+  fontSize: 9,
   fontWeight: 800,
-  letterSpacing: "0.06em",
+  letterSpacing: "0.08em",
   whiteSpace: "nowrap",
+  background: "rgba(0,0,0,0.15)",
 };
 
 const btnOff: CSSProperties = {

@@ -9,15 +9,18 @@ type Props = {
   children: ReactNode;
   emphasize?: boolean;
   id?: string;
+  /** Slightly more padding for primary chart panel */
+  major?: boolean;
 };
 
-export function DashboardPanel({ title, titleRight, children, emphasize, id }: Props) {
+export function DashboardPanel({ title, titleRight, children, emphasize, id, major }: Props) {
   return (
     <section
       id={id}
       style={{
         ...panelStyle,
-        ...(emphasize ? { borderColor: "rgba(255,204,106,0.62)" } : {}),
+        padding: major ? "22px 24px 20px" : "18px 20px 16px",
+        ...(emphasize ? { borderColor: "rgba(255,204,106,0.55)", boxShadow: `${CB.shadowCard}, 0 0 0 1px rgba(255,204,106,0.12)` } : {}),
       }}
     >
       <div style={headerRow}>
@@ -30,11 +33,10 @@ export function DashboardPanel({ title, titleRight, children, emphasize, id }: P
 }
 
 const panelStyle: CSSProperties = {
-  border: CB.cardBorder,
+  border: CB.panelBorder,
   borderRadius: CB.radiusLg,
-  background: CB.cardBg,
+  background: CB.panelSurface,
   boxShadow: CB.shadowCard,
-  padding: "22px 24px",
   fontFamily: fontSans,
 };
 
@@ -42,20 +44,20 @@ const headerRow: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  gap: 12,
+  gap: 10,
   flexWrap: "wrap",
 };
 
 const titleStyle: CSSProperties = {
   margin: 0,
   fontFamily: fontSerif,
-  fontSize: "clamp(22px, 2.2vw, 30px)",
-  lineHeight: 1.12,
+  fontSize: "clamp(22px, 1.9vw, 30px)",
+  lineHeight: 1.08,
   fontWeight: 600,
   color: CB.gold,
 };
 
 const bodyStyle: CSSProperties = {
-  marginTop: 14,
+  marginTop: 10,
   color: CB.white,
 };

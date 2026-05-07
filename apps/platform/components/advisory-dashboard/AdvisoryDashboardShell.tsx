@@ -34,7 +34,7 @@ export function AdvisoryDashboardShell({
           <h1 style={heroTitle}>{title}</h1>
           <p style={heroSub}>{subtitle}</p>
           <div style={banner}>
-            <CheckCircle2 size={22} color={statusComplete ? CB.success : CB.gold} style={{ flexShrink: 0 }} />
+            <CheckCircle2 size={18} color={statusComplete ? CB.success : CB.gold} style={{ flexShrink: 0 }} />
             <p style={bannerText}>{statusComplete ? statusLineComplete : statusLineIncomplete}</p>
           </div>
         </header>
@@ -53,22 +53,23 @@ const page: CSSProperties = {
   overflow: "hidden",
 };
 
+/** Compact hero + tight coupling to module rail / KPI strip */
 const contentWrap: CSSProperties = {
   position: "relative",
   zIndex: 1,
   maxWidth: 1440,
   margin: "0 auto",
-  padding: "22px clamp(16px, 3vw, 32px) 12px",
+  padding: "clamp(40px, 5vw, 56px) clamp(16px, 3vw, 32px) 6px",
   display: "flex",
   flexDirection: "column",
-  gap: 26,
+  gap: 18,
 };
 
 const hero: CSSProperties = {
   position: "relative",
   zIndex: 1,
-  padding: "6px 0 2px",
-  maxWidth: "min(920px, 100%)",
+  padding: "0 0 clamp(24px, 3vw, 32px)",
+  maxWidth: "min(880px, 100%)",
 };
 
 const eyebrowStyle: CSSProperties = {
@@ -76,15 +77,15 @@ const eyebrowStyle: CSSProperties = {
   fontFamily: fontSans,
   fontSize: 10,
   fontWeight: 800,
-  letterSpacing: "0.2em",
+  letterSpacing: "0.18em",
   textTransform: "uppercase",
   color: CB.gold,
 };
 
 const heroTitle: CSSProperties = {
-  margin: "10px 0 12px",
+  margin: "6px 0 8px",
   fontFamily: fontSerif,
-  fontSize: "clamp(48px, 6vw, 78px)",
+  fontSize: "clamp(44px, 5.2vw, 72px)",
   lineHeight: 1.02,
   fontWeight: 600,
   color: CB.white,
@@ -93,28 +94,28 @@ const heroTitle: CSSProperties = {
 const heroSub: CSSProperties = {
   margin: 0,
   fontFamily: fontSans,
-  fontSize: "clamp(15px, 1.5vw, 17px)",
+  fontSize: "clamp(14px, 1.35vw, 15px)",
   lineHeight: 1.45,
   color: "rgba(246,245,241,0.9)",
-  maxWidth: 820,
+  maxWidth: 760,
 };
 
 const banner: CSSProperties = {
-  marginTop: 16,
+  marginTop: 12,
   display: "flex",
   alignItems: "flex-start",
-  gap: 12,
-  padding: "14px 16px",
+  gap: 10,
+  padding: "11px 14px",
   borderRadius: CB.radiusMd,
-  border: `1px solid rgba(255,204,106,0.35)`,
-  background: "rgba(13,58,29,0.55)",
-  maxWidth: 900,
+  border: `1px solid rgba(255,204,106,0.38)`,
+  background: "rgba(5,28,16,0.72)",
+  maxWidth: 820,
 };
 
 const bannerText: CSSProperties = {
   margin: 0,
   fontFamily: fontSans,
-  fontSize: 14,
-  lineHeight: 1.45,
+  fontSize: 13,
+  lineHeight: 1.42,
   color: CB.white,
 };

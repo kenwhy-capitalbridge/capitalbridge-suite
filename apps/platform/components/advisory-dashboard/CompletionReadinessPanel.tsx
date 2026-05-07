@@ -18,19 +18,19 @@ type Props = { missing: Set<string> };
 export function CompletionReadinessPanel({ missing }: Props) {
   return (
     <DashboardPanel title="Model Completion / Execution Readiness">
-      <div style={{ display: "grid", gap: 12, fontFamily: fontSans }}>
+      <div style={{ display: "grid", gap: 8, fontFamily: fontSans }}>
         {ROWS.map((row) => {
           const isMissing = missing.has(row.key);
           const pct = isMissing ? 0 : 100;
           return (
             <div key={row.key} style={rowStyle}>
               <div style={iconCell}>
-                {isMissing ? <AlertTriangle size={15} color={CB.gold} /> : <CheckCircle2 size={15} color={CB.success} />}
+                {isMissing ? <AlertTriangle size={14} color={CB.gold} /> : <CheckCircle2 size={14} color={CB.success} />}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={rowTop}>
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>{row.label}</span>
-                  <span style={{ color: "rgba(246,245,241,0.75)", fontSize: 13 }}>{pct}%</span>
+                  <span style={{ fontWeight: 700, fontSize: 12 }}>{row.label}</span>
+                  <span style={{ color: "rgba(246,245,241,0.72)", fontSize: 12 }}>{pct}%</span>
                 </div>
                 <div style={track}>
                   <div style={{ ...fill, width: `${pct}%` }} />
@@ -47,18 +47,18 @@ export function CompletionReadinessPanel({ missing }: Props) {
 
 const rowStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "32px 1fr auto",
-  gap: 10,
+  gridTemplateColumns: "30px 1fr auto",
+  gap: 8,
   alignItems: "center",
-  paddingBottom: 12,
-  borderBottom: "1px solid rgba(255,204,106,0.14)",
+  paddingBottom: 8,
+  borderBottom: "1px solid rgba(255,204,106,0.12)",
 };
 
 const iconCell: CSSProperties = {
-  width: 30,
-  height: 30,
-  borderRadius: 8,
-  border: `1px solid rgba(255,204,106,0.35)`,
+  width: 28,
+  height: 28,
+  borderRadius: 7,
+  border: `1px solid rgba(255,204,106,0.32)`,
   display: "grid",
   placeItems: "center",
   background: "rgba(0,0,0,0.15)",
@@ -68,13 +68,13 @@ const rowTop: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   gap: 8,
-  marginBottom: 6,
+  marginBottom: 5,
 };
 
 const track: CSSProperties = {
-  height: 7,
+  height: 6,
   borderRadius: 999,
-  background: "rgba(246,245,241,0.1)",
+  background: "rgba(246,245,241,0.09)",
   overflow: "hidden",
 };
 
@@ -86,19 +86,19 @@ const fill: CSSProperties = {
 };
 
 const chipMissing: CSSProperties = {
-  fontSize: 9,
+  fontSize: 8,
   fontWeight: 800,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
-  border: `1px solid rgba(255,204,106,0.45)`,
+  border: `1px solid rgba(255,204,106,0.42)`,
   color: CB.gold,
   borderRadius: 999,
-  padding: "5px 10px",
+  padding: "4px 8px",
   whiteSpace: "nowrap",
 };
 
 const chipDone: CSSProperties = {
   ...chipMissing,
-  border: "1px solid rgba(110,231,160,0.45)",
+  border: "1px solid rgba(110,231,160,0.42)",
   color: CB.success,
 };

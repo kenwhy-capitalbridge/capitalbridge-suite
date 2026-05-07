@@ -19,7 +19,7 @@ export function MetricCard({ icon, label, value, helper, verified }: Props) {
         <div style={iconWrap}>{icon}</div>
         {verified ? (
           <span style={checkWrap} title="Verified">
-            <CheckCircle2 size={17} strokeWidth={2.5} color={CB.success} />
+            <CheckCircle2 size={16} strokeWidth={2.5} color={CB.success} />
           </span>
         ) : null}
       </div>
@@ -33,10 +33,11 @@ export function MetricCard({ icon, label, value, helper, verified }: Props) {
 const cardStyle: CSSProperties = {
   border: CB.cardBorder,
   borderRadius: CB.radiusMd,
-  background: CB.cardBg,
+  background: CB.panelSurface,
   boxShadow: CB.shadowCard,
-  padding: "16px 14px 14px",
-  minHeight: 128,
+  padding: "18px 18px 14px",
+  minHeight: 138,
+  maxHeight: 156,
   fontFamily: fontSans,
 };
 
@@ -44,38 +45,38 @@ const topRow: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: 8,
+  marginBottom: 6,
 };
 
 const iconWrap: CSSProperties = {
-  width: 36,
-  height: 36,
+  width: 38,
+  height: 38,
   borderRadius: "50%",
-  border: `1px solid rgba(255,204,106,0.5)`,
+  border: `1px solid rgba(255,204,106,0.52)`,
   color: CB.gold,
   display: "grid",
   placeItems: "center",
-  background: "rgba(43,43,43,0.2)",
+  background: "rgba(0,0,0,0.28)",
 };
 
 const checkWrap: CSSProperties = {
   display: "grid",
   placeItems: "center",
-  filter: "drop-shadow(0 0 6px rgba(110,231,160,0.35))",
+  filter: "drop-shadow(0 0 5px rgba(110,231,160,0.35))",
 };
 
 const labelStyle: CSSProperties = {
   margin: 0,
   textTransform: "uppercase",
-  letterSpacing: "0.1em",
+  letterSpacing: "0.14em",
   fontSize: 10,
   fontWeight: 700,
-  color: "rgba(246,245,241,0.65)",
+  color: "rgba(246,245,241,0.62)",
 };
 
 const valueStyle: CSSProperties = {
-  margin: "6px 0 0",
-  fontSize: "clamp(22px, 2.2vw, 30px)",
+  margin: "4px 0 0",
+  fontSize: "clamp(20px, 2vw, 28px)",
   fontFamily: fontSerif,
   lineHeight: 1.05,
   color: CB.white,
@@ -83,8 +84,8 @@ const valueStyle: CSSProperties = {
 };
 
 const helperStyle: CSSProperties = {
-  margin: "6px 0 0",
-  fontSize: 12,
-  lineHeight: 1.35,
+  margin: "5px 0 0",
+  fontSize: 11,
+  lineHeight: 1.32,
   color: CB.gold,
 };
