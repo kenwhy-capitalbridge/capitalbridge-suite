@@ -101,6 +101,25 @@ export function StrategicExecutionDashboardClient() {
   const gapVerified =
     (desiredIncomeCanonical !== null && sustainableMonthly !== null) || capitalGapRaw !== null;
 
+  const desiredIncomeValue = desiredIncomeCanonical !== null ? `${formatRm(desiredIncomeCanonical)} /mo` : "Not set";
+  const desiredIncomeHelper = desiredIncomeCanonical !== null
+    ? "Target confirmed"
+    : dashboardReady
+      ? "No desired income target recorded yet"
+      : "Awaiting verified inputs";
+
+  const sustainableIncomeHelper = sustainableMonthly !== null
+    ? "Supported & sustainable"
+    : dashboardReady
+      ? "Verified completion, but no IE income metric was returned"
+      : "Pending model completion";
+
+  const capitalGapHelper = gapVerified
+    ? gapHelper
+    : dashboardReady
+      ? "Verified completion, but no capital gap metric was returned"
+      : "Available after assessment";
+
   return (
     <>
       <main
@@ -154,21 +173,22 @@ export function StrategicExecutionDashboardClient() {
                   <MetricCard
                     icon={<Target size={18} />}
                     label="Desired Income"
-                    value="Not set"
-                    helper="Awaiting verified inputs"
+                    value={desiredIncomeValue}
+                    helper={desiredIncomeHelper}
+                    verified={desiredIncomeCanonical !== null}
                   />
                   <MetricCard
                     icon={<Activity size={18} />}
                     label="Current Sustainable Income"
                     value={sustainableMonthly !== null ? `${formatRm(sustainableMonthly)} /mo` : "Pending"}
-                    helper={sustainableMonthly !== null ? "Supported & sustainable" : "Pending model completion"}
+                    helper={sustainableIncomeHelper}
                     verified={sustainableMonthly !== null}
                   />
                   <MetricCard
                     icon={<ClipboardList size={18} />}
                     label="Capital Gap"
                     value={gapDisplay}
-                    helper={gapHelper}
+                    helper={capitalGapHelper}
                     verified={gapVerified}
                   />
                   <MetricCard
