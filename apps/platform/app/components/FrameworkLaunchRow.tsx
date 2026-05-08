@@ -45,7 +45,7 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
                 <span className="cb-visually-hidden">Loading</span>
               </span>
             ) : (
-              b.href ? b.label : `${b.label} (Staging destination pending)`
+              b.href ? b.label : `${b.label} (STAGING)`
             )}
           </button>
         );
