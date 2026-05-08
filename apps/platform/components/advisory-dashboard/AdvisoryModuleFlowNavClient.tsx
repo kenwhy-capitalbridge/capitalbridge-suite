@@ -52,7 +52,7 @@ export function AdvisoryModuleFlowNavClient({ activeStepKey, className }: Props)
       steps={steps}
       missing={missing}
       completionState={
-        isLoading ? "Loading…" : data ? completionStateLabel(executionLevel, completed, total) : "Unavailable"
+        isLoading ? "Syncing…" : data ? completionStateLabel(executionLevel, completed, total) : "Unable to verify"
       }
       allModulesComplete={allModulesComplete}
     />

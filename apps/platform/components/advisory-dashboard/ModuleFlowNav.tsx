@@ -54,16 +54,16 @@ export function ModuleFlowNav({ steps, missing, completionState, allModulesCompl
               if (!step.href) e.preventDefault();
             }}
           >
-            <div style={rowStyle}>
-              <span style={indexStyle}>{index + 1}</span>
-              {done && (isStrategic || step.href) ? (
-                <CheckCircle2 size={13} color={CB.success} style={{ flexShrink: 0 }} aria-hidden />
-              ) : (
-                <span style={pillStyle}>{statusLabel}</span>
-              )}
-            </div>
+            <span style={indexStyle}>{index + 1}</span>
             <strong style={nameStyle}>{step.label}</strong>
-            <small style={metaStyle}>{statusLabel}</small>
+            {done && (isStrategic || step.href) ? (
+              <span style={pillDoneStyle}>
+                <CheckCircle2 size={12} color={CB.success} style={{ flexShrink: 0 }} aria-hidden />
+                Complete
+              </span>
+            ) : (
+              <span style={pillStyle}>{statusLabel}</span>
+            )}
           </a>
         );
       })}
@@ -78,20 +78,21 @@ const navStyle: CSSProperties = {
 const cardStyle: CSSProperties = {
   textDecoration: "none",
   color: CB.white,
-  border: CB.panelBorder,
-  borderRadius: CB.radiusMd,
-  background: CB.panelSurface,
-  boxShadow: CB.shadowCard,
-  padding: "8px 8px 7px",
-  display: "grid",
-  gap: 3,
-  minHeight: 56,
-  maxHeight: 72,
+  border: "1px solid rgba(255,204,106,0.24)",
+  borderRadius: 999,
+  background: "rgba(7,31,16,0.5)",
+  boxShadow: "inset 0 1px 0 rgba(255,204,106,0.08)",
+  padding: "8px 12px",
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  minHeight: 46,
+  flex: "1 1 210px",
 };
 
 const cardActive: CSSProperties = {
   border: "1px solid rgba(255,204,106,0.72)",
-  boxShadow: `0 0 0 1px rgba(255,204,106,0.45), 0 6px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,204,106,0.12)`,
+  boxShadow: `0 0 0 1px rgba(255,204,106,0.34), 0 8px 20px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,204,106,0.12)`,
 };
 
 const cardDisabled: CSSProperties = {
@@ -99,49 +100,47 @@ const cardDisabled: CSSProperties = {
   cursor: "not-allowed",
 };
 
-const rowStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 4,
-};
-
 const indexStyle: CSSProperties = {
-  width: 20,
-  height: 20,
+  width: 22,
+  height: 22,
   borderRadius: "50%",
   border: `1px solid rgba(255,204,106,0.48)`,
   color: CB.gold,
   display: "grid",
   placeItems: "center",
-  fontSize: 10,
+  fontSize: 11,
   fontWeight: 800,
+  flexShrink: 0,
 };
 
 const pillStyle: CSSProperties = {
   borderRadius: 999,
   border: `1px solid rgba(255,204,106,0.38)`,
   color: CB.gold,
-  padding: "1px 5px",
-  fontSize: 8,
-  fontWeight: 700,
-  letterSpacing: "0.05em",
+  padding: "2px 8px",
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: "0.04em",
   textTransform: "uppercase",
-  maxWidth: "100%",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
+  marginLeft: "auto",
+  flexShrink: 0,
 };
 
 const nameStyle: CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
+  fontSize: 13,
+  fontWeight: 800,
   letterSpacing: "0.02em",
-  lineHeight: 1.2,
+  lineHeight: 1.15,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
-const metaStyle: CSSProperties = {
-  fontSize: 9,
-  color: "rgba(246,245,241,0.65)",
-  lineHeight: 1.15,
+const pillDoneStyle: CSSProperties = {
+  ...pillStyle,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 5,
+  color: CB.success,
+  border: "1px solid rgba(110,231,160,0.55)",
 };

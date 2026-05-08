@@ -1,7 +1,7 @@
 .kpiRow {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 17px;
+  gap: 18px;
   position: relative;
   z-index: 1;
 }
@@ -23,8 +23,9 @@
 }
 
 .flowNav {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   position: relative;
   z-index: 1;
@@ -42,9 +43,6 @@
   .kpiRow {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .flowNav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 900px) {
@@ -53,9 +51,6 @@
   }
   .mainGrid {
     grid-template-columns: 1fr;
-  }
-  .flowNav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .dashboardBody {
     gap: 20px;
@@ -67,6 +62,6 @@
     grid-template-columns: 1fr;
   }
   .flowNav {
-    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }

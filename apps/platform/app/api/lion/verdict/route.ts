@@ -20,6 +20,7 @@ type RequiredModel = {
 };
 
 type JsonObject = Record<string, unknown>;
+type AdvisoryModelType = "forever-income" | "income-engineering" | "capital-health" | "capital-stress";
 
 const REQUIRED_MODELS: RequiredModel[] = [
   { model_key: "income-engineering-model", criticality: "HIGH" },
@@ -31,6 +32,20 @@ const REQUIRED_MODELS: RequiredModel[] = [
 const MODEL_KEYS = new Set<string>(
   REQUIRED_MODELS.map((model) => model.model_key)
 );
+
+const MODEL_KEY_TO_ADVISORY_TYPE: Record<ModelKey, AdvisoryModelType> = {
+  "forever-income-model": "forever-income",
+  "income-engineering-model": "income-engineering",
+  "capital-health-model": "capital-health",
+  "capital-stress-model": "capital-stress",
+};
+
+const ADVISORY_TYPE_TO_MODEL_KEY: Record<AdvisoryModelType, ModelKey> = {
+  "forever-income": "forever-income-model",
+  "income-engineering": "income-engineering-model",
+  "capital-health": "capital-health-model",
+  "capital-stress": "capital-stress-model",
+};
 
 function isObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -135,6 +150,48 @@ function metricsFromOutputPayload(payload: JsonObject): JsonObject | null {
   if (!isObject(normalized)) return null;
   const metrics = normalized.metrics;
   return isObject(metrics) ? metrics : null;
+}
+
+function pickNumber(obj: JsonObject, keys: string[]): number | null {
+  for (const key of keys) {
+    const direct = parseMetricNumber(obj[key]);
+    if (direct !== null) return direct;
+  }
+  return null;
+}
+
+function advisoryReportToNormalizedMetrics(modelKey: ModelKey, reportResults: unknown): NormalizedMetrics | null {
+  if (!isObject(reportResults)) return null;
+  const r = reportResults;
+  switch (modelKey) {
+    case "income-engineering-model": {
+      const cashflow_coverage_ratio = pickNumber(r, ["cashflow_coverage_ratio", "cashflowCoverageRatio"]);
+      const income_gap_monthly = pickNumber(r, ["income_gap_monthly", "incomeGapMonthly"]);
+      if (cashflow_coverage_ratio === null || income_gap_monthly === null) return null;
+      return { cashflow_coverage_ratio, income_gap_monthly } as unknown as NormalizedMetrics;
+    }
+    case "capital-health-model": {
+      const withdrawal_sustainability_ratio = pickNumber(r, [
+        "withdrawal_sustainability_ratio",
+        "withdrawalSustainabilityRatio",
+      ]);
+      const runway_months = pickNumber(r, ["runway_months", "runwayMonths"]);
+      if (withdrawal_sustainability_ratio === null || runway_months === null) return null;
+      return { withdrawal_sustainability_ratio, runway_months } as unknown as NormalizedMetrics;
+    }
+    case "capital-stress-model": {
+      const survival_probability_pct = pickNumber(r, ["survival_probability_pct", "survivalProbabilityPct"]);
+      const resilience_score_0_100 = pickNumber(r, ["resilience_score_0_100", "resilienceScore0_100", "resilienceScore"]);
+      if (survival_probability_pct === null || resilience_score_0_100 === null) return null;
+      return { survival_probability_pct, resilience_score_0_100 } as unknown as NormalizedMetrics;
+    }
+    case "forever-income-model": {
+      const required_capital = pickNumber(r, ["required_capital", "requiredCapital"]);
+      const runway_months = pickNumber(r, ["runway_months", "runwayMonths"]);
+      if (required_capital === null || runway_months === null) return null;
+      return { required_capital, runway_months } as unknown as NormalizedMetrics;
+    }
+  }
 }
 
 /** Values read from latest `model_outputs.output_normalized.metrics` only (no invented figures). */
@@ -310,9 +367,65 @@ export async function GET() {
       }
     }
 
+    const { data: advisoryReports, error: advisoryReportsError } = await supabase
+      .schema("advisory_v2")
+      .from("advisory_reports")
+      .select("model_type, results, created_at")
+      .eq("user_id", user.id)
+      .in("model_type", Object.values(MODEL_KEY_TO_ADVISORY_TYPE))
+      .order("created_at", { ascending: false });
+
+    if (advisoryReportsError) {
+      console.error("[api/lion/verdict] advisory_reports query failed", advisoryReportsError.message);
+      return NextResponse.json({ error: "advisory_reports_query_failed" }, { status: 500 });
+    }
+
+    const latestAdvisoryByModelKey = new Map<ModelKey, JsonObject>();
+    for (const row of advisoryReports ?? []) {
+      const modelType = String(row.model_type ?? "") as AdvisoryModelType;
+      if (!(modelType in ADVISORY_TYPE_TO_MODEL_KEY)) continue;
+      const modelKey = ADVISORY_TYPE_TO_MODEL_KEY[modelType];
+      if (latestAdvisoryByModelKey.has(modelKey)) continue;
+      latestAdvisoryByModelKey.set(modelKey, isObject(row.results) ? row.results : {});
+    }
+
+    const completedModelKeys = new Set<ModelKey>();
+    for (const model of REQUIRED_MODELS) {
+      const run = latestRuns.get(model.model_key);
+      const payload = run ? outputsByRunId.get(run.id) : null;
+      const normalized = isObject(payload?.output_normalized) ? payload.output_normalized : null;
+      const hasCompletedRun = run?.status === "completed" && isObject(normalized?.metrics);
+      const hasAdvisoryReport = latestAdvisoryByModelKey.has(model.model_key);
+      const reportMetrics = advisoryReportToNormalizedMetrics(
+        model.model_key,
+        latestAdvisoryByModelKey.get(model.model_key),
+      );
+      if (hasCompletedRun || hasAdvisoryReport || reportMetrics) completedModelKeys.add(model.model_key);
+    }
+
     const modelRuns: LionPipelineModelRunInput[] = REQUIRED_MODELS.map((model) => {
       const run = latestRuns.get(model.model_key);
-      if (!run) return fallbackRunForMissingModel(model);
+      if (!run) {
+        const reportMetrics = advisoryReportToNormalizedMetrics(
+          model.model_key,
+          latestAdvisoryByModelKey.get(model.model_key),
+        );
+        if (reportMetrics) {
+          return {
+            model_key: model.model_key,
+            status: "completed",
+            output_normalized: { metrics: reportMetrics, reason: [] },
+          };
+        }
+        if (latestAdvisoryByModelKey.has(model.model_key)) {
+          return {
+            model_key: model.model_key,
+            status: "completed",
+            output_normalized: { metrics: null, reason: [] },
+          };
+        }
+        return fallbackRunForMissingModel(model);
+      }
 
       const payload = outputsByRunId.get(run.id) ?? {};
       const normalized = isObject(payload.output_normalized)
@@ -343,6 +456,25 @@ export async function GET() {
         };
       }
 
+      const reportMetrics = advisoryReportToNormalizedMetrics(
+        model.model_key,
+        latestAdvisoryByModelKey.get(model.model_key),
+      );
+      if (reportMetrics) {
+        return {
+          model_key: model.model_key,
+          status: "completed",
+          output_normalized: { metrics: reportMetrics, reason: [] },
+        };
+      }
+      if (latestAdvisoryByModelKey.has(model.model_key)) {
+        return {
+          model_key: model.model_key,
+          status: "completed",
+          output_normalized: { metrics: null, reason: [] },
+        };
+      }
+
       return {
         model_key: model.model_key,
         status: "failed",
@@ -354,7 +486,7 @@ export async function GET() {
     });
 
     const missingModels = REQUIRED_MODELS.filter(
-      (model) => !latestRuns.has(model.model_key)
+      (model) => !completedModelKeys.has(model.model_key)
     );
     const hasMissingCritical = missingModels.some(
       (model) => model.criticality === "HIGH"
@@ -390,7 +522,10 @@ export async function GET() {
       reason: pipeline.verdict.reason,
       missing_models: missingModels,
       execution_gate: executionGate,
-      progress: pipeline.progress,
+      progress: {
+        completed_models: completedModelKeys.size,
+        total_models: REQUIRED_MODELS.length,
+      },
       metrics_snapshot,
       narrative: {
         headline: pipeline.verdict.headline,

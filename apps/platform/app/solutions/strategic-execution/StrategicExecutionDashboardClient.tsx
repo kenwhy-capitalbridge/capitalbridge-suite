@@ -58,8 +58,12 @@ export function StrategicExecutionDashboardClient() {
   }, [data]);
 
   const executionLevel: ExecutionGateLevel = data?.execution_gate.level ?? "BLOCKED";
-  const completed = data?.progress.completed_models ?? 0;
   const total = data?.progress.total_models ?? 4;
+  const completed = data
+    ? typeof data.progress?.completed_models === "number"
+      ? data.progress.completed_models
+      : Math.max(0, total - data.missing_models.length)
+    : 0;
   const allModulesComplete = Boolean(
     data && data.execution_gate.level === "ALLOWED" && data.missing_models.length === 0,
   );
@@ -137,8 +141,10 @@ export function StrategicExecutionDashboardClient() {
 
             {!isLoading && !isSessionError && (error || !data) ? (
               <section style={notice}>
-                <h2 style={noticeTitle}>Verdict unavailable</h2>
-                <p style={noticeBody}>The current Lion verdict could not be loaded. Please refresh or try again shortly.</p>
+                <h2 style={noticeTitle}>Unable to verify completion</h2>
+                <p style={noticeBody}>
+                  We could not verify your module completion state right now. Please refresh or try again shortly.
+                </p>
               </section>
             ) : null}
 

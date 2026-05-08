@@ -17,11 +17,10 @@ export function MetricCard({ icon, label, value, helper, verified }: Props) {
     <article style={cardStyle}>
       <div style={topRow}>
         <div style={iconWrap}>{icon}</div>
-        {verified ? (
-          <span style={checkWrap} title="Verified">
-            <CheckCircle2 size={16} strokeWidth={2.5} color={CB.success} />
-          </span>
-        ) : null}
+        <span style={statusPill(verified)} title={verified ? "Verified" : "Pending verification"}>
+          {verified ? <CheckCircle2 size={14} strokeWidth={2.5} color={CB.success} /> : null}
+          {verified ? "Verified" : "Pending"}
+        </span>
       </div>
       <p style={labelStyle}>{label}</p>
       <p style={valueStyle}>{value}</p>
@@ -31,13 +30,12 @@ export function MetricCard({ icon, label, value, helper, verified }: Props) {
 }
 
 const cardStyle: CSSProperties = {
-  border: CB.cardBorder,
-  borderRadius: CB.radiusMd,
-  background: CB.panelSurface,
-  boxShadow: CB.shadowCard,
-  padding: "18px 18px 14px",
-  minHeight: 138,
-  maxHeight: 156,
+  border: "1px solid rgba(255,204,106,0.34)",
+  borderRadius: 18,
+  background: "linear-gradient(180deg, rgba(12,48,24,0.95) 0%, rgba(8,31,16,0.92) 100%)",
+  boxShadow: "0 14px 34px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,204,106,0.14)",
+  padding: "16px 16px 14px",
+  minHeight: 154,
   fontFamily: fontSans,
 };
 
@@ -45,47 +43,60 @@ const topRow: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: 6,
+  marginBottom: 10,
+  gap: 10,
 };
 
 const iconWrap: CSSProperties = {
-  width: 38,
-  height: 38,
+  width: 44,
+  height: 44,
   borderRadius: "50%",
-  border: `1px solid rgba(255,204,106,0.52)`,
+  border: `1px solid rgba(255,204,106,0.68)`,
   color: CB.gold,
   display: "grid",
   placeItems: "center",
-  background: "rgba(0,0,0,0.28)",
+  background: "radial-gradient(circle at 35% 35%, rgba(255,204,106,0.2), rgba(0,0,0,0.32))",
 };
 
-const checkWrap: CSSProperties = {
-  display: "grid",
-  placeItems: "center",
-  filter: "drop-shadow(0 0 5px rgba(110,231,160,0.35))",
-};
+function statusPill(verified?: boolean): CSSProperties {
+  return {
+    borderRadius: 999,
+    border: verified ? "1px solid rgba(110,231,160,0.5)" : "1px solid rgba(255,204,106,0.45)",
+    color: verified ? CB.success : CB.gold,
+    fontSize: 9,
+    fontWeight: 800,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    padding: "3px 8px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 0,
+    background: verified ? "rgba(110,231,160,0.08)" : "rgba(255,204,106,0.1)",
+  };
+}
 
 const labelStyle: CSSProperties = {
   margin: 0,
   textTransform: "uppercase",
-  letterSpacing: "0.14em",
+  letterSpacing: "0.12em",
   fontSize: 10,
-  fontWeight: 700,
-  color: "rgba(246,245,241,0.62)",
+  fontWeight: 800,
+  color: "rgba(246,245,241,0.72)",
 };
 
 const valueStyle: CSSProperties = {
-  margin: "4px 0 0",
-  fontSize: "clamp(20px, 2vw, 28px)",
+  margin: "5px 0 0",
+  fontSize: "clamp(24px, 2.1vw, 31px)",
   fontFamily: fontSerif,
-  lineHeight: 1.05,
+  lineHeight: 1.02,
   color: CB.white,
   fontWeight: 600,
 };
 
 const helperStyle: CSSProperties = {
-  margin: "5px 0 0",
-  fontSize: 11,
-  lineHeight: 1.32,
-  color: CB.gold,
+  margin: "8px 0 0",
+  fontSize: 12,
+  lineHeight: 1.35,
+  color: "rgba(246,245,241,0.86)",
 };
