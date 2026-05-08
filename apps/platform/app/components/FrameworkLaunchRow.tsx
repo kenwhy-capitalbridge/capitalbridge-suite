@@ -23,7 +23,7 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
   return (
     <div className="cb-module-buttons">
       {buttons.map((b) => {
-        const active = pendingHref === b.href;
+        const active = Boolean(b.href) && pendingHref === b.href;
         const anyPending = pendingHref !== null;
         const disabled = anyPending || !b.href;
         return (
