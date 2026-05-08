@@ -32,14 +32,13 @@ export function ModuleFlowNav({ steps, missing, completionState, allModulesCompl
       {steps.map((step, index) => {
         const isStrategic = step.key === "strategic";
         const missingModel = !isStrategic && missing.has(step.key);
-        const done = isStrategic ? allModulesComplete : Boolean(step.href) && !missingModel;
+        const done = isStrategic ? allModulesComplete : !missingModel;
         const statusLabel = isStrategic
           ? completionState
-          : !step.href
-            ? "Staging destination pending"
-            : missingModel
-              ? "Missing"
-              : "Completed";
+          : missingModel
+            ? "Missing"
+            : "Completed";
+        const destinationPending = !isStrategic && !step.href;
         return (
           <a
             key={step.label}
@@ -61,9 +60,12 @@ export function ModuleFlowNav({ steps, missing, completionState, allModulesCompl
                 <CheckCircle2 size={12} color={CB.success} style={{ flexShrink: 0 }} aria-hidden />
                 Complete
               </span>
+            ) : done ? (
+              <span style={pillDoneStyle}>Complete</span>
             ) : (
               <span style={pillStyle}>{statusLabel}</span>
             )}
+            {destinationPending ? <span style={subtleMetaStyle}>Destination pending</span> : null}
           </a>
         );
       })}
@@ -143,4 +145,13 @@ const pillDoneStyle: CSSProperties = {
   gap: 5,
   color: CB.success,
   border: "1px solid rgba(110,231,160,0.55)",
+};
+
+const subtleMetaStyle: CSSProperties = {
+  marginLeft: 6,
+  fontSize: 9,
+  color: "rgba(246,245,241,0.58)",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
 };
