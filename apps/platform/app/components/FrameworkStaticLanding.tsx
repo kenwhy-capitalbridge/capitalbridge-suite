@@ -23,7 +23,41 @@ function ModuleStatusLine({
 const FOREVER_APP_URL =
   typeof process.env.NEXT_PUBLIC_FOREVER_APP_URL === "string" && process.env.NEXT_PUBLIC_FOREVER_APP_URL
     ? process.env.NEXT_PUBLIC_FOREVER_APP_URL.replace(/\/+$/, "")
-    : "https://forever.thecapitalbridge.com";
+    : "";
+
+const IS_STAGING_BUILD = (() => {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const stagingHost = process.env.NEXT_PUBLIC_CB_STAGING_HOSTNAME?.trim() || "staging.thecapitalbridge.com";
+  if (appUrl) {
+    try {
+      return new URL(appUrl).hostname.toLowerCase() === stagingHost.toLowerCase();
+    } catch {
+      /* ignore invalid url */
+    }
+  }
+  return process.env.NEXT_PUBLIC_APP_ENV === "staging";
+})();
+
+function resolveModuleBase(envUrl: string, productionFallback: string): string | null {
+  const fromEnv = envUrl?.trim();
+  if (fromEnv) return fromEnv.replace(/\/+$/, "");
+  if (IS_STAGING_BUILD) return null;
+  return productionFallback;
+}
+
+const FOREVER_BASE = resolveModuleBase(FOREVER_APP_URL, "https://forever.thecapitalbridge.com");
+const INCOME_ENGINEERING_BASE = resolveModuleBase(
+  process.env.NEXT_PUBLIC_INCOME_ENGINEERING_APP_URL ?? "",
+  "https://incomeengineering.thecapitalbridge.com",
+);
+const CAPITAL_HEALTH_BASE = resolveModuleBase(
+  process.env.NEXT_PUBLIC_CAPITAL_HEALTH_APP_URL ?? "",
+  "https://capitalhealth.thecapitalbridge.com",
+);
+const CAPITAL_STRESS_BASE = resolveModuleBase(
+  process.env.NEXT_PUBLIC_CAPITAL_STRESS_APP_URL ?? "",
+  "https://capitalstress.thecapitalbridge.com",
+);
 
 export type FrameworkStaticLandingProps = {
   /** Passed through so the sticky header always renders when this page already proved auth. */
@@ -152,8 +186,11 @@ export async function FrameworkStaticLanding({
                   <span className="cb-module-label">Launch Models:</span>
                   <FrameworkLaunchRow
                     buttons={[
-                      { href: `${FOREVER_APP_URL}/`, label: "Forever Income Model" },
-                      { href: "https://incomeengineering.thecapitalbridge.com/", label: "Income Engineering Model" },
+                      { href: FOREVER_BASE ? `${FOREVER_BASE}/` : null, label: "Forever Income Model" },
+                      {
+                        href: INCOME_ENGINEERING_BASE ? `${INCOME_ENGINEERING_BASE}/` : null,
+                        label: "Income Engineering Model",
+                      },
                     ]}
                   />
                 </div>
@@ -173,7 +210,7 @@ export async function FrameworkStaticLanding({
                   </p>
                   <span className="cb-module-label">Launch Models:</span>
                   <FrameworkLaunchRow
-                    buttons={[{ href: "https://capitalhealth.thecapitalbridge.com/", label: "Capital Health Model" }]}
+                    buttons={[{ href: CAPITAL_HEALTH_BASE ? `${CAPITAL_HEALTH_BASE}/` : null, label: "Capital Health Model" }]}
                   />
                 </div>
               </article>
@@ -192,7 +229,7 @@ export async function FrameworkStaticLanding({
                   </p>
                   <span className="cb-module-label">Launch Models:</span>
                   <FrameworkLaunchRow
-                    buttons={[{ href: "https://capitalstress.thecapitalbridge.com/", label: "Capital Stress Model" }]}
+                    buttons={[{ href: CAPITAL_STRESS_BASE ? `${CAPITAL_STRESS_BASE}/` : null, label: "Capital Stress Model" }]}
                   />
                 </div>
               </article>

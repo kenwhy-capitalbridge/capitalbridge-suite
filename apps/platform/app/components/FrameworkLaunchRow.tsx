@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { ChromeSpinnerGlyph } from "@cb/ui";
 
-type LaunchItem = { href: string; label: string };
+type LaunchItem = { href: string | null; label: string };
 
 /**
  * Replaces static anchor tiles so each launch shows a spinner and disables all sibling launches until navigation completes.
@@ -25,14 +25,19 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
       {buttons.map((b) => {
         const active = pendingHref === b.href;
         const anyPending = pendingHref !== null;
+        const disabled = anyPending || !b.href;
         return (
           <button
-            key={b.href}
+            key={`${b.label}:${b.href ?? "pending"}`}
             type="button"
             className="cb-btn"
-            disabled={anyPending}
+            disabled={disabled}
             aria-busy={active}
-            onClick={() => onGo(b.href)}
+            title={!b.href ? "Staging destination pending" : undefined}
+            onClick={() => {
+              if (!b.href) return;
+              onGo(b.href);
+            }}
           >
             {active ? (
               <span className="cb-pending-btn-inner cb-launch-btn-inner">
@@ -40,7 +45,7 @@ export function FrameworkLaunchRow({ buttons }: { buttons: LaunchItem[] }) {
                 <span className="cb-visually-hidden">Loading</span>
               </span>
             ) : (
-              b.label
+              b.href ? b.label : `${b.label} (Staging destination pending)`
             )}
           </button>
         );
