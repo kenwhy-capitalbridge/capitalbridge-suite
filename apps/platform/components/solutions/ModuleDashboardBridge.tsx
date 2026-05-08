@@ -43,11 +43,18 @@ const MODULE_COPY: Record<ModuleId, { title: string; subtitle: string; envVar?: 
   },
 };
 
+const STAGING_MODULE_URLS: Record<ModuleId, string> = {
+  "forever-income": "https://staging-foreverincome.thecapitalbridge.com",
+  "income-engineering": "https://staging-incomeengineering.thecapitalbridge.com",
+  "capital-health": "https://staging-capitalhealth.thecapitalbridge.com",
+  "capital-stress": "https://staging-capitalstress.thecapitalbridge.com",
+};
+
 function resolveDestination(moduleId: ModuleId, stagingHost: boolean): string | null {
   const cfg = MODULE_COPY[moduleId];
   const envUrl = cfg.envVar ? process.env[cfg.envVar]?.trim() : undefined;
   if (envUrl) return envUrl;
-  if (stagingHost) return null;
+  if (stagingHost) return STAGING_MODULE_URLS[moduleId];
   return cfg.productionUrl;
 }
 

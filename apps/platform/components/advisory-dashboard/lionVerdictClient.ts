@@ -31,10 +31,14 @@ export function isStagingCapitalBridgeBrowserHost(): boolean {
   return typeof window !== "undefined" && window.location.hostname === "staging.thecapitalbridge.com";
 }
 
-export function moduleHref(envValue: string | undefined, productionFallback: string): string | null {
+export function moduleHref(
+  envValue: string | undefined,
+  productionFallback: string,
+  stagingFallback?: string,
+): string | null {
   const resolved = envValue?.trim();
   if (resolved) return resolved;
-  if (isStagingCapitalBridgeBrowserHost()) return null;
+  if (isStagingCapitalBridgeBrowserHost()) return stagingFallback ?? null;
   return productionFallback;
 }
 
@@ -50,7 +54,11 @@ export function buildAdvisoryFlowSteps(activeStepKey: ModelKey | "strategic"): F
     {
       label: "Forever Income",
       key: "forever-income-model",
-      href: moduleHref(process.env.NEXT_PUBLIC_FOREVER_APP_URL, "https://forever.thecapitalbridge.com/dashboard"),
+      href: moduleHref(
+        process.env.NEXT_PUBLIC_FOREVER_APP_URL,
+        "https://forever.thecapitalbridge.com/dashboard",
+        "https://staging-foreverincome.thecapitalbridge.com/dashboard",
+      ),
       active: activeStepKey === "forever-income-model",
     },
     {
@@ -59,19 +67,28 @@ export function buildAdvisoryFlowSteps(activeStepKey: ModelKey | "strategic"): F
       href: moduleHref(
         process.env.NEXT_PUBLIC_INCOME_ENGINEERING_APP_URL,
         "https://incomeengineering.thecapitalbridge.com/dashboard",
+        "https://staging-incomeengineering.thecapitalbridge.com/dashboard",
       ),
       active: activeStepKey === "income-engineering-model",
     },
     {
       label: "Capital Health",
       key: "capital-health-model",
-      href: moduleHref(process.env.NEXT_PUBLIC_CAPITAL_HEALTH_APP_URL, "https://capitalhealth.thecapitalbridge.com/dashboard"),
+      href: moduleHref(
+        process.env.NEXT_PUBLIC_CAPITAL_HEALTH_APP_URL,
+        "https://capitalhealth.thecapitalbridge.com/dashboard",
+        "https://staging-capitalhealth.thecapitalbridge.com/dashboard",
+      ),
       active: activeStepKey === "capital-health-model",
     },
     {
       label: "Capital Stress",
       key: "capital-stress-model",
-      href: moduleHref(process.env.NEXT_PUBLIC_CAPITAL_STRESS_APP_URL, "https://capitalstress.thecapitalbridge.com/dashboard"),
+      href: moduleHref(
+        process.env.NEXT_PUBLIC_CAPITAL_STRESS_APP_URL,
+        "https://capitalstress.thecapitalbridge.com/dashboard",
+        "https://staging-capitalstress.thecapitalbridge.com/dashboard",
+      ),
       active: activeStepKey === "capital-stress-model",
     },
     {

@@ -45,21 +45,25 @@ function resolveModuleBase(envUrl: string, productionFallback: string, stagingFa
   return productionFallback;
 }
 
-const FOREVER_BASE = resolveModuleBase(FOREVER_APP_URL, "https://forever.thecapitalbridge.com", "/solutions/forever-income");
+const FOREVER_BASE = resolveModuleBase(
+  FOREVER_APP_URL,
+  "https://forever.thecapitalbridge.com",
+  "https://staging-foreverincome.thecapitalbridge.com",
+);
 const INCOME_ENGINEERING_BASE = resolveModuleBase(
   process.env.NEXT_PUBLIC_INCOME_ENGINEERING_APP_URL ?? "",
   "https://incomeengineering.thecapitalbridge.com",
-  "/solutions/income-engineering",
+  "https://staging-incomeengineering.thecapitalbridge.com",
 );
 const CAPITAL_HEALTH_BASE = resolveModuleBase(
   process.env.NEXT_PUBLIC_CAPITAL_HEALTH_APP_URL ?? "",
   "https://capitalhealth.thecapitalbridge.com",
-  "/solutions/capital-health",
+  "https://staging-capitalhealth.thecapitalbridge.com",
 );
 const CAPITAL_STRESS_BASE = resolveModuleBase(
   process.env.NEXT_PUBLIC_CAPITAL_STRESS_APP_URL ?? "",
   "https://capitalstress.thecapitalbridge.com",
-  "/solutions/capital-stress",
+  "https://staging-capitalstress.thecapitalbridge.com",
 );
 
 export type FrameworkStaticLandingProps = {
