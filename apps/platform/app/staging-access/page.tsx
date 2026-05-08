@@ -8,10 +8,19 @@ export default function StagingAccessPage() {
     <Suspense
       fallback={
         <div
-          className="flex min-h-screen flex-col items-center justify-center px-4"
-          style={{ backgroundColor: "#0D3A1D", color: "rgba(246,245,241,0.65)" }}
+          style={{
+            display: "flex",
+            minHeight: "100vh",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingLeft: 16,
+            paddingRight: 16,
+            backgroundColor: "#0D3A1D",
+            color: "rgba(246,245,241,0.65)",
+          }}
         >
-          <p className="text-xs uppercase tracking-[0.16em]">Loading…</p>
+          <p style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase" }}>Loading…</p>
         </div>
       }
     >

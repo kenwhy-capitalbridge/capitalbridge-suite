@@ -3,16 +3,17 @@ import type { NextRequest } from "next/server";
 import { LOGIN_APP_URL } from "@cb/shared/urls";
 import {
   isStagingCapitalBridgeHost,
+  isStagingGateExemptPath,
   normalizeRequestHost,
+  STAGING_GATE_COOKIE_NAME,
+  verifyStagingGateCookieValue,
 } from "@cb/shared/staging";
 
 /**
- * When the request host is `staging.thecapitalbridge.com`, require a signed staging
- * gate cookie (set after password at `/api/staging-gate/login`). Returns a response
- * to short-circuit middleware, or `null` to continue.
+ * Staging host: require signed `cb_staging_gate` cookie except on exempt paths
+ * (see `isStagingGateExemptPath` in `@cb/shared/staging`).
  *
- * `/access` is not implemented on platform — on staging only, send users to the login app
- * with the same query string (e.g. `redirectTo=…`).
+ * Also: `/access` on platform → redirect to login app (legacy behaviour).
  */
 export async function stagingHostGateResponse(req: NextRequest): Promise<NextResponse | null> {
   const host = normalizeRequestHost(req.headers.get("host"));
@@ -30,5 +31,20 @@ export async function stagingHostGateResponse(req: NextRequest): Promise<NextRes
     return res;
   }
 
-  return null;
+  if (isStagingGateExemptPath(pathname)) {
+    return null;
+  }
+
+  const raw = req.cookies.get(STAGING_GATE_COOKIE_NAME)?.value;
+  const ok = await verifyStagingGateCookieValue(raw);
+  if (ok) {
+    return null;
+  }
+
+  const u = new URL("/staging-access", req.url);
+  const from = `${pathname}${req.nextUrl.searchParams.toString() ? `?${req.nextUrl.searchParams.toString()}` : ""}`;
+  u.searchParams.set("from", from || "/");
+  const res = NextResponse.redirect(u.toString());
+  res.headers.set("Cache-Control", "private, no-store, max-age=0");
+  return res;
 }

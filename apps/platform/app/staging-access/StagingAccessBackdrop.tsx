@@ -8,8 +8,14 @@ const GREEN = "#0D3A1D";
 export function StagingAccessBackdrop() {
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
-      style={{ backgroundColor: GREEN }}
+      style={{
+        pointerEvents: "none",
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        overflow: "hidden",
+        backgroundColor: GREEN,
+      }}
       aria-hidden
     >
       <div

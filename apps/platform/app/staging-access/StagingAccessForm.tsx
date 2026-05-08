@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { HeaderBrandPicture } from "@cb/ui";
@@ -8,6 +9,10 @@ import { StagingAccessBackdrop } from "./StagingAccessBackdrop";
 const GOLD = "#FFCC6A";
 const WHITE = "#F6F5F1";
 const GREEN = "#0D3A1D";
+const MUTED = "rgba(246, 245, 241, 0.88)";
+
+const sans = 'var(--font-staging-sans), "Inter", system-ui, sans-serif';
+const serif = 'var(--font-staging-serif), "Roboto Serif", Georgia, serif';
 
 export function StagingAccessForm() {
   const router = useRouter();
@@ -48,62 +53,34 @@ export function StagingAccessForm() {
   }
 
   return (
-    <div className="relative isolate flex min-h-screen flex-col">
+    <div style={rootStyle}>
       <StagingAccessBackdrop />
 
-      <main
-        className="relative z-[1] flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6"
-        style={{ color: WHITE }}
-      >
-        <div
-          className="w-full max-w-[440px]"
-          style={{
-            borderRadius: 17,
-            border: "1px solid rgba(255, 204, 106, 0.42)",
-            background: "linear-gradient(180deg, rgba(13, 58, 29, 0.96) 0%, rgba(7, 38, 20, 0.94) 100%)",
-            boxShadow:
-              "0 24px 64px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 204, 106, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.15)",
-            padding: "clamp(28px, 5vw, 36px)",
-          }}
-        >
-          <div className="mb-6 flex flex-col items-center gap-3 text-center">
+      <main style={mainStyle}>
+        <div style={cardStyle}>
+          <div style={headerBlockStyle}>
             <a
               href="https://thecapitalbridge.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex opacity-95 transition-opacity hover:opacity-100"
+              style={logoLinkStyle}
               aria-label="Capital Bridge home"
             >
               <HeaderBrandPicture />
             </a>
-            <p
-              className="text-[10px] font-bold uppercase tracking-[0.22em]"
-              style={{ color: GOLD }}
-            >
-              Preview environment
-            </p>
-            <h1
-              className="text-[clamp(1.65rem,4vw,2rem)] font-semibold leading-tight"
-              style={{
-                fontFamily: 'var(--font-staging-serif), "Roboto Serif", Georgia, serif',
-                color: WHITE,
-              }}
-            >
-              Staging access
-            </h1>
-            <p className="max-w-[34ch] text-[13px] leading-relaxed text-[rgba(246,245,241,0.82)]">
+            <p style={eyebrowStyle}>Preview environment</p>
+            <h1 style={h1Style}>Staging access</h1>
+            <p style={bodyTextStyle}>
               Enter the staging password to unlock this host. This gate applies only to staging — not production.
             </p>
-            <p className="text-[11px] leading-snug text-[rgba(246,245,241,0.55)]">
-              After sign-in you&apos;ll continue to <span className="font-medium text-[rgba(246,245,241,0.75)]">{returnLabel}</span>
+            <p style={hintStyle}>
+              After sign-in you&apos;ll continue to <span style={hintEmStyle}>{returnLabel}</span>
             </p>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
-            <label className="block">
-              <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-[rgba(246,245,241,0.55)]">
-                Password
-              </span>
+          <form onSubmit={onSubmit} style={formStyle}>
+            <label style={labelWrapStyle}>
+              <span style={labelTextStyle}>Password</span>
               <input
                 type="password"
                 name="password"
@@ -111,59 +88,220 @@ export function StagingAccessForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={pending}
-                className="w-full rounded-[12px] px-3.5 py-3 text-[15px] outline-none transition-[border-color,box-shadow] disabled:opacity-60"
-                style={{
-                  border: "1px solid rgba(255, 204, 106, 0.35)",
-                  background: "rgba(4, 22, 14, 0.65)",
-                  color: WHITE,
-                  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.25)",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "rgba(255, 204, 106, 0.65)";
-                  e.target.style.boxShadow = "0 0 0 1px rgba(255, 204, 106, 0.25), inset 0 2px 8px rgba(0,0,0,0.2)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "rgba(255, 204, 106, 0.35)";
-                  e.target.style.boxShadow = "inset 0 2px 8px rgba(0,0,0,0.25)";
-                }}
+                style={inputStyle}
               />
             </label>
 
-            {error ? (
-              <p className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-2 text-[13px] text-red-100">{error}</p>
-            ) : null}
+            {error ? <p style={errorStyle}>{error}</p> : null}
 
-            <button
-              type="submit"
-              disabled={pending || !password.trim()}
-              className="w-full rounded-[11px] py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-              style={{
-                border: `1px solid ${GOLD}`,
-                background: GOLD,
-                color: GREEN,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
-              }}
-            >
+            <button type="submit" disabled={pending || !password.trim()} style={buttonStyle(pending || !password.trim())}>
               {pending ? "Checking…" : "Continue"}
             </button>
           </form>
 
-          <div className="mt-8 border-t border-[rgba(255,204,106,0.18)] pt-5">
-            <div className="flex flex-col gap-3 text-[10px] leading-relaxed text-[rgba(246,245,241,0.48)] sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-              <p className="max-w-[52ch]">
+          <div style={footerRuleStyle}>
+            <div style={legalRowStyle}>
+              <p style={legalLeftStyle}>
                 © {new Date().getFullYear()} Capital Bridge. Proprietary — unauthorised use prohibited.
               </p>
-              <p className="shrink-0 font-bold uppercase tracking-[0.12em]" style={{ color: GOLD }}>
-                Private & Confidential
-              </p>
+              <p style={legalRightStyle}>Private & Confidential</p>
             </div>
           </div>
         </div>
 
-        <p className="mt-8 text-center text-[10px] uppercase tracking-[0.18em] text-[rgba(246,245,241,0.35)]">
-          Capital Bridge — Staging
-        </p>
+        <p style={pageTaglineStyle}>Capital Bridge — Staging</p>
       </main>
     </div>
   );
 }
+
+const rootStyle: CSSProperties = {
+  position: "relative",
+  isolation: "isolate",
+  display: "flex",
+  minHeight: "100vh",
+  flexDirection: "column",
+};
+
+const mainStyle: CSSProperties = {
+  position: "relative",
+  zIndex: 5,
+  display: "flex",
+  flex: 1,
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "40px 16px",
+  color: WHITE,
+  fontFamily: sans,
+  pointerEvents: "auto",
+};
+
+const cardStyle: CSSProperties = {
+  width: "100%",
+  maxWidth: 440,
+  borderRadius: 17,
+  border: "1px solid rgba(255, 204, 106, 0.42)",
+  background: "linear-gradient(180deg, rgba(13, 58, 29, 0.96) 0%, rgba(7, 38, 20, 0.94) 100%)",
+  boxShadow:
+    "0 24px 64px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 204, 106, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.15)",
+  padding: "clamp(28px, 5vw, 36px)",
+  pointerEvents: "auto",
+};
+
+const headerBlockStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 12,
+  textAlign: "center",
+  marginBottom: 24,
+};
+
+const logoLinkStyle: CSSProperties = {
+  display: "inline-flex",
+  opacity: 0.95,
+};
+
+const eyebrowStyle: CSSProperties = {
+  margin: 0,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: "0.22em",
+  textTransform: "uppercase",
+  color: GOLD,
+};
+
+const h1Style: CSSProperties = {
+  margin: 0,
+  fontFamily: serif,
+  fontSize: "clamp(1.65rem, 4vw, 2rem)",
+  fontWeight: 600,
+  lineHeight: 1.15,
+  color: WHITE,
+};
+
+const bodyTextStyle: CSSProperties = {
+  margin: 0,
+  maxWidth: "34ch",
+  fontSize: 14,
+  lineHeight: 1.55,
+  color: MUTED,
+};
+
+const hintStyle: CSSProperties = {
+  margin: 0,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: "rgba(246, 245, 241, 0.65)",
+};
+
+const hintEmStyle: CSSProperties = {
+  fontWeight: 600,
+  color: "rgba(246, 245, 241, 0.9)",
+};
+
+const formStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 16,
+};
+
+const labelWrapStyle: CSSProperties = {
+  display: "block",
+};
+
+const labelTextStyle: CSSProperties = {
+  display: "block",
+  marginBottom: 8,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "rgba(246, 245, 241, 0.75)",
+};
+
+const inputStyle: CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  borderRadius: 12,
+  padding: "12px 14px",
+  fontSize: 16,
+  fontFamily: sans,
+  color: WHITE,
+  background: "rgba(4, 22, 14, 0.85)",
+  border: "1px solid rgba(255, 204, 106, 0.45)",
+  outline: "none",
+  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.35)",
+};
+
+const errorStyle: CSSProperties = {
+  margin: 0,
+  padding: "10px 12px",
+  borderRadius: 10,
+  fontSize: 13,
+  lineHeight: 1.4,
+  color: "#fecaca",
+  background: "rgba(127, 29, 29, 0.35)",
+  border: "1px solid rgba(248, 113, 113, 0.35)",
+};
+
+function buttonStyle(disabled: boolean): CSSProperties {
+  return {
+    width: "100%",
+    borderRadius: 11,
+    padding: "12px 16px",
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    fontFamily: sans,
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.45 : 1,
+    border: `1px solid ${GOLD}`,
+    background: GOLD,
+    color: GREEN,
+    boxShadow: disabled ? "none" : "0 8px 24px rgba(0,0,0,0.35)",
+  };
+}
+
+const footerRuleStyle: CSSProperties = {
+  marginTop: 28,
+  paddingTop: 20,
+  borderTop: "1px solid rgba(255, 204, 106, 0.2)",
+};
+
+const legalRowStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+};
+
+const legalLeftStyle: CSSProperties = {
+  margin: 0,
+  maxWidth: "52ch",
+  fontSize: 10,
+  lineHeight: 1.45,
+  color: "rgba(246, 245, 241, 0.55)",
+};
+
+const legalRightStyle: CSSProperties = {
+  margin: 0,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: GOLD,
+  flexShrink: 0,
+};
+
+const pageTaglineStyle: CSSProperties = {
+  marginTop: 28,
+  textAlign: "center",
+  fontSize: 10,
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+  color: "rgba(246, 245, 241, 0.4)",
+};

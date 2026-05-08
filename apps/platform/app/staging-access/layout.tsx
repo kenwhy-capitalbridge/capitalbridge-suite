@@ -19,8 +19,11 @@ const stagingSans = Inter({
 export default function StagingAccessLayout({ children }: { children: ReactNode }) {
   return (
     <div
-      className={`${stagingSerif.variable} ${stagingSans.variable} min-h-screen antialiased`}
+      className={`${stagingSerif.variable} ${stagingSans.variable}`}
       style={{
+        minHeight: "100vh",
+        WebkitFontSmoothing: "antialiased",
+        MozOsxFontSmoothing: "grayscale",
         fontFamily: 'var(--font-staging-sans), "Inter", system-ui, sans-serif',
       }}
     >
