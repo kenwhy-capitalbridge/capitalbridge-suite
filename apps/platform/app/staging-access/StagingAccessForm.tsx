@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { HeaderBrandPicture } from "@cb/ui";
+import { StagingAccessBackdrop } from "./StagingAccessBackdrop";
+
+const GOLD = "#FFCC6A";
+const WHITE = "#F6F5F1";
+const GREEN = "#0D3A1D";
 
 export function StagingAccessForm() {
   const router = useRouter();
@@ -11,6 +17,11 @@ export function StagingAccessForm() {
   const [pending, setPending] = useState(false);
 
   const from = searchParams.get("from") || "/";
+  const returnLabel = useMemo(() => {
+    const path = from.startsWith("/") ? from : "/";
+    if (path === "/" || path === "") return "the platform home";
+    return path;
+  }, [from]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,36 +48,122 @@ export function StagingAccessForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16 text-[#F6F5F1]">
-      <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-[0.25em] text-[#FFCC6A]/90">
-        Capital Bridge
-      </p>
-      <h1 className="mb-2 text-center font-serif text-2xl font-bold text-[#FFCC6A]">Staging access</h1>
-      <p className="mb-8 text-center text-sm leading-relaxed text-[#B8B5AE]">
-        Enter the staging password to continue. This gate applies only to the staging host, not production.
-      </p>
-      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-[#FFCC6A]/25 bg-[#0f2e1c]/90 p-6 shadow-xl">
-        <label className="block text-xs font-medium text-[#B8B5AE]">
-          Password
-          <input
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-[#FFCC6A]/30 bg-[#0A2E18] px-3 py-2.5 text-sm text-[#F6F5F1] outline-none ring-0 focus:border-[#FFCC6A]/70"
-            disabled={pending}
-          />
-        </label>
-        {error ? <p className="text-sm text-red-300">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={pending || !password.trim()}
-          className="w-full rounded-lg bg-[#FFCC6A] py-2.5 text-sm font-bold text-[#0D3A1D] transition-opacity disabled:opacity-50"
+    <div className="relative isolate flex min-h-screen flex-col">
+      <StagingAccessBackdrop />
+
+      <main
+        className="relative z-[1] flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6"
+        style={{ color: WHITE }}
+      >
+        <div
+          className="w-full max-w-[440px]"
+          style={{
+            borderRadius: 17,
+            border: "1px solid rgba(255, 204, 106, 0.42)",
+            background: "linear-gradient(180deg, rgba(13, 58, 29, 0.96) 0%, rgba(7, 38, 20, 0.94) 100%)",
+            boxShadow:
+              "0 24px 64px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 204, 106, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.15)",
+            padding: "clamp(28px, 5vw, 36px)",
+          }}
         >
-          {pending ? "Checking…" : "Continue"}
-        </button>
-      </form>
-    </main>
+          <div className="mb-6 flex flex-col items-center gap-3 text-center">
+            <a
+              href="https://thecapitalbridge.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex opacity-95 transition-opacity hover:opacity-100"
+              aria-label="Capital Bridge home"
+            >
+              <HeaderBrandPicture />
+            </a>
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.22em]"
+              style={{ color: GOLD }}
+            >
+              Preview environment
+            </p>
+            <h1
+              className="text-[clamp(1.65rem,4vw,2rem)] font-semibold leading-tight"
+              style={{
+                fontFamily: 'var(--font-staging-serif), "Roboto Serif", Georgia, serif',
+                color: WHITE,
+              }}
+            >
+              Staging access
+            </h1>
+            <p className="max-w-[34ch] text-[13px] leading-relaxed text-[rgba(246,245,241,0.82)]">
+              Enter the staging password to unlock this host. This gate applies only to staging — not production.
+            </p>
+            <p className="text-[11px] leading-snug text-[rgba(246,245,241,0.55)]">
+              After sign-in you&apos;ll continue to <span className="font-medium text-[rgba(246,245,241,0.75)]">{returnLabel}</span>
+            </p>
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            <label className="block">
+              <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-[rgba(246,245,241,0.55)]">
+                Password
+              </span>
+              <input
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={pending}
+                className="w-full rounded-[12px] px-3.5 py-3 text-[15px] outline-none transition-[border-color,box-shadow] disabled:opacity-60"
+                style={{
+                  border: "1px solid rgba(255, 204, 106, 0.35)",
+                  background: "rgba(4, 22, 14, 0.65)",
+                  color: WHITE,
+                  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.25)",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "rgba(255, 204, 106, 0.65)";
+                  e.target.style.boxShadow = "0 0 0 1px rgba(255, 204, 106, 0.25), inset 0 2px 8px rgba(0,0,0,0.2)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "rgba(255, 204, 106, 0.35)";
+                  e.target.style.boxShadow = "inset 0 2px 8px rgba(0,0,0,0.25)";
+                }}
+              />
+            </label>
+
+            {error ? (
+              <p className="rounded-lg border border-red-400/35 bg-red-950/40 px-3 py-2 text-[13px] text-red-100">{error}</p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={pending || !password.trim()}
+              className="w-full rounded-[11px] py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+              style={{
+                border: `1px solid ${GOLD}`,
+                background: GOLD,
+                color: GREEN,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+              }}
+            >
+              {pending ? "Checking…" : "Continue"}
+            </button>
+          </form>
+
+          <div className="mt-8 border-t border-[rgba(255,204,106,0.18)] pt-5">
+            <div className="flex flex-col gap-3 text-[10px] leading-relaxed text-[rgba(246,245,241,0.48)] sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <p className="max-w-[52ch]">
+                © {new Date().getFullYear()} Capital Bridge. Proprietary — unauthorised use prohibited.
+              </p>
+              <p className="shrink-0 font-bold uppercase tracking-[0.12em]" style={{ color: GOLD }}>
+                Private & Confidential
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <p className="mt-8 text-center text-[10px] uppercase tracking-[0.18em] text-[rgba(246,245,241,0.35)]">
+          Capital Bridge — Staging
+        </p>
+      </main>
+    </div>
   );
 }

@@ -15,7 +15,7 @@ import { CbLegalSiteFooter, ElfsightChatbot } from "@cb/ui";
 import { CB_SITE_FAVICON_ICONS } from "@cb/ui/siteFaviconMetadata";
 import { MembershipSessionCheck } from "./components/MembershipSessionCheck";
 import { decodeMembershipSafeCookie } from "../lib/safeModeCookie";
-import { routeUsesDashboardFooterOnly } from "../lib/dashboardFooterRoute";
+import { hideGlobalLegalSiteFooter } from "../lib/dashboardFooterRoute";
 
 const BASE_METADATA: Metadata = {
   title: "Capital Bridge Advisory Platform",
@@ -59,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const initialSafeMode = await readInitialSafeMode();
   const h = await headers();
   const pathname = h.get("x-cb-pathname") ?? "";
-  const hideGlobalLegalFooter = routeUsesDashboardFooterOnly(pathname);
+  const hideGlobalLegalFooter = hideGlobalLegalSiteFooter(pathname);
 
   return (
     <html lang="en" className={cbFrameworkFont.variable}>
