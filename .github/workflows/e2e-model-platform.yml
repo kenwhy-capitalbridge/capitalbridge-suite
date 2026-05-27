@@ -17,13 +17,10 @@ jobs:
   playwright:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      # GitHub Actions: opt into Node 24 for JS actions before default flip (see GH changelog).
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -42,6 +39,17 @@ jobs:
             exit 1
           fi
           printf '%s' "$CB_E2E_STORAGE_JSON" > e2e/.auth/storage.json
+          node -e "
+            const fs = require('node:fs');
+            const file = 'e2e/.auth/storage.json';
+            let data;
+            try { data = JSON.parse(fs.readFileSync(file, 'utf8')); }
+            catch { throw new Error('CB_E2E_STORAGE_JSON is not valid JSON'); }
+            const cookies = Array.isArray(data.cookies) ? data.cookies : [];
+            if (cookies.length === 0) {
+              throw new Error('CB_E2E_STORAGE_JSON has no cookies — regenerate with npm run e2e:storage');
+            }
+          "
 
       - name: Run Playwright
         env:
@@ -49,8 +57,24 @@ jobs:
           CB_E2E_PLATFORM_ORIGIN: ${{ vars.CB_E2E_PLATFORM_ORIGIN }}
         run: npm run test:e2e
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
           path: playwright-report/
+
+      - name: Auth rotation hint
+        if: failure()
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## E2E auth may be expired
+
+          If Playwright landed on `/access`, regenerate the bot session and update **`CB_E2E_STORAGE_JSON`**:
+
+          ```bash
+          CB_E2E_LOGIN_ORIGIN=https://login.thecapitalbridge.com npm run e2e:storage
+          gh secret set CB_E2E_STORAGE_JSON -R kenwhy-capitalbridge/capitalbridge-suite < e2e/.auth/storage.json
+          ```
+
+          See `e2e/README.md` for details.
+          EOF
