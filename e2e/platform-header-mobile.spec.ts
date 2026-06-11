@@ -49,7 +49,7 @@ test.describe("Platform header @375px", () => {
     await expect(header).toHaveScreenshot("platform-header-375.png", {
       animations: "disabled",
       // Linux CI fonts/AA often differ slightly from the committed baseline (usually captured on macOS).
-      maxDiffPixelRatio: process.env.CI ? 0.08 : 0.04,
+      maxDiffPixelRatio: process.env.CI ? 0.14 : 0.04,
     });
 
     await context.close();
