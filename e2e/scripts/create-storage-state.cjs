@@ -24,6 +24,30 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function hasSuiteAuthCookie(cookies) {
+  return cookies.some(
+    (c) =>
+      c.domain === ".thecapitalbridge.com" &&
+      /^sb-.+-auth-token$/.test(c.name) &&
+      c.value &&
+      c.value.length > 0,
+  );
+}
+
+async function waitForSuiteAuthCookie(context, deadlineMs) {
+  const deadline = Date.now() + deadlineMs;
+  while (Date.now() < deadline) {
+    if (hasSuiteAuthCookie(await context.cookies())) {
+      await sleep(1500);
+      return;
+    }
+    await sleep(500);
+  }
+  throw new Error(
+    `[e2e] Timed out after ${deadlineMs / 1000}s waiting for suite auth cookie on .thecapitalbridge.com`,
+  );
+}
+
 async function main() {
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
   const browser = await chromium.launch({ headless: false });
@@ -31,9 +55,9 @@ async function main() {
   const page = await context.newPage();
   await page.goto(`${loginOrigin}/access`, { waitUntil: "domcontentloaded" });
   console.error(
-    `[e2e] Sign in in the browser window. Waiting ${waitMs / 1000}s, then saving to ${outFile}`
+    `[e2e] Sign in in the browser window. Saving to ${outFile} once auth cookies appear (max ${waitMs / 1000}s).`,
   );
-  await sleep(waitMs);
+  await waitForSuiteAuthCookie(context, waitMs);
   await context.storageState({ path: outFile });
   await browser.close();
   console.error("[e2e] Storage state saved.");
