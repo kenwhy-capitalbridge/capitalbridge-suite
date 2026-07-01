@@ -40,7 +40,8 @@
     "verify:forever-report-assets": "node node_modules/tsx/dist/cli.mjs packages/pdf/scripts/verify-forever-report-assets.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "e2e:storage": "node e2e/scripts/create-storage-state.cjs"
+    "e2e:storage": "node e2e/scripts/create-storage-state.cjs",
+    "e2e:storage:login": "node e2e/scripts/login-storage-state.cjs"
   },
   "devDependencies": {
     "@cb/pdf": "*",

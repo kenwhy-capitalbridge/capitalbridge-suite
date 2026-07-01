@@ -36,9 +36,9 @@ Defaults match production hostnames above. Override when pointing at a preview U
 
 ## CI
 
-- Store `e2e/.auth/storage.json` from a dedicated bot account **securely** (e.g. GitHub secret), decode into the job workspace before `npm run test:e2e`.
-- Rotate storage when the session expires.
-- Optional: `.github/workflows/e2e-model-platform.yml` — **workflow_dispatch** (manual) and a **weekly schedule** (Wed 08:00 UTC). Set repository secret **`CB_E2E_STORAGE_JSON`** to the full file contents. Optional **repository variables** **`CB_E2E_FOREVER_ORIGIN`** and **`CB_E2E_PLATFORM_ORIGIN`** override defaults (`https://forever.thecapitalbridge.com` and `https://platform.thecapitalbridge.com`) when you want staging or preview hosts.
+- **Preferred:** repository secrets **`CB_E2E_EMAIL`** + **`CB_E2E_PASSWORD`** (paid bot account). The workflow logs in headlessly before each run — no manual cookie rotation.
+- **Fallback:** store `e2e/.auth/storage.json` in **`CB_E2E_STORAGE_JSON`** (regenerate when sessions expire).
+- Optional: `.github/workflows/e2e-model-platform.yml` — **workflow_dispatch** (manual) and a **weekly schedule** (Wed 08:00 UTC). Optional **repository variables** **`CB_E2E_FOREVER_ORIGIN`** and **`CB_E2E_PLATFORM_ORIGIN`** override defaults (`https://forever.thecapitalbridge.com` and `https://platform.thecapitalbridge.com`) when you want staging or preview hosts.
 
 ## Periodic staging runs (local)
 

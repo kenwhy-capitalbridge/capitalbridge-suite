@@ -1,5 +1,7 @@
 # E2E: Forever → platform BACK + advisory save.
-# Prerequisites: secret CB_E2E_STORAGE_JSON = full contents of e2e/.auth/storage.json
+# Auth (pick one):
+#   - secrets CB_E2E_EMAIL + CB_E2E_PASSWORD (preferred; fresh login each run)
+#   - secret CB_E2E_STORAGE_JSON = full contents of e2e/.auth/storage.json
 # Optional vars: CB_E2E_FOREVER_ORIGIN, CB_E2E_PLATFORM_ORIGIN (defaults to production hosts).
 # Scheduled runs fail until the secret is set; disable the schedule in the workflow file if unused.
 name: E2E model → platform
@@ -29,27 +31,13 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
 
-      - name: Write storage state from secret
+      - name: Bootstrap auth storage
         env:
+          CB_E2E_EMAIL: ${{ secrets.CB_E2E_EMAIL }}
+          CB_E2E_PASSWORD: ${{ secrets.CB_E2E_PASSWORD }}
           CB_E2E_STORAGE_JSON: ${{ secrets.CB_E2E_STORAGE_JSON }}
-        run: |
-          mkdir -p e2e/.auth
-          if [ -z "$CB_E2E_STORAGE_JSON" ]; then
-            echo "Set repository secret CB_E2E_STORAGE_JSON (contents of e2e/.auth/storage.json)"
-            exit 1
-          fi
-          printf '%s' "$CB_E2E_STORAGE_JSON" > e2e/.auth/storage.json
-          node -e "
-            const fs = require('node:fs');
-            const file = 'e2e/.auth/storage.json';
-            let data;
-            try { data = JSON.parse(fs.readFileSync(file, 'utf8')); }
-            catch { throw new Error('CB_E2E_STORAGE_JSON is not valid JSON'); }
-            const cookies = Array.isArray(data.cookies) ? data.cookies : [];
-            if (cookies.length === 0) {
-              throw new Error('CB_E2E_STORAGE_JSON has no cookies — regenerate with npm run e2e:storage');
-            }
-          "
+          CB_E2E_LOGIN_ORIGIN: https://login.thecapitalbridge.com
+        run: node e2e/scripts/bootstrap-storage-state.cjs
 
       - name: Run Playwright
         env:
@@ -69,7 +57,11 @@ jobs:
           cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
           ## E2E auth may be expired
 
-          If Playwright landed on `/access`, regenerate the bot session and update **`CB_E2E_STORAGE_JSON`**:
+          If Playwright landed on `/access`, refresh auth:
+
+          **Preferred (no manual rotation):** set repository secrets **`CB_E2E_EMAIL`** and **`CB_E2E_PASSWORD`** for the paid bot account. CI logs in headlessly before each run.
+
+          **Manual fallback:**
 
           ```bash
           CB_E2E_LOGIN_ORIGIN=https://login.thecapitalbridge.com npm run e2e:storage
