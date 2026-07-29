@@ -10,16 +10,36 @@ const {
   outFile,
   loginOrigin,
   ensureAuthDir,
-  waitForSuiteAuthCookie,
+  hasSuiteAuthCookie,
+  sleep,
 } = require("./storage-state-utils.cjs");
 
 const waitMs = Number(process.env.CB_E2E_STORAGE_WAIT_MS || "120000");
 
-async function dismissSessionConflictIfPresent(page) {
+async function waitForLogin(context, page, deadlineMs) {
+  const deadline = Date.now() + deadlineMs;
   const replace = page.getByRole("button", { name: /log out other session and continue/i });
-  if (await replace.isVisible().catch(() => false)) {
-    await replace.click();
+
+  while (Date.now() < deadline) {
+    if (hasSuiteAuthCookie(await context.cookies())) {
+      await sleep(1500);
+      return;
+    }
+
+    // The conflict dialog is rendered asynchronously after password sign-in,
+    // so checking only once can miss it and leave CI waiting for a cookie.
+    if (await replace.isVisible().catch(() => false)) {
+      await replace.click();
+    }
+
+    await sleep(500);
   }
+
+  const error = await page.locator('[role="alert"]').allTextContents().catch(() => []);
+  throw new Error(
+    `[e2e] Timed out after ${deadlineMs / 1000}s waiting for suite auth cookie. ` +
+      `Login URL: ${page.url()}. Alerts: ${error.filter(Boolean).join(" | ") || "(none)"}`,
+  );
 }
 
 async function main() {
@@ -42,8 +62,7 @@ async function main() {
   await page.locator('input[autocomplete="current-password"]').fill(password);
   await page.getByRole("button", { name: /^Login$/i }).click();
 
-  await dismissSessionConflictIfPresent(page);
-  await waitForSuiteAuthCookie(context, waitMs);
+  await waitForLogin(context, page, waitMs);
 
   await context.storageState({ path: outFile });
   await browser.close();
