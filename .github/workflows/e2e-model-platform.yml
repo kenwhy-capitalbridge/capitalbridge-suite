@@ -17,7 +17,8 @@ concurrency:
 
 jobs:
   playwright:
-    runs-on: ubuntu-latest
+    # ubuntu-latest is 26.04; Playwright 1.58 has no chromium deps for it.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
