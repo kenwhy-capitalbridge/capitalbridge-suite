@@ -30,7 +30,14 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install --with-deps chromium
+      # apt mirrors on hosted runners occasionally fail DNS; retry instead of failing the whole run.
+      - name: Install Playwright Chromium
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: npx playwright install --with-deps chromium
 
       - name: Bootstrap auth storage
         env:
